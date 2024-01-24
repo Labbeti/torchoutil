@@ -3,6 +3,7 @@
 
 from typing import (
     Any,
+    List,
     Union,
 )
 
@@ -13,23 +14,23 @@ from torch import Tensor
 from extentorch.nn.functional.get import get_device, _DEVICE_CUDA_IF_AVAILABLE
 
 
-def get_inverse_perm(indexes: Tensor, dim: int = -1) -> Tensor:
-    """Return inverse permutation indexes.
+def get_inverse_perm(indices: Tensor, dim: int = -1) -> Tensor:
+    """Return inverse permutation indices.
     The output will be a tensor of shape (..., N).
 
     Args:
-        indexes: Original permutation indexes as tensor of shape (..., N).
-        dim: Dimension of indexes. defaults to -1.
+        indices: Original permutation indices as tensor of shape (..., N).
+        dim: Dimension of indices. defaults to -1.
     """
     arange = torch.arange(
-        indexes.shape[dim],
-        dtype=indexes.dtype,
-        device=indexes.device,
+        indices.shape[dim],
+        dtype=indices.dtype,
+        device=indices.device,
     )
-    arange = arange.expand(*indexes.shape)
-    indexes_inv = torch.empty_like(indexes)
-    indexes_inv = indexes_inv.scatter(dim, indexes, arange)
-    return indexes_inv
+    arange = arange.expand(*indices.shape)
+    indices_inv = torch.empty_like(indices)
+    indices_inv = indices_inv.scatter(dim, indices, arange)
+    return indices_inv
 
 
 def randperm_diff(
@@ -41,9 +42,9 @@ def randperm_diff(
     The output will be a tensor of shape (size,).
 
     Args:
-        size: The number of indexes. Cannot be < 2.
+        size: The number of indices. Cannot be < 2.
         seed: The seed or torch.Generator used to generate permutation.
-        device: The PyTorch device of the output indexes tensor.
+        device: The PyTorch device of the output indices tensor.
 
     Example 1
     ----------
@@ -75,8 +76,8 @@ def get_perm(t1: Tensor, t2: Tensor) -> Tensor:
     ----------
         >>> t1 = torch.as_tensor([0, 1, 2, 4, 3, 6, 5, 7])
         >>> t2 = torch.as_tensor([0, 2, 1, 4, 3, 5, 6, 7])
-        >>> indexes = get_permutation(t1, t2)
-        >>> (t1[indexes] == t2).all().item()
+        >>> indices = get_permutation(t1, t2)
+        >>> (t1[indices] == t2).all().item()
         True
     """
     i1 = (t1[..., None, :] == t2[..., :, None]).int().argmax(dim=-2)
@@ -85,35 +86,41 @@ def get_perm(t1: Tensor, t2: Tensor) -> Tensor:
 
 def insert_at_indices(
     x: Tensor,
-    indexes: Tensor,
+    indices: Union[Tensor, List],
     values: Union[float, int, Tensor],
 ) -> Tensor:
-    """Insert value(s) in vector at specified indexes.
+    """Insert value(s) in vector at specified indices.
 
     Example 1::
     ----------
         >>> x = torch.as_tensor([1, 1, 2, 2, 2, 3])
-        >>> indexes = torch.as_tensor([2, 5])
+        >>> indices = torch.as_tensor([2, 5])
         >>> values = 4
-        >>> insert_values(x, indexes, values)
+        >>> insert_values(x, indices, values)
         tensor([1, 1, 4, 2, 2, 2, 4, 3])
     """
-    out = torch.empty((x.shape[0] + indexes.shape[0]), dtype=x.dtype, device=x.device)
-    indexes = indexes + torch.arange(indexes.shape[0], device=indexes.device)
-    out[indexes] = values
+    if isinstance(indices, list):
+        indices = torch.as_tensor(indices)
+
+    out = torch.empty((x.shape[0] + indices.shape[0]), dtype=x.dtype, device=x.device)
+    indices = indices + torch.arange(indices.shape[0], device=indices.device)
+    out[indices] = values
     mask = torch.full((out.shape[0],), True, dtype=torch.bool)
-    mask[indexes] = False
+    mask[indices] = False
     out[mask] = x
     return out
 
 
 def remove_at_indices(
     x: Tensor,
-    indexes: Tensor,
+    indices: Union[Tensor, List],
 ) -> Tensor:
-    """Remove value(s) in vector at specified indexes."""
-    indexes = indexes + torch.arange(indexes.shape[0], device=indexes.device)
+    """Remove value(s) in vector at specified indices."""
+    if isinstance(indices, list):
+        indices = torch.as_tensor(indices)
+
+    indices = indices + torch.arange(indices.shape[0], device=indices.device)
     mask = torch.full((x.shape[0],), True, dtype=torch.bool)
-    mask[indexes] = False
+    mask[indices] = False
     out = x[mask]
     return out

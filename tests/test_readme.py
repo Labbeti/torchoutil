@@ -7,7 +7,7 @@ from unittest import TestCase
 
 import torch
 
-from extentorch import masked_mean
+from extentorch import masked_mean, insert_at_indices
 
 
 class TestReadme(TestCase):
@@ -19,6 +19,12 @@ class TestReadme(TestCase):
 
         result = result.item()
         self.assertEqual(result, 1.5)
+
+    def test_example_2(self) -> None:
+        x = torch.as_tensor([1, 2, 3, 4])
+        result = insert_at_indices(x, [0, 2], 5)
+        expected = torch.as_tensor([5, 1, 2, 5, 3, 4])
+        self.assertTrue(torch.equal(result, expected))
 
 
 if __name__ == "__main__":

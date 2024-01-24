@@ -23,14 +23,14 @@ def find(
         )
     mask = x.eq(value)
     contains_eos = mask.any(dim=dim)
-    indexes_eos = mask.int().argmax(dim=dim)
+    indices_eos = mask.int().argmax(dim=dim)
 
     if default is None:
         if not contains_eos.all():
             raise RuntimeError(f"Cannot find {value=} in tensor.")
-        return indexes_eos
+        return indices_eos
     else:
-        output = torch.where(contains_eos, indexes_eos, default)
+        output = torch.where(contains_eos, indices_eos, default)
         return output
 
 
@@ -89,21 +89,21 @@ def cat_padded_batch(
 
     x12 = pad_dim(x1, sum_size_12, dim=seq_dim)
     kwd: dict[str, Any] = dict(device=x1.device, dtype=torch.long)
-    indexes = torch.arange(x2_lens.max().item(), **kwd)
+    indices = torch.arange(x2_lens.max().item(), **kwd)
 
     unsq_x1_lens = x1_lens
     ndim = x1.ndim
     for i in range(ndim):
         if i != (seq_dim % ndim):
-            indexes = indexes.unsqueeze(dim=i)
+            indices = indices.unsqueeze(dim=i)
         if i != (batch_dim % ndim):
             unsq_x1_lens = unsq_x1_lens.unsqueeze(dim=i)
 
     expand_size = list(x2.shape)
     expand_size[seq_dim] = -1
-    indexes = indexes.expand(*expand_size)
-    indexes = indexes + unsq_x1_lens
-    x12.scatter_(seq_dim, indexes, x2)
+    indices = indices.expand(*expand_size)
+    indices = indices + unsq_x1_lens
+    x12.scatter_(seq_dim, indices, x2)
 
     max_size_12 = int(x12_lens.max().item())
     if max_size_12 < sum_size_12:

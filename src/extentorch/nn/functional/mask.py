@@ -148,12 +148,12 @@ def lengths_to_non_pad_mask(
     dim = -1
     if max_len is None:
         max_len = int(lengths.max(dim=dim)[0].item())
-    indexes = torch.arange(0, max_len, device=lengths.device)
+    indices = torch.arange(0, max_len, device=lengths.device)
     lengths = lengths.unsqueeze(dim=-1)
     if include_end:
-        non_pad_mask = indexes <= lengths
+        non_pad_mask = indices <= lengths
     else:
-        non_pad_mask = indexes < lengths
+        non_pad_mask = indices < lengths
     return non_pad_mask
 
 
@@ -242,8 +242,8 @@ def tensor_to_lengths(
 
     elif end_value is not None:
         contains_eos = (tensor == end_value).any(dim=dim)
-        indexes_eos = (tensor == end_value).int().argmax(dim=dim)
-        lengths = torch.where(contains_eos, indexes_eos, tensor.shape[dim])
+        indices_eos = (tensor == end_value).int().argmax(dim=dim)
+        lengths = torch.where(contains_eos, indices_eos, tensor.shape[dim])
 
     else:
         raise ValueError(

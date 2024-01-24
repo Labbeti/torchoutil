@@ -12,7 +12,7 @@ from torch import Tensor
 from extentorch.nn.functional.indices import randperm_diff
 
 
-class TestIndexes(TestCase):
+class Testindices(TestCase):
     def test_randperm_diff(self) -> None:
         for i in range(2, 10):
             perm = randperm_diff(i)
