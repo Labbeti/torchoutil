@@ -58,7 +58,7 @@ def indices_to_names(
 
 
 def multihot_to_indices(
-    multihot: Tensor,
+    multihot: Union[Tensor, Sequence[Tensor], Sequence[Sequence[bool]]],
 ) -> List[List[int]]:
     """Convert multihot boolean encoding to indices of labels.
 
@@ -67,13 +67,15 @@ def multihot_to_indices(
     """
     preds = []
     for multihot_i in multihot:
+        if not isinstance(multihot_i, Tensor):
+            multihot_i = torch.as_tensor(multihot_i)
         preds_i = torch.where(multihot_i)[0].tolist()
         preds.append(preds_i)
     return preds
 
 
 def multihot_to_names(
-    multihot: Tensor,
+    multihot: Union[Tensor, Sequence[Tensor], Sequence[Sequence[bool]]],
     idx_to_name: Mapping[int, T],
 ) -> List[List[T]]:
     """Convert multihot boolean encoding to names using a mapping.
