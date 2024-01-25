@@ -8,7 +8,7 @@ from unittest import TestCase
 
 import torch
 
-from extentorch.nn.functional.mask import (
+from torchoutil.nn.functional.mask import (
     generate_square_subsequent_mask,
     generate_square_subsequent_mask_shifted,
     lengths_to_non_pad_mask,

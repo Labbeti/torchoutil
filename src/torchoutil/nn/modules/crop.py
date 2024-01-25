@@ -5,7 +5,7 @@ from typing import Iterable, Union
 
 from torch import nn, Generator, Tensor
 
-from extentorch.nn.functional.crop import crop_dim, crop_dims
+from torchoutil.nn.functional.crop import crop_dim, crop_dims
 
 
 class CropDim(nn.Module):

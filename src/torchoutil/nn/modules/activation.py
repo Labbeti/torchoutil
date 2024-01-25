@@ -5,7 +5,7 @@ from typing import Iterable
 
 from torch import nn, Tensor
 
-from extentorch.nn.functional.activation import softmax_multidim
+from torchoutil.nn.functional.activation import softmax_multidim
 
 
 class SoftmaxMultidim(nn.Module):

@@ -1,4 +1,4 @@
-# extentorch
+# torchoutil
 
 <a href="https://www.python.org/"><img alt="Python" src="https://img.shields.io/badge/-Python 3.8+-blue?style=for-the-badge&logo=python&logoColor=white"></a>
 <a href="https://pytorch.org/get-started/locally/"><img alt="PyTorch" src="https://img.shields.io/badge/-PyTorch 1.10.0-ee4c2c?style=for-the-badge&logo=pytorch&logoColor=white"></a>
@@ -9,12 +9,12 @@ Utilities for manipuling PyTorch tensors.
 
 ## Installation
 ```bash
-pip install extentorch
+pip install torchoutil
 ```
 
 ## Usage
 ```python
-from extentorch import masked_mean
+from torchoutil import masked_mean
 
 x = torch.as_tensor([1, 2, 3, 4])
 mask = torch.as_tensor([True, True, False, False])
@@ -23,7 +23,7 @@ result = masked_mean(x, mask)
 ```
 
 ```python
-from extentorch import insert_at_indices
+from torchoutil import insert_at_indices
 
 x = torch.as_tensor([1, 2, 3, 4])
 result = insert_at_indices(x, [0, 2], 5)

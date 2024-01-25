@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 cff-version: 1.2.0
-title: extentorch
+title: torchoutil
 message: 'If you use this software, please cite it as below.'
 type: software
 authors:
@@ -10,7 +10,7 @@ authors:
     email: labbeti.pub@gmail.com
     affiliation: IRIT
     orcid: 'https://orcid.org/0000-0002-7219-5463'
-repository-code: 'https://github.com/Labbeti/extentorch/'
+repository-code: 'https://github.com/Labbeti/torchoutil/'
 abstract: Utilities for manipuling PyTorch tensors.
 keywords:
   - pytorch

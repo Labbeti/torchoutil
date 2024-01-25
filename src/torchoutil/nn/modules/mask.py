@@ -5,7 +5,7 @@ from typing import Iterable, Union
 
 from torch import nn, Tensor
 
-from extentorch.nn.functional.mask import masked_mean, masked_sum
+from torchoutil.nn.functional.mask import masked_mean, masked_sum
 
 
 class MaskedMean(nn.Module):

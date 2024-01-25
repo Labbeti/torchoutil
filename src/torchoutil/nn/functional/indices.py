@@ -11,7 +11,7 @@ import torch
 
 from torch import Tensor
 
-from extentorch.nn.functional.get import get_device, _DEVICE_CUDA_IF_AVAILABLE
+from torchoutil.nn.functional.get import get_device, _DEVICE_CUDA_IF_AVAILABLE
 
 
 def get_inverse_perm(indices: Tensor, dim: int = -1) -> Tensor:

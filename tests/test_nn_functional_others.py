@@ -7,7 +7,7 @@ from unittest import TestCase
 
 import torch
 
-from extentorch.nn.functional.others import cat_padded_batch
+from torchoutil.nn.functional.others import cat_padded_batch
 
 
 class TestCatPaddedBatch(TestCase):

@@ -7,7 +7,7 @@ import torch
 
 from torch import nn, Generator, Tensor
 
-from extentorch.nn.functional.pad import pad_dim, pad_dims, pad_and_stack_rec
+from torchoutil.nn.functional.pad import pad_dim, pad_dims, pad_and_stack_rec
 
 
 class PadDim(nn.Module):

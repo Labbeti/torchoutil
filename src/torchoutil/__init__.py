@@ -4,7 +4,7 @@
 """Adds functions and modules for PyTorch to facilitate tensor manipulation.
 """
 
-__name__ = "extentorch"
+__name__ = "torchoutil"
 __author__ = "Étienne Labbé (Labbeti)"
 __author_email__ = "labbeti.pub@gmail.com"
 __license__ = "MIT"

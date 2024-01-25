@@ -7,7 +7,7 @@ from unittest import TestCase
 
 import torch
 
-from extentorch.nn.functional.repeat import repeat_interleave_nd
+from torchoutil.nn.functional.repeat import repeat_interleave_nd
 
 
 class TestRepeat(TestCase):

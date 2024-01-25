@@ -10,7 +10,7 @@ import torch
 
 from torch import Tensor
 
-from extentorch.nn.functional.get import get_device
+from torchoutil.nn.functional.get import get_device
 
 
 T = TypeVar("T")

@@ -55,7 +55,7 @@ jobs:
 
     - name: Print install info
       run: |
-        extentorch-info
+        torchoutil-info
 
     - name: Test with pytest
       run: |

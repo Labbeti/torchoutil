@@ -9,7 +9,7 @@ from torch import Generator, Size, Tensor
 from torch.nn import functional as F
 from torch.nn.utils.rnn import pad_sequence
 
-from extentorch.nn.functional.get import get_device
+from torchoutil.nn.functional.get import get_device
 
 
 PAD_ALIGNS = ("left", "right", "center", "random")

@@ -7,7 +7,7 @@ from unittest import TestCase
 
 import torch
 
-from extentorch import masked_mean, insert_at_indices
+from torchoutil import masked_mean, insert_at_indices
 
 
 class TestReadme(TestCase):

@@ -9,7 +9,7 @@ from typing import Dict
 
 import torch
 
-import extentorch
+import torchoutil
 
 
 def get_package_repository_path() -> str:
@@ -19,7 +19,7 @@ def get_package_repository_path() -> str:
 
 def get_install_info() -> Dict[str, str]:
     return {
-        "extentorch": extentorch.__version__,
+        "torchoutil": torchoutil.__version__,
         "python": f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}",
         "os": platform.system(),
         "architecture": platform.architecture()[0],

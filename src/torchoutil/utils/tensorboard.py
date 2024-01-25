@@ -6,7 +6,7 @@ import os.path as osp
 
 from typing import Any, Dict, List
 
-from extentorch.utils.packaging import _TENSORBOARD_AVAILABLE
+from torchoutil.utils.packaging import _TENSORBOARD_AVAILABLE
 
 
 pylog = logging.getLogger(__name__)

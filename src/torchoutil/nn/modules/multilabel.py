@@ -7,7 +7,7 @@ import torch
 
 from torch import nn, Tensor
 
-from extentorch.nn.functional.multilabel import (
+from torchoutil.nn.functional.multilabel import (
     indices_to_multihot,
     indices_to_names,
     multihot_to_indices,

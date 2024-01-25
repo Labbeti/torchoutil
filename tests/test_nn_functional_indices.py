@@ -9,7 +9,7 @@ import torch
 
 from torch import Tensor
 
-from extentorch.nn.functional.indices import randperm_diff
+from torchoutil.nn.functional.indices import randperm_diff
 
 
 class Testindices(TestCase):

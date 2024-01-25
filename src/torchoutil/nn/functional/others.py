@@ -7,7 +7,7 @@ import torch
 
 from torch import nn, Tensor
 
-from extentorch.nn.functional.pad import pad_dim
+from torchoutil.nn.functional.pad import pad_dim
 
 
 def find(
