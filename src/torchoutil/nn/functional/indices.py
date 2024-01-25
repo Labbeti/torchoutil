@@ -10,6 +10,7 @@ from typing import (
 import torch
 
 from torch import Tensor
+from torch.types import Number
 
 from torchoutil.nn.functional.get import get_device, _DEVICE_CUDA_IF_AVAILABLE
 
@@ -69,14 +70,14 @@ def randperm_diff(
     return perm
 
 
-def get_perm(t1: Tensor, t2: Tensor) -> Tensor:
+def get_perm_indices(t1: Tensor, t2: Tensor) -> Tensor:
     """Find permutation between two vectors t1 and t2 which contains values from 0 to N-1.
 
     Example 1::
     ----------
         >>> t1 = torch.as_tensor([0, 1, 2, 4, 3, 6, 5, 7])
         >>> t2 = torch.as_tensor([0, 2, 1, 4, 3, 5, 6, 7])
-        >>> indices = get_permutation(t1, t2)
+        >>> indices = get_perm_indices(t1, t2)
         >>> (t1[indices] == t2).all().item()
         True
     """
@@ -86,8 +87,8 @@ def get_perm(t1: Tensor, t2: Tensor) -> Tensor:
 
 def insert_at_indices(
     x: Tensor,
-    indices: Union[Tensor, List],
-    values: Union[float, int, Tensor],
+    indices: Union[Tensor, List, Number],
+    values: Union[Number, Tensor],
 ) -> Tensor:
     """Insert value(s) in vector at specified indices.
 
@@ -99,10 +100,13 @@ def insert_at_indices(
         >>> insert_values(x, indices, values)
         tensor([1, 1, 4, 2, 2, 2, 4, 3])
     """
-    if isinstance(indices, list):
-        indices = torch.as_tensor(indices)
+    device = x.device
+    if isinstance(indices, Number):
+        indices = torch.as_tensor([indices], device=device, dtype=torch.long)
+    elif isinstance(indices, list):
+        indices = torch.as_tensor(indices, device=device, dtype=torch.long)
 
-    out = torch.empty((x.shape[0] + indices.shape[0]), dtype=x.dtype, device=x.device)
+    out = torch.empty((x.shape[0] + indices.shape[0]), dtype=x.dtype, device=device)
     indices = indices + torch.arange(indices.shape[0], device=indices.device)
     out[indices] = values
     mask = torch.full((out.shape[0],), True, dtype=torch.bool)
@@ -113,13 +117,16 @@ def insert_at_indices(
 
 def remove_at_indices(
     x: Tensor,
-    indices: Union[Tensor, List],
+    indices: Union[Tensor, List, Number],
 ) -> Tensor:
     """Remove value(s) in vector at specified indices."""
-    if isinstance(indices, list):
-        indices = torch.as_tensor(indices)
+    device = x.device
+    if isinstance(indices, Number):
+        indices = torch.as_tensor([indices], device=device, dtype=torch.long)
+    elif isinstance(indices, list):
+        indices = torch.as_tensor(indices, device=device, dtype=torch.long)
 
-    indices = indices + torch.arange(indices.shape[0], device=indices.device)
+    indices = indices + torch.arange(indices.shape[0], device=device)
     mask = torch.full((x.shape[0],), True, dtype=torch.bool)
     mask[indices] = False
     out = x[mask]
