@@ -10,6 +10,8 @@ import torch
 
 from torch import Tensor
 
+from extentorch.nn.functional.get import get_device
+
 
 T = TypeVar("T")
 
@@ -17,12 +19,16 @@ T = TypeVar("T")
 def indices_to_multihot(
     indices: Union[List[List[int]], List[Tensor]],
     num_classes: int,
+    device: Union[str, torch.device, None] = None,
 ) -> Tensor:
+    device = get_device(device)
     bsize = len(indices)
-    multihot = torch.full((bsize, num_classes), False, dtype=torch.bool)
+    multihot = torch.full((bsize, num_classes), False, dtype=torch.bool, device=device)
     for i, indices_i in enumerate(indices):
         if isinstance(indices_i, list):
-            indices_i = torch.as_tensor(indices_i, dtype=torch.long)
+            indices_i = torch.as_tensor(indices_i, dtype=torch.long, device=device)
+        else:
+            indices_i = indices_i.to(device=device)
         multihot[i].scatter_(0, indices_i, True)
     return multihot
 
@@ -72,9 +78,10 @@ def names_to_indices(
 def names_to_multihot(
     names: List[List[T]],
     idx_to_name: Mapping[int, T],
+    device: Union[str, torch.device, None] = None,
 ) -> Tensor:
     indices = names_to_indices(names, idx_to_name)
-    multihot = indices_to_multihot(indices, len(idx_to_name))
+    multihot = indices_to_multihot(indices, len(idx_to_name), device)
     return multihot
 
 

@@ -3,6 +3,8 @@
 
 from typing import Generic, List, Mapping, TypeVar, Union
 
+import torch
+
 from torch import nn, Tensor
 
 from extentorch.nn.functional.multilabel import (
@@ -25,15 +27,17 @@ class IndicesToMultihot(nn.Module):
     def __init__(
         self,
         num_classes: int,
+        device: Union[str, torch.device, None] = None,
     ) -> None:
         super().__init__()
         self.num_classes = num_classes
+        self.device = device
 
     def forward(
         self,
         indices: Union[List[List[int]], List[Tensor]],
     ) -> Tensor:
-        multihot = indices_to_multihot(indices, self.num_classes)
+        multihot = indices_to_multihot(indices, self.num_classes, self.device)
         return multihot
 
 
@@ -98,15 +102,17 @@ class NamesToMultihot(nn.Module, Generic[T]):
     def __init__(
         self,
         idx_to_name: Mapping[int, T],
+        device: Union[str, torch.device, None] = None,
     ) -> None:
         super().__init__()
         self.idx_to_name = idx_to_name
+        self.device = device
 
     def forward(
         self,
         names: List[List[T]],
     ) -> Tensor:
-        multihot = names_to_multihot(names, self.idx_to_name)
+        multihot = names_to_multihot(names, self.idx_to_name, self.device)
         return multihot
 
 
