@@ -26,7 +26,7 @@ result = masked_mean(x, mask)
 from torchoutil import insert_at_indices
 
 x = torch.as_tensor([1, 2, 3, 4])
-result = insert_at_indices(x, [0, 2], 5)
+result = insert_at_indices(x, indices=[0, 2], values=5)
 # result contains tensor with inserted values: tensor([5, 1, 2, 5, 3, 4])
 ```
 
