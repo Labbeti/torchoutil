@@ -11,7 +11,7 @@ authors:
     affiliation: IRIT
     orcid: 'https://orcid.org/0000-0002-7219-5463'
 repository-code: 'https://github.com/Labbeti/torchoutil/'
-abstract: Utilities for manipuling PyTorch tensors.
+abstract: Collection of functions and modules to simplify deep learning development.
 keywords:
   - pytorch
   - deep-learning
