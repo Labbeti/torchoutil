@@ -21,26 +21,42 @@ from torchoutil.nn.functional.multilabel import (
 
 
 class TestMultilabel(TestCase):
-    def test_indices_to_multihot(self) -> None:
+    def test_indices_to_multihot_1(self) -> None:
         indices = [[1, 2], [0], [], [3]]
         num_classes = 4
-        expected = torch.as_tensor(
+        expected_multihot = torch.as_tensor(
             [[0, 1, 1, 0], [1, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 1]], dtype=torch.bool
         )
 
         result = indices_to_multihot(indices, num_classes=num_classes)
 
-        self.assertTrue(torch.equal(result, expected))
+        self.assertTrue(torch.equal(result, expected_multihot))
 
-    def test_probs_to_names(self) -> None:
+    def test_probs_to_indices_1(self) -> None:
         probs = torch.as_tensor([[1.0, 0.4, 0.1, 0.9]])
-        expected = [["0", "3"]]
+        expected_indices = [[0, 3]]
+
+        result = probs_to_indices(probs, threshold=0.5)
+
+        self.assertListEqual(result, expected_indices)
+
+    def test_probs_to_multihot_1(self) -> None:
+        probs = torch.as_tensor([[1.0, 0.4, 0.1, 0.9]])
+        expected_multihot = torch.as_tensor([[True, False, False, True]])
+
+        result = probs_to_multihot(probs, threshold=0.5)
+
+        self.assertTrue(torch.equal(result, expected_multihot))
+
+    def test_probs_to_names_1(self) -> None:
+        probs = torch.as_tensor([[1.0, 0.4, 0.1, 0.9]])
+        expected_names = [["0", "3"]]
 
         num_classes = probs.shape[-1]
         idx_to_name = dict(zip(range(num_classes), map(str, range(num_classes))))
         result = probs_to_names(probs, threshold=0.5, idx_to_name=idx_to_name)
 
-        self.assertListEqual(result, expected)
+        self.assertListEqual(result, expected_names)
 
     def test_convert_multihot(self) -> None:
         num_samples = int(torch.randint(0, 20, ()).item())
