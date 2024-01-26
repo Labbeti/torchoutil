@@ -3,11 +3,9 @@
 
 import logging
 import os.path as osp
-
 from typing import Any, Dict, List
 
 from torchoutil.utils.packaging import _TENSORBOARD_AVAILABLE
-
 
 pylog = logging.getLogger(__name__)
 
@@ -18,16 +16,19 @@ DT_STRING = 7
 
 
 def load_event_file(
-    path: str, cast_float_and_str: bool = True,
+    path: str,
+    cast_float_and_str: bool = True,
     ignore_underscore_tags: bool = True,
     verbose: int = 0,
 ) -> List[Dict[str, Any]]:
     if not _TENSORBOARD_AVAILABLE:
         raise RuntimeError(
-            f"Cannot call function load_event_file if tensorboard is not installed."
+            "Cannot call function load_event_file if tensorboard is not installed."
         )
 
-    from tensorboard.backend.event_processing.event_file_loader import EventFileLoader  # type: ignore
+    from tensorboard.backend.event_processing.event_file_loader import (  # type: ignore
+        EventFileLoader,
+    )
 
     if not osp.isfile(path):
         raise FileNotFoundError(f"Invalid argument {path=}. (not a file)")
