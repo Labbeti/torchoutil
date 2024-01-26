@@ -69,4 +69,4 @@ result = insert_at_indices(x, indices=[0, 2], values=5)
 
 ## Contact
 Maintainer:
-- Etienne Labbé "Labbeti": labbeti.pub@gmail.com
+- Étienne Labbé "Labbeti": labbeti.pub@gmail.com
