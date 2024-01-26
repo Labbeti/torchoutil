@@ -4,8 +4,7 @@
 from typing import Any, Callable, Generator, Iterable, Mapping, Optional, Tuple, Union
 
 import torch
-
-from torch import nn, Tensor
+from torch import Tensor, nn
 from torch.types import Number
 
 from torchoutil.nn.functional.pad import pad_dim
@@ -117,3 +116,17 @@ def cat_padded_batch(
 
 def is_scalar(x: Union[Number, Tensor]) -> bool:
     return isinstance(x, Number) or (isinstance(x, Tensor) and x.ndim == 0)
+
+
+def default_extra_repr(
+    join: str = ", ",
+    fmt: str = "{name}={value}",
+    ignore_if_none: bool = False,
+    **kwargs,
+) -> str:
+    result = join.join(
+        fmt.format(name=name, value=value)
+        for name, value in kwargs.items()
+        if not (value is None and ignore_if_none)
+    )
+    return result

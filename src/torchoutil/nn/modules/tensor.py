@@ -4,40 +4,48 @@
 """Module versions of tensor functions that do not already exists in PyTorch."""
 
 import copy
-
-from typing import List, Optional, Tuple, Union
+from typing import List, Optional, Union
 
 import torch
-
-from torch import nn, Tensor
+from torch import Tensor, nn
 from torch.nn import functional as F
 from torch.types import Number
 
 from torchoutil.nn.functional.get import get_device
+from torchoutil.nn.functional.others import default_extra_repr
 
 
 class Reshape(nn.Module):
-    def __init__(self, shape: Tuple[int, ...]) -> None:
+    def __init__(self, *shape: int) -> None:
         super().__init__()
         self.shape = shape
 
     def forward(self, x: Tensor) -> Tensor:
         return x.reshape(self.shape)
 
+    def extra_repr(self) -> str:
+        return default_extra_repr(
+            shape=self.shape,
+        )
+
 
 class Mean(nn.Module):
-    def __init__(self, dim: Optional[int]) -> None:
+    def __init__(self, dim: Union[int, None], keepdim: bool = False) -> None:
         super().__init__()
         self.dim = dim
+        self.keepdim = keepdim
 
     def forward(self, x: Tensor) -> Tensor:
         if self.dim is None:
             return x.mean()
         else:
-            return x.mean(dim=self.dim)
+            return x.mean(dim=self.dim, keepdim=self.keepdim)
 
     def extra_repr(self) -> str:
-        return f"dim={self.dim}"
+        return default_extra_repr(
+            dim=self.dim,
+            ignore_if_none=True,
+        )
 
 
 class Max(nn.Module):
@@ -75,7 +83,9 @@ class Max(nn.Module):
             )
 
     def extra_repr(self) -> str:
-        return f"dim={self.dim}"
+        return default_extra_repr(
+            dim=self.dim,
+        )
 
 
 class Min(nn.Module):
@@ -113,7 +123,11 @@ class Min(nn.Module):
             )
 
     def extra_repr(self) -> str:
-        return f"dim={self.dim}"
+        return default_extra_repr(
+            dim=self.dim,
+            return_values=self.return_values,
+            return_indices=self.return_indices,
+        )
 
 
 class Normalize(nn.Module):
@@ -131,6 +145,13 @@ class Normalize(nn.Module):
     def forward(self, data: Tensor) -> Tensor:
         return F.normalize(data, self.p, self.dim, self.eps)
 
+    def extra_repr(self) -> str:
+        return default_extra_repr(
+            p=self.p,
+            dim=self.dim,
+            eps=self.eps,
+        )
+
 
 class Transpose(nn.Module):
     def __init__(self, dim0: int, dim1: int) -> None:
@@ -142,7 +163,11 @@ class Transpose(nn.Module):
         return x.transpose(self.dim0, self.dim1)
 
     def extra_repr(self) -> str:
-        return f"{self.dim0}, {self.dim1}"
+        return default_extra_repr(
+            dim0=self.dim0,
+            dim1=self.dim1,
+            fmt="{value}",
+        )
 
 
 class Squeeze(nn.Module):
@@ -164,7 +189,10 @@ class Squeeze(nn.Module):
                 return x.squeeze_(self.dim)
 
     def extra_repr(self) -> str:
-        return f"dim={self.dim}, inplace={self.inplace}"
+        return default_extra_repr(
+            dim=self.dim,
+            inplace=self.inplace,
+        )
 
 
 class Unsqueeze(nn.Module):
@@ -180,7 +208,10 @@ class Unsqueeze(nn.Module):
             return x.unsqueeze_(self.dim)
 
     def extra_repr(self) -> str:
-        return f"dim={self.dim}, inplace={self.inplace}"
+        return default_extra_repr(
+            dim=self.dim,
+            inplace=self.inplace,
+        )
 
 
 class TensorTo(nn.Module):
@@ -194,34 +225,22 @@ class TensorTo(nn.Module):
         return x.to(**new_kwargs)
 
     def extra_repr(self) -> str:
-        kwargs_str = ", ".join(f"{k}={v}" for k, v in self.kwargs.items())
-        return kwargs_str
+        return default_extra_repr(**self.kwargs)
 
 
 class Permute(nn.Module):
     def __init__(self, *args: int) -> None:
         super().__init__()
-        self._dims = tuple(args)
+        self.dims = tuple(args)
 
     def forward(self, x: Tensor) -> Tensor:
-        return x.permute(self._dims)
+        return x.permute(self.dims)
 
     def extra_repr(self) -> str:
-        return ", ".join(map(str, self._dims))
-
-
-class Div(nn.Module):
-    def __init__(
-        self,
-        divisor: Union[float, Tensor],
-        rounding_mode: Optional[str] = None,
-    ) -> None:
-        super().__init__()
-        self.divisor = divisor
-        self.rounding_mode = rounding_mode
-
-    def forward(self, x: Tensor) -> Tensor:
-        return x.div(self.divisor, rounding_mode=self.rounding_mode)
+        return default_extra_repr(
+            dims=self.dims,
+            fmt="{value}",
+        )
 
 
 class ToList(nn.Module):
@@ -242,3 +261,10 @@ class AsTensor(nn.Module):
 
     def forward(self, x: Union[List, Number]) -> Tensor:
         return torch.as_tensor(x, dtype=self.dtype, device=self.device)
+
+    def extra_repr(self) -> str:
+        return default_extra_repr(
+            device=self.device,
+            dtype=self.dtype,
+            ignore_if_none=True,
+        )

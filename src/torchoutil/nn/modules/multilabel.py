@@ -4,8 +4,7 @@
 from typing import Generic, List, Mapping, TypeVar, Union
 
 import torch
-
-from torch import nn, Tensor
+from torch import Tensor, nn
 
 from torchoutil.nn.functional.multilabel import (
     indices_to_multihot,
@@ -18,7 +17,7 @@ from torchoutil.nn.functional.multilabel import (
     probs_to_multihot,
     probs_to_names,
 )
-
+from torchoutil.nn.functional.others import default_extra_repr
 
 T = TypeVar("T")
 
@@ -39,6 +38,11 @@ class IndicesToMultihot(nn.Module):
     ) -> Tensor:
         multihot = indices_to_multihot(indices, self.num_classes, self.device)
         return multihot
+
+    def extra_repr(self) -> str:
+        return default_extra_repr(
+            num_classes=self.num_classes,
+        )
 
 
 class IndicesToNames(nn.Module, Generic[T]):

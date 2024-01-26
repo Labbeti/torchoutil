@@ -3,9 +3,10 @@
 
 from typing import Iterable
 
-from torch import nn, Tensor
+from torch import Tensor, nn
 
 from torchoutil.nn.functional.activation import softmax_multidim
+from torchoutil.nn.functional.others import default_extra_repr
 
 
 class SoftmaxMultidim(nn.Module):
@@ -18,9 +19,7 @@ class SoftmaxMultidim(nn.Module):
         self.dims = dims
 
     def extra_repr(self) -> str:
-        repr_params = {"dims": self.dims}
-        repr_ = ", ".join(f"{name}={value}" for name, value in repr_params.items())
-        return repr_
+        return default_extra_repr(dims=self.dims)
 
     def forward(
         self,

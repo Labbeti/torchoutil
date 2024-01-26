@@ -1,10 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from typing import Any, ClassVar, Dict, Generic, OrderedDict, TypeVar, overload
+from typing import Generic, OrderedDict, TypeVar, overload
 
 from torch import nn
-
 
 InType = TypeVar("InType", covariant=False, contravariant=True)
 OutType = TypeVar("OutType", covariant=True, contravariant=False)
@@ -133,5 +132,9 @@ def __test_typing() -> None:
     xa = LayerA()(x)
     xb = LayerB()(x)
 
-    seq = TSequential(LayerA(), LayerB())
+    seq = TSequential(LayerA(), LayerA(), LayerB())
     xab = seq(x)
+
+    assert isinstance(xa, Tensor)
+    assert isinstance(xb, int)
+    assert isinstance(xab, int)
