@@ -18,8 +18,7 @@ DT_STRING = 7
 
 
 def load_event_file(
-    path: str,
-    cast_float_and_str: bool = True,
+    path: str, cast_float_and_str: bool = True,
     ignore_underscore_tags: bool = True,
     verbose: int = 0,
 ) -> List[Dict[str, Any]]:
