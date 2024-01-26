@@ -1,0 +1,8 @@
+# -*- coding: utf-8 -*-
+
+pytest
+flake8
+black
+twine
+ipython
+pre-commit

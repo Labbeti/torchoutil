@@ -117,7 +117,7 @@ class TSequential(nn.Sequential, Generic[InType, OutType]):
         return super().forward(*args, **kwargs)
 
 
-def test_typing() -> None:
+def __test_typing() -> None:
     import torch
     from torch import Tensor
 

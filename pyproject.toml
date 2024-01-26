@@ -22,7 +22,7 @@ classifiers = [
 maintainers = [
     {name = "Étienne Labbé (Labbeti)", email = "labbeti.pub@gmail.com"},
 ]
-dynamic = ["version", "dependencies"]
+dynamic = ["version", "dependencies", "optional-dependencies"]
 
 [project.urls]
 Repository = "https://github.com/Labbeti/torchoutil.git"
@@ -31,15 +31,6 @@ Changelog = "https://github.com/Labbeti/torchoutil/blob/main/CHANGELOG.md"
 [project.scripts]
 torchoutil-info = "torchoutil.info:print_install_info"
 
-[project.optional-dependencies]
-dev = [
-    "pytest",
-    "flake8",
-    "black",
-    "twine",
-    "ipython",
-]
-
 [tool.setuptools.packages.find]
 where = ["src"]  # list of folders that contain the packages (["."] by default)
 include = ["torchoutil*"]  # package names should match these glob patterns (["*"] by default)
@@ -47,6 +38,7 @@ include = ["torchoutil*"]  # package names should match these glob patterns (["*
 [tool.setuptools.dynamic]
 version = {attr = "torchoutil.__version__"}
 dependencies = {file = ["requirements.txt"]}
+optional-dependencies = {dev = { file = ["requirements-dev.txt"] }}
 
 [tool.pyright]
 include = ["src"]
