@@ -102,7 +102,9 @@ def insert_at_indices(
         indices = torch.as_tensor(indices, device=device, dtype=torch.long)
 
     out = torch.empty((x.shape[0] + indices.shape[0]), dtype=x.dtype, device=device)
-    indices = indices + torch.arange(indices.shape[0], device=indices.device)
+    indices = indices + torch.arange(
+        indices.shape[0], device=indices.device, dtype=indices.dtype
+    )
     out[indices] = values
     mask = torch.full((out.shape[0],), True, dtype=torch.bool)
     mask[indices] = False
@@ -121,7 +123,9 @@ def remove_at_indices(
     elif isinstance(indices, list):
         indices = torch.as_tensor(indices, device=device, dtype=torch.long)
 
-    indices = indices + torch.arange(indices.shape[0], device=device)
+    indices = indices + torch.arange(
+        indices.shape[0], device=device, dtype=indices.dtype
+    )
     mask = torch.full((x.shape[0],), True, dtype=torch.bool)
     mask[indices] = False
     out = x[mask]
