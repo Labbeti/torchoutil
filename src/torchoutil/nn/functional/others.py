@@ -115,7 +115,7 @@ def cat_padded_batch(
 
 
 def is_scalar(x: Union[Number, Tensor]) -> bool:
-    return isinstance(x, Number) or (isinstance(x, Tensor) and x.ndim == 0)
+    return isinstance(x, (int, float, bool)) or (isinstance(x, Tensor) and x.ndim == 0)
 
 
 def default_extra_repr(

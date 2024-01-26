@@ -1,18 +1,13 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from typing import (
-    Any,
-    List,
-    Union,
-)
+from typing import Any, List, Union
 
 import torch
-
 from torch import Tensor
 from torch.types import Number
 
-from torchoutil.nn.functional.get import get_device, _DEVICE_CUDA_IF_AVAILABLE
+from torchoutil.nn.functional.get import _DEVICE_CUDA_IF_AVAILABLE, get_device
 
 
 def get_inverse_perm(indices: Tensor, dim: int = -1) -> Tensor:
@@ -101,7 +96,7 @@ def insert_at_indices(
         tensor([1, 1, 4, 2, 2, 2, 4, 3])
     """
     device = x.device
-    if isinstance(indices, Number):
+    if isinstance(indices, (int, float, bool)):
         indices = torch.as_tensor([indices], device=device, dtype=torch.long)
     elif isinstance(indices, list):
         indices = torch.as_tensor(indices, device=device, dtype=torch.long)
@@ -121,7 +116,7 @@ def remove_at_indices(
 ) -> Tensor:
     """Remove value(s) in vector at specified indices."""
     device = x.device
-    if isinstance(indices, Number):
+    if isinstance(indices, (int, float, bool)):
         indices = torch.as_tensor([indices], device=device, dtype=torch.long)
     elif isinstance(indices, list):
         indices = torch.as_tensor(indices, device=device, dtype=torch.long)
