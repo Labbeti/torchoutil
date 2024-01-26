@@ -3,14 +3,13 @@
 
 from typing import Iterable, Union
 
-from torch import Generator, Tensor
+from torch import Generator, Tensor, nn
 
 from torchoutil.nn.functional.crop import crop_dim, crop_dims
 from torchoutil.nn.functional.others import default_extra_repr
-from torchoutil.nn.modules.typed import TModule
 
 
-class CropDim(TModule[Tensor, Tensor]):
+class CropDim(nn.Module):
     def __init__(
         self,
         target_length: int,
@@ -38,7 +37,7 @@ class CropDim(TModule[Tensor, Tensor]):
         )
 
 
-class CropDims(TModule[Tensor, Tensor]):
+class CropDims(nn.Module):
     def __init__(
         self,
         target_lengths: Iterable[int],

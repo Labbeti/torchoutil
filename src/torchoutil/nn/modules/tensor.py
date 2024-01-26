@@ -6,16 +6,15 @@
 from typing import List, Optional, Union
 
 import torch
-from torch import Tensor
+from torch import Tensor, nn
 from torch.nn import functional as F
 from torch.types import Number
 
 from torchoutil.nn.functional.get import get_device
 from torchoutil.nn.functional.others import default_extra_repr
-from torchoutil.nn.modules.typed import TModule
 
 
-class Reshape(TModule[Tensor, Tensor]):
+class Reshape(nn.Module):
     def __init__(self, *shape: int) -> None:
         super().__init__()
         self.shape = shape
@@ -29,7 +28,7 @@ class Reshape(TModule[Tensor, Tensor]):
         )
 
 
-class Mean(TModule[Tensor, Tensor]):
+class Mean(nn.Module):
     def __init__(self, dim: Union[int, None], keepdim: bool = False) -> None:
         super().__init__()
         self.dim = dim
@@ -48,7 +47,7 @@ class Mean(TModule[Tensor, Tensor]):
         )
 
 
-class Max(TModule[Tensor, Union[Tensor, torch.return_types.max]]):
+class Max(nn.Module):
     def __init__(
         self,
         dim: Optional[int],
@@ -88,7 +87,7 @@ class Max(TModule[Tensor, Union[Tensor, torch.return_types.max]]):
         )
 
 
-class Min(TModule[Tensor, Union[Tensor, torch.return_types.min]]):
+class Min(nn.Module):
     def __init__(
         self,
         dim: Optional[int],
@@ -130,7 +129,7 @@ class Min(TModule[Tensor, Union[Tensor, torch.return_types.min]]):
         )
 
 
-class Normalize(TModule[Tensor, Tensor]):
+class Normalize(nn.Module):
     def __init__(
         self,
         p: float = 2.0,
@@ -153,7 +152,7 @@ class Normalize(TModule[Tensor, Tensor]):
         )
 
 
-class Transpose(TModule[Tensor, Tensor]):
+class Transpose(nn.Module):
     def __init__(self, dim0: int, dim1: int) -> None:
         super().__init__()
         self.dim0 = dim0
@@ -170,7 +169,7 @@ class Transpose(TModule[Tensor, Tensor]):
         )
 
 
-class Squeeze(TModule[Tensor, Tensor]):
+class Squeeze(nn.Module):
     def __init__(self, dim: Optional[int] = None, inplace: bool = True) -> None:
         super().__init__()
         self.dim = dim
@@ -195,7 +194,7 @@ class Squeeze(TModule[Tensor, Tensor]):
         )
 
 
-class Unsqueeze(TModule[Tensor, Tensor]):
+class Unsqueeze(nn.Module):
     def __init__(self, dim: int, inplace: bool = True) -> None:
         super().__init__()
         self.dim = dim
@@ -214,7 +213,7 @@ class Unsqueeze(TModule[Tensor, Tensor]):
         )
 
 
-class TensorTo(TModule[Tensor, Tensor]):
+class TensorTo(nn.Module):
     def __init__(self, **kwargs) -> None:
         super().__init__()
         self.kwargs = kwargs
@@ -226,7 +225,7 @@ class TensorTo(TModule[Tensor, Tensor]):
         return default_extra_repr(**self.kwargs)
 
 
-class Permute(TModule[Tensor, Tensor]):
+class Permute(nn.Module):
     def __init__(self, *args: int) -> None:
         super().__init__()
         self.dims = tuple(args)
@@ -241,12 +240,12 @@ class Permute(TModule[Tensor, Tensor]):
         )
 
 
-class ToList(TModule[Tensor, List]):
+class ToList(nn.Module):
     def forward(self, x: Tensor) -> List:
         return x.tolist()
 
 
-class AsTensor(TModule[Union[List, Number], Tensor]):
+class AsTensor(nn.Module):
     def __init__(
         self,
         device: Union[str, torch.device, None] = None,

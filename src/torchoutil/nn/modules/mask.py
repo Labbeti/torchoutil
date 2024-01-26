@@ -3,14 +3,13 @@
 
 from typing import Iterable, Union
 
-from torch import Tensor
+from torch import Tensor, nn
 
 from torchoutil.nn.functional.mask import masked_mean, masked_sum
 from torchoutil.nn.functional.others import default_extra_repr
-from torchoutil.nn.modules.typed import TModule
 
 
-class MaskedMean(TModule[Tensor, Tensor]):
+class MaskedMean(nn.Module):
     def __init__(self, dim: Union[None, int, Iterable[int]] = None) -> None:
         super().__init__()
         self.dim = dim
@@ -25,7 +24,7 @@ class MaskedMean(TModule[Tensor, Tensor]):
         )
 
 
-class MaskedSum(TModule[Tensor, Tensor]):
+class MaskedSum(nn.Module):
     def __init__(self, dim: Union[None, int, Iterable[int]] = None) -> None:
         super().__init__()
         self.dim = dim

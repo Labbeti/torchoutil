@@ -25,7 +25,7 @@ class TModule(nn.Module, Generic[InType, OutType]):
         return super().forward(*args, **kwargs)
 
 
-class TSequential(nn.Sequential, Generic[InType, OutType]):
+class TSequential(nn.Sequential, TModule, Generic[InType, OutType]):
     """Typed version of torch.nn.Sequential, designed to work with torchoutil.nn.TModules."""
 
     @overload
@@ -118,24 +118,25 @@ class TSequential(nn.Sequential, Generic[InType, OutType]):
         ...
 
     def __init__(self, *args) -> None:  # type: ignore
-        super().__init__(*args)
+        nn.Sequential.__init__(self, *args)
+        TModule.__init__(self)
 
     def __call__(self, *args: InType, **kwargs: InType) -> OutType:
-        return super().__call__(*args, **kwargs)
+        return nn.Sequential.__call__(self, *args, **kwargs)
 
     def forward(self, *args: InType, **kwargs: InType) -> OutType:
-        return super().forward(*args, **kwargs)
+        return nn.Sequential.forward(self, *args, **kwargs)
 
 
 def __test_typing() -> None:
     import torch
     from torch import Tensor
 
-    class LayerA(TModule[Tensor, Tensor]):
+    class LayerA(nn.Module):
         def forward(self, x: Tensor) -> Tensor:
             return x * x
 
-    class LayerB(TModule[Tensor, int]):
+    class LayerB(nn.Module):
         def forward(self, x: Tensor) -> int:
             return int(x.sum().item())
 

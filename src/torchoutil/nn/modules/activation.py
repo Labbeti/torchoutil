@@ -3,14 +3,13 @@
 
 from typing import Iterable
 
-from torch import Tensor
+from torch import Tensor, nn
 
 from torchoutil.nn.functional.activation import softmax_multidim
 from torchoutil.nn.functional.others import default_extra_repr
-from torchoutil.nn.modules.typed import TModule
 
 
-class SoftmaxMultidim(TModule[Tensor, Tensor]):
+class SoftmaxMultidim(nn.Module):
     def __init__(
         self,
         dims: Iterable[int] = (-1,),

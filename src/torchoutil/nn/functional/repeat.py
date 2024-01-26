@@ -4,14 +4,14 @@
 from torch import Tensor
 
 
-def repeat_interleave_nd(x: Tensor, n: int, dim: int = 0) -> Tensor:
+def repeat_interleave_nd(x: Tensor, repeats: int, dim: int = 0) -> Tensor:
     """Generalized version of torch.repeat_interleave for N >= 1 dimensions.
     The output size will be (..., D*n, ...), where D is the size of the dimension of the dim parameter.
 
     Args:
         x: Any tensor of shape (..., D, ...) with at least 1 dim.
-        n: Number of repeats.
-        dim: Dimension to repeat.
+        repeats: Number of repeats.
+        dim: Dimension to repeat. defaults to 0.
 
     Examples::
     ----------
@@ -31,7 +31,7 @@ def repeat_interleave_nd(x: Tensor, n: int, dim: int = 0) -> Tensor:
     dim = dim % x.ndim
     x = x.unsqueeze(dim=dim + 1)
     shape = list(x.shape)
-    shape[dim + 1] = n
+    shape[dim + 1] = repeats
     x = x.expand(*shape)
     x = x.flatten(dim, dim + 1)
     return x

@@ -5,6 +5,7 @@ import unittest
 from unittest import TestCase
 
 import torch
+from torch import Tensor
 
 from torchoutil.nn.modules.multilabel import (
     IndicesToMultihot,
@@ -26,7 +27,8 @@ class TestMultilabel(TestCase):
 
         multihot = torch.rand(num_samples, num_classes).ge(threshold)
 
-        pipeline = TSequential(
+        # dummy pipeline to convert labels multiple times
+        pipeline = TSequential[Tensor, Tensor](
             MultihotToIndices(),
             IndicesToNames(idx_to_name),
             NamesToMultihot(idx_to_name),
