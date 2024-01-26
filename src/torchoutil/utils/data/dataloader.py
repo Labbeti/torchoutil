@@ -3,6 +3,10 @@
 
 import os
 
+from typing import Any, Generator, Iterable, Tuple, TypeVar
+
+T = TypeVar("T")
+
 
 def get_auto_num_cpus() -> int:
     """Returns the number of CPUs available, useful for num_workers attribute used in DataLoaders."""

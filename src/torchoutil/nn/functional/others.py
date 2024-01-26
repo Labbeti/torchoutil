@@ -6,6 +6,7 @@ from typing import Any, Callable, Generator, Iterable, Mapping, Optional, Tuple,
 import torch
 
 from torch import nn, Tensor
+from torch.types import Number
 
 from torchoutil.nn.functional.pad import pad_dim
 
@@ -112,3 +113,7 @@ def cat_padded_batch(
         x12 = x12[slices]
 
     return x12, x12_lens
+
+
+def is_scalar(x: Union[Number, Tensor]) -> bool:
+    return isinstance(x, Number) or (isinstance(x, Tensor) and x.ndim == 0)

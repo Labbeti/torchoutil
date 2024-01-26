@@ -119,7 +119,7 @@ def generate_square_subsequent_mask_shifted(
 
 def lengths_to_non_pad_mask(
     lengths: Tensor,
-    max_len: Optional[int],
+    max_len: Optional[int] = None,
     include_end: bool = False,
 ) -> Tensor:
     """Convert lengths to binary mask of non-padded values.
@@ -159,7 +159,7 @@ def lengths_to_non_pad_mask(
 
 def lengths_to_pad_mask(
     lengths: Tensor,
-    max_len: Optional[int],
+    max_len: Optional[int] = None,
     include_end: bool = True,
 ) -> Tensor:
     """Convert lengths to binary mask of padded values.

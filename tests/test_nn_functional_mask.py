@@ -29,7 +29,7 @@ class TestTensorToPadMask(TestCase):
         out_expected = torch.as_tensor([True, True, True, False, False, False])
 
         self.assertEqual(out.shape, out_expected.shape)
-        self.assertTrue(out.eq(out_expected).all().item())
+        self.assertTrue(torch.equal(out, out_expected))
 
     def test_tensor_to_non_pad_mask_example_2(self) -> None:
         inp = torch.as_tensor([1, 10, 20, 2, 0, 0])
@@ -37,7 +37,7 @@ class TestTensorToPadMask(TestCase):
         out_expected = torch.as_tensor([True, True, True, True, False, False])
 
         self.assertEqual(out.shape, out_expected.shape)
-        self.assertTrue(out.eq(out_expected).all().item())
+        self.assertTrue(torch.equal(out, out_expected))
 
     def test_tensor_to_non_pad_mask_example_3(self) -> None:
         inp = torch.as_tensor(
@@ -57,7 +57,7 @@ class TestTensorToPadMask(TestCase):
         )
 
         self.assertEqual(out.shape, out_expected.shape)
-        self.assertTrue(out.eq(out_expected).all().item())
+        self.assertTrue(torch.equal(out, out_expected))
 
     def test_tensor_to_pad_mask_example_1(self) -> None:
         inp = torch.as_tensor([1, 10, 20, 2, 0, 0])
@@ -65,7 +65,7 @@ class TestTensorToPadMask(TestCase):
         out = tensor_to_pad_mask(inp, end_value=2)  # default include_end value is True
 
         self.assertEqual(out.shape, out_expected.shape)
-        self.assertTrue(out.eq(out_expected).all().item())
+        self.assertTrue(torch.equal(out, out_expected))
 
     def test_tensor_to_pad_mask_example_2(self) -> None:
         inp = torch.as_tensor([1, 10, 20, 2, 0, 0])
@@ -73,7 +73,7 @@ class TestTensorToPadMask(TestCase):
         out = tensor_to_pad_mask(inp, end_value=2, include_end=False)
 
         self.assertEqual(out.shape, out_expected.shape)
-        self.assertTrue(out.eq(out_expected).all().item())
+        self.assertTrue(torch.equal(out, out_expected))
 
     def test_tensor_to_pad_mask_example_3(self) -> None:
         inp = torch.as_tensor([[10, 20, 30, 40, 50], [10, 2, 20, 30, 40]])
@@ -83,7 +83,7 @@ class TestTensorToPadMask(TestCase):
         out = tensor_to_pad_mask(inp, end_value=2, include_end=False)
 
         self.assertEqual(out.shape, out_expected.shape)
-        self.assertTrue(out.eq(out_expected).all().item())
+        self.assertTrue(torch.equal(out, out_expected))
 
     def test_tensor_to_pad_mask_example_4(self) -> None:
         inp = torch.as_tensor([[10, 20, 30, 40, 50], [10, 2, 20, 30, 40]])
@@ -93,7 +93,7 @@ class TestTensorToPadMask(TestCase):
         out = tensor_to_pad_mask(inp, end_value=2, include_end=True)
 
         self.assertEqual(out.shape, out_expected.shape)
-        self.assertTrue(out.eq(out_expected).all().item())
+        self.assertTrue(torch.equal(out, out_expected))
 
 
 class TestMaskLengths(TestCase):
@@ -104,12 +104,12 @@ class TestMaskLengths(TestCase):
 
         out = non_pad_mask_to_lengths(non_pad_mask)
         out_expected = torch.as_tensor([2, 0, 3])
-        self.assertTrue(out.eq(out_expected).all())
+        self.assertTrue(torch.equal(out, out_expected))
 
         inp2 = out
         out2 = lengths_to_non_pad_mask(inp2, None)
         out2_expected = non_pad_mask
-        self.assertTrue(out2.eq(out2_expected).all(), f"{out2=}\n{out2_expected=}")
+        self.assertTrue(torch.equal(out2, out2_expected), f"{out2=}\n{out2_expected=}")
 
         pad_mask = torch.as_tensor(
             [
@@ -124,7 +124,7 @@ class TestMaskLengths(TestCase):
         out3 = lengths_to_pad_mask(lens, None)
         out3_expected = pad_mask
 
-        self.assertTrue(out3.eq(out3_expected).all(), f"{out3=}; {out3_expected=}")
+        self.assertTrue(torch.equal(out3, out3_expected), f"{out3=}; {out3_expected=}")
 
     def test_lens_to_non_pad_masks(self) -> None:
         lens = torch.arange(5)
@@ -145,7 +145,7 @@ class TestMaskLengths(TestCase):
         non_pad_mask = lengths_to_non_pad_mask(lens, 4).int()
         self.assertEqual(non_pad_mask.shape, expected_mask.shape)
         self.assertTrue(
-            non_pad_mask.eq(expected_mask).all(),
+            torch.equal(non_pad_mask, expected_mask),
             f"{include_end=}; {non_pad_mask=}; {expected_mask=}",
         )
 
@@ -165,7 +165,7 @@ class TestMaskLengths(TestCase):
         non_pad_mask = lengths_to_non_pad_mask(lens, 4, include_end).int()
         self.assertEqual(non_pad_mask.shape, expected_mask.shape)
         self.assertTrue(
-            non_pad_mask.eq(expected_mask).all(),
+            torch.equal(non_pad_mask, expected_mask),
             f"{include_end=}; {non_pad_mask=}; {expected_mask=}",
         )
 
@@ -183,7 +183,7 @@ class TestMaskLengths(TestCase):
         )
 
         self.assertEqual(output.shape, expected.shape)
-        self.assertTrue(output.eq(expected).all().item())
+        self.assertTrue(torch.equal(output, expected))
 
     def test_lengths_to_pad_mask_example_1(self) -> None:
         input = torch.as_tensor([4, 2, 0, 3, 0])
@@ -199,7 +199,7 @@ class TestMaskLengths(TestCase):
         )
 
         self.assertEqual(output.shape, expected.shape)
-        self.assertTrue(output.eq(expected).all().item())
+        self.assertTrue(torch.equal(output, expected))
 
     def test_lens_to_pad_masks(self) -> None:
         lens = torch.arange(5)
@@ -220,7 +220,7 @@ class TestMaskLengths(TestCase):
         pad_mask = lengths_to_pad_mask(lens, 4).int()
         self.assertEqual(pad_mask.shape, expected_mask.shape)
         self.assertTrue(
-            pad_mask.eq(expected_mask).all(),
+            torch.equal(pad_mask, expected_mask),
             f"{include_end=}; {pad_mask=}; {expected_mask=}",
         )
 
@@ -240,7 +240,7 @@ class TestMaskLengths(TestCase):
         pad_mask = lengths_to_pad_mask(lens, 4, include_end).int()
         self.assertEqual(pad_mask.shape, expected_mask.shape)
         self.assertTrue(
-            pad_mask.eq(expected_mask).all(),
+            torch.equal(pad_mask, expected_mask),
             f"{include_end=}; {pad_mask=}; {expected_mask=}",
         )
 
@@ -260,7 +260,7 @@ class TestGenerateSqMask(TestCase):
             ]
         )
         self.assertEqual(output.shape, expected.shape)
-        self.assertTrue(output.eq(expected).all().item())
+        self.assertTrue(torch.equal(output, expected))
 
     def test_generate_shifted_sq_mask_example_1(self) -> None:
         inf = math.inf
@@ -276,7 +276,7 @@ class TestGenerateSqMask(TestCase):
             ]
         )
         self.assertEqual(output.shape, expected.shape)
-        self.assertTrue(output.eq(expected).all().item())
+        self.assertTrue(torch.equal(output, expected))
 
     def test_generate_shifted_sq_mask_example_2(self) -> None:
         inf = math.inf
@@ -292,7 +292,7 @@ class TestGenerateSqMask(TestCase):
             ]
         )
         self.assertEqual(output.shape, expected.shape)
-        self.assertTrue(output.eq(expected).all().item())
+        self.assertTrue(torch.equal(output, expected))
 
     def test_generate_shifted_sq_mask_example_3(self) -> None:
         inf = math.inf
@@ -308,7 +308,7 @@ class TestGenerateSqMask(TestCase):
             ]
         )
         self.assertEqual(output.shape, expected.shape)
-        self.assertTrue(output.eq(expected).all().item())
+        self.assertTrue(torch.equal(output, expected))
 
 
 if __name__ == "__main__":

@@ -5,12 +5,15 @@
 
 import copy
 
-from typing import Optional, Tuple, Union
+from typing import List, Optional, Tuple, Union
 
 import torch
 
 from torch import nn, Tensor
 from torch.nn import functional as F
+from torch.types import Number
+
+from torchoutil.nn.functional.get import get_device
 
 
 class Reshape(nn.Module):
@@ -219,3 +222,23 @@ class Div(nn.Module):
 
     def forward(self, x: Tensor) -> Tensor:
         return x.div(self.divisor, rounding_mode=self.rounding_mode)
+
+
+class ToList(nn.Module):
+    def forward(self, x: Tensor) -> List:
+        return x.tolist()
+
+
+class AsTensor(nn.Module):
+    def __init__(
+        self,
+        device: Union[str, torch.device, None] = None,
+        dtype: Union[torch.dtype, None] = None,
+    ) -> None:
+        device = get_device(device)
+        super().__init__()
+        self.device = device
+        self.dtype = dtype
+
+    def forward(self, x: Union[List, Number]) -> Tensor:
+        return torch.as_tensor(x, dtype=self.dtype, device=self.device)

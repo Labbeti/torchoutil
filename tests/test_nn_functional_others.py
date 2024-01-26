@@ -44,8 +44,8 @@ class TestCatPaddedBatch(TestCase):
 
         self.assertEqual(expected.shape, x12.shape)
         self.assertEqual(expected_lens.shape, x12_lens.shape)
-        self.assertTrue(expected.eq(x12).all().item())
-        self.assertTrue(expected_lens.eq(x12_lens).all().item())
+        self.assertTrue(torch.equal(expected, x12))
+        self.assertTrue(torch.equal(expected_lens, x12_lens))
 
     def test_example_2(self) -> None:
         # Cas 3D
@@ -80,8 +80,8 @@ class TestCatPaddedBatch(TestCase):
 
         self.assertEqual(expected.shape, x12.shape)
         self.assertEqual(expected_lens.shape, x12_lens.shape)
-        self.assertTrue(expected.eq(x12).all().item())
-        self.assertTrue(expected_lens.eq(x12_lens).all().item())
+        self.assertTrue(torch.equal(expected, x12))
+        self.assertTrue(torch.equal(expected_lens, x12_lens))
 
 
 if __name__ == "__main__":
