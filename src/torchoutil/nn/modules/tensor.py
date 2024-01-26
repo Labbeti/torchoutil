@@ -142,8 +142,8 @@ class Normalize(TModule[Tensor, Tensor]):
         self.dim = dim
         self.eps = eps
 
-    def forward(self, data: Tensor) -> Tensor:
-        return F.normalize(data, self.p, self.dim, self.eps)
+    def forward(self, x: Tensor) -> Tensor:
+        return F.normalize(x, self.p, self.dim, self.eps)
 
     def extra_repr(self) -> str:
         return default_extra_repr(
