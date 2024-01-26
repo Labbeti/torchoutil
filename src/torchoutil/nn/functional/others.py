@@ -121,12 +121,12 @@ def is_scalar(x: Union[Number, Tensor]) -> bool:
 def default_extra_repr(
     join: str = ", ",
     fmt: str = "{name}={value}",
-    ignore_if_none: bool = False,
+    ignore_none: bool = False,
     **kwargs,
 ) -> str:
     result = join.join(
         fmt.format(name=name, value=value)
         for name, value in kwargs.items()
-        if not (value is None and ignore_if_none)
+        if not (value is None and ignore_none)
     )
     return result

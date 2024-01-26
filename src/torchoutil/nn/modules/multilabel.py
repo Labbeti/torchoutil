@@ -4,7 +4,7 @@
 from typing import Generic, List, Mapping, TypeVar, Union
 
 import torch
-from torch import Tensor, nn
+from torch import Tensor
 
 from torchoutil.nn.functional.multilabel import (
     indices_to_multihot,
@@ -18,11 +18,12 @@ from torchoutil.nn.functional.multilabel import (
     probs_to_names,
 )
 from torchoutil.nn.functional.others import default_extra_repr
+from torchoutil.nn.modules.typed import TModule
 
 T = TypeVar("T")
 
 
-class IndicesToMultihot(nn.Module):
+class IndicesToMultihot(TModule[Union[List[List[int]], List[Tensor]], Tensor]):
     def __init__(
         self,
         num_classes: int,
@@ -42,10 +43,14 @@ class IndicesToMultihot(nn.Module):
     def extra_repr(self) -> str:
         return default_extra_repr(
             num_classes=self.num_classes,
+            device=self.device,
+            ignore_none=True,
         )
 
 
-class IndicesToNames(nn.Module, Generic[T]):
+class IndicesToNames(
+    TModule[Union[List[List[int]], List[Tensor]], List[List[T]]], Generic[T]
+):
     def __init__(
         self,
         idx_to_name: Mapping[int, T],
@@ -61,7 +66,10 @@ class IndicesToNames(nn.Module, Generic[T]):
         return names
 
 
-class MultihotToIndices(nn.Module):
+class MultihotToIndices(TModule[Tensor, List[List[int]]]):
+    def __init__(self) -> None:
+        super().__init__()
+
     def forward(
         self,
         multihot: Tensor,
@@ -70,7 +78,7 @@ class MultihotToIndices(nn.Module):
         return names
 
 
-class MultihotToNames(nn.Module, Generic[T]):
+class MultihotToNames(TModule[Tensor, List[List[T]]], Generic[T]):
     def __init__(
         self,
         idx_to_name: Mapping[int, T],
@@ -86,7 +94,7 @@ class MultihotToNames(nn.Module, Generic[T]):
         return names
 
 
-class NamesToIndices(nn.Module, Generic[T]):
+class NamesToIndices(TModule[List[List[T]], List[List[int]]], Generic[T]):
     def __init__(
         self,
         idx_to_name: Mapping[int, T],
@@ -102,7 +110,7 @@ class NamesToIndices(nn.Module, Generic[T]):
         return indices
 
 
-class NamesToMultihot(nn.Module, Generic[T]):
+class NamesToMultihot(TModule[List[List[T]], Tensor], Generic[T]):
     def __init__(
         self,
         idx_to_name: Mapping[int, T],
@@ -120,7 +128,7 @@ class NamesToMultihot(nn.Module, Generic[T]):
         return multihot
 
 
-class ProbsToIndices(nn.Module, Generic[T]):
+class ProbsToIndices(TModule[Tensor, List[List[int]]], Generic[T]):
     def __init__(
         self,
         threshold: Union[float, Tensor],
@@ -136,7 +144,7 @@ class ProbsToIndices(nn.Module, Generic[T]):
         return indices
 
 
-class ProbsToMultihot(nn.Module):
+class ProbsToMultihot(TModule[Tensor, Tensor]):
     def __init__(
         self,
         threshold: Union[float, Tensor],
@@ -152,7 +160,7 @@ class ProbsToMultihot(nn.Module):
         return multihot
 
 
-class ProbsToNames(nn.Module, Generic[T]):
+class ProbsToNames(TModule[Tensor, List[List[T]]], Generic[T]):
     def __init__(
         self,
         threshold: Union[float, Tensor],

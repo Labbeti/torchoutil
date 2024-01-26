@@ -4,13 +4,14 @@
 from typing import Iterable, Union
 
 import torch
-from torch import Generator, Tensor, nn
+from torch import Generator, Tensor
 
 from torchoutil.nn.functional.others import default_extra_repr
 from torchoutil.nn.functional.pad import pad_and_stack_rec, pad_dim, pad_dims
+from torchoutil.nn.modules.typed import TModule
 
 
-class PadDim(nn.Module):
+class PadDim(TModule[Tensor, Tensor]):
     def __init__(
         self,
         target_length: int,
@@ -52,7 +53,7 @@ class PadDim(nn.Module):
         )
 
 
-class PadDims(nn.Module):
+class PadDims(TModule[Tensor, Tensor]):
     def __init__(
         self,
         target_lengths: Iterable[int],
@@ -94,7 +95,7 @@ class PadDims(nn.Module):
         )
 
 
-class PadAndStackRec(nn.Module):
+class PadAndStackRec(TModule[Union[Tensor, int, float, tuple, list], Tensor]):
     def __init__(
         self,
         pad_value: float,

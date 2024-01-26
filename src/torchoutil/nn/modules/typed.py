@@ -12,6 +12,7 @@ InterType2 = TypeVar("InterType2")
 InterType3 = TypeVar("InterType3")
 InterType4 = TypeVar("InterType4")
 InterType5 = TypeVar("InterType5")
+InterType6 = TypeVar("InterType6")
 
 
 class TModule(nn.Module, Generic[InType, OutType]):
@@ -91,11 +92,21 @@ class TSequential(nn.Sequential, Generic[InType, OutType]):
         ...
 
     @overload
-    def __init__(self, *args: nn.Module) -> None:
+    def __init__(
+        self,
+        arg0: TModule[InType, InterType1],
+        arg1: TModule[InterType1, InterType2],
+        arg2: TModule[InterType2, InterType3],
+        arg3: TModule[InterType3, InterType4],
+        arg4: TModule[InterType4, InterType5],
+        arg5: TModule[InterType5, InterType6],
+        arg6: TModule[InterType6, OutType],
+        /,
+    ) -> None:
         ...
 
     @overload
-    def __init__(self, *args: TModule[InType, OutType]) -> None:
+    def __init__(self, *args: nn.Module) -> None:
         ...
 
     @overload
