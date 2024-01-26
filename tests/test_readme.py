@@ -2,17 +2,17 @@
 # -*- coding: utf-8 -*-
 
 import unittest
-
 from unittest import TestCase
 
 import torch
 
 from torchoutil import (
-    masked_mean,
-    lengths_to_non_pad_mask,
-    probs_to_names,
-    multihot_to_indices,
+    get_inverse_perm,
     insert_at_indices,
+    lengths_to_non_pad_mask,
+    masked_mean,
+    multihot_to_indices,
+    probs_to_names,
 )
 
 
@@ -58,6 +58,17 @@ class TestReadme(TestCase):
         result = insert_at_indices(x, [0, 2], 5)
         expected = torch.as_tensor([5, 1, 2, 5, 3, 4])
         self.assertTrue(torch.equal(result, expected))
+
+    def test_get_inverse_perm_example(self) -> None:
+        perm = torch.randperm(10)
+        inv_perm = get_inverse_perm(perm)
+
+        x1 = torch.rand(10)
+        x2 = x1[perm]
+        x3 = x2[inv_perm]
+        # inv_perm are indices that allow us to get x1 from x3, i.e. x1 == x3 here
+
+        self.assertTrue(torch.equal(x1, x3))
 
 
 if __name__ == "__main__":
