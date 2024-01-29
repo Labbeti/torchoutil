@@ -1,16 +1,15 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from typing import Iterable, List, Sized, Union
+from typing import Any, Iterable, List, Sized, Tuple, Union
 
 import torch
-
 from torch import Generator, Size, Tensor
 from torch.nn import functional as F
-from torch.nn.utils.rnn import pad_sequence
+from torch.types import Number
 
 from torchoutil.nn.functional.get import get_device
-
+from torchoutil.nn.functional.others import can_be_stacked, is_scalar
 
 PAD_ALIGNS = ("left", "right", "center", "random")
 
@@ -67,7 +66,7 @@ def pad_dims(
 
 def pad_and_stack_rec(
     sequence: Union[Tensor, int, float, tuple, list],
-    pad_value: float,
+    pad_value: Number,
     dtype: Union[None, torch.dtype] = None,
     device: Union[str, torch.device, None] = None,
 ) -> Tensor:
@@ -97,51 +96,37 @@ def pad_and_stack_rec(
     if isinstance(sequence, Tensor):
         return sequence.to(dtype=dtype, device=device)
 
-    elif isinstance(sequence, (int, float)) or (
-        isinstance(sequence, Sized) and len(sequence) == 0
-    ):
+    elif is_scalar(sequence) or (isinstance(sequence, Sized) and len(sequence) == 0):
         return torch.as_tensor(sequence, dtype=dtype, device=device)  # type: ignore
 
     elif isinstance(sequence, (list, tuple)):
-        if all(isinstance(elt, (int, float)) for elt in sequence):
-            return torch.as_tensor(sequence, dtype=dtype, device=device)  # type: ignore
-
         sequence = [
             pad_and_stack_rec(elt, pad_value, dtype, device) for elt in sequence
         ]
-        # sequence is now a list[Tensor]
-        shapes = [elt.shape for elt in sequence]
-
-        # If all tensors have the same shape, just stack them
-        if all(shape == shapes[0] for shape in shapes):
+        if can_be_stacked(sequence):
             return torch.stack(sequence)
 
-        # If all tensors have the same number of dims
-        elif all(elt.ndim == sequence[0].ndim for elt in sequence):
-            if all(shape[1:] == shapes[0][1:] for shape in shapes):
-                return pad_sequence(sequence, True, pad_value)
-            else:
-                max_lens = [
-                    max(shape[i] for shape in shapes) for i in range(sequence[0].ndim)
-                ]
-                paddings = [
-                    [
-                        (max_lens[i] - elt.shape[i]) * j
-                        for i in range(-1, -sequence[0].ndim, -1)
-                        for j in range(2)
-                    ]
-                    for elt in sequence
-                ]
-                sequence = [
-                    F.pad(elt, padding, value=pad_value)
-                    for elt, padding in zip(sequence, paddings)
-                ]
-                return pad_sequence(sequence, True, pad_value)
+        shapes = [elt.shape for elt in sequence]
+        shape0 = shapes[0]
 
-        else:
+        if not all(len(shape) == len(shape0) for shape in shapes):
             raise ValueError(
-                f"Cannot pad sequence of tensors of differents number of dims. (with {sequence=} and {shapes=})"
+                f"Cannot pad sequence of tensors of differents number of dims. (with {shapes=})"
             )
+
+        max_lens = [max(shape[i] for shape in shapes) for i in range(len(shape0))]
+        sequence = [
+            pad_dims(
+                xi,
+                target_lengths=max_lens,
+                pad_value=pad_value,
+                aligns=["left"] * xi.ndim,
+                dims=range(xi.ndim),
+            )
+            for xi in sequence
+        ]
+        result = torch.stack(sequence)
+        return result
 
     else:
         raise TypeError(
@@ -188,3 +173,50 @@ def __generate_pad_seq(
         pad_seq[idx * 2 + 1] = missing_right
 
     return pad_seq
+
+
+def cat_padded_batch(
+    x1: Tensor,
+    x1_lens: Tensor,
+    x2: Tensor,
+    x2_lens: Tensor,
+    seq_dim: int,
+    batch_dim: int = 0,
+) -> Tuple[Tensor, Tensor]:
+    assert x1.ndim == x2.ndim
+    assert x1_lens.ndim == x2_lens.ndim == 1
+    assert (
+        x1.shape[batch_dim]
+        == x2.shape[batch_dim]
+        == x1_lens.shape[0]
+        == x2_lens.shape[0]
+    )
+
+    x12_lens = x1_lens + x2_lens
+    sum_size_12 = x1.shape[seq_dim] + x2.shape[seq_dim]
+
+    x12 = pad_dim(x1, sum_size_12, dim=seq_dim)
+    kwd: dict[str, Any] = dict(device=x1.device, dtype=torch.long)
+    indices = torch.arange(x2_lens.max().item(), **kwd)
+
+    unsq_x1_lens = x1_lens
+    ndim = x1.ndim
+    for i in range(ndim):
+        if i != (seq_dim % ndim):
+            indices = indices.unsqueeze(dim=i)
+        if i != (batch_dim % ndim):
+            unsq_x1_lens = unsq_x1_lens.unsqueeze(dim=i)
+
+    expand_size = list(x2.shape)
+    expand_size[seq_dim] = -1
+    indices = indices.expand(*expand_size)
+    indices = indices + unsq_x1_lens
+    x12.scatter_(seq_dim, indices, x2)
+
+    max_size_12 = int(x12_lens.max().item())
+    if max_size_12 < sum_size_12:
+        slices = [slice(None) for _ in range(ndim)]
+        slices[seq_dim] = slice(max_size_12)
+        x12 = x12[slices]
+
+    return x12, x12_lens
