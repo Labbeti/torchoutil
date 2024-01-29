@@ -1,11 +1,23 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from typing import Any, Callable, Generator, Iterable, Mapping, Optional, Tuple, Union
+from typing import (
+    Any,
+    Callable,
+    Generator,
+    Iterable,
+    List,
+    Mapping,
+    Optional,
+    Sized,
+    Tuple,
+    Union,
+)
 
 import torch
 from torch import Tensor, nn
 from torch.types import Number
+from typing_extensions import TypeGuard
 
 from torchoutil.nn.functional.pad import pad_dim
 
@@ -118,15 +130,39 @@ def is_scalar(x: Union[Number, Tensor]) -> bool:
     return isinstance(x, (int, float, bool)) or (isinstance(x, Tensor) and x.ndim == 0)
 
 
-def dump_dict(
-    join: str = ", ",
-    fmt: str = "{name}={value}",
-    ignore_none: bool = False,
-    **kwargs: Any,
-) -> str:
-    result = join.join(
-        fmt.format(name=name, value=value)
-        for name, value in kwargs.items()
-        if not (value is None and ignore_none)
-    )
+def can_be_stacked(
+    tensors: Union[List[Any], Tuple[Any, ...]]
+) -> TypeGuard[Union[List[Tensor], Tuple[Tensor, ...]]]:
+    if len(tensors) == 0:
+        return True
+    if not all(isinstance(tensor, Tensor) for tensor in tensors):
+        return False
+    shape0 = tensors[0].shape
+    result = all(tensor.shape == shape0 for tensor in tensors[1:])
     return result
+
+
+def can_be_converted_to_tensor(x: Any) -> bool:
+    if isinstance(x, (int, float, bool, complex)):
+        return True
+    elif isinstance(x, (List, Tuple)):
+        return __can_be_converted_to_tensor_list_tuple(x)
+    else:
+        return False
+
+
+def __can_be_converted_to_tensor_list_tuple(x: Union[List, Tuple]) -> bool:
+    if len(x) == 0:
+        return True
+
+    valid_items = all(can_be_converted_to_tensor(xi) for xi in x)
+    if not valid_items:
+        return False
+
+    if all(not isinstance(xi, Sized) for xi in x):
+        return True
+    elif all(isinstance(xi, Sized) for xi in x):
+        len0 = len(x[0])
+        return all(len(xi) == len0 for xi in x[1:])
+    else:
+        return False

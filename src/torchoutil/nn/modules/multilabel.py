@@ -17,7 +17,7 @@ from torchoutil.nn.functional.multilabel import (
     probs_to_multihot,
     probs_to_names,
 )
-from torchoutil.nn.functional.others import dump_dict
+from torchoutil.utils.collections import dump_dict
 
 T = TypeVar("T")
 
@@ -41,8 +41,10 @@ class IndicesToMultihot(nn.Module):
 
     def extra_repr(self) -> str:
         return dump_dict(
-            num_classes=self.num_classes,
-            device=self.device,
+            dict(
+                num_classes=self.num_classes,
+                device=self.device,
+            ),
             ignore_none=True,
         )
 

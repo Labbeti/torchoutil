@@ -6,7 +6,7 @@ from typing import Iterable, Union
 from torch import Generator, Tensor, nn
 
 from torchoutil.nn.functional.crop import crop_dim, crop_dims
-from torchoutil.nn.functional.others import dump_dict
+from torchoutil.utils.collections import dump_dict
 
 
 class CropDim(nn.Module):
@@ -31,9 +31,11 @@ class CropDim(nn.Module):
 
     def extra_repr(self) -> str:
         return dump_dict(
-            target_length=self.target_length,
-            align=self.align,
-            dim=self.dim,
+            dict(
+                target_length=self.target_length,
+                align=self.align,
+                dim=self.dim,
+            )
         )
 
 
@@ -59,7 +61,9 @@ class CropDims(nn.Module):
 
     def extra_repr(self) -> str:
         return dump_dict(
-            target_lengths=self.target_lengths,
-            aligns=self.aligns,
-            dims=self.dims,
+            dict(
+                target_lengths=self.target_lengths,
+                aligns=self.aligns,
+                dims=self.dims,
+            )
         )
