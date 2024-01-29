@@ -69,7 +69,7 @@ def get_perm_indices(t1: Tensor, t2: Tensor) -> Tensor:
     """Find permutation between two vectors t1 and t2 which contains values from 0 to N-1.
 
     Example 1::
-    ----------
+    -----------
         >>> t1 = torch.as_tensor([0, 1, 2, 4, 3, 6, 5, 7])
         >>> t2 = torch.as_tensor([0, 2, 1, 4, 3, 5, 6, 7])
         >>> indices = get_perm_indices(t1, t2)
@@ -88,7 +88,7 @@ def insert_at_indices(
     """Insert value(s) in vector at specified indices.
 
     Example 1::
-    ----------
+    -----------
         >>> x = torch.as_tensor([1, 1, 2, 2, 2, 3])
         >>> indices = torch.as_tensor([2, 5])
         >>> values = 4

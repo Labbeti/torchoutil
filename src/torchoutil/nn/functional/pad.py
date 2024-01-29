@@ -79,13 +79,13 @@ def pad_and_stack_rec(
         device: The device of the output Tensor. defaults to None.
 
     Example 1::
-    ----------
+    -----------
         >>> sequence = [[1, 2], [3], [], [4, 5]]
         >>> output = pad_sequence_rec(sequence, 0)
         tensor([[1, 2], [3, 0], [0, 0], [4, 5]])
 
     Example 2::
-    ----------
+    -----------
         >>> invalid_sequence = [[1, 2, 3], 3]
         >>> output = pad_sequence_rec(invalid_sequence, 0)
         ValueError : Cannot pad sequence of tensors of differents number of dims.
