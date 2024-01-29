@@ -3,13 +3,13 @@
 
 import platform
 import sys
-
 from pathlib import Path
 from typing import Dict
 
 import torch
 
 import torchoutil
+from torchoutil.nn.functional.others import dump_dict
 
 
 def get_package_repository_path() -> str:
@@ -31,8 +31,8 @@ def get_install_info() -> Dict[str, str]:
 def print_install_info() -> None:
     """Show main packages versions."""
     install_info = get_install_info()
-    for name, version in install_info.items():
-        print(f"{name}: {version}")
+    dumped = dump_dict(fmt="{name}: {value}", join="\n", **install_info)  # type: ignore
+    print(dumped)
 
 
 if __name__ == "__main__":

@@ -6,7 +6,7 @@ from typing import Iterable, Union
 import torch
 from torch import Generator, Tensor, nn
 
-from torchoutil.nn.functional.others import default_extra_repr
+from torchoutil.nn.functional.others import dump_dict
 from torchoutil.nn.functional.pad import pad_and_stack_rec, pad_dim, pad_dims
 
 
@@ -43,7 +43,7 @@ class PadDim(nn.Module):
         )
 
     def extra_repr(self) -> str:
-        return default_extra_repr(
+        return dump_dict(
             target_length=self.target_length,
             align=self.align,
             pad_value=self.pad_value,
@@ -85,7 +85,7 @@ class PadDims(nn.Module):
         )
 
     def extra_repr(self) -> str:
-        return default_extra_repr(
+        return dump_dict(
             target_lengths=self.target_lengths,
             aligns=self.aligns,
             pad_value=self.pad_value,
@@ -113,7 +113,7 @@ class PadAndStackRec(nn.Module):
         return pad_and_stack_rec(sequence, self.pad_value, self.dtype, self.device)
 
     def extra_repr(self) -> str:
-        return default_extra_repr(
+        return dump_dict(
             pad_value=self.pad_value,
             dtype=self.dtype,
             device=self.device,

@@ -11,7 +11,7 @@ from torch.nn import functional as F
 from torch.types import Number
 
 from torchoutil.nn.functional.get import get_device
-from torchoutil.nn.functional.others import default_extra_repr
+from torchoutil.nn.functional.others import dump_dict
 
 
 class Reshape(nn.Module):
@@ -23,7 +23,7 @@ class Reshape(nn.Module):
         return x.reshape(self.shape)
 
     def extra_repr(self) -> str:
-        return default_extra_repr(
+        return dump_dict(
             shape=self.shape,
         )
 
@@ -41,7 +41,7 @@ class Mean(nn.Module):
             return x.mean(dim=self.dim, keepdim=self.keepdim)
 
     def extra_repr(self) -> str:
-        return default_extra_repr(
+        return dump_dict(
             dim=self.dim,
             ignore_none=True,
         )
@@ -82,7 +82,7 @@ class Max(nn.Module):
             )
 
     def extra_repr(self) -> str:
-        return default_extra_repr(
+        return dump_dict(
             dim=self.dim,
         )
 
@@ -122,7 +122,7 @@ class Min(nn.Module):
             )
 
     def extra_repr(self) -> str:
-        return default_extra_repr(
+        return dump_dict(
             dim=self.dim,
             return_values=self.return_values,
             return_indices=self.return_indices,
@@ -145,7 +145,7 @@ class Normalize(nn.Module):
         return F.normalize(x, self.p, self.dim, self.eps)
 
     def extra_repr(self) -> str:
-        return default_extra_repr(
+        return dump_dict(
             p=self.p,
             dim=self.dim,
             eps=self.eps,
@@ -162,7 +162,7 @@ class Transpose(nn.Module):
         return x.transpose(self.dim0, self.dim1)
 
     def extra_repr(self) -> str:
-        return default_extra_repr(
+        return dump_dict(
             dim0=self.dim0,
             dim1=self.dim1,
             fmt="{value}",
@@ -188,7 +188,7 @@ class Squeeze(nn.Module):
                 return x.squeeze_(self.dim)
 
     def extra_repr(self) -> str:
-        return default_extra_repr(
+        return dump_dict(
             dim=self.dim,
             inplace=self.inplace,
         )
@@ -207,7 +207,7 @@ class Unsqueeze(nn.Module):
             return x.unsqueeze_(self.dim)
 
     def extra_repr(self) -> str:
-        return default_extra_repr(
+        return dump_dict(
             dim=self.dim,
             inplace=self.inplace,
         )
@@ -222,7 +222,7 @@ class TensorTo(nn.Module):
         return x.to(**self.kwargs)
 
     def extra_repr(self) -> str:
-        return default_extra_repr(**self.kwargs)
+        return dump_dict(**self.kwargs)
 
 
 class Permute(nn.Module):
@@ -234,7 +234,7 @@ class Permute(nn.Module):
         return x.permute(self.dims)
 
     def extra_repr(self) -> str:
-        return default_extra_repr(
+        return dump_dict(
             dims=self.dims,
             fmt="{value}",
         )
@@ -260,7 +260,7 @@ class AsTensor(nn.Module):
         return torch.as_tensor(x, dtype=self.dtype, device=self.device)
 
     def extra_repr(self) -> str:
-        return default_extra_repr(
+        return dump_dict(
             device=self.device,
             dtype=self.dtype,
             ignore_none=True,

@@ -6,7 +6,7 @@ from typing import Iterable
 from torch import Tensor, nn
 
 from torchoutil.nn.functional.activation import softmax_multidim
-from torchoutil.nn.functional.others import default_extra_repr
+from torchoutil.nn.functional.others import dump_dict
 
 
 class SoftmaxMultidim(nn.Module):
@@ -26,4 +26,4 @@ class SoftmaxMultidim(nn.Module):
         return input
 
     def extra_repr(self) -> str:
-        return default_extra_repr(dims=self.dims)
+        return dump_dict(dims=self.dims)
