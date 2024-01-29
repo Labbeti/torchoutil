@@ -16,7 +16,7 @@ Collection of functions and modules to help development in PyTorch.
 pip install torchoutil
 ```
 
-The only requirements are `python>=3.8` and `torch>=1.10`.
+The only requirements are `python>=3.8` and `torch>=1.4`.
 
 ## Usage
 
