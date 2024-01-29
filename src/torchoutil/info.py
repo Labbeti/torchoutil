@@ -9,7 +9,7 @@ from typing import Dict
 import torch
 
 import torchoutil
-from torchoutil.nn.functional.others import dump_dict
+from torchoutil.utils.collections import dump_dict
 
 
 def get_package_repository_path() -> str:
