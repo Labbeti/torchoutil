@@ -31,7 +31,7 @@ def get_install_info() -> Dict[str, str]:
 def print_install_info() -> None:
     """Show main packages versions."""
     install_info = get_install_info()
-    dumped = dump_dict(fmt="{name}: {value}", join="\n", **install_info)  # type: ignore
+    dumped = dump_dict(install_info, join="\n", fmt="{name}: {value}")
     print(dumped)
 
 
