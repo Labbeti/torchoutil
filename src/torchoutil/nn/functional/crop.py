@@ -1,12 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from typing import Iterable, Union
+from typing import Iterable, Literal, Union
 
 import torch
-
 from torch import Generator, Tensor
-
 
 CROP_ALIGNS = ("left", "right", "center", "random")
 
@@ -14,7 +12,7 @@ CROP_ALIGNS = ("left", "right", "center", "random")
 def crop_dim(
     x: Tensor,
     target_length: int,
-    align: str = "left",
+    align: Literal["left", "right", "center", "random"] = "left",
     dim: int = -1,
     generator: Union[int, Generator, None] = None,
 ) -> Tensor:
@@ -25,7 +23,7 @@ def crop_dim(
 def crop_dims(
     x: Tensor,
     target_lengths: Iterable[int],
-    aligns: Iterable[str] = ("left",),
+    aligns: Iterable[Literal["left", "right", "center", "random"]] = ("left",),
     dims: Iterable[int] = (-1,),
     generator: Union[int, Generator, None] = None,
 ) -> Tensor:

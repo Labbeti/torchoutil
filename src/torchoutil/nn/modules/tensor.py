@@ -26,7 +26,7 @@ class Reshape(nn.Module):
         return dump_dict(
             dict(
                 shape=self.shape,
-            )
+            ),
         )
 
 
@@ -89,7 +89,7 @@ class Max(nn.Module):
         return dump_dict(
             dict(
                 dim=self.dim,
-            )
+            ),
         )
 
 
@@ -133,7 +133,7 @@ class Min(nn.Module):
                 dim=self.dim,
                 return_values=self.return_values,
                 return_indices=self.return_indices,
-            )
+            ),
         )
 
 
@@ -204,7 +204,7 @@ class Squeeze(nn.Module):
             dict(
                 dim=self.dim,
                 inplace=self.inplace,
-            )
+            ),
         )
 
 
@@ -225,7 +225,7 @@ class Unsqueeze(nn.Module):
             dict(
                 dim=self.dim,
                 inplace=self.inplace,
-            )
+            ),
         )
 
 

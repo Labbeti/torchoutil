@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from typing import Any, Iterable, List, Sized, Tuple, Union
+from typing import Any, Iterable, List, Literal, Sized, Tuple, Union
 
 import torch
 from torch import Generator, Size, Tensor
@@ -17,7 +17,7 @@ PAD_ALIGNS = ("left", "right", "center", "random")
 def pad_dim(
     x: Tensor,
     target_length: int,
-    align: str = "left",
+    align: Literal["left", "right", "center", "random"] = "left",
     pad_value: float = 0.0,
     dim: int = -1,
     mode: str = "constant",
@@ -30,7 +30,7 @@ def pad_dim(
 def pad_dims(
     x: Tensor,
     target_lengths: Iterable[int],
-    aligns: Iterable[str] = ("left",),
+    aligns: Iterable[Literal["left", "right", "center", "random"]] = ("left",),
     pad_value: float = 0.0,
     dims: Iterable[int] = (-1,),
     mode: str = "constant",
@@ -138,7 +138,7 @@ def __generate_pad_seq(
     x_shape: Size,
     target_lengths: List[int],
     dims: List[int],
-    aligns: List[str],
+    aligns: List[Literal["left", "right", "center", "random"]],
     generator: Union[None, Generator],
 ) -> List[int]:
     pad_seq = [0 for _ in range(len(x_shape) * 2)]

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from typing import Iterable, Union
+from typing import Iterable, Literal, Union
 
 import torch
 from torch import Generator, Tensor, nn
@@ -14,7 +14,7 @@ class PadDim(nn.Module):
     def __init__(
         self,
         target_length: int,
-        align: str = "left",
+        align: Literal["left", "right", "center", "random"] = "left",
         pad_value: float = 0.0,
         dim: int = -1,
         mode: str = "constant",
@@ -35,7 +35,7 @@ class PadDim(nn.Module):
         return pad_dim(
             x,
             self.target_length,
-            self.align,
+            self.align,  # type: ignore
             self.pad_value,
             self.dim,
             self.mode,
@@ -58,7 +58,7 @@ class PadDims(nn.Module):
     def __init__(
         self,
         target_lengths: Iterable[int],
-        aligns: Iterable[str] = ("left",),
+        aligns: Iterable[Literal["left", "right", "center", "random"]] = ("left",),
         pad_value: float = 0.0,
         dims: Iterable[int] = (-1,),
         mode: str = "constant",

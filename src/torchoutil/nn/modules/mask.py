@@ -22,7 +22,8 @@ class MaskedMean(nn.Module):
         return dump_dict(
             dict(
                 dim=self.dim,
-            )
+            ),
+            ignore_none=True,
         )
 
 
@@ -39,5 +40,6 @@ class MaskedSum(nn.Module):
         return dump_dict(
             dict(
                 dim=self.dim,
-            )
+            ),
+            ignore_none=True,
         )
