@@ -11,10 +11,10 @@ authors:
     affiliation: IRIT
     orcid: 'https://orcid.org/0000-0002-7219-5463'
 repository-code: 'https://github.com/Labbeti/torchoutil/'
-abstract: Collection of functions and modules to simplify deep learning development.
+abstract: Collection of functions and modules to help development in PyTorch.
 keywords:
   - pytorch
   - deep-learning
 license: MIT
 version: 0.1.0
-date-released: 'UNRELEASED'
+date-released: '2024-01-29'

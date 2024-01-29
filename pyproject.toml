@@ -3,7 +3,7 @@ name = "torchoutil"
 authors = [
     {name = "Étienne Labbé (Labbeti)", email = "labbeti.pub@gmail.com"},
 ]
-description = "Collection of functions and modules to simplify deep learning development."
+description = "Collection of functions and modules to help development in PyTorch."
 readme = "README.md"
 requires-python = ">=3.8"
 keywords = ["pytorch", "deep-learning"]
