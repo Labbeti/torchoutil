@@ -2,86 +2,33 @@
 # -*- coding: utf-8 -*-
 
 import unittest
-
 from unittest import TestCase
 
 import torch
 
-from torchoutil.nn.functional.others import cat_padded_batch
+from torchoutil.nn.functional.others import can_be_converted_to_tensor
 
 
-class TestCatPaddedBatch(TestCase):
-    def test_example_1(self) -> None:
-        # Cas 2D
-        x1 = torch.as_tensor(
-            [
-                [1, 1, 0, 0],
-                [2, 2, 2, 0],
-                [3, 0, 0, 0],
-            ]
-        )
-        x2 = torch.as_tensor(
-            [
-                [4, 4, 4, 4, 4],
-                [5, 5, 0, 0, 0],
-                [6, 6, 0, 0, 0],
-            ]
-        )
-        x1_lens = torch.as_tensor([2, 3, 1])
-        x2_lens = torch.as_tensor([5, 2, 2])
-        seq_dim = -1
-        batch_dim = 0
+class TestOthers(TestCase):
+    def test_can_be_converted_to_tensor_1(self) -> None:
+        lst = [[1, 0, 0], [2, 3, 4]]
+        self.assertTrue(can_be_converted_to_tensor(lst))
 
-        expected = torch.as_tensor(
-            [
-                [1, 1, 4, 4, 4, 4, 4],
-                [2, 2, 2, 5, 5, 0, 0],
-                [3, 6, 6, 0, 0, 0, 0],
-            ]
-        )
-        expected_lens = torch.as_tensor([7, 5, 3])
-        x12, x12_lens = cat_padded_batch(x1, x1_lens, x2, x2_lens, seq_dim, batch_dim)
+    def test_can_be_converted_to_tensor_2(self) -> None:
+        lst = [[1, 0, 0], [2, 3]]
+        self.assertFalse(can_be_converted_to_tensor(lst))
 
-        self.assertEqual(expected.shape, x12.shape)
-        self.assertEqual(expected_lens.shape, x12_lens.shape)
-        self.assertTrue(torch.equal(expected, x12))
-        self.assertTrue(torch.equal(expected_lens, x12_lens))
+    def test_can_be_converted_to_tensor_3(self) -> None:
+        lst = [[[True], [False]], [[False], [True]]]
+        self.assertTrue(can_be_converted_to_tensor(lst))
 
-    def test_example_2(self) -> None:
-        # Cas 3D
-        x1 = torch.as_tensor(
-            [
-                [[1, 11], [1, 11], [0, 00], [0, 00]],
-                [[2, 22], [2, 22], [2, 22], [0, 00]],
-                [[3, 33], [0, 00], [0, 00], [0, 00]],
-            ]
-        )
-        x2 = torch.as_tensor(
-            [
-                [[4, 44], [4, 44], [4, 44], [4, 44], [4, 44]],
-                [[5, 55], [5, 55], [0, 00], [0, 00], [0, 00]],
-                [[6, 66], [6, 66], [0, 00], [0, 00], [0, 00]],
-            ]
-        )
-        x1_lens = torch.as_tensor([2, 3, 1])
-        x2_lens = torch.as_tensor([5, 2, 2])
-        seq_dim = -2
-        batch_dim = 0
+    def test_can_be_converted_to_tensor_4(self) -> None:
+        lst = [[[]], [[]]]
+        self.assertTrue(can_be_converted_to_tensor(lst))
 
-        expected = torch.as_tensor(
-            [
-                [[1, 11], [1, 11], [4, 44], [4, 44], [4, 44], [4, 44], [4, 44]],
-                [[2, 22], [2, 22], [2, 22], [5, 55], [5, 55], [0, 00], [0, 00]],
-                [[3, 33], [6, 66], [6, 66], [0, 00], [0, 00], [0, 00], [0, 00]],
-            ]
-        )
-        expected_lens = torch.as_tensor([7, 5, 3])
-        x12, x12_lens = cat_padded_batch(x1, x1_lens, x2, x2_lens, seq_dim, batch_dim)
-
-        self.assertEqual(expected.shape, x12.shape)
-        self.assertEqual(expected_lens.shape, x12_lens.shape)
-        self.assertTrue(torch.equal(expected, x12))
-        self.assertTrue(torch.equal(expected_lens, x12_lens))
+    def test_can_be_converted_to_tensor_5(self) -> None:
+        lst = [torch.rand(10), torch.rand(10)]
+        self.assertFalse(can_be_converted_to_tensor(lst))
 
 
 if __name__ == "__main__":
