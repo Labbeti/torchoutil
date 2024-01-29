@@ -38,6 +38,7 @@ jobs:
         cache: 'pip'
 
     - name: Install package
+      shell: bash
       run: |
         if [ "${{ matrix.torch-version }}" != "latest" ]; then
           python -m pip install torch==${{ matrix.torch-version }}
