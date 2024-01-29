@@ -4,7 +4,6 @@
 from typing import Iterable, List, Optional, Union
 
 import torch
-
 from torch import Tensor
 
 from torchoutil.nn.functional.get import get_device
@@ -69,8 +68,8 @@ def generate_square_subsequent_mask(
         size: The size of the output tensor.
         device: The device of the output tensor.
 
-    Example 1
-    ----------
+    Example 1::
+    -----------
         >>> generate_square_subsequent_mask(6)
         tensor([[0., -inf, -inf, -inf, -inf, -inf],
                 [0., 0., -inf, -inf, -inf, -inf],
@@ -123,6 +122,7 @@ def lengths_to_non_pad_mask(
     include_end: bool = False,
 ) -> Tensor:
     """Convert lengths to binary mask of non-padded values.
+
     The output will be a tensor of shape (B, max_len).
 
     Args:
@@ -133,9 +133,8 @@ def lengths_to_non_pad_mask(
         include_end: If True, the value at index of len will be True in returned mask.
         defaults to False.
 
-    Example 1
+    Example 1::
     -----------
-        ```
         >>> input = torch.as_tensor([4, 2, 0, 3, 0])
         >>> lengths_to_non_pad_mask(input, max_len=6, include_end=False)
         tensor([[True, True, True, True, False, False],
@@ -143,7 +142,6 @@ def lengths_to_non_pad_mask(
                 [False, False, False, False, False, False],
                 [True, True, True, False, False, False],
                 [False, False, False, False, False, False]])
-        ```
     """
     dim = -1
     if max_len is None:
@@ -172,9 +170,8 @@ def lengths_to_pad_mask(
         defaults to None.
         include_end: If True, the last value of each size will be set to False. defaults to True.
 
-    Example 1
+    Example 1::
     -----------
-        ```
         >>> input = torch.as_tensor([4, 2, 0, 3, 0])
         >>> lengths_to_non_pad_mask(input, max_len=None, include_end=True)
         tensor([[False, False, False, False],
@@ -182,7 +179,6 @@ def lengths_to_pad_mask(
                 [True, True, True, True],
                 [False, False, False, True],
                 [True, True, True, True]])
-        ```
     """
     non_pad_mask = lengths_to_non_pad_mask(lengths, max_len, not include_end)
     return non_pad_mask.logical_not()
@@ -204,32 +200,33 @@ def tensor_to_lengths(
 ) -> Tensor:
     """Get the lengths of the non-padded elements of a tensor.
 
-    You must provide a value for one of pad_value or end_value. If both values are provided, the end_value is ignored.
-    The output will be of shape (N,)
-
-    Note: The end_value is not included in the length of the sentence.
+    You must provide a value for one of `pad_value` or `end_value`.
+    If both values are provided, the `end_value` is ignored.
+    The output will be of shape (N,).
+    The `end_value` is not included in the length of the sentence.
 
     Args:
-        tensor: Tensor of shape (N, *)
-        pad_value: The pad value used in tensor. defaults to None.
-        end_value: The end value used in tensor. defaults to None.
+        tensor: Input of shape (N, *).
+        pad_value: The pad value used in `tensor`. defaults to None.
+        end_value: The end value used in `tensor`. defaults to None.
         dim: The dimension of the length. defaults to -1.
 
-    Example 1
+    Example 1::
     -----------
-        ```
-        >>> input = torch.as_tensor([1, 10, 20, 2, 0, 0])
-        >>> tensor_to_lengths(input, end_value=2)
-        tensor(3)
-        ```
+    ```
+    >>> x = torch.as_tensor([1, 10, 20, 2, 0, 0])
+    >>> tensor_to_lengths(x, end_value=2)
+    ... tensor(3)
+    ```
 
-    Example 2
+    Example 2::
     -----------
-        ```
-        >>> input = torch.as_tensor([1, 10, 20, 2, 0, 0])
-        >>> tensor_to_lengths(input, pad_value=0)
-        tensor(4)
-        ```
+    ```
+    >>> x = torch.as_tensor([1, 10, 20, 2, 0, 0])
+    >>> tensor_to_lengths(x, pad_value=0)
+    ... tensor(4)
+    ```
+
     """
     if (pad_value is None) == (end_value is None):
         raise ValueError(
@@ -271,13 +268,11 @@ def tensor_to_non_pad_mask(
         This parameter is ignored if end_value is None.
         defaults to False.
 
-    Example 1
+    Example 1::
     -----------
-        ```
         >>> input = torch.as_tensor([1, 10, 20, 2, 0, 0])
         >>> tensor_to_pad_mask(input, end_value=2)
         tensor([True, True, True, False, False, False])
-        ```
     """
     if (pad_value is None) == (end_value is None):
         raise ValueError(
@@ -310,7 +305,9 @@ def tensor_to_pad_mask(
     include_end: bool = True,
 ) -> Tensor:
     """Convert tensor to pad binary mask.
+
     You must provide a value for one of pad_value or end_value. If both values are provided, the end_value is ignored.
+
     The output will be a binary mask representing the padded values. Shape is the same than the input tensor.
 
     Args:
@@ -319,13 +316,11 @@ def tensor_to_pad_mask(
         end_value: The end value used in tensor. defaults to None.
         include_end: If True, the end value will be included in pad_mask. defaults to True.
 
-    Example 1
+    Example 1::
     -----------
-        ```
         >>> input = torch.as_tensor([1, 10, 20, 2, 0, 0])
         >>> tensor_to_pad_mask(input, end_value=2)
         tensor([False, False, False, True, True, True])
-        ```
     """
     non_pad_mask = tensor_to_non_pad_mask(tensor, pad_value, end_value, not include_end)
     return non_pad_mask.logical_not()
@@ -338,16 +333,18 @@ def tensor_to_tensors_list(
     non_pad_mask: Optional[Tensor] = None,
     lengths: Optional[Tensor] = None,
 ) -> List[Tensor]:
-    """You must provide a value for one of pad_value, end_value non_pad_mask or lengths.
-    If multiple values are provided, only one will be used and the priority order is [pad_value, end_value non_pad_mask, lengths].
+    """Convert padded tensor to tensor list.
+
+    You must provide a value for one of `pad_value`, `end_value`, `non_pad_mask` or `lengths`.
+    If multiple values are provided, only one will be used and the priority order is `pad_value`, `end_value`, `non_pad_mask` and `lengths`.
     The output will be a list of N tensors of shape (*).
 
     Args:
-        tensor: (N, *)
-        pad_value: Pad value index. defaults to None.
-        end_value: End value index. defaults to None.
-        non_pad_mask: TODO
-        lengths: TODO
+        `tensor`: (N, *)
+        `pad_value`: Pad value index. defaults to None.
+        `end_value`: End value index. defaults to None.
+        `non_pad_mask`: Optional non-padded boolean mask. defaults to None.
+        `lengths`: Length of each sequence in padded batch.
     """
 
     if pad_value is not None:
@@ -379,10 +376,14 @@ def tensor_to_tensors_list(
 
 def tensors_list_to_lengths(tensors: List[Tensor], dim: int = -1) -> Tensor:
     """Return the size of the tensor at a specific dim.
+
     The output will be a tensor of size N.
 
     Args:
         tensors: List of N tensors.
         dim: The dimension of the output sizes. defaults to -1.
     """
-    return torch.as_tensor([tensor.shape[dim] for tensor in tensors])
+    device = None if len(tensors) == 0 else tensors[0].device
+    return torch.as_tensor(
+        [tensor.shape[dim] for tensor in tensors], dtype=torch.long, device=device
+    )
