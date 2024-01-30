@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-"""Adds functions and modules for PyTorch to facilitate tensor manipulation.
+"""Collection of functions and modules to help development in PyTorch.
 """
 
 __name__ = "torchoutil"
