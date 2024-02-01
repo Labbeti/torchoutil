@@ -43,7 +43,7 @@ pylog = logging.getLogger(__name__)
 T = TypeVar("T")
 
 
-class HDFDataset(Dataset[T], Generic[T]):
+class HDFDataset(Generic[T], Dataset[T]):
     def __init__(
         self,
         hdf_fpath: Union[str, Path],
