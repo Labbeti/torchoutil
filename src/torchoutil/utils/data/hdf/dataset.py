@@ -6,7 +6,19 @@ import os
 import os.path as osp
 import pickle
 from pathlib import Path
-from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple, Union, overload
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    Generic,
+    Iterable,
+    List,
+    Optional,
+    Tuple,
+    TypeVar,
+    Union,
+    overload,
+)
 
 import h5py
 import numpy as np
@@ -28,7 +40,10 @@ from torchoutil.utils.data.hdf.constants import (
 pylog = logging.getLogger(__name__)
 
 
-class HDFDataset(Dataset):
+T = TypeVar("T")
+
+
+class HDFDataset(Dataset[T], Generic[T]):
     def __init__(
         self,
         hdf_fpath: Union[str, Path],

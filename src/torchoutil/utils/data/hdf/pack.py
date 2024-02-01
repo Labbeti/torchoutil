@@ -5,9 +5,20 @@ import datetime
 import json
 import logging
 import zlib
-from functools import partial
+from dataclasses import asdict, is_dataclass
 from pathlib import Path
-from typing import Any, Callable, Dict, Literal, Mapping, Optional, Sized, Tuple, Union
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    Literal,
+    Mapping,
+    Optional,
+    Sized,
+    Tuple,
+    TypeVar,
+    Union,
+)
 
 import h5py
 import numpy as np
@@ -17,8 +28,9 @@ from torch import Tensor, nn
 from torch.utils.data.dataloader import DataLoader
 from torch.utils.data.dataset import Dataset
 
-from torchoutil.utils.collections import all_eq, flat_dict_of_dict
+from torchoutil.utils.collections import all_eq
 from torchoutil.utils.data.dataloader import get_auto_num_cpus
+from torchoutil.utils.data.dataset import SizedDatasetLike
 from torchoutil.utils.data.hdf.constants import (
     HDF_ENCODING,
     HDF_STRING_DTYPE,
@@ -29,18 +41,21 @@ from torchoutil.utils.data.hdf.dataset import HDFDataset
 
 logger = logging.getLogger(__name__)
 
+T = TypeVar("T")
+U = TypeVar("U", bound=Union[int, float, str, Tensor, list])
+
 
 @torch.inference_mode()
 def pack_to_hdf(
-    dataset: Any,
+    dataset: SizedDatasetLike[T],
     hdf_fpath: Union[str, Path],
-    pre_save_transform: Optional[Callable[[Dict[str, Any]], Dict[str, Any]]] = None,
+    pre_save_transform: Optional[Callable[[T], Dict[str, U]]] = None,
     overwrite: bool = False,
     metadata: str = "",
     verbose: int = 0,
-    loader_bsize: int = 8,
+    batch_size: int = 32,
     num_workers: Union[int, Literal["auto"]] = "auto",
-) -> HDFDataset:
+) -> HDFDataset[Dict[str, U]]:
     """Pack a dataset to HDF file.
 
     Args:
@@ -53,7 +68,7 @@ def pack_to_hdf(
         overwrite: If True, the file hdf_fpath can be overwritten. defaults to False.
         metadata: Additional metadata string to add to the hdf file. defaults to ''.
         verbose: Verbose level. defaults to 0.
-        loader_bsize: The batch size of the dataloader. defaults to 8.
+        batch_size: The batch size of the dataloader. defaults to 32.
         num_workers: The number of workers of the dataloader.
             If "auto", it will be set to `len(os.sched_getaffinity(0))`. defaults to "auto".
     """
@@ -75,32 +90,28 @@ def pack_to_hdf(
             f"Cannot overwrite file {hdf_fpath}. Please remove it or use overwrite=True option."
         )
 
-    if pre_save_transform is None:
-        pre_save_transform = partial(flat_dict_of_dict, sep="_")
-    else:
-        pre_save_transform = Compose(
-            pre_save_transform, partial(flat_dict_of_dict, sep="_")
-        )
-
     if num_workers == "auto":
         num_workers = get_auto_num_cpus()
         if verbose >= 2:
             logger.debug(f"Found num_workers=='auto', set to {num_workers}.")
 
+    if pre_save_transform is None:
+        pre_save_transform = nn.Identity()
+
     if verbose >= 2:
         logger.debug(f"Start packing data into HDF file '{hdf_fpath}'...")
 
     # Step 1: Init max_shapes and hdf_dtypes with the first item
+    shapes_0 = {}
+    hdf_dtypes_0 = {}
     item_0 = dataset[0]
+    item_0 = pre_save_transform(item_0)
+
     if not isinstance(item_0, dict):
         raise ValueError(
             f"Invalid item type for {dataset.__class__.__name__}. (expected dict but found {type(item_0)})"
         )
     item_type = "dict"  # TODO : detect automatically
-
-    shapes_0 = {}
-    hdf_dtypes_0 = {}
-    item_0 = pre_save_transform(item_0)
 
     for attr_name, value in item_0.items():
         shape, hdf_dtype = _get_shape_and_dtype(value)
@@ -112,7 +123,7 @@ def pack_to_hdf(
 
     loader = DataLoader(
         dataset,
-        batch_size=loader_bsize,
+        batch_size=batch_size,
         shuffle=False,
         num_workers=num_workers,
         collate_fn=nn.Identity(),
@@ -150,8 +161,14 @@ def pack_to_hdf(
     now = datetime.datetime.now()
     creation_date = now.strftime("%Y-%m-%d_%H-%M-%S")
 
-    if hasattr(dataset, "info") and isinstance(dataset.info, Mapping):  # type: ignore
-        info = dict(dataset.info.items())  # type: ignore
+    if hasattr(dataset, "info"):
+        info = dataset.info  # type: ignore
+        if is_dataclass(info):
+            info = asdict(info)
+        elif isinstance(info, Mapping):
+            info = dict(info.items())  # type: ignore
+        else:
+            info = {}
     else:
         info = {}
 
@@ -197,7 +214,7 @@ def pack_to_hdf(
 
         loader = DataLoader(
             dataset,
-            batch_size=loader_bsize,
+            batch_size=batch_size,
             shuffle=False,
             num_workers=num_workers,
             collate_fn=nn.Identity(),
@@ -235,8 +252,8 @@ def pack_to_hdf(
                             "INTERNAL ERROR: Cannot resize dataset when pre-computing shapes."
                         )
 
-                    if isinstance(value, Tensor) and value.is_cuda:
-                        value = value.cpu()
+                    if isinstance(value, Tensor) and value.is_cuda:  # type: ignore
+                        value = value.cpu()  # type: ignore
 
                     # If the value is a sequence but not an array or tensor
                     if hdf_dtype in ("i", "f") and not isinstance(
