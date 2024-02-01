@@ -3,6 +3,7 @@
 
 from typing import (
     Any,
+    Callable,
     Dict,
     Iterable,
     List,
@@ -92,3 +93,50 @@ def filter_iterable(
     exclude: Optional[Iterable[T]] = None,
 ) -> List[T]:
     return [item for item in it if pass_filter(item, include, exclude)]
+
+
+def all_eq(it: Iterable[T], eq_fn: Optional[Callable[[T, T], bool]] = None) -> bool:
+    """Returns true if all elements in inputs are equal."""
+    it = list(it)
+    first = it[0]
+    if eq_fn is None:
+        return all(first == elt for elt in it)
+    else:
+        return all(eq_fn(first, elt) for elt in it)
+
+
+def flat_dict_of_dict(
+    nested_dic: Mapping[str, Any],
+    sep: str = ".",
+    flat_iterables: bool = False,
+) -> Dict[str, Any]:
+    """Flat a nested dictionary.
+    Example
+    ----------
+    ```
+    >>> dic = {
+    ...     "a": 1,
+    ...     "b": {
+    ...         "a": 2,
+    ...         "b": 10,
+    ...     },
+    ... }
+    >>> flat_dict(dic)
+    ... {"a": 1, "b.a": 2, "b.b": 10}
+    ```
+    """
+    output = {}
+    for k, v in nested_dic.items():
+        if isinstance(v, Mapping) and all(isinstance(kv, str) for kv in v.keys()):
+            v = flat_dict_of_dict(v, sep, flat_iterables)
+            output.update({f"{k}{sep}{kv}": vv for kv, vv in v.items()})
+        elif flat_iterables and isinstance(v, Iterable) and not isinstance(v, str):
+            output.update(
+                {
+                    f"{k}{sep}{i}": flat_dict_of_dict(vv, sep, flat_iterables)
+                    for i, vv in enumerate(v)
+                }
+            )
+        else:
+            output[k] = v
+    return output

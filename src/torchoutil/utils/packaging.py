@@ -18,3 +18,4 @@ def _package_is_available(package_name: str) -> bool:
 
 _NUMPY_AVAILABLE = _package_is_available("numpy")
 _TENSORBOARD_AVAILABLE = _package_is_available("tensorboard")
+_H5PY_AVAILABLE = _package_is_available("h5py")
