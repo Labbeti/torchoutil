@@ -14,7 +14,6 @@ from typing import (
     Literal,
     Mapping,
     Optional,
-    Sized,
     Tuple,
     TypeVar,
     Union,
@@ -24,18 +23,19 @@ import h5py
 import numpy as np
 import torch
 import tqdm
+from h5py import Dataset as HDFRawDataset
 from torch import Tensor, nn
 from torch.utils.data.dataloader import DataLoader
-from torch.utils.data.dataset import Dataset
 
 from torchoutil.utils.collections import all_eq
 from torchoutil.utils.data.dataloader import get_auto_num_cpus
 from torchoutil.utils.data.dataset import SizedDatasetLike
-from torchoutil.utils.data.hdf.constants import (
+from torchoutil.utils.data.hdf.common import (
     HDF_ENCODING,
     HDF_STRING_DTYPE,
     HDF_VOID_DTYPE,
     SHAPE_SUFFIX,
+    _tuple_to_dict,
 )
 from torchoutil.utils.data.hdf.dataset import HDFDataset
 
@@ -49,13 +49,13 @@ U = TypeVar("U", bound=Union[int, float, str, Tensor, list])
 def pack_to_hdf(
     dataset: SizedDatasetLike[T],
     hdf_fpath: Union[str, Path],
-    pre_save_transform: Optional[Callable[[T], Dict[str, U]]] = None,
+    pre_save_transform: Optional[Callable[[T], U]] = None,
     overwrite: bool = False,
     metadata: str = "",
     verbose: int = 0,
     batch_size: int = 32,
     num_workers: Union[int, Literal["auto"]] = "auto",
-) -> HDFDataset[Dict[str, U]]:
+) -> HDFDataset[U, U]:
     """Pack a dataset to HDF file.
 
     Args:
@@ -73,13 +73,9 @@ def pack_to_hdf(
             If "auto", it will be set to `len(os.sched_getaffinity(0))`. defaults to "auto".
     """
     # Check inputs
-    if not isinstance(dataset, Dataset):
+    if not isinstance(dataset, SizedDatasetLike):
         raise TypeError(
-            f"Cannot pack a non-dataset '{dataset.__class__.__name__}'. (found {isinstance(dataset, Dataset)=})"
-        )
-    if not isinstance(dataset, Sized):
-        raise TypeError(
-            f"Cannot pack a non-sized dataset '{dataset.__class__.__name__}'. (found {isinstance(dataset, Sized)=})"
+            f"Cannot pack a non-sized-dataset '{dataset.__class__.__name__}'."
         )
 
     hdf_fpath = Path(hdf_fpath)
@@ -107,11 +103,19 @@ def pack_to_hdf(
     item_0 = dataset[0]
     item_0 = pre_save_transform(item_0)
 
-    if not isinstance(item_0, dict):
+    final_transform: Callable[[T], Dict[str, Any]]
+    if isinstance(item_0, dict) and all(isinstance(key, str) for key in item_0.keys()):
+        item_type = "dict"
+        final_transform = pre_save_transform  # type: ignore
+    elif isinstance(item_0, tuple):
+        item_type = "tuple"
+        final_transform = Compose(pre_save_transform, _tuple_to_dict)
+        item_0 = _tuple_to_dict(item_0)
+    else:
         raise ValueError(
-            f"Invalid item type for {dataset.__class__.__name__}. (expected dict but found {type(item_0)})"
+            f"Invalid item type for {dataset.__class__.__name__}. (expected dict[str, Any] or tuple but found {type(item_0)})"
         )
-    item_type = "dict"  # TODO : detect automatically
+    del pre_save_transform
 
     for attr_name, value in item_0.items():
         shape, hdf_dtype = _get_shape_and_dtype(value)
@@ -122,7 +126,7 @@ def pack_to_hdf(
     hdf_dtypes: Dict[str, str] = hdf_dtypes_0
 
     loader = DataLoader(
-        dataset,
+        dataset,  # type: ignore
         batch_size=batch_size,
         shuffle=False,
         num_workers=num_workers,
@@ -136,7 +140,7 @@ def pack_to_hdf(
         desc="Pre compute shapes...",
         disable=verbose <= 0,
     ):
-        batch = [pre_save_transform(item) for item in batch]
+        batch = [final_transform(item) for item in batch]
         for item in batch:
             for attr_name, value in item.items():
                 shape, hdf_dtype = _get_shape_and_dtype(value)
@@ -213,7 +217,7 @@ def pack_to_hdf(
         global_hash_value = 0
 
         loader = DataLoader(
-            dataset,
+            dataset,  # type: ignore
             batch_size=batch_size,
             shuffle=False,
             num_workers=num_workers,
@@ -227,11 +231,11 @@ def pack_to_hdf(
             desc="Pack data into HDF...",
             disable=verbose <= 0,
         ):
-            batch = [pre_save_transform(item) for item in batch]
+            batch = [final_transform(item) for item in batch]
 
             for item in batch:
                 for attr_name, value in item.items():
-                    hdf_dset = hdf_dsets[attr_name]
+                    hdf_dset: HDFRawDataset = hdf_dsets[attr_name]
                     shape, hdf_dtype = _get_shape_and_dtype(value)
 
                     # Check every shape
@@ -240,7 +244,7 @@ def pack_to_hdf(
                             f"Invalid number of dimension in audio (expected {len(shape)}, found {len(shape)})."
                         )
 
-                    # Resize dataset if needed
+                    # Check dataset size
                     if any(
                         shape_i > dset_shape_i
                         for shape_i, dset_shape_i in zip(shape, hdf_dset.shape[1:])
@@ -277,7 +281,7 @@ def pack_to_hdf(
                         hdf_shapes_dset = hdf_dsets[shape_name]
                         hdf_shapes_dset[i] = shape
 
-                    global_hash_value += _checksum_rec(value)
+                    global_hash_value += _checksum(value)
 
                 i += 1
 
@@ -290,7 +294,7 @@ def pack_to_hdf(
             "length": len(dataset),
             "metadata": str(metadata),
             "encoding": HDF_ENCODING,
-            "info": str(info),
+            "info": json.dumps(info),
             "global_hash_value": global_hash_value,
             "item_type": item_type,
         }
@@ -325,7 +329,7 @@ class Compose:
         return x
 
 
-def _checksum_rec(
+def _checksum(
     value: Any,
 ) -> int:
     if isinstance(value, bytes):
@@ -335,9 +339,9 @@ def _checksum_rec(
     elif isinstance(value, (int, float)):
         return int(value)
     elif isinstance(value, str):
-        return _checksum_rec(value.encode())
+        return _checksum(value.encode())
     elif isinstance(value, (list, tuple)):
-        return sum(map(_checksum_rec, value))
+        return sum(map(_checksum, value))
     else:
         raise TypeError(f"Invalid argument type {value.__class__.__name__}.")
 

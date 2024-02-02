@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import json
 import logging
 import os
 import os.path as osp
@@ -27,35 +28,40 @@ import yaml
 from h5py import Dataset as HDFRawDataset
 from torch import Tensor
 from torch.utils.data.dataset import Dataset
+from typing_extensions import TypeGuard
 
 from torchoutil.nn.functional.indices import get_inverse_perm
 from torchoutil.utils.collections import all_eq
-from torchoutil.utils.data.hdf.constants import (
+from torchoutil.utils.data.hdf.common import (
     HDF_ENCODING,
     HDF_STRING_DTYPE,
     HDF_VOID_DTYPE,
     SHAPE_SUFFIX,
+    _dict_to_tuple,
 )
 
-pylog = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 
 
 T = TypeVar("T")
+U = TypeVar("U")
 
 
-class HDFDataset(Generic[T], Dataset[T]):
+class HDFDataset(Generic[T, U], Dataset[U]):
     def __init__(
         self,
         hdf_fpath: Union[str, Path],
-        transform: Optional[Callable] = None,
+        transform: Optional[Callable[[T], U]] = None,
         keep_padding: Iterable[str] = (),
         open_hdf: bool = True,
     ) -> None:
-        """
-        :param hdf_fpath: The path to the HDF file.
-        :param transforms: The transform to apply values (Tensor). default to None.
-        :param keep_padding: Keys to keep padding values. defaults to ().
-        :param open_hdf: If True, open the HDF file at start. defaults to True.
+        """HDFDataset to read an packed hdf file.
+
+        Args:
+            hdf_fpath: The path to the HDF file.
+            transforms: The transform to apply values. default to None.
+            keep_padding: Keys to keep padding values. defaults to ().
+            open_hdf: If True, open the HDF file at start. defaults to True.
         """
         hdf_fpath = Path(hdf_fpath)
         if not hdf_fpath.is_file():
@@ -91,15 +97,28 @@ class HDFDataset(Generic[T], Dataset[T]):
     @property
     def info(self) -> Dict[str, Any]:
         """Return the global dataset info."""
-        return eval(self._hdf_file.attrs.get("info", "{}"))
+        return json.loads(self._hdf_file.attrs.get("info", "{}"))
+
+    @property
+    def item_type(self) -> str:
+        """Return the global dataset info."""
+        return str(self._hdf_file.attrs.get("item_type", "dict"))
+
+    @property
+    def num_columns(self) -> int:
+        return len(self.column_names)
+
+    @property
+    def num_rows(self) -> int:
+        return len(self)
 
     # Public methods
     @overload
-    def at(self, idx: int) -> Dict[str, Any]:
+    def at(self, idx: int) -> T:
         ...
 
     @overload
-    def at(self, idx: Union[Iterable[int], slice, None]) -> Dict[str, list]:
+    def at(self, idx: Union[Iterable[int], slice, None]) -> Any:
         ...
 
     @overload
@@ -243,7 +262,7 @@ class HDFDataset(Generic[T], Dataset[T]):
             self.close()
 
     @overload
-    def __getitem__(self, idx: int) -> Dict[str, Any]:
+    def __getitem__(self, idx: int) -> U:
         ...
 
     @overload
@@ -268,8 +287,11 @@ class HDFDataset(Generic[T], Dataset[T]):
             column = None
 
         item = self.at(idx, column)  # type: ignore
-        if isinstance(idx, int) and column is None and self._transform is not None:
-            item = self._transform(item)
+        if isinstance(idx, int) and column is None:
+            if self.item_type == "tuple":
+                item = _dict_to_tuple(item)
+            if self._transform is not None:
+                item = self._transform(item)  # type: ignore
         return item
 
     def __getstate__(self) -> Dict[str, Any]:
@@ -316,9 +338,19 @@ class HDFDataset(Generic[T], Dataset[T]):
     def _sanity_check(self) -> None:
         lens = [dset.shape[0] for dset in self._hdf_file.values()]
         if not all_eq(lens) or lens[0] != len(self):
-            pylog.error(
+            logger.error(
                 f"Incorrect length stored in HDF file. (found {lens=} and {len(self)=})"
             )
+
+        if hasattr(self, "__orig_class__"):
+            t_type = self.__orig_class__.__args__[0]  # type: ignore
+            if t_type is not Any and (
+                (issubclass(t_type, dict) and self.item_type != "dict")
+                or (issubclass(t_type, tuple) and self.item_type != "tuple")
+            ):
+                raise TypeError(
+                    f"Invalid HDFDataset typing. (found specified type '{t_type.__name__}' but the internal dataset contains type '{self.item_type}')"
+                )
 
     def _raw_at(self, idx: Union[int, Iterable[int], slice], column: str) -> Any:
         if isinstance(idx, Iterable):
@@ -342,3 +374,7 @@ def _decode_rec(value: Union[bytes, list], encoding: str) -> Union[str, list]:
         raise TypeError(
             f"Invalid argument type {type(value)}. (expected bytes or Iterable)"
         )
+
+
+def is_iterable_int(x: Any) -> TypeGuard[Iterable[int]]:
+    return isinstance(x, Iterable) and all(isinstance(xi, int) for xi in x)

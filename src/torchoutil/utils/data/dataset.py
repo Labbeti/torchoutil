@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from typing import Generic, Protocol, TypeVar
+from typing import Generic, Protocol, TypeVar, runtime_checkable
 
 from torch.utils.data.dataset import Dataset
 
@@ -18,6 +18,7 @@ class EmptyDataset(Dataset):
         return 0
 
 
+@runtime_checkable
 class SizedDatasetLike(Generic[T], Protocol):
     def __getitem__(self, idx) -> T:
         ...
