@@ -63,6 +63,7 @@ def dump_dict(
     fmt: str = "{name}={value}",
     ignore_none: bool = False,
 ) -> str:
+    """Dump dictionary to string."""
     result = join.join(
         fmt.format(name=name, value=value)
         for name, value in dic.items()

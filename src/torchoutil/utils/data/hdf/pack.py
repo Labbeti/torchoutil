@@ -26,6 +26,7 @@ import tqdm
 from h5py import Dataset as HDFRawDataset
 from torch import Tensor, nn
 from torch.utils.data.dataloader import DataLoader
+from typing_extensions import TypeGuard
 
 from torchoutil.utils.collections import all_eq
 from torchoutil.utils.data.dataloader import get_auto_num_cpus
@@ -42,7 +43,7 @@ from torchoutil.utils.data.hdf.dataset import HDFDataset
 logger = logging.getLogger(__name__)
 
 T = TypeVar("T")
-U = TypeVar("U", bound=Union[int, float, str, Tensor, list])
+U = TypeVar("U", bound=Union[int, float, str, Tensor, list, dict])
 
 
 @torch.inference_mode()
@@ -75,8 +76,10 @@ def pack_to_hdf(
     # Check inputs
     if not isinstance(dataset, SizedDatasetLike):
         raise TypeError(
-            f"Cannot pack a non-sized-dataset '{dataset.__class__.__name__}'."
+            f"Cannot pack to hdf a non-sized-dataset '{dataset.__class__.__name__}'."
         )
+    if len(dataset) == 0:
+        raise ValueError("Cannot pack to hdf a empty dataset.")
 
     hdf_fpath = Path(hdf_fpath)
     if hdf_fpath.exists() and not hdf_fpath.is_file():
@@ -104,20 +107,22 @@ def pack_to_hdf(
     item_0 = pre_save_transform(item_0)
 
     final_transform: Callable[[T], Dict[str, Any]]
-    if isinstance(item_0, dict) and all(isinstance(key, str) for key in item_0.keys()):
+
+    if is_dict_str(item_0):
         item_type = "dict"
         final_transform = pre_save_transform  # type: ignore
+        item_0_dict = item_0
     elif isinstance(item_0, tuple):
         item_type = "tuple"
         final_transform = Compose(pre_save_transform, _tuple_to_dict)
-        item_0 = _tuple_to_dict(item_0)
+        item_0_dict = _tuple_to_dict(item_0)
     else:
         raise ValueError(
             f"Invalid item type for {dataset.__class__.__name__}. (expected dict[str, Any] or tuple but found {type(item_0)})"
         )
-    del pre_save_transform
+    del pre_save_transform, item_0
 
-    for attr_name, value in item_0.items():
+    for attr_name, value in item_0_dict.items():
         shape, hdf_dtype = _get_shape_and_dtype(value)
         shapes_0[attr_name] = shape
         hdf_dtypes_0[attr_name] = hdf_dtype
@@ -404,3 +409,7 @@ def _get_shape_and_dtype(
         )
 
     return shape, hdf_dtype
+
+
+def is_dict_str(x: Any) -> TypeGuard[Dict[str, Any]]:
+    return isinstance(x, dict) and all(isinstance(key, str) for key in x.keys())
