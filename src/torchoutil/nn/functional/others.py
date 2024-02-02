@@ -4,6 +4,7 @@
 from typing import (
     Any,
     Callable,
+    Dict,
     Generator,
     Iterable,
     List,
@@ -13,6 +14,7 @@ from typing import (
     Tuple,
     TypeVar,
     Union,
+    overload,
 )
 
 import torch
@@ -22,6 +24,7 @@ from typing_extensions import TypeGuard
 from torchoutil.nn.functional.get import get_device
 
 T = TypeVar("T")
+U = TypeVar("U")
 
 
 def find(
@@ -48,11 +51,29 @@ def find(
         return output
 
 
+@overload
+def move_to_rec(
+    x: Mapping[T, U],
+    predicate: Optional[Callable[[Any], bool]] = None,
+    **kwargs,
+) -> Dict[T, U]:
+    ...
+
+
+@overload
 def move_to_rec(
     x: T,
     predicate: Optional[Callable[[Any], bool]] = None,
     **kwargs,
 ) -> T:
+    ...
+
+
+def move_to_rec(
+    x: Any,
+    predicate: Optional[Callable[[Any], bool]] = None,
+    **kwargs,
+) -> Any:
     """Move all modules and tensors recursively to a specific dtype or device."""
     if "device" in kwargs:
         kwargs["device"] = get_device(kwargs["device"])
@@ -65,17 +86,15 @@ def move_to_rec(
     elif isinstance(x, (str, float, int, bool, complex)):
         return x
     elif isinstance(x, Mapping):
-        return {k: move_to_rec(v, predicate=predicate, **kwargs) for k, v in x.items()}  # type: ignore
+        return {k: move_to_rec(v, predicate=predicate, **kwargs) for k, v in x.items()}
     elif isinstance(x, Iterable):
         generator = (move_to_rec(xi, predicate=predicate, **kwargs) for xi in x)
         if isinstance(x, Generator):
-            return generator  # type: ignore
+            return generator
         elif isinstance(x, tuple):
-            return tuple(generator)  # type: ignore
-        elif isinstance(x, list):
-            return list(generator)  # type: ignore
+            return tuple(generator)
         else:
-            return list(generator)  # type: ignore
+            return list(generator)
     else:
         return x
 
