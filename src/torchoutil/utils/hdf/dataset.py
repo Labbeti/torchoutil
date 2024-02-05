@@ -32,7 +32,7 @@ from typing_extensions import TypeGuard
 
 from torchoutil.nn.functional.indices import get_inverse_perm
 from torchoutil.utils.collections import all_eq
-from torchoutil.utils.data.hdf.common import (
+from torchoutil.utils.hdf.common import (
     HDF_ENCODING,
     HDF_STRING_DTYPE,
     HDF_VOID_DTYPE,

@@ -31,14 +31,14 @@ from typing_extensions import TypeGuard
 from torchoutil.utils.collections import all_eq
 from torchoutil.utils.data.dataloader import get_auto_num_cpus
 from torchoutil.utils.data.dataset import SizedDatasetLike
-from torchoutil.utils.data.hdf.common import (
+from torchoutil.utils.hdf.common import (
     HDF_ENCODING,
     HDF_STRING_DTYPE,
     HDF_VOID_DTYPE,
     SHAPE_SUFFIX,
     _tuple_to_dict,
 )
-from torchoutil.utils.data.hdf.dataset import HDFDataset
+from torchoutil.utils.hdf.dataset import HDFDataset
 
 logger = logging.getLogger(__name__)
 
