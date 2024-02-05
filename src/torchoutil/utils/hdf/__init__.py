@@ -12,5 +12,5 @@ if not _H5PY_AVAILABLE:
 del _H5PY_AVAILABLE
 
 
-from torchoutil.utils.data.hdf.dataset import HDFDataset
-from torchoutil.utils.data.hdf.pack import pack_to_hdf
+from torchoutil.utils.hdf.dataset import HDFDataset
+from torchoutil.utils.hdf.pack import pack_to_hdf
