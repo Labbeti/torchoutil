@@ -51,7 +51,7 @@ class TransformWrapper(Generic[T, U], Dataset[U]):
         item = self._dataset[index]
         if self._transform is not None:
             item = self._transform(item)
-        return item  # type: ignore
+        return item
 
     def __len__(self) -> int:
         if isinstance(self._dataset, Sized):
