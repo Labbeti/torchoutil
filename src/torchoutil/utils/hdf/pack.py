@@ -11,6 +11,7 @@ from typing import (
     Any,
     Callable,
     Dict,
+    List,
     Literal,
     Mapping,
     Optional,
@@ -50,7 +51,8 @@ U = TypeVar("U", bound=Union[int, float, str, Tensor, list, dict])
 def pack_to_hdf(
     dataset: SizedDatasetLike[T],
     hdf_fpath: Union[str, Path],
-    pre_save_transform: Optional[Callable[[T], U]] = None,
+    pre_transform: Optional[Callable[[T], U]] = None,
+    pre_batch_transform: Optional[Callable[[List[T]], List[U]]] = None,
     overwrite: bool = False,
     metadata: str = "",
     verbose: int = 0,
@@ -64,7 +66,7 @@ def pack_to_hdf(
             The key of each dictionaries are strings and values can be int, float, str, Tensor, non-empty List[int], non-empty List[float], non-empty List[str].
             If values are tensors or lists, the number of dimensions must be the same for all items in the dataset.
         hdf_fpath: The path to the HDF file.
-        pre_save_transform: The optional transform to apply to audio returned by the dataset BEFORE storing it in HDF file.
+        pre_transform: The optional transform to apply to audio returned by the dataset BEFORE storing it in HDF file.
             Can be used for deterministic transforms like Resample, LogMelSpectrogram, etc. defaults to None.
         overwrite: If True, the file hdf_fpath can be overwritten. defaults to False.
         metadata: Additional metadata string to add to the hdf file. defaults to ''.
@@ -94,8 +96,8 @@ def pack_to_hdf(
         if verbose >= 2:
             logger.debug(f"Found num_workers=='auto', set to {num_workers}.")
 
-    if pre_save_transform is None:
-        pre_save_transform = nn.Identity()
+    if pre_transform is None:
+        pre_transform = nn.Identity()
 
     if verbose >= 2:
         logger.debug(f"Start packing data into HDF file '{hdf_fpath}'...")
@@ -104,23 +106,23 @@ def pack_to_hdf(
     shapes_0 = {}
     hdf_dtypes_0 = {}
     item_0 = dataset[0]
-    item_0 = pre_save_transform(item_0)
+    item_0 = pre_transform(item_0)
 
-    final_transform: Callable[[T], Dict[str, Any]]
+    dict_pre_transform: Callable[[T], Dict[str, Any]]
 
     if is_dict_str(item_0):
         item_type = "dict"
-        final_transform = pre_save_transform  # type: ignore
+        dict_pre_transform = pre_transform  # type: ignore
         item_0_dict = item_0
     elif isinstance(item_0, tuple):
         item_type = "tuple"
-        final_transform = Compose(pre_save_transform, _tuple_to_dict)
+        dict_pre_transform = Compose(pre_transform, _tuple_to_dict)
         item_0_dict = _tuple_to_dict(item_0)
     else:
         raise ValueError(
             f"Invalid item type for {dataset.__class__.__name__}. (expected dict[str, Any] or tuple but found {type(item_0)})"
         )
-    del pre_save_transform, item_0
+    del pre_transform, item_0
 
     for attr_name, value in item_0_dict.items():
         shape, hdf_dtype = _get_shape_and_dtype(value)
@@ -145,7 +147,9 @@ def pack_to_hdf(
         desc="Pre compute shapes...",
         disable=verbose <= 0,
     ):
-        batch = [final_transform(item) for item in batch]
+        batch = [dict_pre_transform(item) for item in batch]
+        # batch = pre_batch_transform(batch)  # TODO
+
         for item in batch:
             for attr_name, value in item.items():
                 shape, hdf_dtype = _get_shape_and_dtype(value)
@@ -236,7 +240,7 @@ def pack_to_hdf(
             desc="Pack data into HDF...",
             disable=verbose <= 0,
         ):
-            batch = [final_transform(item) for item in batch]
+            batch = [dict_pre_transform(item) for item in batch]
 
             for item in batch:
                 for attr_name, value in item.items():
