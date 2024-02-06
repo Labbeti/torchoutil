@@ -6,8 +6,9 @@ import os
 
 def get_auto_num_cpus() -> int:
     """Returns the number of CPUs available for several Linux-based platforms.
-
     Useful for setting num_workers argument in DataLoaders.
+
+    On Windows and MAC OS, this will just return the number of CPUs on this machine.
     """
     try:
         num_cpus = len(os.sched_getaffinity(0))
