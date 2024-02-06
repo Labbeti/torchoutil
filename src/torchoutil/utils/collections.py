@@ -10,6 +10,7 @@ from typing import (
     Mapping,
     Optional,
     Sequence,
+    Tuple,
     TypeVar,
     Union,
 )
@@ -149,3 +150,10 @@ def flat_dict_of_dict(
         else:
             output[k] = v
     return output
+
+
+def flat_list(lst: Iterable[Sequence[T]]) -> Tuple[List[T], List[int]]:
+    """Return a flat version of the input list of sublists with each sublist size."""
+    flatten_lst = [element for sublst in lst for element in sublst]
+    sizes = [len(sents) for sents in lst]
+    return flatten_lst, sizes
