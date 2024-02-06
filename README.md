@@ -28,7 +28,7 @@ Collection of functions and modules to help development in PyTorch.
 pip install torchoutil
 ```
 
-The only requirements are `python` and `torch`.
+The only requirement is **PyTorch**.
 
 ## Usage
 
