@@ -30,7 +30,7 @@ class EmptyDataset(Dataset[None]):
 
 @runtime_checkable
 class SizedDatasetLike(Generic[T], Protocol):
-    def __getitem__(self, idx) -> T:
+    def __getitem__(self, index) -> T:
         ...
 
     def __len__(self) -> int:
