@@ -15,7 +15,7 @@ T5 = TypeVar("T5")
 T6 = TypeVar("T6")
 
 
-class TModule(nn.Module, Generic[InType, OutType]):
+class TModule(Generic[InType, OutType], nn.Module):
     """Typed version of torch.nn.Module. Can specify an input and output type."""
 
     def __call__(self, *args: InType, **kwargs: InType) -> OutType:
@@ -25,14 +25,14 @@ class TModule(nn.Module, Generic[InType, OutType]):
         return super().forward(*args, **kwargs)
 
     @overload
-    def __add__(self, other: nn.Module) -> "TSequential[InType, Any]":
-        ...
-
-    @overload
     def __add__(self, other: "TModule[Any, T1]") -> "TSequential[InType, T1]":
         ...
 
-    def __add__(self, other: Any) -> "TSequential":
+    @overload
+    def __add__(self, other: nn.Module) -> "TSequential[InType, Any]":
+        ...
+
+    def __add__(self, other) -> "TSequential[InType, Any]":
         return TSequential(self, other)
 
     def __mul__(self, num: int) -> "TSequential[InType, OutType]":
@@ -40,7 +40,7 @@ class TModule(nn.Module, Generic[InType, OutType]):
         return TSequential(*duplicated)
 
 
-class TSequential(nn.Sequential, TModule, Generic[InType, OutType]):
+class TSequential(Generic[InType, OutType], TModule[InType, OutType], nn.Sequential):
     """Typed version of torch.nn.Sequential, designed to work with torchoutil.nn.TModules."""
 
     @overload
@@ -160,6 +160,9 @@ def __test_typing() -> None:
     xb = LayerB()(x)
 
     seq = TSequential(LayerA(), LayerA(), LayerB())
+    xab = seq(x)
+
+    seq = (LayerA() + LayerA()) + LayerB()
     xab = seq(x)
 
     assert isinstance(xa, Tensor)
