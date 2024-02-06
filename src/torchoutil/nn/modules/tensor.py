@@ -293,10 +293,24 @@ class AsTensor(nn.Module):
 
 
 class OneHot(nn.Module):
-    def __init__(self, num_classes: int) -> None:
+    def __init__(
+        self,
+        num_classes: int,
+        device: Union[str, torch.device, None] = None,
+        dtype: Union[torch.dtype, None] = None,
+    ) -> None:
+        device = get_device(device)
+
         super().__init__()
         self.num_classes = num_classes
+        self.device = device
+        self.dtype = dtype
 
     def forward(self, x: Tensor) -> Tensor:
-        x = torch.as_tensor(x)
-        return F.one_hot(x, self.num_classes)
+        x = torch.as_tensor(x, device=self.device)
+        x = F.one_hot(x, self.num_classes)
+        x = x.to(dtype=self.dtype)
+        return x
+
+    def extra_repr(self) -> str:
+        return f"{self.num_classes}"
