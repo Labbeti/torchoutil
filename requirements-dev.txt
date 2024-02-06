@@ -5,4 +5,5 @@ flake8
 ipython
 pre-commit
 pytest
+torchvision
 twine
