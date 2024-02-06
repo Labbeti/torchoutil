@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 black==23.11.0
+coverage
 flake8
 ipython
 pre-commit
