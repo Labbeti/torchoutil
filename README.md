@@ -28,7 +28,7 @@ Collection of functions and modules to help development in PyTorch.
 pip install torchoutil
 ```
 
-The only requirements are `python>=3.8` and `torch>=1.4`.
+The only requirements are `python` and `torch`.
 
 ## Usage
 
@@ -96,6 +96,15 @@ x2 = x1[perm]
 x3 = x2[inv_perm]
 # inv_perm are indices that allow us to get x1 from x3, i.e. x1 == x3 here
 ```
+
+## Extras
+`torchoutil` also provides additional modules when some specific package are already installed in your environment.
+All extras can be installed with `pip install torchoutil[extras]`
+
+If `tensorboard` is installed, the function `load_event_file` can be used.
+If `numpy` is installed, the classes `FromNumpy` and  `ToNumpy` can be used.
+If `h5py` is installed, the function `pack_to_hdf` and class `HDFDataset` can be used.
+
 
 ## Contact
 Maintainer:
