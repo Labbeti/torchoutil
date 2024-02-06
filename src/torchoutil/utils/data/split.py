@@ -15,6 +15,12 @@ def random_split(
     lengths: Iterable[float],
     generator: Union[int, Generator, None] = None,
 ) -> List[List[int]]:
+    """
+    Args:
+        targets: List of class indices of size (N,).
+        lengths: Ratios of the target splits.
+        generator: Torch Generator or seed to make this function deterministic. defaults to None.
+    """
     lengths = _round_lengths(num_samples, lengths, math.floor)
     if isinstance(generator, int):
         generator = Generator().manual_seed(generator)
@@ -35,6 +41,13 @@ def balanced_random_split(
     lengths: Iterable[float],
     generator: Union[int, Generator, None] = None,
 ) -> List[List[int]]:
+    """
+    Args:
+        targets: List of class indices of size (N,).
+        num_classes: Number of classes.
+        lengths: Ratios of the target splits.
+        generator: Torch Generator or seed to make this function deterministic. defaults to None.
+    """
     lengths = list(lengths)
     if isinstance(generator, int):
         generator = Generator().manual_seed(generator)
@@ -52,7 +65,9 @@ def balanced_random_split(
 
 
 def _round_lengths(
-    n: int, lengths: Iterable[Union[int, float]], round_fn: Callable[[float], int]
+    n: int,
+    lengths: Iterable[Union[int, float]],
+    round_fn: Callable[[float], int],
 ) -> List[int]:
     int_lenghts = []
     for length in lengths:
