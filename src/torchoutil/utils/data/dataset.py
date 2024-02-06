@@ -21,7 +21,7 @@ U = TypeVar("U", covariant=True)
 class EmptyDataset(Dataset[None]):
     """Dataset placeholder. Raises StopIteration if __getitem__ is called."""
 
-    def __getitem__(self, idx) -> None:
+    def __getitem__(self, index) -> None:
         raise StopIteration
 
     def __len__(self) -> int:
