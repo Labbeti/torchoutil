@@ -1,18 +1,18 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from typing import Generic, OrderedDict, TypeVar, overload
+from typing import Any, Generic, OrderedDict, TypeVar, overload
 
 from torch import nn
 
 InType = TypeVar("InType", covariant=False, contravariant=True)
 OutType = TypeVar("OutType", covariant=True, contravariant=False)
-InterType1 = TypeVar("InterType1")
-InterType2 = TypeVar("InterType2")
-InterType3 = TypeVar("InterType3")
-InterType4 = TypeVar("InterType4")
-InterType5 = TypeVar("InterType5")
-InterType6 = TypeVar("InterType6")
+T1 = TypeVar("T1")
+T2 = TypeVar("T2")
+T3 = TypeVar("T3")
+T4 = TypeVar("T4")
+T5 = TypeVar("T5")
+T6 = TypeVar("T6")
 
 
 class TModule(nn.Module, Generic[InType, OutType]):
@@ -23,6 +23,21 @@ class TModule(nn.Module, Generic[InType, OutType]):
 
     def forward(self, *args: InType, **kwargs: InType) -> OutType:
         return super().forward(*args, **kwargs)
+
+    @overload
+    def __add__(self, other: nn.Module) -> "TSequential[InType, Any]":
+        ...
+
+    @overload
+    def __add__(self, other: "TModule[Any, T1]") -> "TSequential[InType, T1]":
+        ...
+
+    def __add__(self, other: Any) -> "TSequential":
+        return TSequential(self, other)
+
+    def __mul__(self, num: int) -> "TSequential[InType, OutType]":
+        duplicated = [self] * num
+        return TSequential(*duplicated)
 
 
 class TSequential(nn.Sequential, TModule, Generic[InType, OutType]):
@@ -39,8 +54,8 @@ class TSequential(nn.Sequential, TModule, Generic[InType, OutType]):
     @overload
     def __init__(
         self,
-        arg0: TModule[InType, InterType1],
-        arg1: TModule[InterType1, OutType],
+        arg0: TModule[InType, T1],
+        arg1: TModule[T1, OutType],
         /,
     ) -> None:
         ...
@@ -48,9 +63,9 @@ class TSequential(nn.Sequential, TModule, Generic[InType, OutType]):
     @overload
     def __init__(
         self,
-        arg0: TModule[InType, InterType1],
-        arg1: TModule[InterType1, InterType2],
-        arg2: TModule[InterType2, OutType],
+        arg0: TModule[InType, T1],
+        arg1: TModule[T1, T2],
+        arg2: TModule[T2, OutType],
         /,
     ) -> None:
         ...
@@ -58,10 +73,10 @@ class TSequential(nn.Sequential, TModule, Generic[InType, OutType]):
     @overload
     def __init__(
         self,
-        arg0: TModule[InType, InterType1],
-        arg1: TModule[InterType1, InterType2],
-        arg2: TModule[InterType2, InterType3],
-        arg3: TModule[InterType3, OutType],
+        arg0: TModule[InType, T1],
+        arg1: TModule[T1, T2],
+        arg2: TModule[T2, T3],
+        arg3: TModule[T3, OutType],
         /,
     ) -> None:
         ...
@@ -69,11 +84,11 @@ class TSequential(nn.Sequential, TModule, Generic[InType, OutType]):
     @overload
     def __init__(
         self,
-        arg0: TModule[InType, InterType1],
-        arg1: TModule[InterType1, InterType2],
-        arg2: TModule[InterType2, InterType3],
-        arg3: TModule[InterType3, InterType4],
-        arg4: TModule[InterType4, OutType],
+        arg0: TModule[InType, T1],
+        arg1: TModule[T1, T2],
+        arg2: TModule[T2, T3],
+        arg3: TModule[T3, T4],
+        arg4: TModule[T4, OutType],
         /,
     ) -> None:
         ...
@@ -81,12 +96,12 @@ class TSequential(nn.Sequential, TModule, Generic[InType, OutType]):
     @overload
     def __init__(
         self,
-        arg0: TModule[InType, InterType1],
-        arg1: TModule[InterType1, InterType2],
-        arg2: TModule[InterType2, InterType3],
-        arg3: TModule[InterType3, InterType4],
-        arg4: TModule[InterType4, InterType5],
-        arg5: TModule[InterType5, OutType],
+        arg0: TModule[InType, T1],
+        arg1: TModule[T1, T2],
+        arg2: TModule[T2, T3],
+        arg3: TModule[T3, T4],
+        arg4: TModule[T4, T5],
+        arg5: TModule[T5, OutType],
         /,
     ) -> None:
         ...
@@ -94,13 +109,13 @@ class TSequential(nn.Sequential, TModule, Generic[InType, OutType]):
     @overload
     def __init__(
         self,
-        arg0: TModule[InType, InterType1],
-        arg1: TModule[InterType1, InterType2],
-        arg2: TModule[InterType2, InterType3],
-        arg3: TModule[InterType3, InterType4],
-        arg4: TModule[InterType4, InterType5],
-        arg5: TModule[InterType5, InterType6],
-        arg6: TModule[InterType6, OutType],
+        arg0: TModule[InType, T1],
+        arg1: TModule[T1, T2],
+        arg2: TModule[T2, T3],
+        arg3: TModule[T3, T4],
+        arg4: TModule[T4, T5],
+        arg5: TModule[T5, T6],
+        arg6: TModule[T6, OutType],
         /,
     ) -> None:
         ...
