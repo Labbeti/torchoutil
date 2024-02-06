@@ -29,7 +29,7 @@ class TestHDF(TestCase):
         image1, label1 = hdf_dataset[idx]
 
         self.assertTrue(np.equal(image0, image1).bool().all())
-        self.assertListEqual(label0, label1)
+        self.assertEqual(label0, label1)
 
 
 if __name__ == "__main__":
