@@ -44,8 +44,8 @@ from torchoutil.utils.hdf.dataset import HDFDataset
 logger = logging.getLogger(__name__)
 
 T = TypeVar("T")
-U = TypeVar("U", bound=Union[int, float, str, Tensor, list, dict])
-V = TypeVar("V", bound=Union[int, float, str, Tensor, list, dict])
+U = TypeVar("U", bound=Union[int, float, str, Tensor, list])
+V = TypeVar("V", bound=Union[int, float, str, Tensor, list])
 
 
 @torch.inference_mode()
@@ -53,7 +53,9 @@ def pack_to_hdf(
     dataset: SizedDatasetLike[T],
     hdf_fpath: Union[str, Path],
     pre_transform: Optional[Callable[[T], U]] = None,
-    pre_batch_transform: Optional[Callable[[List[U]], List[V]]] = None,
+    pre_batch_transform: Optional[
+        Callable[[List[Dict[str, U]]], List[Dict[str, V]]]
+    ] = None,
     overwrite: bool = False,
     metadata: str = "",
     verbose: int = 0,

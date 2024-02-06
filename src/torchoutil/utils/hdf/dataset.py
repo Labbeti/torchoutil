@@ -112,6 +112,10 @@ class HDFDataset(Generic[T, U], Dataset[U]):
     def num_rows(self) -> int:
         return len(self)
 
+    @property
+    def transform(self) -> Optional[Callable[[T], U]]:
+        return self._transform
+
     # Public methods
     @overload
     def at(self, idx: int) -> T:
@@ -143,7 +147,7 @@ class HDFDataset(Generic[T, U], Dataset[U]):
         if column is None:
             column = self.column_names
 
-        if not isinstance(column, str) and isinstance(column, Iterable):
+        if is_iterable_str(column):
             return {column_i: self.at(idx, column_i) for column_i in column}
 
         if column not in self.column_names:
@@ -202,7 +206,7 @@ class HDFDataset(Generic[T, U], Dataset[U]):
 
             # Decode all bytes to string
             if hdf_dtype == HDF_STRING_DTYPE:
-                hdf_value = _decode_rec(hdf_value, HDF_ENCODING)
+                hdf_value = decode_rec(hdf_value, HDF_ENCODING)
             # Convert numpy.array to torch.Tensor
             elif isinstance(hdf_value, np.ndarray):
                 if hdf_dtype != HDF_VOID_DTYPE:
@@ -364,12 +368,12 @@ class HDFDataset(Generic[T, U], Dataset[U]):
         return hdf_value
 
 
-def _decode_rec(value: Union[bytes, list], encoding: str) -> Union[str, list]:
-    """Decode bytes to str with the specified encoding. Works recursively on list of str, list of list of str, etc."""
+def decode_rec(value: Union[bytes, Iterable], encoding: str) -> Union[str, list]:
+    """Decode bytes to str with the specified encoding. Works recursively on list of bytes, list of list of bytes, etc."""
     if isinstance(value, bytes):
         return value.decode(encoding=encoding)
-    elif isinstance(value, list):
-        return [_decode_rec(elt, encoding) for elt in value]
+    elif is_iterable_bytes_list(value):
+        return [decode_rec(elt, encoding) for elt in value]
     else:
         raise TypeError(
             f"Invalid argument type {type(value)}. (expected bytes or Iterable)"
@@ -378,3 +382,13 @@ def _decode_rec(value: Union[bytes, list], encoding: str) -> Union[str, list]:
 
 def is_iterable_int(x: Any) -> TypeGuard[Iterable[int]]:
     return isinstance(x, Iterable) and all(isinstance(xi, int) for xi in x)
+
+
+def is_iterable_str(x: Any) -> TypeGuard[Iterable[str]]:
+    return not isinstance(x, str) and (
+        isinstance(x, Iterable) and all(isinstance(xi, str) for xi in x)
+    )
+
+
+def is_iterable_bytes_list(x: Any) -> TypeGuard[Iterable[Union[bytes, list]]]:
+    return isinstance(x, Iterable) and all(isinstance(xi, (bytes, list)) for xi in x)
