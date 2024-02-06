@@ -263,6 +263,11 @@ class ToList(nn.Module):
         return x.tolist()
 
 
+class ToItem(nn.Module):
+    def forward(self, x: Tensor) -> Number:
+        return x.item()
+
+
 class AsTensor(nn.Module):
     def __init__(
         self,
@@ -285,3 +290,13 @@ class AsTensor(nn.Module):
             ),
             ignore_none=True,
         )
+
+
+class OneHot(nn.Module):
+    def __init__(self, num_classes: int) -> None:
+        super().__init__()
+        self.num_classes = num_classes
+
+    def forward(self, x: Tensor) -> Tensor:
+        x = torch.as_tensor(x)
+        return F.one_hot(x, self.num_classes)
