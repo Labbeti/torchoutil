@@ -15,7 +15,8 @@ def random_split(
     lengths: Iterable[float],
     generator: Union[int, Generator, None] = None,
 ) -> List[List[int]]:
-    """
+    """Generate indices for a random dataset split.
+
     Args:
         targets: List of class indices of size (N,).
         lengths: Ratios of the target splits.
@@ -41,7 +42,8 @@ def balanced_random_split(
     lengths: Iterable[float],
     generator: Union[int, Generator, None] = None,
 ) -> List[List[int]]:
-    """
+    """Generate indices for a random dataset split while keeping the same multiclass distribution.
+
     Args:
         targets: List of class indices of size (N,).
         num_classes: Number of classes.
@@ -105,6 +107,7 @@ def _split_indices_per_class(
     ]
 
     current_starts = [0 for _ in range(num_classes)]
+
     for i, length in enumerate(lengths):
         for j, indices in enumerate(indices_per_class):
             current_start = current_starts[j]
