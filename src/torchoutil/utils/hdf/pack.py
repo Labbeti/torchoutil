@@ -197,15 +197,25 @@ def pack_to_hdf(
             hdf_dtype = hdf_dtypes.get(attr_name)
 
             kwargs: Dict[str, Any] = {}
-            if hdf_dtype == "i":
+            if hdf_dtype == "b":
+                kwargs["fillvalue"] = False
+            elif hdf_dtype in ("i", "u"):
                 kwargs["fillvalue"] = 0
             elif hdf_dtype == "f":
                 kwargs["fillvalue"] = 0.0
             elif hdf_dtype in (HDF_STRING_DTYPE, HDF_VOID_DTYPE):
                 pass
             else:
+                HDF_SUPPORTED_DTYPES = (
+                    "b",
+                    "i",
+                    "u",
+                    "f",
+                    HDF_STRING_DTYPE,
+                    HDF_VOID_DTYPE,
+                )
                 raise ValueError(
-                    f"Unknown value {hdf_dtype=}. (with {attr_name=} and {attr_name in hdf_dtypes=})"
+                    f"Unsupported type {hdf_dtype=}. (expected one of {HDF_SUPPORTED_DTYPES})"
                 )
 
             if verbose >= 2:
@@ -328,7 +338,7 @@ def pack_to_hdf(
     if verbose >= 2:
         logger.debug(f"Data into has been packed into HDF file '{hdf_fpath}'.")
 
-    hdf_dataset = HDFDataset(hdf_fpath, open_hdf=True)
+    hdf_dataset = HDFDataset(hdf_fpath, open_hdf=True, return_shape_columns=False)
     return hdf_dataset
 
 
@@ -381,6 +391,12 @@ def _get_shape_and_dtype(
         if value.is_floating_point():
             hdf_dtype = "f"
         else:
+            hdf_dtype = "i"
+
+    elif isinstance(value, np.ndarray):
+        shape = tuple(value.shape)
+        hdf_dtype = value.dtype.kind
+        if hdf_dtype == "u":
             hdf_dtype = "i"
 
     elif isinstance(value, (list, tuple)):

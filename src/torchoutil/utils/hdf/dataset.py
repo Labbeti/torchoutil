@@ -24,7 +24,6 @@ from typing import (
 import h5py
 import numpy as np
 import torch
-import yaml
 from h5py import Dataset as HDFRawDataset
 from torch import Tensor
 from torch.utils.data.dataset import Dataset
@@ -53,6 +52,7 @@ class HDFDataset(Generic[T, U], Dataset[U]):
         hdf_fpath: Union[str, Path],
         transform: Optional[Callable[[T], U]] = None,
         keep_padding: Iterable[str] = (),
+        return_shape_columns: bool = False,
         open_hdf: bool = True,
     ) -> None:
         """HDFDataset to read an packed hdf file.
@@ -68,8 +68,9 @@ class HDFDataset(Generic[T, U], Dataset[U]):
             names = os.listdir(osp.dirname(hdf_fpath))
             names = [name for name in names if name.endswith(".hdf")]
             names = list(sorted(names))
+            names_str = "\n - ".join(names)
             raise FileNotFoundError(
-                f"Cannot find HDF file in path {hdf_fpath=}. Possible HDF files are:\n{yaml.dump(names, sort_keys=False)}"
+                f"Cannot find HDF file in path {hdf_fpath=}. Possible HDF files are:\n - {names_str}"
             )
         keep_padding = list(keep_padding)
 
@@ -77,6 +78,7 @@ class HDFDataset(Generic[T, U], Dataset[U]):
         self._hdf_fpath = hdf_fpath
         self._transform = transform
         self._keep_padding = keep_padding
+        self._return_shape_columns = return_shape_columns
 
         self._hdf_file: Any = None
 
@@ -85,9 +87,20 @@ class HDFDataset(Generic[T, U], Dataset[U]):
 
     # Properties
     @property
+    def all_columns(self) -> List[str]:
+        """The name of all columns of the dataset."""
+        return list(self.get_hdf_keys())
+
+    @property
     def column_names(self) -> List[str]:
         """The name of each column of the dataset."""
-        return list(self.get_hdf_keys())
+        column_names = self.all_columns
+        column_names = [
+            name
+            for name in column_names
+            if self._return_shape_columns or not name.endswith(SHAPE_SUFFIX)
+        ]
+        return column_names
 
     @property
     def shape(self) -> Tuple[int, ...]:
