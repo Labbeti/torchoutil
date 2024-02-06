@@ -60,13 +60,13 @@ def dump_dict(
     dic: Mapping[str, Any],
     /,
     join: str = ", ",
-    fmt: str = "{name}={value}",
+    fmt: str = "{key}={value}",
     ignore_none: bool = False,
 ) -> str:
     """Dump dictionary to string."""
     result = join.join(
-        fmt.format(name=name, value=value)
-        for name, value in dic.items()
+        fmt.format(key=key, value=value)
+        for key, value in dic.items()
         if not (value is None and ignore_none)
     )
     return result

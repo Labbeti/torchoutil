@@ -31,7 +31,7 @@ def get_install_info() -> Dict[str, str]:
 def print_install_info() -> None:
     """Show main packages versions."""
     install_info = get_install_info()
-    dumped = dump_dict(install_info, join="\n", fmt="{name}: {value}")
+    dumped = dump_dict(install_info, join="\n", fmt="{key}: {value}")
     print(dumped)
 
 
