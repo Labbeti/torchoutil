@@ -112,8 +112,9 @@ def flat_dict_of_dict(
     flat_iterables: bool = False,
 ) -> Dict[str, Any]:
     """Flat a nested dictionary.
-    Example
-    ----------
+
+    Example 1
+    ---------
     ```
     >>> dic = {
     ...     "a": 1,
@@ -125,6 +126,14 @@ def flat_dict_of_dict(
     >>> flat_dict(dic)
     ... {"a": 1, "b.a": 2, "b.b": 10}
     ```
+
+    Example 2
+    ---------
+    ```
+    >>> dic = {"a": ["hello", "world"], "b": 3}
+    >>> flat_dict(dic, flat_iterables=True)
+    ... {"a.0": "hello", "a.1": "world", "b": 3}
+    ```
     """
     output = {}
     for k, v in nested_dic.items():
@@ -132,12 +141,9 @@ def flat_dict_of_dict(
             v = flat_dict_of_dict(v, sep, flat_iterables)
             output.update({f"{k}{sep}{kv}": vv for kv, vv in v.items()})
         elif flat_iterables and isinstance(v, Iterable) and not isinstance(v, str):
-            output.update(
-                {
-                    f"{k}{sep}{i}": flat_dict_of_dict(vv, sep, flat_iterables)
-                    for i, vv in enumerate(v)
-                }
-            )
+            v = {f"{i}": vi for i, vi in enumerate(v)}
+            v = flat_dict_of_dict(v, sep, flat_iterables)
+            output.update({f"{k}{sep}{kv}": vv for kv, vv in v.items()})
         else:
             output[k] = v
     return output
