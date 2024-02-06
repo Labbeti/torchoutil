@@ -7,7 +7,7 @@ from unittest import TestCase
 from torchoutil.utils.collections import flat_dict_of_dict
 
 
-class TestReadme(TestCase):
+class TestCollections(TestCase):
     def test_flat_dict_of_dict_example_1(self) -> None:
         x = {
             "a": 1,
