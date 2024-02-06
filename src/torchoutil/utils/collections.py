@@ -139,11 +139,13 @@ def flat_dict_of_dict(
     for k, v in nested_dic.items():
         if isinstance(v, Mapping) and all(isinstance(kv, str) for kv in v.keys()):
             v = flat_dict_of_dict(v, sep, flat_iterables)
-            output.update({f"{k}{sep}{kv}": vv for kv, vv in v.items()})
+            v = {f"{k}{sep}{kv}": vv for kv, vv in v.items()}
+            output.update(v)
         elif flat_iterables and isinstance(v, Iterable) and not isinstance(v, str):
             v = {f"{i}": vi for i, vi in enumerate(v)}
             v = flat_dict_of_dict(v, sep, flat_iterables)
-            output.update({f"{k}{sep}{kv}": vv for kv, vv in v.items()})
+            v = {f"{k}{sep}{kv}": vv for kv, vv in v.items()}
+            output.update(v)
         else:
             output[k] = v
     return output

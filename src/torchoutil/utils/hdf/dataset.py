@@ -28,7 +28,6 @@ import yaml
 from h5py import Dataset as HDFRawDataset
 from torch import Tensor
 from torch.utils.data.dataset import Dataset
-from typing_extensions import TypeGuard
 
 from torchoutil.nn.functional.indices import get_inverse_perm
 from torchoutil.utils.collections import all_eq
@@ -39,6 +38,7 @@ from torchoutil.utils.hdf.common import (
     SHAPE_SUFFIX,
     _dict_to_tuple,
 )
+from torchoutil.utils.type_checks import is_iterable_bytes_list, is_iterable_str
 
 logger = logging.getLogger(__name__)
 
@@ -378,17 +378,3 @@ def decode_rec(value: Union[bytes, Iterable], encoding: str) -> Union[str, list]
         raise TypeError(
             f"Invalid argument type {type(value)}. (expected bytes or Iterable)"
         )
-
-
-def is_iterable_int(x: Any) -> TypeGuard[Iterable[int]]:
-    return isinstance(x, Iterable) and all(isinstance(xi, int) for xi in x)
-
-
-def is_iterable_str(x: Any) -> TypeGuard[Iterable[str]]:
-    return not isinstance(x, str) and (
-        isinstance(x, Iterable) and all(isinstance(xi, str) for xi in x)
-    )
-
-
-def is_iterable_bytes_list(x: Any) -> TypeGuard[Iterable[Union[bytes, list]]]:
-    return isinstance(x, Iterable) and all(isinstance(xi, (bytes, list)) for xi in x)

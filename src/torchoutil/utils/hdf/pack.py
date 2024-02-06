@@ -27,7 +27,6 @@ import tqdm
 from h5py import Dataset as HDFRawDataset
 from torch import Tensor, nn
 from torch.utils.data.dataloader import DataLoader
-from typing_extensions import TypeGuard
 
 from torchoutil.utils.collections import all_eq
 from torchoutil.utils.data.dataloader import get_auto_num_cpus
@@ -40,6 +39,7 @@ from torchoutil.utils.hdf.common import (
     _tuple_to_dict,
 )
 from torchoutil.utils.hdf.dataset import HDFDataset
+from torchoutil.utils.type_checks import is_dict_str
 
 logger = logging.getLogger(__name__)
 
@@ -418,7 +418,3 @@ def _get_shape_and_dtype(
         )
 
     return shape, hdf_dtype
-
-
-def is_dict_str(x: Any) -> TypeGuard[Dict[str, Any]]:
-    return isinstance(x, dict) and all(isinstance(key, str) for key in x.keys())

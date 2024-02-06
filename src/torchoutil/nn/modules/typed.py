@@ -132,11 +132,11 @@ def __test_typing() -> None:
     import torch
     from torch import Tensor
 
-    class LayerA(nn.Module):
+    class LayerA(TModule[Tensor, Tensor]):
         def forward(self, x: Tensor) -> Tensor:
             return x * x
 
-    class LayerB(nn.Module):
+    class LayerB(TModule[Tensor, int]):
         def forward(self, x: Tensor) -> int:
             return int(x.sum().item())
 
