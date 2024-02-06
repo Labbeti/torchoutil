@@ -94,7 +94,7 @@ inv_perm = get_inverse_perm(perm)
 x1 = torch.rand(10)
 x2 = x1[perm]
 x3 = x2[inv_perm]
-# inv_perm are indices that allow us to get x1 from x3, i.e. x1 == x3 here
+# inv_perm are indices that allow us to get x3 from x2, i.e. x1 == x3 here
 ```
 
 ## Extras
