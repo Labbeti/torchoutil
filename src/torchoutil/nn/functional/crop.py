@@ -23,15 +23,27 @@ def crop_dim(
 def crop_dims(
     x: Tensor,
     target_lengths: Iterable[int],
-    aligns: Iterable[Literal["left", "right", "center", "random"]] = ("left",),
-    dims: Iterable[int] = (-1,),
+    aligns: Union[  # type: ignore
+        Literal["left", "right", "center", "random"],
+        Iterable[Literal["left", "right", "center", "random"]],
+    ] = "left",
+    dims: Union[Iterable[int], Literal["auto"]] = "auto",
     generator: Union[int, Generator, None] = None,
 ) -> Tensor:
     """Generic function to crop multiple dimensions."""
 
     target_lengths = list(target_lengths)
-    aligns = list(aligns)
-    dims = list(dims)
+
+    if isinstance(aligns, str):
+        aligns = [aligns] * len(target_lengths)
+    else:
+        aligns = list(aligns)
+    aligns: list[Literal["left", "right", "center", "random"]]
+
+    if dims == "auto":
+        dims = list(range(-len(target_lengths), 0))
+    else:
+        dims = list(dims)
 
     if isinstance(generator, int):
         generator = Generator().manual_seed(generator)
