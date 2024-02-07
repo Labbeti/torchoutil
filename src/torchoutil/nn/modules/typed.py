@@ -25,17 +25,17 @@ class TModule(Generic[InType, OutType], nn.Module):
         return super().forward(*args, **kwargs)
 
     @overload
-    def __add__(self, other: "TModule[Any, T1]") -> "TSequential[InType, T1]":
+    def chain(self, other: "TModule[Any, T1]") -> "TSequential[InType, T1]":
         ...
 
     @overload
-    def __add__(self, other: nn.Module) -> "TSequential[InType, Any]":
+    def chain(self, other: nn.Module) -> "TSequential[InType, Any]":
         ...
 
-    def __add__(self, other) -> "TSequential[InType, Any]":
+    def chain(self, other) -> "TSequential[InType, Any]":
         return TSequential(self, other)
 
-    def __mul__(self, num: int) -> "TSequential[InType, OutType]":
+    def duplicate(self, num: int) -> "TSequential[InType, OutType]":
         duplicated = [self] * num
         return TSequential(*duplicated)
 
@@ -162,7 +162,7 @@ def __test_typing() -> None:
     seq = TSequential(LayerA(), LayerA(), LayerB())
     xab = seq(x)
 
-    seq = (LayerA() + LayerA()) + LayerB()
+    seq = LayerA().chain(LayerA()).chain(LayerB())
     xab = seq(x)
 
     assert isinstance(xa, Tensor)
