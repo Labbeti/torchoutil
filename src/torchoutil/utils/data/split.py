@@ -36,8 +36,8 @@ def random_split(
     return splits
 
 
-def balanced_random_split(
-    targets: Tensor,
+def balanced_monolabel_split(
+    targets_indices: Tensor,
     num_classes: int,
     lengths: Iterable[float],
     generator: Union[int, Generator, None] = None,
@@ -56,7 +56,7 @@ def balanced_random_split(
 
     indices_per_class = []
     for class_idx in range(num_classes):
-        indices = torch.where(targets.eq(class_idx))[0]
+        indices = torch.where(targets_indices.eq(class_idx))[0]
         indices = indices[torch.randperm(len(indices), generator=generator)]
         indices = indices.tolist()
         indices_per_class.append(indices)
