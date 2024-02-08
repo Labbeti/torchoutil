@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import math
-from typing import Callable, Iterable, List, Union
+from typing import Callable, Iterable, List, Optional, Union
 
 import torch
 from torch import Generator, Tensor
@@ -57,10 +57,10 @@ def balanced_monolabel_split(
     indices_per_class = []
     for class_idx in range(num_classes):
         indices = torch.where(targets_indices.eq(class_idx))[0]
-        indices = indices[torch.randperm(len(indices), generator=generator)]
         indices = indices.tolist()
         indices_per_class.append(indices)
 
+    indices_per_class = _shuffle_indices_per_class(indices_per_class, generator)
     splits = _split_indices_per_class(indices_per_class, lengths, math.floor)
     flatten = [flat_list(split)[0] for split in splits]
     return flatten
@@ -77,6 +77,19 @@ def _round_lengths(
             length = round_fn(n * length)
         int_lenghts.append(length)
     return int_lenghts
+
+
+def _shuffle_indices_per_class(
+    indices_per_class: List[List[int]],
+    generator: Optional[Generator],
+) -> List[List[int]]:
+    shuffled = []
+    for indices in indices_per_class:
+        perm = torch.randperm(len(indices), generator=generator)
+        indices = torch.as_tensor(indices)
+        indices = indices[perm].tolist()
+        shuffled.append(indices)
+    return indices_per_class
 
 
 def _split_indices_per_class(
