@@ -19,6 +19,7 @@ def masked_mean(
     Args:
         tensor: (N, ...)
         non_pad_mask: Non-padding mask, should be broadcastable with argument tensor and reduced with argument dim.
+            It should be a boolean tensor or a float tensor containing only 1 and 0 values.
         dim: Optional dim(s) to reduce. If None, result will be reduced to a scalar. defaults to None.
     """
     if dim is None:
@@ -41,8 +42,9 @@ def masked_sum(
     """Sum a tensor along the specified dim(s).
 
     Args:
-        tensor: (N, ...)
+        x: (N, ...)
         non_pad_mask: Non-padding mask, should be broadcastable with argument tensor and reduced with argument dim.
+            It should be a boolean tensor or a float tensor containing only 1 and 0 values.
         dim: Optional dim(s) to reduce. If None, result will be reduced to a scalar. defaults to None.
     """
     if dim is None:
@@ -96,7 +98,7 @@ def generate_square_subsequent_mask_shifted(
     """
     Example 1
     ----------
-        >>> generate_shifted_sq_mask(6, 2)
+        >>> generate_shifted_sq_mask(6, right_shift=2)
         tensor([[0., 0., 0., -inf, -inf, -inf],
                 [0., 0., 0., 0., -inf, -inf],
                 [0., 0., 0., 0., 0., -inf],
@@ -128,10 +130,10 @@ def lengths_to_non_pad_mask(
     Args:
         lengths: (bsize,)
         max_len: Optional int for indicate the maximal length.
-        If None, it will be set to lengths.max().
-        defaults to None.
+            If None, it will be set to lengths.max().
+            defaults to None.
         include_end: If True, the value at index of len will be True in returned mask.
-        defaults to False.
+            defaults to False.
 
     Example 1::
     -----------
@@ -166,9 +168,10 @@ def lengths_to_pad_mask(
     Args:
         lengths: (B,)
         max_len: Optional int for indicate the maximal length.
-        If None, it will be set to lengths.max().
-        defaults to None.
-        include_end: If True, the last value of each size will be set to False. defaults to True.
+            If None, it will be set to lengths.max().
+            defaults to None.
+        include_end: If True, the last value of each size will be set to False.
+            defaults to True.
 
     Example 1::
     -----------
@@ -265,8 +268,8 @@ def tensor_to_non_pad_mask(
         pad_value: The pad value used in tensor. defaults to None.
         end_value: The end value used in tensor. defaults to None.
         include_end: If True, the end value will be included in non_pad_mask.
-        This parameter is ignored if end_value is None.
-        defaults to False.
+            This parameter is ignored if end_value is None.
+            defaults to False.
 
     Example 1::
     -----------
@@ -335,7 +338,7 @@ def tensor_to_tensors_list(
 ) -> List[Tensor]:
     """Convert padded tensor to tensor list.
 
-    You must provide a value for one of `pad_value`, `end_value`, `non_pad_mask` or `lengths`.
+    You must provide a value for one of the 4 arguments: `pad_value`, `end_value`, `non_pad_mask` or `lengths`.
     If multiple values are provided, only one will be used and the priority order is `pad_value`, `end_value`, `non_pad_mask` and `lengths`.
     The output will be a list of N tensors of shape (*).
 
@@ -346,7 +349,6 @@ def tensor_to_tensors_list(
         `non_pad_mask`: Optional non-padded boolean mask. defaults to None.
         `lengths`: Length of each sequence in padded batch.
     """
-
     if pad_value is not None:
         lengths = tensor_to_lengths(tensor, pad_value=pad_value)
         return tensor_to_tensors_list(tensor, lengths=lengths)
@@ -368,7 +370,7 @@ def tensor_to_tensors_list(
 
     else:
         raise ValueError(
-            "Invalid arguments. Please provide only one of the arguments : end_value, pad_value, mask, lengths."
+            "Invalid arguments. Please provide only one of the arguments : end_value, pad_value, non_pad_mask or lengths."
         )
 
     return tensors
@@ -384,6 +386,6 @@ def tensors_list_to_lengths(tensors: List[Tensor], dim: int = -1) -> Tensor:
         dim: The dimension of the output sizes. defaults to -1.
     """
     device = None if len(tensors) == 0 else tensors[0].device
-    return torch.as_tensor(
-        [tensor.shape[dim] for tensor in tensors], dtype=torch.long, device=device
-    )
+    lst = [tensor.shape[dim] for tensor in tensors]
+    output = torch.as_tensor(lst, dtype=torch.long, device=device)
+    return output
