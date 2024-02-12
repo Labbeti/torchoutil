@@ -101,6 +101,7 @@ def _split_indices_per_class(
     Split distinct indices per class.
 
     Example:
+    --------
     ```
     >>> split_indices_per_class(indices_per_class=[[1, 2], [3, 4], [5, 6]], ratios=[0.5, 0.5])
     ... [[[1], [3], [5]], [[2], [4], [6]]]
