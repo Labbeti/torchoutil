@@ -9,10 +9,10 @@ def _package_is_available(package_name: str) -> bool:
     try:
         return find_spec(package_name) is not None
     except AttributeError:
-        # Python 3.6
+        # Old support for Python <= 3.6
         return False
     except (ImportError, ModuleNotFoundError):
-        # Python 3.7+
+        # Python >= 3.7
         return False
 
 
