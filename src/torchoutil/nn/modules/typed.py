@@ -25,14 +25,14 @@ class TModule(Generic[InType, OutType], nn.Module):
         return super().forward(*args, **kwargs)
 
     @overload
-    def chain(self, other: "TModule[Any, T1]") -> "TSequential[InType, T1]":
+    def compose(self, other: "TModule[Any, T1]") -> "TSequential[InType, T1]":
         ...
 
     @overload
-    def chain(self, other: nn.Module) -> "TSequential[InType, Any]":
+    def compose(self, other: nn.Module) -> "TSequential[InType, Any]":
         ...
 
-    def chain(self, other) -> "TSequential[InType, Any]":
+    def compose(self, other) -> "TSequential[InType, Any]":
         return TSequential(self, other)
 
     def duplicate(self, num: int) -> "TSequential[InType, OutType]":
@@ -46,8 +46,20 @@ class TSequential(Generic[InType, OutType], TModule[InType, OutType], nn.Sequent
     @overload
     def __init__(
         self,
+        *,
+        unpack_tuple: bool = False,
+        unpack_dict: bool = False,
+    ) -> None:
+        ...
+
+    @overload
+    def __init__(
+        self,
         arg0: TModule[InType, OutType],
         /,
+        *,
+        unpack_tuple: bool = False,
+        unpack_dict: bool = False,
     ) -> None:
         ...
 
@@ -57,6 +69,9 @@ class TSequential(Generic[InType, OutType], TModule[InType, OutType], nn.Sequent
         arg0: TModule[InType, T1],
         arg1: TModule[T1, OutType],
         /,
+        *,
+        unpack_tuple: bool = False,
+        unpack_dict: bool = False,
     ) -> None:
         ...
 
@@ -67,6 +82,9 @@ class TSequential(Generic[InType, OutType], TModule[InType, OutType], nn.Sequent
         arg1: TModule[T1, T2],
         arg2: TModule[T2, OutType],
         /,
+        *,
+        unpack_tuple: bool = False,
+        unpack_dict: bool = False,
     ) -> None:
         ...
 
@@ -78,6 +96,9 @@ class TSequential(Generic[InType, OutType], TModule[InType, OutType], nn.Sequent
         arg2: TModule[T2, T3],
         arg3: TModule[T3, OutType],
         /,
+        *,
+        unpack_tuple: bool = False,
+        unpack_dict: bool = False,
     ) -> None:
         ...
 
@@ -90,6 +111,9 @@ class TSequential(Generic[InType, OutType], TModule[InType, OutType], nn.Sequent
         arg3: TModule[T3, T4],
         arg4: TModule[T4, OutType],
         /,
+        *,
+        unpack_tuple: bool = False,
+        unpack_dict: bool = False,
     ) -> None:
         ...
 
@@ -103,6 +127,9 @@ class TSequential(Generic[InType, OutType], TModule[InType, OutType], nn.Sequent
         arg4: TModule[T4, T5],
         arg5: TModule[T5, OutType],
         /,
+        *,
+        unpack_tuple: bool = False,
+        unpack_dict: bool = False,
     ) -> None:
         ...
 
@@ -117,30 +144,67 @@ class TSequential(Generic[InType, OutType], TModule[InType, OutType], nn.Sequent
         arg5: TModule[T5, T6],
         arg6: TModule[T6, OutType],
         /,
+        *,
+        unpack_tuple: bool = False,
+        unpack_dict: bool = False,
     ) -> None:
         ...
 
     @overload
-    def __init__(self, *args: nn.Module) -> None:
+    def __init__(
+        self,
+        arg: "OrderedDict[str, TModule[InType, OutType]]",
+        /,
+        *,
+        unpack_tuple: bool = False,
+        unpack_dict: bool = False,
+    ) -> None:
         ...
 
     @overload
-    def __init__(self, arg: "OrderedDict[str, nn.Module]") -> None:
+    def __init__(
+        self,
+        arg: "OrderedDict[str, nn.Module]",
+        /,
+        *,
+        unpack_tuple: bool = False,
+        unpack_dict: bool = False,
+    ) -> None:
         ...
 
     @overload
-    def __init__(self, arg: "OrderedDict[str, TModule[InType, OutType]]") -> None:
+    def __init__(
+        self,
+        *args: nn.Module,
+        unpack_tuple: bool = False,
+        unpack_dict: bool = False,
+    ) -> None:
         ...
 
-    def __init__(self, *args) -> None:  # type: ignore
+    def __init__(
+        self,
+        *args,
+        unpack_tuple: bool = False,
+        unpack_dict: bool = False,
+    ) -> None:  # type: ignore
         nn.Sequential.__init__(self, *args)
         TModule.__init__(self)
 
-    def __call__(self, *args: InType, **kwargs: InType) -> OutType:
-        return nn.Sequential.__call__(self, *args, **kwargs)
+        self._unpack_tuple = unpack_tuple
+        self._unpack_dict = unpack_dict
 
-    def forward(self, *args: InType, **kwargs: InType) -> OutType:
-        return nn.Sequential.forward(self, *args, **kwargs)
+    def __call__(self, x: InType) -> OutType:
+        return nn.Sequential.__call__(self, x)
+
+    def forward(self, x: InType) -> OutType:
+        for module in self:
+            if self._unpack_tuple and isinstance(x, tuple):
+                x = module(*x)
+            elif self._unpack_dict and isinstance(x, dict):
+                x = module(**x)
+            else:
+                x = module(x)
+        return x  # type: ignore
 
 
 def __test_typing() -> None:
@@ -155,6 +219,10 @@ def __test_typing() -> None:
         def forward(self, x: Tensor) -> int:
             return int(x.sum().item())
 
+    class LayerC(TModule[int, Tensor]):
+        def forward(self, x: int) -> Tensor:
+            return torch.as_tensor(x)
+
     x = torch.rand(10)
     xa = LayerA()(x)
     xb = LayerB()(x)
@@ -162,9 +230,13 @@ def __test_typing() -> None:
     seq = TSequential(LayerA(), LayerA(), LayerB())
     xab = seq(x)
 
-    seq = LayerA().chain(LayerA()).chain(LayerB())
+    seq = LayerA().compose(LayerA()).compose(LayerB())
     xab = seq(x)
+
+    seq = LayerC().compose(LayerA())
+    xc = seq(xab)
 
     assert isinstance(xa, Tensor)
     assert isinstance(xb, int)
     assert isinstance(xab, int)
+    assert isinstance(xc, Tensor)
