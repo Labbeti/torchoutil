@@ -11,7 +11,6 @@ from typing import (
     Any,
     Callable,
     Dict,
-    List,
     Literal,
     Mapping,
     Optional,
@@ -45,7 +44,6 @@ logger = logging.getLogger(__name__)
 
 T = TypeVar("T")
 U = TypeVar("U", bound=Union[int, float, str, Tensor, list])
-V = TypeVar("V", bound=Union[int, float, str, Tensor, list])
 
 
 @torch.inference_mode()
@@ -53,15 +51,12 @@ def pack_to_hdf(
     dataset: SizedDatasetLike[T],
     hdf_fpath: Union[str, Path],
     pre_transform: Optional[Callable[[T], U]] = None,
-    pre_batch_transform: Optional[
-        Callable[[List[Dict[str, U]]], List[Dict[str, V]]]
-    ] = None,
     overwrite: bool = False,
     metadata: str = "",
     verbose: int = 0,
     batch_size: int = 32,
     num_workers: Union[int, Literal["auto"]] = "auto",
-) -> HDFDataset[V, V]:
+) -> HDFDataset[U, U]:
     """Pack a dataset to HDF file.
 
     Args:
@@ -101,8 +96,6 @@ def pack_to_hdf(
 
     if pre_transform is None:
         pre_transform = nn.Identity()
-    if pre_batch_transform is None:
-        pre_batch_transform = nn.Identity()
 
     if verbose >= 2:
         logger.debug(f"Start packing data into HDF file '{hdf_fpath}'...")
@@ -153,7 +146,6 @@ def pack_to_hdf(
         disable=verbose <= 0,
     ):
         batch = [dict_pre_transform(item) for item in batch]
-        batch = pre_batch_transform(batch)
 
         for item in batch:
             for attr_name, value in item.items():
