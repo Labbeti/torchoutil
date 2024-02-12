@@ -18,7 +18,7 @@ def random_split(
     """Generate indices for a random dataset split.
 
     Args:
-        targets: List of class indices of size (N,).
+        num_samples: Number of total samples.
         lengths: Ratios of the target splits.
         generator: Torch Generator or seed to make this function deterministic. defaults to None.
     """
