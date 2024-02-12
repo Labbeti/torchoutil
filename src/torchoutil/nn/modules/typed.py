@@ -234,7 +234,7 @@ def __test_typing() -> None:
     xab = seq(x)
 
     seq = LayerC().compose(LayerA())
-    xc = seq(xab)
+    xc = seq(2)
 
     assert isinstance(xa, Tensor)
     assert isinstance(xb, int)

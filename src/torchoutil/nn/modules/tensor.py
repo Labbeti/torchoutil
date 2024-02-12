@@ -279,7 +279,7 @@ class AsTensor(nn.Module):
         self.device = device
         self.dtype = dtype
 
-    def forward(self, x: Union[List, Number]) -> Tensor:
+    def forward(self, x: Union[List, Number, Tensor]) -> Tensor:
         return torch.as_tensor(x, dtype=self.dtype, device=self.device)
 
     def extra_repr(self) -> str:
