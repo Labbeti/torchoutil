@@ -1,17 +1,15 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-"""Utilities for conversion between classes indices, multihot, names and probabilities for multilabel classification.
+"""Helper functions for conversion between classes indices, multihot, names and probabilities for multilabel classification.
 """
 
 from typing import List, Mapping, Sequence, TypeVar, Union
 
 import torch
-
 from torch import Tensor
 
 from torchoutil.nn.functional.get import get_device
-
 
 T = TypeVar("T")
 
@@ -63,7 +61,7 @@ def multihot_to_indices(
     """Convert multihot boolean encoding to indices of labels.
 
     Args:
-        multihot: Multihot labels encoding as 2D matrix.
+        multihot: Multihot labels encoded as 2D matrix.
     """
     preds = []
     for multihot_i in multihot:
@@ -81,7 +79,7 @@ def multihot_to_names(
     """Convert multihot boolean encoding to names using a mapping.
 
     Args:
-        multihot: Multihot labels encoding as 2D matrix.
+        multihot: Multihot labels encoded as 2D matrix.
         idx_to_name: Mapping to convert a class index to its name.
     """
     indices = multihot_to_indices(multihot)
@@ -135,8 +133,8 @@ def probs_to_indices(
         threshold: Threshold(s) to binarize probabilities. Can be a scalar or a sequence of (num_classes,) thresholds.
     """
     multihot = probs_to_multihot(probs, threshold)
-    preds = multihot_to_indices(multihot)
-    return preds
+    indices = multihot_to_indices(multihot)
+    return indices
 
 
 def probs_to_multihot(
