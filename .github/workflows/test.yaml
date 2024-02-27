@@ -24,7 +24,6 @@ jobs:
       matrix:
         os: [ubuntu-latest,windows-latest,macos-latest]
         python-version: ["3.8", "3.11"]
-        torch-version: ["1.10"]
 
     steps:
     # --- INSTALLATIONS ---
@@ -39,8 +38,10 @@ jobs:
 
     - name: Install package
       run: |
-        python -m pip install torch==${{ matrix.torch-version }}
         python -m pip install -e .[extras,dev]
+        torch_min_version=`pip index versions torch | grep 'Available versions' | rev | cut -d' ' -f 1 | rev`
+        echo "Found torch_min_version=${torch_min_version}"
+        pip install torch==${torch_min_version}
 
     # --- TESTS ---
     - name: Lint with flake8
