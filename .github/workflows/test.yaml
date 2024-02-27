@@ -24,7 +24,7 @@ jobs:
       matrix:
         os: [ubuntu-latest,windows-latest,macos-latest]
         python-version: ["3.8", "3.11"]
-        torch-version: ["1.10", "last"]
+        torch-version: ["1.10.0", "last"]
 
     steps:
     # --- INSTALLATIONS ---
@@ -54,7 +54,7 @@ jobs:
             version=${torch_min_version}
           fi
           echo "Installing torch version=${version}"
-          python -m pip install torch==${version}
+          python -m pip install torch~=${version}
         fi
         python -m pip install -e .[extras,dev]
 
