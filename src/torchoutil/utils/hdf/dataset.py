@@ -67,7 +67,7 @@ class HDFDataset(Generic[T, U], Dataset[U]):
             return_shape_columns: Returns the shape of each value.
             open_hdf: If True, open the HDF file at start. defaults to True.
         """
-        hdf_fpath = Path(hdf_fpath)
+        hdf_fpath = Path(hdf_fpath).resolve()
         if not hdf_fpath.is_file():
             names = os.listdir(osp.dirname(hdf_fpath))
             names = [name for name in names if name.endswith(".hdf")]
