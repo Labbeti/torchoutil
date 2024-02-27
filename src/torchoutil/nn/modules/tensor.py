@@ -11,6 +11,7 @@ from torch.nn import functional as F
 from torch.types import Number
 
 from torchoutil.nn.functional.get import get_device
+from torchoutil.utils import return_types
 from torchoutil.utils.collections import dump_dict
 
 
@@ -56,8 +57,10 @@ class Max(nn.Module):
         self,
         dim: Optional[int],
         return_values: bool = True,
-        return_indices: bool = False,
+        return_indices: Optional[bool] = None,
     ) -> None:
+        if return_indices is None:
+            return_indices = dim is not None
         if not return_values and not return_indices:
             raise ValueError(
                 f"Invalid combinaison of arguments {return_values=} and {return_indices=}. (at least one of them must be True)"
@@ -67,10 +70,10 @@ class Max(nn.Module):
         self.return_values = return_values
         self.return_indices = return_indices
 
-    def forward(self, x: Tensor) -> Union[Tensor, torch.return_types.max]:
+    def forward(self, x: Tensor) -> Union[Tensor, return_types.max]:
         if self.dim is None:
             index = x.argmax()
-            values_indices = torch.return_types.max(x[index], index)
+            values_indices = return_types.max(x.flatten()[index], index)
         else:
             values_indices = x.max(dim=self.dim)
 
@@ -98,8 +101,10 @@ class Min(nn.Module):
         self,
         dim: Optional[int],
         return_values: bool = True,
-        return_indices: bool = False,
+        return_indices: Optional[bool] = None,
     ) -> None:
+        if return_indices is None:
+            return_indices = dim is not None
         if not return_values and not return_indices:
             raise ValueError(
                 f"Invalid combinaison of arguments {return_values=} and {return_indices=}. (at least one of them must be True)"
@@ -109,10 +114,10 @@ class Min(nn.Module):
         self.return_values = return_values
         self.return_indices = return_indices
 
-    def forward(self, x: Tensor) -> Union[Tensor, torch.return_types.min]:
+    def forward(self, x: Tensor) -> Union[Tensor, return_types.min]:
         if self.dim is None:
             index = x.argmin()
-            values_indices = torch.return_types.min(x[index], index)
+            values_indices = return_types.min(x.flatten()[index], index)
         else:
             values_indices = x.min(dim=self.dim)
 
@@ -280,7 +285,7 @@ class AsTensor(nn.Module):
         self.dtype = dtype
 
     def forward(self, x: Union[List, Number, Tensor]) -> Tensor:
-        return torch.as_tensor(x, dtype=self.dtype, device=self.device)
+        return torch.as_tensor(x, dtype=self.dtype, device=self.device)  # type: ignore
 
     def extra_repr(self) -> str:
         return dump_dict(

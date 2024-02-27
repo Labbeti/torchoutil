@@ -22,3 +22,11 @@ def is_iterable_str(x: Any) -> TypeGuard[Iterable[str]]:
 
 def is_iterable_bytes_list(x: Any) -> TypeGuard[Iterable[Union[bytes, list]]]:
     return isinstance(x, Iterable) and all(isinstance(xi, (bytes, list)) for xi in x)
+
+
+def is_iterable_iterable_int(x: Any) -> TypeGuard[Iterable[Iterable[int]]]:
+    return (
+        isinstance(x, Iterable)
+        and all(isinstance(xi, Iterable) for xi in x)
+        and all(isinstance(xij, int) for xi in x for xij in xi)
+    )
