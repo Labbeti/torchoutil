@@ -45,6 +45,7 @@ jobs:
           }
           torch_min_version=`python -m pip index versions torch | grep 'Available versions' | rev | cut -d' ' -f 1 | rev`
           echo "Found torch_min_version=${torch_min_version}"
+          echo "Comparing with ${{ matrix.torch-version }}"
           version_greater_equal "${{ matrix.torch-version }}" "${torch_min_version}"
           is_ge=$?
           if [ "${is_ge}" == 1 ]; then
