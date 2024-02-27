@@ -30,6 +30,12 @@ pip install torchoutil
 
 The only requirement is **PyTorch**.
 
+To check if the package is installed and show the package version, you can use the following command:
+```bash
+torchoutil-info
+```
+
+
 ## Usage
 
 ### Batch of padded sequences
