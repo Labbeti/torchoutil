@@ -44,6 +44,8 @@ jobs:
           printf '%s\n%s\n' "$2" "$1" | sort --check=quiet --version-sort
         }
         echo "Dummy check"
+        sort --help
+        echo "" | sort --check=quiet --version-sort
         version_greater_equal 1.10.0 1.13.0
         echo "Dummy check OK: $?"
 
