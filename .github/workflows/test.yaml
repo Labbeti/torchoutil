@@ -40,7 +40,7 @@ jobs:
     - name: Install package
       shell: bash
       run: |
-        python -m pip install torch~=${{ torch-version }}
+        python -m pip install torch~=${{ matrix.torch-version }}
         python -m pip install -e .[extras,dev]
 
     # --- TESTS ---
