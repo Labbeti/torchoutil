@@ -15,7 +15,7 @@ T = TypeVar("T")
 
 
 def indices_to_multihot(
-    indices: Union[Sequence[Sequence[int]], List[Tensor]],
+    indices: Union[Sequence[Sequence[int]], List[Tensor], Tensor],
     num_classes: int,
     device: Union[str, torch.device, None] = None,
     dtype: Union[torch.dtype, None] = torch.bool,
@@ -41,7 +41,7 @@ def indices_to_multihot(
 
 
 def indices_to_names(
-    indices: Union[Sequence[Sequence[int]], List[Tensor]],
+    indices: Union[Sequence[Sequence[int]], List[Tensor], Tensor],
     idx_to_name: Mapping[int, T],
 ) -> List[List[T]]:
     """Convert indices of labels to names using a mapping.
