@@ -27,16 +27,18 @@ class IndicesToOneHot(nn.Module):
         self,
         num_classes: int,
         device: Union[str, torch.device, None] = None,
+        dtype: Union[torch.dtype, None] = torch.bool,
     ) -> None:
         super().__init__()
         self.num_classes = num_classes
         self.device = device
+        self.dtype = dtype
 
     def forward(
         self,
         indices: Union[List[int], Tensor],
     ) -> Tensor:
-        onehot = indices_to_onehot(indices, self.num_classes, self.device)
+        onehot = indices_to_onehot(indices, self.num_classes, self.device, self.dtype)
         return onehot
 
     def extra_repr(self) -> str:
@@ -44,6 +46,7 @@ class IndicesToOneHot(nn.Module):
             dict(
                 num_classes=self.num_classes,
                 device=self.device,
+                dtype=self.dtype,
             ),
             ignore_none=True,
         )
@@ -114,17 +117,28 @@ class NamesToOneHot(nn.Module, Generic[T]):
         self,
         idx_to_name: Mapping[int, T],
         device: Union[str, torch.device, None] = None,
+        dtype: Union[torch.dtype, None] = torch.bool,
     ) -> None:
         super().__init__()
         self.idx_to_name = idx_to_name
         self.device = device
+        self.dtype = dtype
 
     def forward(
         self,
         names: List[T],
     ) -> Tensor:
-        onehot = names_to_onehot(names, self.idx_to_name, self.device)
+        onehot = names_to_onehot(names, self.idx_to_name, self.device, self.dtype)
         return onehot
+
+    def extra_repr(self) -> str:
+        return dump_dict(
+            dict(
+                device=self.device,
+                dtype=self.dtype,
+            ),
+            ignore_none=True,
+        )
 
 
 class ProbsToIndices(nn.Module):
@@ -137,12 +151,30 @@ class ProbsToIndices(nn.Module):
 
 
 class ProbsToOneHot(nn.Module):
+    def __init__(
+        self,
+        device: Union[str, torch.device, None] = None,
+        dtype: Union[torch.dtype, None] = torch.bool,
+    ) -> None:
+        super().__init__()
+        self.device = device
+        self.dtype = dtype
+
     def forward(
         self,
         probs: Tensor,
     ) -> Tensor:
-        onehot = probs_to_onehot(probs)
+        onehot = probs_to_onehot(probs, self.device, self.dtype)
         return onehot
+
+    def extra_repr(self) -> str:
+        return dump_dict(
+            dict(
+                device=self.device,
+                dtype=self.dtype,
+            ),
+            ignore_none=True,
+        )
 
 
 class ProbsToNames(nn.Module, Generic[T]):

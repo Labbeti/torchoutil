@@ -19,6 +19,7 @@ def indices_to_onehot(
     indices: Union[Sequence[int], Tensor],
     num_classes: int,
     device: Union[str, torch.device, None] = None,
+    dtype: Union[torch.dtype, None] = torch.bool,
 ) -> Tensor:
     """Convert indices of labels to onehot boolean encoding.
 
@@ -26,11 +27,12 @@ def indices_to_onehot(
         indices: List of list of label indices.
         num_classes: Number maximal of unique classes.
         device: PyTorch device of the output tensor.
+        dtype: PyTorch DType of the output tensor.
     """
     device = get_device(device)
     indices = torch.as_tensor(indices, device=device, dtype=torch.long)
     onehot = F.one_hot(indices, num_classes)
-    onehot = onehot.bool()
+    onehot = onehot.to(dtype=dtype)
     return onehot
 
 
@@ -92,6 +94,7 @@ def names_to_onehot(
     names: List[T],
     idx_to_name: Mapping[int, T],
     device: Union[str, torch.device, None] = None,
+    dtype: Union[torch.dtype, None] = torch.bool,
 ) -> Tensor:
     """Convert names to onehot boolean encoding.
 
@@ -99,9 +102,10 @@ def names_to_onehot(
         names: List of list of label names.
         idx_to_name: Mapping to convert a class index to its name.
         device: PyTorch device of the output tensor.
+        dtype: PyTorch DType of the output tensor.
     """
     indices = names_to_indices(names, idx_to_name)
-    onehot = indices_to_onehot(indices, len(idx_to_name), device)
+    onehot = indices_to_onehot(indices, len(idx_to_name), device, dtype)
     return onehot
 
 
@@ -120,14 +124,18 @@ def probs_to_indices(
 
 def probs_to_onehot(
     probs: Tensor,
+    device: Union[str, torch.device, None] = None,
+    dtype: Union[torch.dtype, None] = torch.bool,
 ) -> Tensor:
     """Convert matrix of probabilities to onehot boolean encoding.
 
     Args:
         probs: Output probabilities for each classes.
     """
+    if device is None:
+        device = probs.device
     indices = probs_to_indices(probs)
-    onehot = indices_to_onehot(indices, probs.shape[-1], probs.device)
+    onehot = indices_to_onehot(indices, probs.shape[-1], device, dtype)
     return onehot
 
 
