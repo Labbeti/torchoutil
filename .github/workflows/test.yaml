@@ -48,7 +48,7 @@ jobs:
           echo "Comparing with ${{ matrix.torch-version }}"
           version_greater_equal "${{ matrix.torch-version }}" "${torch_min_version}"
           is_ge=$?
-          if [ "${is_ge}" == 1 ]; then
+          if [ "${is_ge}" == 0 ]; then
             version=${{ matrix.torch-version }}
           else
             version=${torch_min_version}
