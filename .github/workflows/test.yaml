@@ -43,7 +43,7 @@ jobs:
           printf '%s\n%s\n' "$2" "$1" | sort --check=quiet --version-sort
         }
         echo "Dummy check"
-        version_greater_equal 1.0.0 0.9.0
+        version_greater_equal 1.10.0 1.13.0
         echo "Dummy check OK: $?"
 
         if [ "${{ matrix.torch-version }}" != "last" ]; then
