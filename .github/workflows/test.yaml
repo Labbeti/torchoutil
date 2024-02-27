@@ -39,10 +39,14 @@ jobs:
 
     - name: Install package
       run: |
-        if [ "${{ matrix.torch-version }}" != last ]; then
-          version_greater_equal() {
-            printf '%s\n%s\n' "$2" "$1" | sort --check=quiet --version-sort
-          }
+        version_greater_equal() {
+          printf '%s\n%s\n' "$2" "$1" | sort --check=quiet --version-sort
+        }
+        echo "Dummy check"
+        version_greater_equal 1.0.0 0.9.0
+        echo "Dummy check OK: $?"
+
+        if [ "${{ matrix.torch-version }}" != "last" ]; then
           torch_min_version=`python -m pip index versions torch | grep 'Available versions' | rev | cut -d' ' -f 1 | rev`
           echo "Found torch_min_version=${torch_min_version}"
           echo "Comparing with ${{ matrix.torch-version }}"
