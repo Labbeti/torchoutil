@@ -27,6 +27,7 @@ import torch
 from h5py import Dataset as HDFRawDataset
 from torch import Tensor
 from torch.utils.data.dataset import Dataset
+from typing_extensions import TypeGuard
 
 from torchoutil.nn.functional.indices import get_inverse_perm
 from torchoutil.utils.collections import all_eq
@@ -37,7 +38,11 @@ from torchoutil.utils.hdf.common import (
     SHAPE_SUFFIX,
     _dict_to_tuple,
 )
-from torchoutil.utils.type_checks import is_iterable_bytes_list, is_iterable_str
+from torchoutil.utils.type_checks import (
+    is_iterable_bytes_list,
+    is_iterable_int,
+    is_iterable_str,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -322,8 +327,8 @@ class HDFDataset(Generic[T, U], Dataset[U]):
         if (
             isinstance(index, tuple)
             and len(index) == 2
-            and isinstance(index[0], IndexType)
-            and isinstance(index[1], ColumnType)
+            and is_index(index[0])
+            and is_column(index[1])
         ):
             index, column = index
         else:
@@ -430,3 +435,16 @@ def _decode_rec(value: Union[bytes, Iterable], encoding: str) -> Union[str, list
         raise TypeError(
             f"Invalid argument type {type(value)}. (expected bytes or Iterable)"
         )
+
+
+def is_index(index: Any) -> TypeGuard[IndexType]:
+    return (
+        isinstance(index, int)
+        or is_iterable_int(index)
+        or isinstance(index, slice)
+        or index is None
+    )
+
+
+def is_column(column: Any) -> TypeGuard[ColumnType]:
+    return isinstance(column, str) or is_iterable_str(column) or column is None
