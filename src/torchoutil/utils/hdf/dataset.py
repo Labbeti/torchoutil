@@ -46,6 +46,10 @@ T = TypeVar("T")
 U = TypeVar("U")
 
 
+IndexType = Union[int, Iterable[int], slice, None]
+ColumnType = Union[str, Iterable[str], None]
+
+
 class HDFDataset(Generic[T, U], Dataset[U]):
     def __init__(
         self,
@@ -160,8 +164,8 @@ class HDFDataset(Generic[T, U], Dataset[U]):
 
     def at(
         self,
-        index: Union[int, Iterable[int], slice, None] = None,
-        column: Union[str, Iterable[str], None] = None,
+        index: IndexType = None,
+        column: ColumnType = None,
         raw: bool = False,
     ) -> Any:
         if not self.is_open():
@@ -301,7 +305,10 @@ class HDFDataset(Generic[T, U], Dataset[U]):
         ...
 
     @overload
-    def __getitem__(self, index: Union[Iterable[int], slice, None]) -> Dict[str, list]:
+    def __getitem__(
+        self,
+        index: Union[Iterable[int], slice, None],
+    ) -> Dict[str, list]:
         ...
 
     @overload
@@ -310,12 +317,13 @@ class HDFDataset(Generic[T, U], Dataset[U]):
 
     def __getitem__(
         self,
-        index: Union[int, Iterable[int], None, slice, Tuple[Any, Any]],
+        index: Union[IndexType, Tuple[IndexType, ColumnType]],
     ) -> Any:
         if (
             isinstance(index, tuple)
             and len(index) == 2
-            and (isinstance(index[1], (str, Iterable)) or index[1] is None)
+            and isinstance(index[0], IndexType)
+            and isinstance(index[1], ColumnType)
         ):
             index, column = index
         else:
