@@ -61,60 +61,15 @@ def masked_sum(
 
 def generate_square_subsequent_mask(
     size: int,
+    diagonal: int = 0,
     device: Union[str, torch.device, None] = None,
+    dtype: Optional[torch.dtype] = None,
 ) -> Tensor:
-    r"""Generate a square mask for the sequence. The masked positions are filled with float('-inf').
-    Unmasked positions are filled with float(0.0).
-
-    Args:
-        size: The size of the output tensor.
-        device: The device of the output tensor.
-
-    Example 1::
-    -----------
-        >>> generate_square_subsequent_mask(6)
-        tensor([[0., -inf, -inf, -inf, -inf, -inf],
-                [0., 0., -inf, -inf, -inf, -inf],
-                [0., 0., 0., -inf, -inf, -inf],
-                [0., 0., 0., 0., -inf, -inf],
-                [0., 0., 0., 0., 0., -inf],
-                [0., 0., 0., 0., 0., 0.]])
-    """
     device = get_device(device)
-    mask = (torch.triu(torch.ones(size, size, device=device)) == 1).transpose(0, 1)
-    mask = (
-        mask.float()
-        .masked_fill(mask == 0, float("-inf"))
-        .masked_fill(mask == 1, float(0.0))
-    )
-    return mask
-
-
-def generate_square_subsequent_mask_shifted(
-    size: int,
-    right_shift: int = 0,
-    device: Union[str, torch.device, None] = None,
-) -> Tensor:
-    """
-    Example 1
-    ----------
-        >>> generate_shifted_sq_mask(6, right_shift=2)
-        tensor([[0., 0., 0., -inf, -inf, -inf],
-                [0., 0., 0., 0., -inf, -inf],
-                [0., 0., 0., 0., 0., -inf],
-                [0., 0., 0., 0., 0., 0.],
-                [0., 0., 0., 0., 0., 0.],
-                [0., 0., 0., 0., 0., 0.]])
-    """
-    device = get_device(device)
-    mask = (
-        torch.triu(torch.ones(size, size, device=device), diagonal=-right_shift) == 1
-    ).transpose(0, 1)
-    mask = (
-        mask.float()
-        .masked_fill(mask == 0, float("-inf"))
-        .masked_fill(mask == 1, float(0.0))
-    )
+    mask = torch.ones((size, size), device=device, dtype=torch.bool)
+    mask = torch.tril(mask, diagonal=diagonal)
+    mask = torch.where(mask, 0.0, torch.inf)
+    mask = mask.to(dtype=dtype)
     return mask
 
 
@@ -122,6 +77,7 @@ def lengths_to_non_pad_mask(
     lengths: Tensor,
     max_len: Optional[int] = None,
     include_end: bool = False,
+    dtype: Optional[torch.dtype] = None,
 ) -> Tensor:
     """Convert lengths to binary mask of non-padded values.
 
@@ -154,6 +110,7 @@ def lengths_to_non_pad_mask(
         non_pad_mask = indices <= lengths
     else:
         non_pad_mask = indices < lengths
+    non_pad_mask = non_pad_mask.to(dtype=dtype)
     return non_pad_mask
 
 
@@ -161,6 +118,7 @@ def lengths_to_pad_mask(
     lengths: Tensor,
     max_len: Optional[int] = None,
     include_end: bool = True,
+    dtype: Optional[torch.dtype] = None,
 ) -> Tensor:
     """Convert lengths to binary mask of padded values.
     The output will be a tensor of shape (B, max_len).
@@ -183,8 +141,12 @@ def lengths_to_pad_mask(
                 [False, False, False, True],
                 [True, True, True, True]])
     """
-    non_pad_mask = lengths_to_non_pad_mask(lengths, max_len, not include_end)
-    return non_pad_mask.logical_not()
+    non_pad_mask = lengths_to_non_pad_mask(
+        lengths, max_len, not include_end, dtype=torch.bool
+    )
+    pad_mask = non_pad_mask.logical_not()
+    pad_mask = pad_mask.to(dtype=dtype)
+    return pad_mask
 
 
 def non_pad_mask_to_lengths(mask: Tensor, dim: int = -1) -> Tensor:
@@ -258,6 +220,7 @@ def tensor_to_non_pad_mask(
     pad_value: Optional[float] = None,
     end_value: Optional[float] = None,
     include_end: bool = False,
+    dtype: Optional[torch.dtype] = None,
 ) -> Tensor:
     """Convert tensor to non-pad binary mask.
     You must provide a value for one of pad_value or end_value. If both values are provided, the end_value is ignored.
@@ -284,6 +247,7 @@ def tensor_to_non_pad_mask(
 
     if pad_value is not None:
         non_pad_mask = tensor.ne(pad_value)
+        non_pad_mask = non_pad_mask.to(dtype=dtype)
 
     elif end_value is not None:
         if tensor.ndim > 2:
@@ -291,7 +255,9 @@ def tensor_to_non_pad_mask(
                 f"Cannot compute non_pad_mask for with more than 2 dimensions with {end_value=}. (found {tensor.ndim=})"
             )
         lengths = tensor_to_lengths(tensor, end_value=end_value, dim=-1)
-        non_pad_mask = lengths_to_non_pad_mask(lengths, tensor.shape[-1], include_end)
+        non_pad_mask = lengths_to_non_pad_mask(
+            lengths, tensor.shape[-1], include_end, dtype=dtype
+        )
 
     else:
         raise ValueError(
@@ -306,6 +272,7 @@ def tensor_to_pad_mask(
     pad_value: Optional[float] = None,
     end_value: Optional[float] = None,
     include_end: bool = True,
+    dtype: Optional[torch.dtype] = None,
 ) -> Tensor:
     """Convert tensor to pad binary mask.
 
@@ -325,8 +292,12 @@ def tensor_to_pad_mask(
         >>> tensor_to_pad_mask(input, end_value=2)
         tensor([False, False, False, True, True, True])
     """
-    non_pad_mask = tensor_to_non_pad_mask(tensor, pad_value, end_value, not include_end)
-    return non_pad_mask.logical_not()
+    non_pad_mask = tensor_to_non_pad_mask(
+        tensor, pad_value, end_value, not include_end, dtype=torch.bool
+    )
+    pad_mask = non_pad_mask.logical_not()
+    pad_mask = pad_mask.to(dtype=dtype)
+    return pad_mask
 
 
 def tensor_to_tensors_list(
