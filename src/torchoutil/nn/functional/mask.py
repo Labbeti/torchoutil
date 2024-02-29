@@ -68,7 +68,7 @@ def generate_square_subsequent_mask(
     device = get_device(device)
     mask = torch.ones((size, size), device=device, dtype=torch.bool)
     mask = torch.tril(mask, diagonal=diagonal)
-    mask = torch.where(mask, 0.0, torch.inf)
+    mask = torch.where(mask, 0.0, -torch.inf)
     mask = mask.to(dtype=dtype)
     return mask
 
