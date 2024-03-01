@@ -319,3 +319,35 @@ class OneHot(nn.Module):
 
     def extra_repr(self) -> str:
         return f"{self.num_classes}"
+
+
+class Abs(nn.Module):
+    def forward(self, x: Tensor) -> Tensor:
+        return x.abs()
+
+
+class Angle(nn.Module):
+    def forward(self, x: Tensor) -> Tensor:
+        return x.angle()
+
+
+class Real(nn.Module):
+    def forward(self, x: Tensor) -> Tensor:
+        return x.real
+
+
+class Imag(nn.Module):
+    def __init__(self, return_zeros: bool = False) -> None:
+        """Return the imaginary part of a complex tensor.
+
+        Args:
+            return_zeros: If the input is not a complex tensor and return_zeros=True, the module will return a tensor containing zeros.
+        """
+        super().__init__()
+        self.return_zeros = return_zeros
+
+    def forward(self, x: Tensor) -> Tensor:
+        if self.return_zeros and not x.is_complex():
+            return torch.zeros_like(x)
+        else:
+            return x.imag
