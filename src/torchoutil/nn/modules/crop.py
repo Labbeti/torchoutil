@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from typing import Iterable, Literal, Union
+from typing import Iterable, Union
 
 from torch import Generator, Tensor, nn
 
-from torchoutil.nn.functional.crop import crop_dim, crop_dims
+from torchoutil.nn.functional.crop import crop_dim, crop_dims, CropAlign
 from torchoutil.utils.collections import dump_dict
 
 
@@ -13,7 +13,7 @@ class CropDim(nn.Module):
     def __init__(
         self,
         target_length: int,
-        align: Literal["left", "right", "center", "random"] = "left",
+        align: CropAlign = "left",
         dim: int = -1,
         generator: Union[int, Generator, None] = None,
     ) -> None:
@@ -49,7 +49,7 @@ class CropDims(nn.Module):
     def __init__(
         self,
         target_lengths: Iterable[int],
-        aligns: Iterable[Literal["left", "right", "center", "random"]] = ("left",),
+        aligns: Iterable[CropAlign] = ("left",),
         dims: Iterable[int] = (-1,),
         generator: Union[int, Generator, None] = None,
     ) -> None:

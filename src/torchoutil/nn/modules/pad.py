@@ -6,7 +6,7 @@ from typing import Iterable, Literal, Union
 import torch
 from torch import Generator, Tensor, nn
 
-from torchoutil.nn.functional.pad import pad_and_stack_rec, pad_dim, pad_dims
+from torchoutil.nn.functional.pad import pad_and_stack_rec, pad_dim, pad_dims, PadAlign
 from torchoutil.utils.collections import dump_dict
 
 
@@ -14,7 +14,7 @@ class PadDim(nn.Module):
     def __init__(
         self,
         target_length: int,
-        align: Literal["left", "right", "center", "random"] = "left",
+        align: PadAlign = "left",
         pad_value: float = 0.0,
         dim: int = -1,
         mode: str = "constant",
@@ -58,7 +58,7 @@ class PadDims(nn.Module):
     def __init__(
         self,
         target_lengths: Iterable[int],
-        aligns: Iterable[Literal["left", "right", "center", "random"]] = ("left",),
+        aligns: Iterable[PadAlign] = ("left",),
         pad_value: float = 0.0,
         dims: Iterable[int] = (-1,),
         mode: str = "constant",

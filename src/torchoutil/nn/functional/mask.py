@@ -59,6 +59,25 @@ def masked_sum(
     return reduced
 
 
+def masked_equal(
+    x1: Tensor,
+    x2: Tensor,
+    mask: Tensor,
+) -> bool:
+    """Check if two tensors are equal at the specific positions.
+
+    Args:
+        x1: First tensor of shape S.
+        x2: Second tensor of shape S.
+        mask: Boolean tensor of shape S. Position marked as False are ignored by the equality.
+    """
+    if x1.shape != x2.shape:
+        return False
+    mask = mask.bool().logical_not().logical_or(x1.eq(x2))
+    equal = mask.all().item()
+    return equal
+
+
 def generate_square_subsequent_mask(
     size: int,
     diagonal: int = 0,
