@@ -7,7 +7,7 @@ from unittest import TestCase
 import numpy as np
 from torchvision.datasets import CIFAR10
 
-from torchoutil.nn import OneHot, ToList, ToNumpy, TSequential
+from torchoutil.nn import IndicesToOneHot, ToList, ToNumpy, TSequential
 from torchoutil.utils.hdf import pack_to_hdf
 
 
@@ -17,7 +17,7 @@ class TestHDF(TestCase):
             "/tmp",
             train=False,
             transform=ToNumpy(),
-            target_transform=TSequential(OneHot(10), ToList()),
+            target_transform=TSequential(IndicesToOneHot(10), ToList()),
             download=True,
         )
 
