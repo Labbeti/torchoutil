@@ -58,6 +58,7 @@ class Max(nn.Module):
         dim: Optional[int],
         return_values: bool = True,
         return_indices: Optional[bool] = None,
+        keepdim: bool = False,
     ) -> None:
         if return_indices is None:
             return_indices = dim is not None
@@ -65,61 +66,23 @@ class Max(nn.Module):
             raise ValueError(
                 f"Invalid combinaison of arguments {return_values=} and {return_indices=}. (at least one of them must be True)"
             )
+        if dim is None and keepdim:
+            raise ValueError(
+                f"Invalid combinaison of arguments {dim=} and {keepdim=}. (expected dim is not None or keepdim=False)"
+            )
+
         super().__init__()
         self.dim = dim
         self.return_values = return_values
         self.return_indices = return_indices
+        self.keepdim = keepdim
 
     def forward(self, x: Tensor) -> Union[Tensor, return_types.max]:
         if self.dim is None:
             index = x.argmax()
             values_indices = return_types.max(x.flatten()[index], index)
         else:
-            values_indices = x.max(dim=self.dim)
-
-        if self.return_values and self.return_indices:
-            return values_indices
-        elif self.return_values:
-            return values_indices.values
-        elif self.return_indices:
-            return values_indices.indices
-        else:
-            raise ValueError(
-                f"Invalid combinaison of arguments {self.return_values=} and {self.return_indices=}. (at least one of them must be True)"
-            )
-
-    def extra_repr(self) -> str:
-        return dump_dict(
-            dict(
-                dim=self.dim,
-            ),
-        )
-
-
-class Min(nn.Module):
-    def __init__(
-        self,
-        dim: Optional[int],
-        return_values: bool = True,
-        return_indices: Optional[bool] = None,
-    ) -> None:
-        if return_indices is None:
-            return_indices = dim is not None
-        if not return_values and not return_indices:
-            raise ValueError(
-                f"Invalid combinaison of arguments {return_values=} and {return_indices=}. (at least one of them must be True)"
-            )
-        super().__init__()
-        self.dim = dim
-        self.return_values = return_values
-        self.return_indices = return_indices
-
-    def forward(self, x: Tensor) -> Union[Tensor, return_types.min]:
-        if self.dim is None:
-            index = x.argmin()
-            values_indices = return_types.min(x.flatten()[index], index)
-        else:
-            values_indices = x.min(dim=self.dim)
+            values_indices = x.max(dim=self.dim, keepdim=self.keepdim)
 
         if self.return_values and self.return_indices:
             return values_indices
@@ -138,6 +101,61 @@ class Min(nn.Module):
                 dim=self.dim,
                 return_values=self.return_values,
                 return_indices=self.return_indices,
+                keepdim=self.keepdim,
+            ),
+        )
+
+
+class Min(nn.Module):
+    def __init__(
+        self,
+        dim: Optional[int],
+        return_values: bool = True,
+        return_indices: Optional[bool] = None,
+        keepdim: bool = False,
+    ) -> None:
+        if return_indices is None:
+            return_indices = dim is not None
+        if not return_values and not return_indices:
+            raise ValueError(
+                f"Invalid combinaison of arguments {return_values=} and {return_indices=}. (at least one of them must be True)"
+            )
+        if dim is None and keepdim:
+            raise ValueError(
+                f"Invalid combinaison of arguments {dim=} and {keepdim=}. (expected dim is not None or keepdim=False)"
+            )
+
+        super().__init__()
+        self.dim = dim
+        self.return_values = return_values
+        self.return_indices = return_indices
+        self.keepdim = keepdim
+
+    def forward(self, x: Tensor) -> Union[Tensor, return_types.min]:
+        if self.dim is None:
+            index = x.argmin()
+            values_indices = return_types.min(x.flatten()[index], index)
+        else:
+            values_indices = x.min(dim=self.dim, keepdim=self.keepdim)
+
+        if self.return_values and self.return_indices:
+            return values_indices
+        elif self.return_values:
+            return values_indices.values
+        elif self.return_indices:
+            return values_indices.indices
+        else:
+            raise ValueError(
+                f"Invalid combinaison of arguments {self.return_values=} and {self.return_indices=}. (at least one of them must be True)"
+            )
+
+    def extra_repr(self) -> str:
+        return dump_dict(
+            dict(
+                dim=self.dim,
+                return_values=self.return_values,
+                return_indices=self.return_indices,
+                keepdim=self.keepdim,
             ),
         )
 
@@ -295,30 +313,6 @@ class AsTensor(nn.Module):
             ),
             ignore_none=True,
         )
-
-
-class OneHot(nn.Module):
-    def __init__(
-        self,
-        num_classes: int,
-        device: Union[str, torch.device, None] = None,
-        dtype: Union[torch.dtype, None] = None,
-    ) -> None:
-        device = get_device(device)
-
-        super().__init__()
-        self.num_classes = num_classes
-        self.device = device
-        self.dtype = dtype
-
-    def forward(self, x: Tensor) -> Tensor:
-        x = torch.as_tensor(x, device=self.device)
-        x = F.one_hot(x, self.num_classes)
-        x = x.to(dtype=self.dtype)
-        return x
-
-    def extra_repr(self) -> str:
-        return f"{self.num_classes}"
 
 
 class Abs(nn.Module):
