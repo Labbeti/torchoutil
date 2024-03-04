@@ -28,7 +28,7 @@ Collection of functions and modules to help development in PyTorch.
 pip install torchoutil
 ```
 
-The only requirement is **PyTorch**.
+The only requirements are **pytorch** and **typing_extensions**.
 
 To check if the package is installed and show the package version, you can use the following command:
 ```bash
@@ -109,7 +109,7 @@ x3 = x2[inv_perm]
 All extras can be installed with `pip install torchoutil[extras]`
 
 If `tensorboard` is installed, the function `load_event_file` can be used.
-If `numpy` is installed, the classes `FromNumpy` and  `ToNumpy` can be used.
+If `numpy` is installed, the classes `FromNumpy` and  `ToNumpy` can be used and their related function.
 If `h5py` is installed, the function `pack_to_hdf` and class `HDFDataset` can be used.
 
 

@@ -10,7 +10,7 @@ __author_email__ = "labbeti.pub@gmail.com"
 __license__ = "MIT"
 __maintainer__ = "Étienne Labbé (Labbeti)"
 __status__ = "Development"
-__version__ = "0.1.1"
+__version__ = "0.2.0"
 
 
 from .nn.functional import *

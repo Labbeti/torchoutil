@@ -23,6 +23,7 @@ from typing_extensions import TypeGuard
 
 from torchoutil.nn.functional.get import get_device
 
+
 T = TypeVar("T")
 U = TypeVar("U")
 
@@ -56,8 +57,7 @@ def move_to_rec(
     x: Mapping[T, U],
     predicate: Optional[Callable[[Any], bool]] = None,
     **kwargs,
-) -> Dict[T, U]:
-    ...
+) -> Dict[T, U]: ...
 
 
 @overload
@@ -65,8 +65,7 @@ def move_to_rec(
     x: T,
     predicate: Optional[Callable[[Any], bool]] = None,
     **kwargs,
-) -> T:
-    ...
+) -> T: ...
 
 
 def move_to_rec(
