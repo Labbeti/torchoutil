@@ -15,6 +15,7 @@ Submodules
    torchoutil.nn.modules.activation
    torchoutil.nn.modules.crop
    torchoutil.nn.modules.mask
+   torchoutil.nn.modules.multiclass
    torchoutil.nn.modules.multilabel
    torchoutil.nn.modules.numpy
    torchoutil.nn.modules.pad
