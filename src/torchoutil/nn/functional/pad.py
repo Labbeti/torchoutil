@@ -240,7 +240,7 @@ def _check_cat_padded_batch(
     if x1.ndim < 2:
         raise ValueError(f"Invalid arguments ndims. (found {x1.ndim=} < 2)")
 
-    batch_size = x1.ndim[batch_dim]
+    batch_size = x1.shape[batch_dim]
     if not (x1_lens.shape == x2_lens.shape == Size((batch_size,))):
         raise ValueError(
             f"Invalid arguments shape. (with {x1_lens.shape=} and {x2_lens.shape=})"
