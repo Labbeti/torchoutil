@@ -9,12 +9,13 @@ def _package_is_available(package_name: str) -> bool:
     try:
         return find_spec(package_name) is not None
     except AttributeError:
-        # Python 3.6
+        # Old support for Python <= 3.6
         return False
     except (ImportError, ModuleNotFoundError):
-        # Python 3.7+
+        # Python >= 3.7
         return False
 
 
 _NUMPY_AVAILABLE = _package_is_available("numpy")
 _TENSORBOARD_AVAILABLE = _package_is_available("tensorboard")
+_H5PY_AVAILABLE = _package_is_available("h5py")

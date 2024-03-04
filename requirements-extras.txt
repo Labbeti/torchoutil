@@ -1,0 +1,6 @@
+# -*- coding: utf-8 -*-
+
+h5py
+numpy
+tensorboard
+tqdm

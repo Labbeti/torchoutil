@@ -1,18 +1,20 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from typing import Iterable, Union
+from typing import Iterable, Literal, Union
 
 import torch
 from torch import Generator, Tensor
 
+
 CROP_ALIGNS = ("left", "right", "center", "random")
+CropAlign = Literal["left", "right", "center", "random"]
 
 
 def crop_dim(
     x: Tensor,
     target_length: int,
-    align: str = "left",
+    align: CropAlign = "left",
     dim: int = -1,
     generator: Union[int, Generator, None] = None,
 ) -> Tensor:
@@ -23,15 +25,26 @@ def crop_dim(
 def crop_dims(
     x: Tensor,
     target_lengths: Iterable[int],
-    aligns: Iterable[str] = ("left",),
-    dims: Iterable[int] = (-1,),
+    aligns: Union[  # type: ignore
+        CropAlign,
+        Iterable[CropAlign],
+    ] = "left",
+    dims: Union[Iterable[int], Literal["auto"]] = "auto",
     generator: Union[int, Generator, None] = None,
 ) -> Tensor:
     """Generic function to crop multiple dimensions."""
 
     target_lengths = list(target_lengths)
-    aligns = list(aligns)
-    dims = list(dims)
+
+    if isinstance(aligns, str):
+        aligns = [aligns] * len(target_lengths)
+    else:
+        aligns = list(aligns)
+
+    if dims == "auto":
+        dims = list(range(-len(target_lengths), 0))
+    else:
+        dims = list(dims)
 
     if isinstance(generator, int):
         generator = Generator().manual_seed(generator)

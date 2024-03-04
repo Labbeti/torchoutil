@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-"""Utilities for conversion between classes indices, multihot, names and probabilities for multilabel classification.
+"""Helper functions for conversion between classes indices, multihot, names and probabilities for multilabel classification.
 """
 
 from typing import List, Mapping, Sequence, TypeVar, Union
@@ -15,9 +15,10 @@ T = TypeVar("T")
 
 
 def indices_to_multihot(
-    indices: Union[Sequence[Sequence[int]], List[Tensor]],
+    indices: Union[Sequence[Sequence[int]], List[Tensor], Tensor],
     num_classes: int,
     device: Union[str, torch.device, None] = None,
+    dtype: Union[torch.dtype, None] = torch.bool,
 ) -> Tensor:
     """Convert indices of labels to multihot boolean encoding.
 
@@ -25,10 +26,11 @@ def indices_to_multihot(
         indices: List of list of label indices.
         num_classes: Number maximal of unique classes.
         device: PyTorch device of the output tensor.
+        dtype: PyTorch DType of the output tensor.
     """
     device = get_device(device)
     bsize = len(indices)
-    multihot = torch.full((bsize, num_classes), False, dtype=torch.bool, device=device)
+    multihot = torch.full((bsize, num_classes), False, dtype=dtype, device=device)
     for i, indices_i in enumerate(indices):
         if isinstance(indices_i, Tensor):
             indices_i = indices_i.to(device=device)
@@ -39,7 +41,7 @@ def indices_to_multihot(
 
 
 def indices_to_names(
-    indices: Union[Sequence[Sequence[int]], List[Tensor]],
+    indices: Union[Sequence[Sequence[int]], List[Tensor], Tensor],
     idx_to_name: Mapping[int, T],
 ) -> List[List[T]]:
     """Convert indices of labels to names using a mapping.
@@ -61,7 +63,7 @@ def multihot_to_indices(
     """Convert multihot boolean encoding to indices of labels.
 
     Args:
-        multihot: Multihot labels encoding as 2D matrix.
+        multihot: Multihot labels encoded as 2D matrix.
     """
     preds = []
     for multihot_i in multihot:
@@ -79,7 +81,7 @@ def multihot_to_names(
     """Convert multihot boolean encoding to names using a mapping.
 
     Args:
-        multihot: Multihot labels encoding as 2D matrix.
+        multihot: Multihot labels encoded as 2D matrix.
         idx_to_name: Mapping to convert a class index to its name.
     """
     indices = multihot_to_indices(multihot)
@@ -109,6 +111,7 @@ def names_to_multihot(
     names: List[List[T]],
     idx_to_name: Mapping[int, T],
     device: Union[str, torch.device, None] = None,
+    dtype: Union[torch.dtype, None] = torch.bool,
 ) -> Tensor:
     """Convert names to multihot boolean encoding.
 
@@ -116,9 +119,10 @@ def names_to_multihot(
         names: List of list of label names.
         idx_to_name: Mapping to convert a class index to its name.
         device: PyTorch device of the output tensor.
+        dtype: PyTorch DType of the output tensor.
     """
     indices = names_to_indices(names, idx_to_name)
-    multihot = indices_to_multihot(indices, len(idx_to_name), device)
+    multihot = indices_to_multihot(indices, len(idx_to_name), device, dtype)
     return multihot
 
 
@@ -133,19 +137,23 @@ def probs_to_indices(
         threshold: Threshold(s) to binarize probabilities. Can be a scalar or a sequence of (num_classes,) thresholds.
     """
     multihot = probs_to_multihot(probs, threshold)
-    preds = multihot_to_indices(multihot)
-    return preds
+    indices = multihot_to_indices(multihot)
+    return indices
 
 
 def probs_to_multihot(
     probs: Tensor,
     threshold: Union[float, Sequence[float], Tensor],
+    device: Union[str, torch.device, None] = None,
+    dtype: Union[torch.dtype, None] = torch.bool,
 ) -> Tensor:
     """Convert matrix of probabilities to multihot boolean encoding.
 
     Args:
         probs: Output probabilities for each classes.
         threshold: Threshold(s) to binarize probabilities. Can be a scalar or a sequence of (num_classes,) thresholds.
+        device: PyTorch device of the output tensor.
+        dtype: PyTorch DType of the output tensor.
     """
     if probs.ndim != 2:
         raise ValueError(
@@ -153,7 +161,10 @@ def probs_to_multihot(
         )
 
     num_classes = probs.shape[-1]
-    device = probs.device
+    if device is None:
+        device = probs.device
+    else:
+        device = get_device(device)
 
     if not isinstance(threshold, Tensor):
         threshold = torch.as_tensor(threshold, dtype=torch.float, device=device)
@@ -173,6 +184,7 @@ def probs_to_multihot(
         )
 
     multihot = probs >= threshold
+    multihot = multihot.to(dtype=dtype)
     return multihot
 
 

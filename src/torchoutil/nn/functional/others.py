@@ -4,6 +4,7 @@
 from typing import (
     Any,
     Callable,
+    Dict,
     Generator,
     Iterable,
     List,
@@ -11,12 +12,20 @@ from typing import (
     Optional,
     Sized,
     Tuple,
+    TypeVar,
     Union,
+    overload,
 )
 
 import torch
 from torch import Tensor, nn
 from typing_extensions import TypeGuard
+
+from torchoutil.nn.functional.get import get_device
+
+
+T = TypeVar("T")
+U = TypeVar("U")
 
 
 def find(
@@ -43,33 +52,48 @@ def find(
         return output
 
 
+@overload
+def move_to_rec(
+    x: Mapping[T, U],
+    predicate: Optional[Callable[[Any], bool]] = None,
+    **kwargs,
+) -> Dict[T, U]:
+    ...
+
+
+@overload
+def move_to_rec(
+    x: T,
+    predicate: Optional[Callable[[Any], bool]] = None,
+    **kwargs,
+) -> T:
+    ...
+
+
 def move_to_rec(
     x: Any,
-    *args,
     predicate: Optional[Callable[[Any], bool]] = None,
     **kwargs,
 ) -> Any:
-    """Move all modules and tensors recursively to dtype or device."""
+    """Move all modules and tensors recursively to a specific dtype or device."""
+    if "device" in kwargs:
+        kwargs["device"] = get_device(kwargs["device"])
+
     if isinstance(x, (Tensor, nn.Module)):
         if predicate is None or predicate(x):
-            return x.to(*args, **kwargs)
+            return x.to(**kwargs)
         else:
             return x
     elif isinstance(x, (str, float, int, bool, complex)):
         return x
     elif isinstance(x, Mapping):
-        return {
-            k: move_to_rec(v, predicate=predicate, *args, **kwargs)
-            for k, v in x.items()
-        }
+        return {k: move_to_rec(v, predicate=predicate, **kwargs) for k, v in x.items()}
     elif isinstance(x, Iterable):
-        generator = (move_to_rec(xi, predicate=predicate, *args, **kwargs) for xi in x)
+        generator = (move_to_rec(xi, predicate=predicate, **kwargs) for xi in x)
         if isinstance(x, Generator):
             return generator
         elif isinstance(x, tuple):
             return tuple(generator)
-        elif isinstance(x, list):
-            return list(generator)
         else:
             return list(generator)
     else:

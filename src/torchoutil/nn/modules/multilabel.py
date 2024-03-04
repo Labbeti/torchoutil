@@ -27,16 +27,20 @@ class IndicesToMultihot(nn.Module):
         self,
         num_classes: int,
         device: Union[str, torch.device, None] = None,
+        dtype: Union[torch.dtype, None] = torch.bool,
     ) -> None:
         super().__init__()
         self.num_classes = num_classes
         self.device = device
+        self.dtype = dtype
 
     def forward(
         self,
         indices: Union[List[List[int]], List[Tensor]],
     ) -> Tensor:
-        multihot = indices_to_multihot(indices, self.num_classes, self.device)
+        multihot = indices_to_multihot(
+            indices, self.num_classes, self.device, self.dtype
+        )
         return multihot
 
     def extra_repr(self) -> str:
@@ -44,6 +48,7 @@ class IndicesToMultihot(nn.Module):
             dict(
                 num_classes=self.num_classes,
                 device=self.device,
+                dtype=self.dtype,
             ),
             ignore_none=True,
         )
@@ -114,17 +119,28 @@ class NamesToMultihot(nn.Module, Generic[T]):
         self,
         idx_to_name: Mapping[int, T],
         device: Union[str, torch.device, None] = None,
+        dtype: Union[torch.dtype, None] = torch.bool,
     ) -> None:
         super().__init__()
         self.idx_to_name = idx_to_name
         self.device = device
+        self.dtype = dtype
 
     def forward(
         self,
         names: List[List[T]],
     ) -> Tensor:
-        multihot = names_to_multihot(names, self.idx_to_name, self.device)
+        multihot = names_to_multihot(names, self.idx_to_name, self.device, self.dtype)
         return multihot
+
+    def extra_repr(self) -> str:
+        return dump_dict(
+            dict(
+                device=self.device,
+                dtype=self.dtype,
+            ),
+            ignore_none=True,
+        )
 
 
 class ProbsToIndices(nn.Module):
@@ -147,16 +163,29 @@ class ProbsToMultihot(nn.Module):
     def __init__(
         self,
         threshold: Union[float, Tensor],
+        device: Union[str, torch.device, None] = None,
+        dtype: Union[torch.dtype, None] = torch.bool,
     ) -> None:
         super().__init__()
         self.threshold = threshold
+        self.device = device
+        self.dtype = dtype
 
     def forward(
         self,
         probs: Tensor,
     ) -> Tensor:
-        multihot = probs_to_multihot(probs, self.threshold)
+        multihot = probs_to_multihot(probs, self.threshold, self.device, self.dtype)
         return multihot
+
+    def extra_repr(self) -> str:
+        return dump_dict(
+            dict(
+                device=self.device,
+                dtype=self.dtype,
+            ),
+            ignore_none=True,
+        )
 
 
 class ProbsToNames(nn.Module, Generic[T]):

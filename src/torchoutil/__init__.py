@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-"""Adds functions and modules for PyTorch to facilitate tensor manipulation.
+"""Collection of functions and modules to help development in PyTorch.
 """
 
 __name__ = "torchoutil"
@@ -10,7 +10,7 @@ __author_email__ = "labbeti.pub@gmail.com"
 __license__ = "MIT"
 __maintainer__ = "Étienne Labbé (Labbeti)"
 __status__ = "Development"
-__version__ = "0.1.0"
+__version__ = "0.2.0"
 
 
 from .nn.functional import *

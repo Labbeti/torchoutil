@@ -11,7 +11,7 @@ from torchoutil.utils.collections import filter_iterable, list_dict_to_dict_list
 
 
 class CollateDict:
-    """Collate list of dict into a dict of list WITHOUT auto-padding."""
+    """Collate class to handle a batch dict."""
 
     def __init__(self, error_on_missing_key: bool = True) -> None:
         super().__init__()
@@ -25,11 +25,14 @@ class CollateDict:
 
 
 class AdvancedCollateDict:
+    """Collate class to automatically convert to tensor, pad sequences and filter keys in a batch dict."""
+
     def __init__(
         self,
         pad_values: Optional[Dict[str, Any]] = None,
         include_keys: Optional[Iterable[str]] = None,
         exclude_keys: Optional[Iterable[str]] = None,
+        error_on_missing_key: bool = True,
     ) -> None:
         """Collate list of dict into a dict of list WITH auto-padding for given keys."""
         if pad_values is None:
@@ -39,9 +42,12 @@ class AdvancedCollateDict:
         self.pad_values = pad_values
         self.include_keys = include_keys
         self.exclude_keys = exclude_keys
+        self.error_on_missing_key = error_on_missing_key
 
     def __call__(self, batch_lst: List[Dict[str, Any]]) -> Dict[str, Any]:
-        batch_dict = list_dict_to_dict_list(batch_lst, error_on_missing_key=True)
+        batch_dict = list_dict_to_dict_list(
+            batch_lst, error_on_missing_key=self.error_on_missing_key
+        )
         batch_keys = filter_iterable(
             batch_dict.keys(), self.include_keys, self.exclude_keys
         )

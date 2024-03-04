@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from typing import Any, Iterable, List, Sized, Tuple, Union
+from typing import Any, Iterable, List, Literal, Sized, Tuple, Union
 
 import torch
 from torch import Generator, Size, Tensor
@@ -11,13 +11,15 @@ from torch.types import Number
 from torchoutil.nn.functional.get import get_device
 from torchoutil.nn.functional.others import can_be_stacked, is_scalar
 
+
 PAD_ALIGNS = ("left", "right", "center", "random")
+PadAlign = Literal["left", "right", "center", "random"]
 
 
 def pad_dim(
     x: Tensor,
     target_length: int,
-    align: str = "left",
+    align: PadAlign = "left",
     pad_value: float = 0.0,
     dim: int = -1,
     mode: str = "constant",
@@ -30,7 +32,7 @@ def pad_dim(
 def pad_dims(
     x: Tensor,
     target_lengths: Iterable[int],
-    aligns: Iterable[str] = ("left",),
+    aligns: Iterable[PadAlign] = ("left",),
     pad_value: float = 0.0,
     dims: Iterable[int] = (-1,),
     mode: str = "constant",
@@ -138,7 +140,7 @@ def __generate_pad_seq(
     x_shape: Size,
     target_lengths: List[int],
     dims: List[int],
-    aligns: List[str],
+    aligns: List[PadAlign],
     generator: Union[None, Generator],
 ) -> List[int]:
     pad_seq = [0 for _ in range(len(x_shape) * 2)]
@@ -180,18 +182,21 @@ def cat_padded_batch(
     x1_lens: Tensor,
     x2: Tensor,
     x2_lens: Tensor,
-    seq_dim: int,
+    seq_dim: int = -1,
     batch_dim: int = 0,
 ) -> Tuple[Tensor, Tensor]:
-    assert x1.ndim == x2.ndim
-    assert x1_lens.ndim == x2_lens.ndim == 1
-    assert (
-        x1.shape[batch_dim]
-        == x2.shape[batch_dim]
-        == x1_lens.shape[0]
-        == x2_lens.shape[0]
-    )
+    """Concatenate padded batched of sequences.
 
+    Args:
+        x1: First batch with D dims of shape (batch_size, ..., N1, ...)
+        x1_lens: First lengths of each element in sequence dim of shape (batch_size,).
+        x2: Second batch with D dims of shape (batch_size, ..., N2, ...)
+            The shape must be the same than x1 unless for the dimension N2.
+        x2_lens: Second lengths of each element in sequence dim of shape (batch_size,).
+        seq_dim: Dimension index of sequence. defaults to -1.
+        batch_dim: Batch dimension index. defaults to 0.
+    """
+    _check_cat_padded_batch(x1, x1_lens, x2, x2_lens, seq_dim, batch_dim)
     x12_lens = x1_lens + x2_lens
     sum_size_12 = x1.shape[seq_dim] + x2.shape[seq_dim]
 
@@ -220,3 +225,30 @@ def cat_padded_batch(
         x12 = x12[slices]
 
     return x12, x12_lens
+
+
+def _check_cat_padded_batch(
+    x1: Tensor,
+    x1_lens: Tensor,
+    x2: Tensor,
+    x2_lens: Tensor,
+    seq_dim: int,
+    batch_dim: int,
+) -> None:
+    if x1.ndim != x2.ndim:
+        raise ValueError(f"Invalid arguments ndims. (found {x1.ndim=} != {x2.ndim=})")
+    if x1.ndim < 2:
+        raise ValueError(f"Invalid arguments ndims. (found {x1.ndim=} < 2)")
+
+    batch_size = x1.shape[batch_dim]
+    if not (x1_lens.shape == x2_lens.shape == Size((batch_size,))):
+        raise ValueError(
+            f"Invalid arguments shape. (with {x1_lens.shape=} and {x2_lens.shape=})"
+        )
+
+    x1_shape = torch.as_tensor(x1.shape)
+    x2_shape = torch.as_tensor(x2.shape)
+    eq_mask = x1_shape.eq(x2_shape)
+    eq_mask[seq_dim] = True
+    if not eq_mask.all():
+        raise ValueError(f"Invalid arguments shape. (with {x1.shape=} and {x2.shape=})")

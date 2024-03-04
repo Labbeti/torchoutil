@@ -2,9 +2,11 @@
 # -*- coding: utf-8 -*-
 
 import unittest
+
 from unittest import TestCase
 
 import torch
+
 from torch import Tensor
 
 from torchoutil.nn.functional.indices import randperm_diff

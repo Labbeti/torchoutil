@@ -11,6 +11,7 @@ from torch.nn import functional as F
 from torch.types import Number
 
 from torchoutil.nn.functional.get import get_device
+from torchoutil.utils import return_types
 from torchoutil.utils.collections import dump_dict
 
 
@@ -26,7 +27,7 @@ class Reshape(nn.Module):
         return dump_dict(
             dict(
                 shape=self.shape,
-            )
+            ),
         )
 
 
@@ -56,65 +57,32 @@ class Max(nn.Module):
         self,
         dim: Optional[int],
         return_values: bool = True,
-        return_indices: bool = False,
+        return_indices: Optional[bool] = None,
+        keepdim: bool = False,
     ) -> None:
+        if return_indices is None:
+            return_indices = dim is not None
         if not return_values and not return_indices:
             raise ValueError(
                 f"Invalid combinaison of arguments {return_values=} and {return_indices=}. (at least one of them must be True)"
             )
+        if dim is None and keepdim:
+            raise ValueError(
+                f"Invalid combinaison of arguments {dim=} and {keepdim=}. (expected dim is not None or keepdim=False)"
+            )
+
         super().__init__()
         self.dim = dim
         self.return_values = return_values
         self.return_indices = return_indices
+        self.keepdim = keepdim
 
-    def forward(self, x: Tensor) -> Union[Tensor, torch.return_types.max]:
+    def forward(self, x: Tensor) -> Union[Tensor, return_types.max]:
         if self.dim is None:
             index = x.argmax()
-            values_indices = torch.return_types.max(x[index], index)
+            values_indices = return_types.max(x.flatten()[index], index)
         else:
-            values_indices = x.max(dim=self.dim)
-
-        if self.return_values and self.return_indices:
-            return values_indices
-        elif self.return_values:
-            return values_indices.values
-        elif self.return_indices:
-            return values_indices.indices
-        else:
-            raise ValueError(
-                f"Invalid combinaison of arguments {self.return_values=} and {self.return_indices=}. (at least one of them must be True)"
-            )
-
-    def extra_repr(self) -> str:
-        return dump_dict(
-            dict(
-                dim=self.dim,
-            )
-        )
-
-
-class Min(nn.Module):
-    def __init__(
-        self,
-        dim: Optional[int],
-        return_values: bool = True,
-        return_indices: bool = False,
-    ) -> None:
-        if not return_values and not return_indices:
-            raise ValueError(
-                f"Invalid combinaison of arguments {return_values=} and {return_indices=}. (at least one of them must be True)"
-            )
-        super().__init__()
-        self.dim = dim
-        self.return_values = return_values
-        self.return_indices = return_indices
-
-    def forward(self, x: Tensor) -> Union[Tensor, torch.return_types.min]:
-        if self.dim is None:
-            index = x.argmin()
-            values_indices = torch.return_types.min(x[index], index)
-        else:
-            values_indices = x.min(dim=self.dim)
+            values_indices = x.max(dim=self.dim, keepdim=self.keepdim)
 
         if self.return_values and self.return_indices:
             return values_indices
@@ -133,7 +101,62 @@ class Min(nn.Module):
                 dim=self.dim,
                 return_values=self.return_values,
                 return_indices=self.return_indices,
+                keepdim=self.keepdim,
+            ),
+        )
+
+
+class Min(nn.Module):
+    def __init__(
+        self,
+        dim: Optional[int],
+        return_values: bool = True,
+        return_indices: Optional[bool] = None,
+        keepdim: bool = False,
+    ) -> None:
+        if return_indices is None:
+            return_indices = dim is not None
+        if not return_values and not return_indices:
+            raise ValueError(
+                f"Invalid combinaison of arguments {return_values=} and {return_indices=}. (at least one of them must be True)"
             )
+        if dim is None and keepdim:
+            raise ValueError(
+                f"Invalid combinaison of arguments {dim=} and {keepdim=}. (expected dim is not None or keepdim=False)"
+            )
+
+        super().__init__()
+        self.dim = dim
+        self.return_values = return_values
+        self.return_indices = return_indices
+        self.keepdim = keepdim
+
+    def forward(self, x: Tensor) -> Union[Tensor, return_types.min]:
+        if self.dim is None:
+            index = x.argmin()
+            values_indices = return_types.min(x.flatten()[index], index)
+        else:
+            values_indices = x.min(dim=self.dim, keepdim=self.keepdim)
+
+        if self.return_values and self.return_indices:
+            return values_indices
+        elif self.return_values:
+            return values_indices.values
+        elif self.return_indices:
+            return values_indices.indices
+        else:
+            raise ValueError(
+                f"Invalid combinaison of arguments {self.return_values=} and {self.return_indices=}. (at least one of them must be True)"
+            )
+
+    def extra_repr(self) -> str:
+        return dump_dict(
+            dict(
+                dim=self.dim,
+                return_values=self.return_values,
+                return_indices=self.return_indices,
+                keepdim=self.keepdim,
+            ),
         )
 
 
@@ -204,7 +227,7 @@ class Squeeze(nn.Module):
             dict(
                 dim=self.dim,
                 inplace=self.inplace,
-            )
+            ),
         )
 
 
@@ -225,7 +248,7 @@ class Unsqueeze(nn.Module):
             dict(
                 dim=self.dim,
                 inplace=self.inplace,
-            )
+            ),
         )
 
 
@@ -263,6 +286,11 @@ class ToList(nn.Module):
         return x.tolist()
 
 
+class ToItem(nn.Module):
+    def forward(self, x: Tensor) -> Number:
+        return x.item()
+
+
 class AsTensor(nn.Module):
     def __init__(
         self,
@@ -274,8 +302,8 @@ class AsTensor(nn.Module):
         self.device = device
         self.dtype = dtype
 
-    def forward(self, x: Union[List, Number]) -> Tensor:
-        return torch.as_tensor(x, dtype=self.dtype, device=self.device)
+    def forward(self, x: Union[List, Number, Tensor]) -> Tensor:
+        return torch.as_tensor(x, dtype=self.dtype, device=self.device)  # type: ignore
 
     def extra_repr(self) -> str:
         return dump_dict(
@@ -285,3 +313,35 @@ class AsTensor(nn.Module):
             ),
             ignore_none=True,
         )
+
+
+class Abs(nn.Module):
+    def forward(self, x: Tensor) -> Tensor:
+        return x.abs()
+
+
+class Angle(nn.Module):
+    def forward(self, x: Tensor) -> Tensor:
+        return x.angle()
+
+
+class Real(nn.Module):
+    def forward(self, x: Tensor) -> Tensor:
+        return x.real
+
+
+class Imag(nn.Module):
+    def __init__(self, return_zeros: bool = False) -> None:
+        """Return the imaginary part of a complex tensor.
+
+        Args:
+            return_zeros: If the input is not a complex tensor and return_zeros=True, the module will return a tensor containing zeros.
+        """
+        super().__init__()
+        self.return_zeros = return_zeros
+
+    def forward(self, x: Tensor) -> Tensor:
+        if self.return_zeros and not x.is_complex():
+            return torch.zeros_like(x)
+        else:
+            return x.imag

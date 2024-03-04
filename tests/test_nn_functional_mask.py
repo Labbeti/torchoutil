@@ -9,7 +9,6 @@ import torch
 
 from torchoutil.nn.functional.mask import (
     generate_square_subsequent_mask,
-    generate_square_subsequent_mask_shifted,
     lengths_to_non_pad_mask,
     lengths_to_pad_mask,
     non_pad_mask_to_lengths,
@@ -263,7 +262,7 @@ class TestGenerateSqMask(TestCase):
 
     def test_generate_shifted_sq_mask_example_1(self) -> None:
         inf = math.inf
-        output = generate_square_subsequent_mask_shifted(6, 2)
+        output = generate_square_subsequent_mask(6, diagonal=2)
         expected = torch.as_tensor(
             [
                 [0.0, 0.0, 0.0, -inf, -inf, -inf],
@@ -279,7 +278,7 @@ class TestGenerateSqMask(TestCase):
 
     def test_generate_shifted_sq_mask_example_2(self) -> None:
         inf = math.inf
-        output = generate_square_subsequent_mask_shifted(6, -2)
+        output = generate_square_subsequent_mask(6, diagonal=-2)
         expected = torch.as_tensor(
             [
                 [-inf, -inf, -inf, -inf, -inf, -inf],
@@ -295,7 +294,7 @@ class TestGenerateSqMask(TestCase):
 
     def test_generate_shifted_sq_mask_example_3(self) -> None:
         inf = math.inf
-        output = generate_square_subsequent_mask_shifted(6, 4)
+        output = generate_square_subsequent_mask(6, diagonal=4)
         expected = torch.as_tensor(
             [
                 [0.0, 0.0, 0.0, 0.0, 0.0, -inf],

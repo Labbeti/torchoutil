@@ -3,12 +3,14 @@
 
 from typing import (
     Any,
+    Callable,
     Dict,
     Iterable,
     List,
     Mapping,
     Optional,
     Sequence,
+    Tuple,
     TypeVar,
     Union,
 )
@@ -59,12 +61,13 @@ def dump_dict(
     dic: Mapping[str, Any],
     /,
     join: str = ", ",
-    fmt: str = "{name}={value}",
+    fmt: str = "{key}={value}",
     ignore_none: bool = False,
 ) -> str:
+    """Dump dictionary to string."""
     result = join.join(
-        fmt.format(name=name, value=value)
-        for name, value in dic.items()
+        fmt.format(key=key, value=value)
+        for key, value in dic.items()
         if not (value is None and ignore_none)
     )
     return result
@@ -92,3 +95,65 @@ def filter_iterable(
     exclude: Optional[Iterable[T]] = None,
 ) -> List[T]:
     return [item for item in it if pass_filter(item, include, exclude)]
+
+
+def all_eq(it: Iterable[T], eq_fn: Optional[Callable[[T, T], bool]] = None) -> bool:
+    """Returns true if all elements in inputs are equal."""
+    it = list(it)
+    first = it[0]
+    if eq_fn is None:
+        return all(first == elt for elt in it)
+    else:
+        return all(eq_fn(first, elt) for elt in it)
+
+
+def flat_dict_of_dict(
+    nested_dic: Mapping[str, Any],
+    sep: str = ".",
+    flat_iterables: bool = False,
+) -> Dict[str, Any]:
+    """Flat a nested dictionary.
+
+    Example 1
+    ---------
+    ```
+    >>> dic = {
+    ...     "a": 1,
+    ...     "b": {
+    ...         "a": 2,
+    ...         "b": 10,
+    ...     },
+    ... }
+    >>> flat_dict(dic)
+    ... {"a": 1, "b.a": 2, "b.b": 10}
+    ```
+
+    Example 2
+    ---------
+    ```
+    >>> dic = {"a": ["hello", "world"], "b": 3}
+    >>> flat_dict(dic, flat_iterables=True)
+    ... {"a.0": "hello", "a.1": "world", "b": 3}
+    ```
+    """
+    output = {}
+    for k, v in nested_dic.items():
+        if isinstance(v, Mapping) and all(isinstance(kv, str) for kv in v.keys()):
+            v = flat_dict_of_dict(v, sep, flat_iterables)
+            v = {f"{k}{sep}{kv}": vv for kv, vv in v.items()}
+            output.update(v)
+        elif flat_iterables and isinstance(v, Iterable) and not isinstance(v, str):
+            v = {f"{i}": vi for i, vi in enumerate(v)}
+            v = flat_dict_of_dict(v, sep, flat_iterables)
+            v = {f"{k}{sep}{kv}": vv for kv, vv in v.items()}
+            output.update(v)
+        else:
+            output[k] = v
+    return output
+
+
+def flat_list(lst: Iterable[Sequence[T]]) -> Tuple[List[T], List[int]]:
+    """Return a flat version of the input list of sublists with each sublist size."""
+    flatten_lst = [element for sublst in lst for element in sublst]
+    sizes = [len(sents) for sents in lst]
+    return flatten_lst, sizes

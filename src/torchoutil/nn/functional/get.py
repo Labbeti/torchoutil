@@ -5,6 +5,7 @@ from typing import Optional, Union
 
 import torch
 
+
 _DEVICE_CUDA_IF_AVAILABLE = "cuda_if_available"
 
 
