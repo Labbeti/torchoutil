@@ -46,6 +46,16 @@ logger = logging.getLogger(__name__)
 T = TypeVar("T")
 U = TypeVar("U", bound=Union[int, float, str, Tensor, list])
 
+_HDF_SUPPORTED_DTYPES = (
+    "b",
+    "i",
+    "u",
+    "f",
+    HDF_STRING_DTYPE,
+    HDF_VOID_DTYPE,
+)
+_HDFDType = Union[Literal["b", "i", "u", "f"], HDF_STRING_DTYPE, HDF_VOID_DTYPE]
+
 
 @torch.inference_mode()
 def pack_to_hdf(
@@ -199,16 +209,8 @@ def pack_to_hdf(
             elif hdf_dtype in (HDF_STRING_DTYPE, HDF_VOID_DTYPE):
                 pass
             else:
-                HDF_SUPPORTED_DTYPES = (
-                    "b",
-                    "i",
-                    "u",
-                    "f",
-                    HDF_STRING_DTYPE,
-                    HDF_VOID_DTYPE,
-                )
                 raise ValueError(
-                    f"Unsupported type {hdf_dtype=}. (expected one of {HDF_SUPPORTED_DTYPES})"
+                    f"Unsupported type {hdf_dtype=}. (expected one of {_HDF_SUPPORTED_DTYPES})"
                 )
 
             if verbose >= 2:
@@ -365,7 +367,7 @@ def _checksum(
 
 def _get_shape_and_dtype(
     value: Union[int, float, str, Tensor, list]
-) -> Tuple[Tuple[int, ...], str]:
+) -> Tuple[Tuple[int, ...], _HDFDType]:
     """Returns the shape and the hdf_dtype for an input."""
     if isinstance(value, int):
         shape = ()
