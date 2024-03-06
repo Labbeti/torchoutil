@@ -18,10 +18,10 @@ class CollateDict:
         self.error_on_missing_key = error_on_missing_key
 
     def __call__(self, batch_lst: List[Dict[str, Any]]) -> Dict[str, List[Any]]:
-        batch_dict = list_dict_to_dict_list(
+        result = list_dict_to_dict_list(
             batch_lst, error_on_missing_key=self.error_on_missing_key
         )
-        return batch_dict
+        return result
 
 
 class AdvancedCollateDict:

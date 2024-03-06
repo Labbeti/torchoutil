@@ -100,9 +100,18 @@ class HDFDataset(Generic[T, U], Dataset[U]):
 
     # Properties
     @property
+    def added_columns(self) -> List[str]:
+        """Return the list of columns added by pack_to_hdf function."""
+        return list(self._hdf_file.attrs.get("added_columns", []))
+
+    @property
     def all_columns(self) -> List[str]:
         """The name of all columns of the dataset."""
         return list(self.get_hdf_keys())
+
+    @property
+    def attrs(self) -> dict[str, Any]:
+        return dict(self._hdf_file.attrs)
 
     @property
     def column_names(self) -> List[str]:
@@ -144,28 +153,23 @@ class HDFDataset(Generic[T, U], Dataset[U]):
 
     # Public methods
     @overload
-    def at(self, index: int) -> T:
-        ...
+    def at(self, index: int) -> T: ...
 
     @overload
-    def at(self, index: Union[Iterable[int], slice, None], column: str) -> List:
-        ...
+    def at(self, index: Union[Iterable[int], slice, None], column: str) -> List: ...
 
     @overload
-    def at(self, index: Union[Iterable[int], slice, None]) -> Dict[str, List]:
-        ...
+    def at(self, index: Union[Iterable[int], slice, None]) -> Dict[str, List]: ...
 
     @overload
     def at(
         self,
         index: Union[Iterable[int], slice, None],
         column: Union[Iterable[str], None],
-    ) -> Dict[str, List]:
-        ...
+    ) -> Dict[str, List]: ...
 
     @overload
-    def at(self, index: Any, column: Any) -> Any:
-        ...
+    def at(self, index: Any, column: Any) -> Any: ...
 
     def at(
         self,
@@ -306,19 +310,16 @@ class HDFDataset(Generic[T, U], Dataset[U]):
             self.close()
 
     @overload
-    def __getitem__(self, index: int) -> U:
-        ...
+    def __getitem__(self, index: int) -> U: ...
 
     @overload
     def __getitem__(
         self,
         index: Union[Iterable[int], slice, None],
-    ) -> Dict[str, list]:
-        ...
+    ) -> Dict[str, list]: ...
 
     @overload
-    def __getitem__(self, index: Any) -> Any:
-        ...
+    def __getitem__(self, index: Any) -> Any: ...
 
     def __getitem__(
         self,

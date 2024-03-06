@@ -4,6 +4,7 @@
 import datetime
 import json
 import logging
+import os
 import zlib
 from dataclasses import asdict, is_dataclass
 from pathlib import Path
@@ -14,7 +15,6 @@ from typing import (
     Literal,
     Mapping,
     Optional,
-    Sequence,
     Tuple,
     TypeVar,
     Union,
@@ -41,7 +41,7 @@ from torchoutil.utils.hdf.common import (
 from torchoutil.utils.hdf.dataset import HDFDataset
 from torchoutil.utils.type_checks import is_dict_str
 
-logger = logging.getLogger(__name__)
+pylog = logging.getLogger(__name__)
 
 T = TypeVar("T")
 U = TypeVar("U", bound=Union[int, float, str, Tensor, list])
@@ -95,7 +95,8 @@ def pack_to_hdf(
     hdf_fpath = Path(hdf_fpath).resolve()
     if hdf_fpath.exists() and not hdf_fpath.is_file():
         raise RuntimeError(f"Item {hdf_fpath=} exists but it is not a file.")
-    if not overwrite and hdf_fpath.is_file():
+
+    if hdf_fpath.is_file() and not overwrite:
         raise ValueError(
             f"Cannot overwrite file {hdf_fpath}. Please remove it or use overwrite=True option."
         )
@@ -103,13 +104,13 @@ def pack_to_hdf(
     if num_workers == "auto":
         num_workers = get_auto_num_cpus()
         if verbose >= 2:
-            logger.debug(f"Found num_workers=='auto', set to {num_workers}.")
+            pylog.debug(f"Found num_workers=='auto', set to {num_workers}.")
 
     if pre_transform is None:
         pre_transform = nn.Identity()
 
     if verbose >= 2:
-        logger.debug(f"Start packing data into HDF file '{hdf_fpath}'...")
+        pylog.debug(f"Start packing data into HDF file '{hdf_fpath}'...")
 
     # Step 1: Init max_shapes and hdf_dtypes with the first item
     shapes_0 = {}
@@ -140,6 +141,9 @@ def pack_to_hdf(
 
     max_shapes: Dict[str, Tuple[int, ...]] = shapes_0
     hdf_dtypes: Dict[str, str] = hdf_dtypes_0
+    all_eq_shapes: Dict[str, bool] = {
+        attr_name: True for attr_name in item_0_dict.keys()
+    }
 
     loader = DataLoader(
         dataset,  # type: ignore
@@ -161,6 +165,7 @@ def pack_to_hdf(
         for item in batch:
             for attr_name, value in item.items():
                 shape, hdf_dtype = _get_shape_and_dtype(value)
+                all_eq_shapes[attr_name] &= max_shapes[attr_name] == shape
                 max_shapes[attr_name] = tuple(
                     map(max, zip(max_shapes[attr_name], shape))
                 )
@@ -176,8 +181,9 @@ def pack_to_hdf(
                     )
 
     if verbose >= 2:
-        logger.debug(f"Found max_shapes:\n{max_shapes}")
-        logger.debug(f"Found hdf_dtypes:\n{hdf_dtypes}")
+        pylog.debug(f"Found max_shapes:\n{max_shapes}")
+        pylog.debug(f"Found hdf_dtypes:\n{hdf_dtypes}")
+        pylog.debug(f"Found all_eq_shapes:\n{all_eq_shapes}")
 
     now = datetime.datetime.now()
     creation_date = now.strftime("%Y-%m-%d_%H-%M-%S")
@@ -193,9 +199,12 @@ def pack_to_hdf(
     else:
         info = {}
 
+    added_columns = []
+
     with h5py.File(hdf_fpath, "w") as hdf_file:
         # Step 2: Build hdf datasets in file
-        hdf_dsets = {}
+        hdf_dsets: dict[str, HDFRawDataset] = {}
+
         for attr_name, shape in max_shapes.items():
             hdf_dtype = hdf_dtypes.get(attr_name)
 
@@ -214,7 +223,7 @@ def pack_to_hdf(
                 )
 
             if verbose >= 2:
-                logger.debug(
+                pylog.debug(
                     f"Build hdf dset '{attr_name}' with shape={(len(dataset),) + shape}."
                 )
 
@@ -225,11 +234,23 @@ def pack_to_hdf(
                 **kwargs,
             )
 
-            if len(shape) > 0:
-                shape_name = f"{attr_name}{SHAPE_SUFFIX}"
-                hdf_dsets[shape_name] = hdf_file.create_dataset(
-                    shape_name, (len(dataset), len(shape)), "i", fillvalue=-1
+        for attr_name, shape in max_shapes.items():
+            if len(shape) == 0 or all_eq_shapes[attr_name]:
+                continue
+
+            shape_name = f"{attr_name}{SHAPE_SUFFIX}"
+            raw_dset_shape = (len(dataset), len(shape))
+
+            if shape_name in hdf_dsets:
+                pylog.warning(
+                    f"Column {shape_name} already exists in source dataset. (with shape={hdf_dsets[shape_name].shape} and expected {raw_dset_shape})"
                 )
+                continue
+
+            added_columns.append(shape_name)
+            hdf_dsets[shape_name] = hdf_file.create_dataset(
+                shape_name, raw_dset_shape, "i", fillvalue=-1
+            )
 
         # Fill hdf datasets with a second pass through the whole dataset
         i = 0
@@ -254,7 +275,7 @@ def pack_to_hdf(
 
             for item in batch:
                 for attr_name, value in item.items():
-                    hdf_dset: HDFRawDataset = hdf_dsets[attr_name]
+                    hdf_dset = hdf_dsets[attr_name]
                     shape, hdf_dtype = _get_shape_and_dtype(value)
 
                     # Check every shape
@@ -268,7 +289,7 @@ def pack_to_hdf(
                         shape_i > dset_shape_i
                         for shape_i, dset_shape_i in zip(shape, hdf_dset.shape[1:])
                     ):
-                        logger.error(
+                        pylog.error(
                             f"Resize hdf_dset {attr_name} of shape {tuple(hdf_dset.shape[1:])} with new {shape=}."
                         )
                         raise RuntimeError(
@@ -289,7 +310,7 @@ def pack_to_hdf(
                     try:
                         hdf_dset[slices] = value
                     except TypeError as err:
-                        logger.error(
+                        pylog.error(
                             f"Cannot set data {value} into {hdf_dset[slices].shape} ({attr_name=}, {i=}, {slices=})"
                         )
                         raise err
@@ -316,22 +337,23 @@ def pack_to_hdf(
             "info": json.dumps(info),
             "global_hash_value": global_hash_value,
             "item_type": item_type,
+            "added_columns": added_columns,
         }
         if verbose >= 2:
             dumped_attributes = json.dumps(attributes, indent="\t")
-            logger.debug(f"Saving attributes in HDF file:\n{dumped_attributes}")
+            pylog.debug(f"Saving attributes in HDF file:\n{dumped_attributes}")
 
         for attr_name, attr_val in attributes.items():
             try:
                 hdf_file.attrs[attr_name] = attr_val
             except TypeError as err:
-                logger.error(
+                pylog.error(
                     f"Cannot store attribute {attr_name=} with value {attr_val=} in HDF."
                 )
                 raise err
 
     if verbose >= 2:
-        logger.debug(f"Data into has been packed into HDF file '{hdf_fpath}'.")
+        pylog.debug(f"Data into has been packed into HDF file '{hdf_fpath}'.")
 
     hdf_dataset = HDFDataset(hdf_fpath, open_hdf=True, return_shape_columns=False)
     return hdf_dataset
