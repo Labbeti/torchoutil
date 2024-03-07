@@ -7,7 +7,7 @@ import os
 import os.path as osp
 
 from pathlib import Path
-from typing import Union, TypedDict
+from typing import Optional, TypedDict, Union
 
 import torch
 
@@ -30,6 +30,7 @@ class ModelCheckpointRegister:
     def __init__(
         self,
         infos: dict[str, CheckpointInfo],
+        state_dict_key: Optional[str],
         ckpt_parent_path: Union[str, Path, None] = None,
     ) -> None:
         """
@@ -44,15 +45,20 @@ class ModelCheckpointRegister:
 
         super().__init__()
         self._infos = infos
+        self._state_dict_key = state_dict_key
         self._ckpt_parent_path = ckpt_parent_path
-
-    @property
-    def ckpt_parent_path(self) -> Path:
-        return self._ckpt_parent_path.resolve()
 
     @property
     def infos(self) -> dict[str, CheckpointInfo]:
         return self._infos
+
+    @property
+    def state_dict_key(self) -> Optional[str]:
+        return self._state_dict_key
+
+    @property
+    def ckpt_parent_path(self) -> Path:
+        return self._ckpt_parent_path.resolve()
 
     @property
     def model_names(self) -> list[str]:
@@ -105,12 +111,16 @@ class ModelCheckpointRegister:
                         f"Cannot find checkpoint model file in '{model_path}' with mode {offline=}."
                     )
                 else:
-                    self.download_ckpt(model_name_or_path, verbose)
+                    self.download_ckpt(model_name_or_path, verbose=verbose)
 
         del model_name_or_path
 
         data = torch.load(model_path, map_location=device)
-        state_dict = data["model"]
+
+        if self._state_dict_key is None:
+            state_dict = data
+        else:
+            state_dict = data[self._state_dict_key]
 
         if verbose >= 1:
             test_map = data.get("test_mAP", "unknown")
@@ -123,18 +133,31 @@ class ModelCheckpointRegister:
     def download_ckpt(
         self,
         model_name: str,
+        force: bool = False,
         verbose: int = 0,
-    ) -> None:
+    ) -> tuple[Path, bool]:
         """Download checkpoint file."""
         fpath = self.get_ckpt_path(model_name)
+        exists = fpath.exists()
+
+        if exists and not force:
+            return fpath, False
+
+        if exists and force:
+            os.remove(fpath)
+
         os.makedirs(fpath.parent, exist_ok=True)
-        fpath = str(fpath)
+
         url = self._infos[model_name]["url"]
-        torch.hub.download_url_to_file(url, fpath, progress=verbose >= 1)
+        torch.hub.download_url_to_file(url, str(fpath), progress=verbose >= 1)
+
+        return fpath, True
 
     def save(self, path: Union[str, Path]) -> None:
+        """Save info to JSON file."""
         args = {
             "infos": self._infos,
+            "state_dict_key": self._state_dict_key,
             "ckpt_parent_path": str(self._ckpt_parent_path),
         }
         with open(path, "r") as file:
@@ -142,6 +165,7 @@ class ModelCheckpointRegister:
 
     @classmethod
     def from_file(cls, path: Union[str, Path]) -> "ModelCheckpointRegister":
+        """Load register info from JSON file."""
         with open(path, "r") as file:
             args = json.load(file)
         return ModelCheckpointRegister(**args)
