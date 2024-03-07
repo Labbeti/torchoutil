@@ -15,7 +15,7 @@ T = TypeVar("T")
 
 
 def indices_to_multihot(
-    indices: Union[Sequence[Sequence[int]], List[Tensor], Tensor],
+    indices: Union[Sequence[Sequence[int] | Tensor], Tensor],
     num_classes: int,
     device: Union[str, torch.device, None] = None,
     dtype: Union[torch.dtype, None] = torch.bool,
@@ -28,7 +28,13 @@ def indices_to_multihot(
         device: PyTorch device of the output tensor.
         dtype: PyTorch DType of the output tensor.
     """
-    device = get_device(device)
+    if device is None and isinstance(indices, Tensor):
+        device = indices.device
+    elif device is None and len(indices) > 0 and isinstance(indices[0], Tensor):
+        device = indices[0].device  # type: ignore
+    else:
+        device = get_device(device)
+
     bsize = len(indices)
     multihot = torch.full((bsize, num_classes), False, dtype=dtype, device=device)
     for i, indices_i in enumerate(indices):
@@ -41,7 +47,7 @@ def indices_to_multihot(
 
 
 def indices_to_names(
-    indices: Union[Sequence[Sequence[int]], List[Tensor], Tensor],
+    indices: Union[Sequence[Sequence[int] | Tensor], Tensor],
     idx_to_name: Mapping[int, T],
 ) -> List[List[T]]:
     """Convert indices of labels to names using a mapping.
