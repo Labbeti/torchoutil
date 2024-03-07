@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from typing import Any, Dict, Iterable, Union
+from typing import Any, Dict, Iterable, Mapping, Union
 
 from typing_extensions import TypeGuard
 
@@ -30,3 +30,7 @@ def is_iterable_iterable_int(x: Any) -> TypeGuard[Iterable[Iterable[int]]]:
         and all(isinstance(xi, Iterable) for xi in x)
         and all(isinstance(xij, int) for xi in x for xij in xi)
     )
+
+
+def is_mapping_str_any(x: Any) -> TypeGuard[Mapping[str, Any]]:
+    return isinstance(x, Mapping) and all(isinstance(key, str) for key in x.keys())

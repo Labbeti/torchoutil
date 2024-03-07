@@ -15,6 +15,8 @@ from typing import (
     Union,
 )
 
+from torchoutil.utils.type_checks import is_mapping_str_any
+
 T = TypeVar("T")
 U = TypeVar("U")
 
@@ -111,6 +113,7 @@ def flat_dict_of_dict(
     nested_dic: Mapping[str, Any],
     sep: str = ".",
     flat_iterables: bool = False,
+    overwrite: bool = True,
 ) -> Dict[str, Any]:
     """Flat a nested dictionary.
 
@@ -135,20 +138,32 @@ def flat_dict_of_dict(
     >>> flat_dict(dic, flat_iterables=True)
     ... {"a.0": "hello", "a.1": "world", "b": 3}
     ```
+
+    Args:
+        nested_dict: Nested mapping containing sub-mappings or iterables.
+        sep: Separators between keys.
+        flat_iterables: If True, flat iterable and use index as key.
+        overwrite: If True, overwrite duplicated keys in output. Otherwise duplicated keys will raises a ValueError.
     """
     output = {}
     for k, v in nested_dic.items():
-        if isinstance(v, Mapping) and all(isinstance(kv, str) for kv in v.keys()):
+        if is_mapping_str_any(v):
             v = flat_dict_of_dict(v, sep, flat_iterables)
             v = {f"{k}{sep}{kv}": vv for kv, vv in v.items()}
             output.update(v)
+
         elif flat_iterables and isinstance(v, Iterable) and not isinstance(v, str):
             v = {f"{i}": vi for i, vi in enumerate(v)}
             v = flat_dict_of_dict(v, sep, flat_iterables)
             v = {f"{k}{sep}{kv}": vv for kv, vv in v.items()}
             output.update(v)
-        else:
+
+        elif overwrite or k not in output:
             output[k] = v
+
+        else:
+            raise ValueError(f"Ambiguous flatten dict with key '{k}'.")
+
     return output
 
 
