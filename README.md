@@ -115,4 +115,4 @@ If `h5py` is installed, the function `pack_to_hdf` and class `HDFDataset` can be
 
 ## Contact
 Maintainer:
-- Etienne Labbé "Labbeti": labbeti.pub@gmail.com
+- Étienne Labbé "Labbeti": labbeti.pub@gmail.com
