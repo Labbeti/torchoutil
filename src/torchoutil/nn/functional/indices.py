@@ -95,6 +95,11 @@ def insert_at_indices(
         >>> insert_values(x, indices, values)
         tensor([1, 1, 4, 2, 2, 2, 4, 3])
     """
+    if x.ndim != 1:
+        raise ValueError(
+            f"Invalid argument number of dims. (found {x.ndim=} but expected 1)"
+        )
+
     device = x.device
     if isinstance(indices, (int, float, bool)):
         indices = torch.as_tensor([indices], device=device, dtype=torch.long)
@@ -117,6 +122,11 @@ def remove_at_indices(
     indices: Union[Tensor, List, Number],
 ) -> Tensor:
     """Remove value(s) in vector at specified indices."""
+    if x.ndim != 1:
+        raise ValueError(
+            f"Invalid argument number of dims. (found {x.ndim=} but expected 1)"
+        )
+
     device = x.device
     if isinstance(indices, (int, float, bool)):
         indices = torch.as_tensor([indices], device=device, dtype=torch.long)

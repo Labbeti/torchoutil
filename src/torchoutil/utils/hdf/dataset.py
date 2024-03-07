@@ -51,8 +51,22 @@ T = TypeVar("T")
 U = TypeVar("U")
 
 
-IndexType = Union[int, Iterable[int], slice, None]
+IndexType = Union[int, Iterable[int], Tensor, slice, None]
 ColumnType = Union[str, Iterable[str], None]
+
+
+def _is_index(index: Any) -> TypeGuard[IndexType]:
+    return (
+        isinstance(index, int)
+        or is_iterable_int(index)
+        or isinstance(index, slice)
+        or index is None
+        or (isinstance(index, Tensor) and not index.is_floating_point())
+    )
+
+
+def _is_column(column: Any) -> TypeGuard[ColumnType]:
+    return isinstance(column, str) or is_iterable_str(column) or column is None
 
 
 class HDFDataset(Generic[T, U], Dataset[U]):
@@ -61,7 +75,7 @@ class HDFDataset(Generic[T, U], Dataset[U]):
         hdf_fpath: Union[str, Path],
         transform: Optional[Callable[[T], U]] = None,
         keep_padding: Iterable[str] = (),
-        return_shape_columns: bool = False,
+        return_added_columns: bool = False,
         open_hdf: bool = True,
     ) -> None:
         """HDFDataset to read an packed hdf file.
@@ -73,7 +87,7 @@ class HDFDataset(Generic[T, U], Dataset[U]):
             hdf_fpath: The path to the HDF file.
             transforms: The transform to apply values. default to None.
             keep_padding: Keys to keep padding values. defaults to ().
-            return_shape_columns: Returns the shape of each value.
+            return_added_columns: Returns the columns added by pack_to_hdf(.) function.
             open_hdf: If True, open the HDF file at start. defaults to True.
         """
         hdf_fpath = Path(hdf_fpath).resolve()
@@ -91,7 +105,7 @@ class HDFDataset(Generic[T, U], Dataset[U]):
         self._hdf_fpath = hdf_fpath
         self._transform = transform
         self._keep_padding = keep_padding
-        self._return_shape_columns = return_shape_columns
+        self._return_added_columns = return_added_columns
 
         self._hdf_file: Any = None
 
@@ -100,9 +114,18 @@ class HDFDataset(Generic[T, U], Dataset[U]):
 
     # Properties
     @property
+    def added_columns(self) -> List[str]:
+        """Return the list of columns added by pack_to_hdf function."""
+        return list(self._hdf_file.attrs.get("added_columns", []))
+
+    @property
     def all_columns(self) -> List[str]:
         """The name of all columns of the dataset."""
         return list(self.get_hdf_keys())
+
+    @property
+    def attrs(self) -> Dict[str, Any]:
+        return dict(self._hdf_file.attrs)
 
     @property
     def column_names(self) -> List[str]:
@@ -111,7 +134,7 @@ class HDFDataset(Generic[T, U], Dataset[U]):
         column_names = [
             name
             for name in column_names
-            if self._return_shape_columns or not name.endswith(SHAPE_SUFFIX)
+            if self._return_added_columns or name not in self.added_columns
         ]
         return column_names
 
@@ -119,6 +142,11 @@ class HDFDataset(Generic[T, U], Dataset[U]):
     def shape(self) -> Tuple[int, ...]:
         """The shape of the Clotho dataset."""
         return len(self), len(self.column_names)
+
+    @property
+    def shape_suffix(self) -> str:
+        """Return the tensor shape suffix in column names."""
+        return self._hdf_file.attrs.get("shape_suffix", SHAPE_SUFFIX)
 
     @property
     def info(self) -> Dict[str, Any]:
@@ -195,9 +223,7 @@ class HDFDataset(Generic[T, U], Dataset[U]):
 
         if isinstance(index, slice):
             is_mult = True
-        elif isinstance(index, Iterable):
-            if not all(isinstance(idx_i, int) for idx_i in index):
-                raise TypeError(f"Invalid argument {index=}.")
+        elif is_iterable_int(index):
             is_mult = True
         elif isinstance(index, int):
             if not (-len(self) <= index < len(self)):
@@ -218,7 +244,7 @@ class HDFDataset(Generic[T, U], Dataset[U]):
             hdf_values = [hdf_value]
         del hdf_value
 
-        shape_name = f"{column}{SHAPE_SUFFIX}"
+        shape_name = f"{column}{self.shape_suffix}"
         must_remove_padding = (
             shape_name in self._hdf_file.keys() and column not in self._keep_padding
         )
@@ -327,15 +353,23 @@ class HDFDataset(Generic[T, U], Dataset[U]):
         if (
             isinstance(index, tuple)
             and len(index) == 2
-            and is_index(index[0])
-            and is_column(index[1])
+            and _is_index(index[0])
+            and _is_column(index[1])
         ):
             index, column = index
         else:
             column = None
 
         item = self.at(index, column)  # type: ignore
-        if isinstance(index, int) and column is None:
+
+        if isinstance(index, int) and (
+            column is None
+            or (
+                isinstance(column, Iterable)
+                and not isinstance(column, str)
+                and set(column) == set(self.column_names)
+            )
+        ):
             if self.item_type == "tuple":
                 item = _dict_to_tuple(item)
             if self._transform is not None:
@@ -347,7 +381,7 @@ class HDFDataset(Generic[T, U], Dataset[U]):
             "hdf_fpath": self._hdf_fpath,
             "transform": self._transform,
             "keep_padding": self._keep_padding,
-            "return_shape_columns": self._return_shape_columns,
+            "return_added_columns": self._return_added_columns,
             "is_open": self.is_open(),
         }
 
@@ -389,7 +423,7 @@ class HDFDataset(Generic[T, U], Dataset[U]):
         self._hdf_fpath = data["hdf_fpath"]
         self._transform = data["transform"]
         self._keep_padding = data["keep_padding"]
-        self._return_shape_columns = data["return_shape_columns"]
+        self._return_added_columns = data["return_added_columns"]
         self._hdf_file = None
 
         if not is_init or (files_are_different and is_open):
@@ -435,16 +469,3 @@ def _decode_rec(value: Union[bytes, Iterable], encoding: str) -> Union[str, list
         raise TypeError(
             f"Invalid argument type {type(value)}. (expected bytes or Iterable)"
         )
-
-
-def is_index(index: Any) -> TypeGuard[IndexType]:
-    return (
-        isinstance(index, int)
-        or is_iterable_int(index)
-        or isinstance(index, slice)
-        or index is None
-    )
-
-
-def is_column(column: Any) -> TypeGuard[ColumnType]:
-    return isinstance(column, str) or is_iterable_str(column) or column is None

@@ -7,6 +7,7 @@ from unittest import TestCase
 
 import torch
 
+from torchoutil.nn.functional.get import get_device
 from torchoutil.nn.functional.multilabel import (
     indices_to_multihot,
     indices_to_names,
@@ -77,6 +78,39 @@ class TestMultilabel(TestCase):
         self.assertTrue(torch.equal(multihot_1, multihot_2))
         self.assertListEqual(names_1, names_2)
         self.assertListEqual(indices_1, indices_2)
+
+    def test_ints_to_multihots(self) -> None:
+        device = get_device()
+        ints = torch.as_tensor([[0, 1, 1]], device=device)
+        num_classes = 5
+        multihots = indices_to_multihot(ints, num_classes, dtype=torch.int)
+        expected = torch.as_tensor([[1, 1, 0, 0, 0]], device=device)
+
+        self.assertEqual(multihots.shape, expected.shape)
+        self.assertTrue(multihots.eq(expected).all(), f"{multihots=}")
+
+    def test_convert_and_reconvert(self) -> None:
+        device = get_device()
+        multihots = torch.as_tensor(
+            [
+                [1, 1, 1],
+                [0, 0, 0],
+                [1, 1, 0],
+                [0, 0, 1],
+            ],
+            device=device,
+        )
+        expected_ints = [[0, 1, 2], [], [0, 1], [2]]
+
+        num_classes = multihots.shape[1]
+        ints = multihot_to_indices(multihots)
+        new_multihots = indices_to_multihot(
+            ints, num_classes, dtype=torch.int, device=device
+        )
+
+        self.assertListEqual(ints, expected_ints)
+        self.assertEqual(multihots.shape, new_multihots.shape)
+        self.assertTrue(multihots.eq(new_multihots).all())
 
 
 if __name__ == "__main__":

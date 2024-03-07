@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.1] 2024-03-07
+### Added
+- `ModelCheckpointRegister` class to make download and loading easier from checkpoint.
+
+### Modified
+- `pack_to_hdf` now supports existing shape column.
+- `SizedDatasetLike` is now compatible with `Sequence`-like objects.
+
 ## [0.2.0] 2024-03-04
 ### Added
 - Optional hdf datasets with `HDFDataset` class and `pack_to_hdf` function.

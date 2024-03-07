@@ -16,8 +16,10 @@ classifiers = [
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
     "Topic :: Scientific/Engineering",
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Operating System :: OS Independent",
 ]
 maintainers = [
     {name = "Étienne Labbé (Labbeti)", email = "labbeti.pub@gmail.com"},
@@ -25,8 +27,11 @@ maintainers = [
 dynamic = ["version", "dependencies", "optional-dependencies"]
 
 [project.urls]
+Homepage = "https://pypi.org/project/torchoutil/"
+Documentation = "https://torchoutil.readthedocs.io/"
 Repository = "https://github.com/Labbeti/torchoutil.git"
 Changelog = "https://github.com/Labbeti/torchoutil/blob/main/CHANGELOG.md"
+Tracker = "https://github.com/Labbeti/torchoutil/issues"
 
 [project.scripts]
 torchoutil-info = "torchoutil.info:print_install_info"
