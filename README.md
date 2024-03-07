@@ -28,7 +28,7 @@ Collection of functions and modules to help development in PyTorch.
 pip install torchoutil
 ```
 
-The only requirements are **pytorch** and **typing_extensions**.
+The only requirement is **pytorch**.
 
 To check if the package is installed and show the package version, you can use the following command:
 ```bash
@@ -115,4 +115,4 @@ If `h5py` is installed, the function `pack_to_hdf` and class `HDFDataset` can be
 
 ## Contact
 Maintainer:
-- Étienne Labbé "Labbeti": labbeti.pub@gmail.com
+- Etienne Labbé "Labbeti": labbeti.pub@gmail.com
