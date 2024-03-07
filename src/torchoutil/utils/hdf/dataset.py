@@ -61,7 +61,7 @@ class HDFDataset(Generic[T, U], Dataset[U]):
         hdf_fpath: Union[str, Path],
         transform: Optional[Callable[[T], U]] = None,
         keep_padding: Iterable[str] = (),
-        return_shape_columns: bool = False,
+        return_added_columns: bool = False,
         open_hdf: bool = True,
     ) -> None:
         """HDFDataset to read an packed hdf file.
@@ -73,7 +73,7 @@ class HDFDataset(Generic[T, U], Dataset[U]):
             hdf_fpath: The path to the HDF file.
             transforms: The transform to apply values. default to None.
             keep_padding: Keys to keep padding values. defaults to ().
-            return_shape_columns: Returns the shape of each value.
+            return_added_columns: Returns the columns added by pack_to_hdf(.) function.
             open_hdf: If True, open the HDF file at start. defaults to True.
         """
         hdf_fpath = Path(hdf_fpath).resolve()
@@ -91,7 +91,7 @@ class HDFDataset(Generic[T, U], Dataset[U]):
         self._hdf_fpath = hdf_fpath
         self._transform = transform
         self._keep_padding = keep_padding
-        self._return_shape_columns = return_shape_columns
+        self._return_added_columns = return_added_columns
 
         self._hdf_file: Any = None
 
@@ -120,7 +120,7 @@ class HDFDataset(Generic[T, U], Dataset[U]):
         column_names = [
             name
             for name in column_names
-            if self._return_shape_columns or not name.endswith(SHAPE_SUFFIX)
+            if self._return_added_columns or name not in self.added_columns
         ]
         return column_names
 
@@ -128,6 +128,11 @@ class HDFDataset(Generic[T, U], Dataset[U]):
     def shape(self) -> Tuple[int, ...]:
         """The shape of the Clotho dataset."""
         return len(self), len(self.column_names)
+
+    @property
+    def shape_suffix(self) -> str:
+        """Return the tensor shape suffix in column names."""
+        return self._hdf_file.attrs.get("shape_suffix", SHAPE_SUFFIX)
 
     @property
     def info(self) -> Dict[str, Any]:
@@ -153,23 +158,28 @@ class HDFDataset(Generic[T, U], Dataset[U]):
 
     # Public methods
     @overload
-    def at(self, index: int) -> T: ...
+    def at(self, index: int) -> T:
+        ...
 
     @overload
-    def at(self, index: Union[Iterable[int], slice, None], column: str) -> List: ...
+    def at(self, index: Union[Iterable[int], slice, None], column: str) -> List:
+        ...
 
     @overload
-    def at(self, index: Union[Iterable[int], slice, None]) -> Dict[str, List]: ...
+    def at(self, index: Union[Iterable[int], slice, None]) -> Dict[str, List]:
+        ...
 
     @overload
     def at(
         self,
         index: Union[Iterable[int], slice, None],
         column: Union[Iterable[str], None],
-    ) -> Dict[str, List]: ...
+    ) -> Dict[str, List]:
+        ...
 
     @overload
-    def at(self, index: Any, column: Any) -> Any: ...
+    def at(self, index: Any, column: Any) -> Any:
+        ...
 
     def at(
         self,
@@ -222,7 +232,7 @@ class HDFDataset(Generic[T, U], Dataset[U]):
             hdf_values = [hdf_value]
         del hdf_value
 
-        shape_name = f"{column}{SHAPE_SUFFIX}"
+        shape_name = f"{column}{self.shape_suffix}"
         must_remove_padding = (
             shape_name in self._hdf_file.keys() and column not in self._keep_padding
         )
@@ -310,16 +320,19 @@ class HDFDataset(Generic[T, U], Dataset[U]):
             self.close()
 
     @overload
-    def __getitem__(self, index: int) -> U: ...
+    def __getitem__(self, index: int) -> U:
+        ...
 
     @overload
     def __getitem__(
         self,
         index: Union[Iterable[int], slice, None],
-    ) -> Dict[str, list]: ...
+    ) -> Dict[str, list]:
+        ...
 
     @overload
-    def __getitem__(self, index: Any) -> Any: ...
+    def __getitem__(self, index: Any) -> Any:
+        ...
 
     def __getitem__(
         self,
@@ -348,7 +361,7 @@ class HDFDataset(Generic[T, U], Dataset[U]):
             "hdf_fpath": self._hdf_fpath,
             "transform": self._transform,
             "keep_padding": self._keep_padding,
-            "return_shape_columns": self._return_shape_columns,
+            "return_added_columns": self._return_added_columns,
             "is_open": self.is_open(),
         }
 
@@ -390,7 +403,7 @@ class HDFDataset(Generic[T, U], Dataset[U]):
         self._hdf_fpath = data["hdf_fpath"]
         self._transform = data["transform"]
         self._keep_padding = data["keep_padding"]
-        self._return_shape_columns = data["return_shape_columns"]
+        self._return_added_columns = data["return_added_columns"]
         self._hdf_file = None
 
         if not is_init or (files_are_different and is_open):

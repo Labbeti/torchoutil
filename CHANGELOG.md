@@ -6,6 +6,8 @@ All notable changes to this project will be documented in this file.
 ### Added
 - `ModelCheckpointRegister` class to make download and loading easier from checkpoint.
 
+### Modified
+- `pack_to_hdf` now supports existing shape column.
 
 ## [0.2.0] 2024-03-04
 ### Added

@@ -54,7 +54,7 @@ _HDF_SUPPORTED_DTYPES = (
     HDF_STRING_DTYPE,
     HDF_VOID_DTYPE,
 )
-_HDFDType = Union[Literal["b", "i", "u", "f"], HDF_STRING_DTYPE, HDF_VOID_DTYPE]
+_HDFDType = Union[Literal["b", "i", "u", "f"], Any]
 
 
 @torch.inference_mode()
@@ -67,6 +67,7 @@ def pack_to_hdf(
     verbose: int = 0,
     batch_size: int = 32,
     num_workers: Union[int, Literal["auto"]] = "auto",
+    shape_suffix: str = SHAPE_SUFFIX,
 ) -> HDFDataset[U, U]:
     """Pack a dataset to HDF file.
 
@@ -238,14 +239,15 @@ def pack_to_hdf(
             if len(shape) == 0 or all_eq_shapes[attr_name]:
                 continue
 
-            shape_name = f"{attr_name}{SHAPE_SUFFIX}"
+            shape_name = f"{attr_name}{shape_suffix}"
             raw_dset_shape = (len(dataset), len(shape))
 
             if shape_name in hdf_dsets:
-                pylog.warning(
-                    f"Column {shape_name} already exists in source dataset. (with shape={hdf_dsets[shape_name].shape} and expected {raw_dset_shape})"
-                )
-                continue
+                if hdf_dsets[shape_name].shape != raw_dset_shape:
+                    msg = f"Column {shape_name} already exists in source dataset with a different shape. (found shape={hdf_dsets[shape_name].shape} but expected shape is {raw_dset_shape})"
+                    raise RuntimeError(msg)
+                else:
+                    continue
 
             added_columns.append(shape_name)
             hdf_dsets[shape_name] = hdf_file.create_dataset(
@@ -316,7 +318,7 @@ def pack_to_hdf(
                         raise err
 
                     # Store original shape if needed
-                    shape_name = f"{attr_name}{SHAPE_SUFFIX}"
+                    shape_name = f"{attr_name}{shape_suffix}"
                     if shape_name in hdf_dsets.keys():
                         hdf_shapes_dset = hdf_dsets[shape_name]
                         hdf_shapes_dset[i] = shape
@@ -338,6 +340,7 @@ def pack_to_hdf(
             "global_hash_value": global_hash_value,
             "item_type": item_type,
             "added_columns": added_columns,
+            "shape_suffix": shape_suffix,
         }
         if verbose >= 2:
             dumped_attributes = json.dumps(attributes, indent="\t")
@@ -355,7 +358,7 @@ def pack_to_hdf(
     if verbose >= 2:
         pylog.debug(f"Data into has been packed into HDF file '{hdf_fpath}'.")
 
-    hdf_dataset = HDFDataset(hdf_fpath, open_hdf=True, return_shape_columns=False)
+    hdf_dataset = HDFDataset(hdf_fpath, open_hdf=True, return_added_columns=False)
     return hdf_dataset
 
 
