@@ -172,28 +172,23 @@ class HDFDataset(Generic[T, U], Dataset[U]):
 
     # Public methods
     @overload
-    def at(self, index: int) -> T:
-        ...
+    def at(self, index: int) -> T: ...
 
     @overload
-    def at(self, index: Union[Iterable[int], slice, None], column: str) -> List:
-        ...
+    def at(self, index: Union[Iterable[int], slice, None], column: str) -> List: ...
 
     @overload
-    def at(self, index: Union[Iterable[int], slice, None]) -> Dict[str, List]:
-        ...
+    def at(self, index: Union[Iterable[int], slice, None]) -> Dict[str, List]: ...
 
     @overload
     def at(
         self,
         index: Union[Iterable[int], slice, None],
         column: Union[Iterable[str], None],
-    ) -> Dict[str, List]:
-        ...
+    ) -> Dict[str, List]: ...
 
     @overload
-    def at(self, index: Any, column: Any) -> Any:
-        ...
+    def at(self, index: Any, column: Any) -> Any: ...
 
     def at(
         self,
@@ -332,19 +327,16 @@ class HDFDataset(Generic[T, U], Dataset[U]):
             self.close()
 
     @overload
-    def __getitem__(self, index: int) -> U:
-        ...
+    def __getitem__(self, index: int) -> U: ...
 
     @overload
     def __getitem__(
         self,
         index: Union[Iterable[int], slice, None],
-    ) -> Dict[str, list]:
-        ...
+    ) -> Dict[str, list]: ...
 
     @overload
-    def __getitem__(self, index: Any) -> Any:
-        ...
+    def __getitem__(self, index: Any) -> Any: ...
 
     def __getitem__(
         self,
@@ -362,16 +354,12 @@ class HDFDataset(Generic[T, U], Dataset[U]):
 
         item = self.at(index, column)  # type: ignore
 
-        if (
-            isinstance(index, int)
-            and self._transform is not None
-            and (
-                column is None
-                or (
-                    isinstance(column, Iterable)
-                    and not isinstance(column, str)
-                    and set(column) == set(self.column_names)
-                )
+        if isinstance(index, int) and (
+            column is None
+            or (
+                isinstance(column, Iterable)
+                and not isinstance(column, str)
+                and set(column) == set(self.column_names)
             )
         ):
             if self.item_type == "tuple":
