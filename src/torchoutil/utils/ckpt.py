@@ -3,6 +3,7 @@
 
 import json
 import logging
+import os
 import os.path as osp
 
 from pathlib import Path
@@ -126,6 +127,7 @@ class ModelCheckpointRegister:
     ) -> None:
         """Download checkpoint file."""
         fpath = self.get_ckpt_path(model_name)
+        os.makedirs(fpath.parent, exist_ok=True)
         fpath = str(fpath)
         url = self._infos[model_name]["url"]
         torch.hub.download_url_to_file(url, fpath, progress=verbose >= 1)
