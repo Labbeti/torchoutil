@@ -7,7 +7,7 @@ import os
 import os.path as osp
 
 from pathlib import Path
-from typing import Dict, Optional, TypedDict, Union
+from typing import Dict, List, Optional, TypedDict, Union
 
 import torch
 
@@ -61,7 +61,7 @@ class ModelCheckpointRegister:
         return self._ckpt_parent_path.resolve()
 
     @property
-    def model_names(self) -> list[str]:
+    def model_names(self) -> List[str]:
         return list(self._infos.keys())
 
     def get_ckpt_path(self, model_name: str) -> Path:
