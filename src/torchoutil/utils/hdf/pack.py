@@ -4,7 +4,6 @@
 import datetime
 import json
 import logging
-import os
 import zlib
 from dataclasses import asdict, is_dataclass
 from pathlib import Path
@@ -91,7 +90,7 @@ def pack_to_hdf(
             f"Cannot pack to hdf a non-sized-dataset '{dataset.__class__.__name__}'."
         )
     if len(dataset) == 0:
-        raise ValueError("Cannot pack to hdf a empty dataset.")
+        raise ValueError("Cannot pack to hdf an empty dataset.")
 
     hdf_fpath = Path(hdf_fpath).resolve()
     if hdf_fpath.exists() and not hdf_fpath.is_file():

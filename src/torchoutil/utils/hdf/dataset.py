@@ -51,8 +51,22 @@ T = TypeVar("T")
 U = TypeVar("U")
 
 
-IndexType = Union[int, Iterable[int], slice, None]
+IndexType = Union[int, Iterable[int], Tensor, slice, None]
 ColumnType = Union[str, Iterable[str], None]
+
+
+def _is_index(index: Any) -> TypeGuard[IndexType]:
+    return (
+        isinstance(index, int)
+        or is_iterable_int(index)
+        or isinstance(index, slice)
+        or index is None
+        or (isinstance(index, Tensor) and not index.is_floating_point())
+    )
+
+
+def _is_column(column: Any) -> TypeGuard[ColumnType]:
+    return isinstance(column, str) or is_iterable_str(column) or column is None
 
 
 class HDFDataset(Generic[T, U], Dataset[U]):
@@ -209,9 +223,7 @@ class HDFDataset(Generic[T, U], Dataset[U]):
 
         if isinstance(index, slice):
             is_mult = True
-        elif isinstance(index, Iterable):
-            if not all(isinstance(idx_i, int) for idx_i in index):
-                raise TypeError(f"Invalid argument {index=}.")
+        elif is_iterable_int(index):
             is_mult = True
         elif isinstance(index, int):
             if not (-len(self) <= index < len(self)):
@@ -341,15 +353,27 @@ class HDFDataset(Generic[T, U], Dataset[U]):
         if (
             isinstance(index, tuple)
             and len(index) == 2
-            and is_index(index[0])
-            and is_column(index[1])
+            and _is_index(index[0])
+            and _is_column(index[1])
         ):
             index, column = index
         else:
             column = None
 
         item = self.at(index, column)  # type: ignore
-        if isinstance(index, int) and column is None:
+
+        if (
+            isinstance(index, int)
+            and self._transform is not None
+            and (
+                column is None
+                or (
+                    isinstance(column, Iterable)
+                    and not isinstance(column, str)
+                    and set(column) == set(self.column_names)
+                )
+            )
+        ):
             if self.item_type == "tuple":
                 item = _dict_to_tuple(item)
             if self._transform is not None:
@@ -449,16 +473,3 @@ def _decode_rec(value: Union[bytes, Iterable], encoding: str) -> Union[str, list
         raise TypeError(
             f"Invalid argument type {type(value)}. (expected bytes or Iterable)"
         )
-
-
-def is_index(index: Any) -> TypeGuard[IndexType]:
-    return (
-        isinstance(index, int)
-        or is_iterable_int(index)
-        or isinstance(index, slice)
-        or index is None
-    )
-
-
-def is_column(column: Any) -> TypeGuard[ColumnType]:
-    return isinstance(column, str) or is_iterable_str(column) or column is None
