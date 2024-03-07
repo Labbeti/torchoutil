@@ -7,7 +7,7 @@ import os
 import os.path as osp
 
 from pathlib import Path
-from typing import Dict, List, Optional, TypedDict, Union
+from typing import Dict, List, Optional, Tuple, TypedDict, Union
 
 import torch
 
@@ -136,7 +136,7 @@ class ModelCheckpointRegister:
         model_name: str,
         force: bool = False,
         verbose: int = 0,
-    ) -> tuple[Path, bool]:
+    ) -> Tuple[Path, bool]:
         """Download checkpoint file."""
         fpath = self.get_ckpt_path(model_name)
         exists = fpath.exists()
