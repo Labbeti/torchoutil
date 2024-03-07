@@ -36,6 +36,7 @@ class ModelCheckpointRegister:
         """
         Args:
             infos: Mapping model_name to their checkpoint information, with architecture, download url, hash value and filename.
+            state_dict_key: Optional key in the checkpoint data where state_dict is stored.
             ckpt_parent_path: Directory where checkpoints are saved. If None, defaults to `~/.cache/torch/hub/checkpoints`.
         """
         if ckpt_parent_path is None:
