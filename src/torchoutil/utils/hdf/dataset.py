@@ -110,7 +110,7 @@ class HDFDataset(Generic[T, U], Dataset[U]):
         return list(self.get_hdf_keys())
 
     @property
-    def attrs(self) -> dict[str, Any]:
+    def attrs(self) -> Dict[str, Any]:
         return dict(self._hdf_file.attrs)
 
     @property
