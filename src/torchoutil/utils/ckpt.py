@@ -7,7 +7,7 @@ import os
 import os.path as osp
 
 from pathlib import Path
-from typing import Optional, TypedDict, Union
+from typing import Dict, Optional, TypedDict, Union
 
 import torch
 
@@ -29,7 +29,7 @@ class CheckpointInfo(TypedDict):
 class ModelCheckpointRegister:
     def __init__(
         self,
-        infos: dict[str, CheckpointInfo],
+        infos: Dict[str, CheckpointInfo],
         state_dict_key: Optional[str],
         ckpt_parent_path: Union[str, Path, None] = None,
     ) -> None:
@@ -49,7 +49,7 @@ class ModelCheckpointRegister:
         self._ckpt_parent_path = ckpt_parent_path
 
     @property
-    def infos(self) -> dict[str, CheckpointInfo]:
+    def infos(self) -> Dict[str, CheckpointInfo]:
         return self._infos
 
     @property
@@ -80,7 +80,7 @@ class ModelCheckpointRegister:
         device: Union[str, torch.device, None] = None,
         offline: bool = False,
         verbose: int = 0,
-    ) -> dict[str, Tensor]:
+    ) -> Dict[str, Tensor]:
         """Load state_dict weights.
 
         Args:

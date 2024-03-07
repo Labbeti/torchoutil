@@ -203,7 +203,7 @@ def pack_to_hdf(
 
     with h5py.File(hdf_fpath, "w") as hdf_file:
         # Step 2: Build hdf datasets in file
-        hdf_dsets: dict[str, HDFRawDataset] = {}
+        hdf_dsets: Dict[str, HDFRawDataset] = {}
 
         for attr_name, shape in max_shapes.items():
             hdf_dtype = hdf_dtypes.get(attr_name)

@@ -201,7 +201,7 @@ def cat_padded_batch(
     sum_size_12 = x1.shape[seq_dim] + x2.shape[seq_dim]
 
     x12 = pad_dim(x1, sum_size_12, dim=seq_dim)
-    kwd: dict[str, Any] = dict(device=x1.device, dtype=torch.long)
+    kwd: Dict[str, Any] = dict(device=x1.device, dtype=torch.long)
     indices = torch.arange(x2_lens.max().item(), **kwd)
 
     unsq_x1_lens = x1_lens

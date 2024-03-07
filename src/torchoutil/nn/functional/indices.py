@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from typing import Any, List, Union
+from typing import Any, Dict, List, Union
 
 import torch
 from torch import Tensor
@@ -56,7 +56,7 @@ def randperm_diff(
     if isinstance(generator, int):
         generator = torch.Generator().manual_seed(generator)
 
-    perm_kws: dict[str, Any] = dict(generator=generator, device=device)
+    perm_kws: Dict[str, Any] = dict(generator=generator, device=device)
     arange = torch.arange(size, device=device)
     perm = torch.randperm(size, **perm_kws)
 
