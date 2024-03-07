@@ -40,6 +40,7 @@ class TestHDF(TestCase):
         assert np.equal(image0, image1).bool().all()
         assert label0 == label1
 
+        hdf_dataset.close()
         os.remove(path)
 
     def test_shape_column(self) -> None:
@@ -62,6 +63,7 @@ class TestHDF(TestCase):
             assert isinstance(data_i, Tensor)
             assert data_i.shape == data_shape[i]
 
+        hdf_dataset.close()
         os.remove(path)
 
 
