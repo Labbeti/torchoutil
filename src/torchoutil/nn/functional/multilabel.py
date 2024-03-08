@@ -17,6 +17,7 @@ T = TypeVar("T")
 def indices_to_multihot(
     indices: Union[Sequence[Union[Sequence[int], Tensor]], Tensor],
     num_classes: int,
+    *,
     device: Union[str, torch.device, None] = None,
     dtype: Union[torch.dtype, None] = torch.bool,
 ) -> Tensor:
@@ -116,6 +117,7 @@ def names_to_indices(
 def names_to_multihot(
     names: List[List[T]],
     idx_to_name: Mapping[int, T],
+    *,
     device: Union[str, torch.device, None] = None,
     dtype: Union[torch.dtype, None] = torch.bool,
 ) -> Tensor:
@@ -128,7 +130,12 @@ def names_to_multihot(
         dtype: PyTorch DType of the output tensor.
     """
     indices = names_to_indices(names, idx_to_name)
-    multihot = indices_to_multihot(indices, len(idx_to_name), device, dtype)
+    multihot = indices_to_multihot(
+        indices,
+        len(idx_to_name),
+        device=device,
+        dtype=dtype,
+    )
     return multihot
 
 
@@ -150,6 +157,7 @@ def probs_to_indices(
 def probs_to_multihot(
     probs: Tensor,
     threshold: Union[float, Sequence[float], Tensor],
+    *,
     device: Union[str, torch.device, None] = None,
     dtype: Union[torch.dtype, None] = torch.bool,
 ) -> Tensor:

@@ -25,12 +25,10 @@ class TModule(Generic[InType, OutType], nn.Module):
         return super().forward(*args, **kwargs)
 
     @overload
-    def compose(self, other: "TModule[Any, T1]") -> "TSequential[InType, T1]":
-        ...
+    def compose(self, other: "TModule[Any, T1]") -> "TSequential[InType, T1]": ...
 
     @overload
-    def compose(self, other: nn.Module) -> "TSequential[InType, Any]":
-        ...
+    def compose(self, other: nn.Module) -> "TSequential[InType, Any]": ...
 
     def compose(self, other) -> "TSequential[InType, Any]":
         return TSequential(self, other)
@@ -49,8 +47,7 @@ class TSequential(Generic[InType, OutType], TModule[InType, OutType], nn.Sequent
         *,
         unpack_tuple: bool = False,
         unpack_dict: bool = False,
-    ) -> None:
-        ...
+    ) -> None: ...
 
     @overload
     def __init__(
@@ -60,8 +57,7 @@ class TSequential(Generic[InType, OutType], TModule[InType, OutType], nn.Sequent
         *,
         unpack_tuple: bool = False,
         unpack_dict: bool = False,
-    ) -> None:
-        ...
+    ) -> None: ...
 
     @overload
     def __init__(
@@ -72,8 +68,7 @@ class TSequential(Generic[InType, OutType], TModule[InType, OutType], nn.Sequent
         *,
         unpack_tuple: bool = False,
         unpack_dict: bool = False,
-    ) -> None:
-        ...
+    ) -> None: ...
 
     @overload
     def __init__(
@@ -85,8 +80,7 @@ class TSequential(Generic[InType, OutType], TModule[InType, OutType], nn.Sequent
         *,
         unpack_tuple: bool = False,
         unpack_dict: bool = False,
-    ) -> None:
-        ...
+    ) -> None: ...
 
     @overload
     def __init__(
@@ -99,8 +93,7 @@ class TSequential(Generic[InType, OutType], TModule[InType, OutType], nn.Sequent
         *,
         unpack_tuple: bool = False,
         unpack_dict: bool = False,
-    ) -> None:
-        ...
+    ) -> None: ...
 
     @overload
     def __init__(
@@ -114,8 +107,7 @@ class TSequential(Generic[InType, OutType], TModule[InType, OutType], nn.Sequent
         *,
         unpack_tuple: bool = False,
         unpack_dict: bool = False,
-    ) -> None:
-        ...
+    ) -> None: ...
 
     @overload
     def __init__(
@@ -130,8 +122,7 @@ class TSequential(Generic[InType, OutType], TModule[InType, OutType], nn.Sequent
         *,
         unpack_tuple: bool = False,
         unpack_dict: bool = False,
-    ) -> None:
-        ...
+    ) -> None: ...
 
     @overload
     def __init__(
@@ -147,8 +138,7 @@ class TSequential(Generic[InType, OutType], TModule[InType, OutType], nn.Sequent
         *,
         unpack_tuple: bool = False,
         unpack_dict: bool = False,
-    ) -> None:
-        ...
+    ) -> None: ...
 
     @overload
     def __init__(
@@ -158,8 +148,7 @@ class TSequential(Generic[InType, OutType], TModule[InType, OutType], nn.Sequent
         *,
         unpack_tuple: bool = False,
         unpack_dict: bool = False,
-    ) -> None:
-        ...
+    ) -> None: ...
 
     @overload
     def __init__(
@@ -169,8 +158,7 @@ class TSequential(Generic[InType, OutType], TModule[InType, OutType], nn.Sequent
         *,
         unpack_tuple: bool = False,
         unpack_dict: bool = False,
-    ) -> None:
-        ...
+    ) -> None: ...
 
     @overload
     def __init__(
@@ -178,8 +166,7 @@ class TSequential(Generic[InType, OutType], TModule[InType, OutType], nn.Sequent
         *args: nn.Module,
         unpack_tuple: bool = False,
         unpack_dict: bool = False,
-    ) -> None:
-        ...
+    ) -> None: ...
 
     def __init__(
         self,
@@ -190,17 +177,17 @@ class TSequential(Generic[InType, OutType], TModule[InType, OutType], nn.Sequent
         nn.Sequential.__init__(self, *args)
         TModule.__init__(self)
 
-        self._unpack_tuple = unpack_tuple
-        self._unpack_dict = unpack_dict
+        self.__unpack_tuple = unpack_tuple
+        self.__unpack_dict = unpack_dict
 
     def __call__(self, x: InType) -> OutType:
         return nn.Sequential.__call__(self, x)
 
     def forward(self, x: InType) -> OutType:
         for module in self:
-            if self._unpack_tuple and isinstance(x, tuple):
+            if self.__unpack_tuple and isinstance(x, tuple):
                 x = module(*x)
-            elif self._unpack_dict and isinstance(x, dict):
+            elif self.__unpack_dict and isinstance(x, dict):
                 x = module(**x)
             else:
                 x = module(x)

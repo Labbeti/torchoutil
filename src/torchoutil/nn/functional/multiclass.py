@@ -18,6 +18,7 @@ T = TypeVar("T")
 def indices_to_onehot(
     indices: Union[Sequence[int], Tensor],
     num_classes: int,
+    *,
     device: Union[str, torch.device, None] = None,
     dtype: Union[torch.dtype, None] = torch.bool,
 ) -> Tensor:
@@ -93,6 +94,7 @@ def names_to_indices(
 def names_to_onehot(
     names: List[T],
     idx_to_name: Mapping[int, T],
+    *,
     device: Union[str, torch.device, None] = None,
     dtype: Union[torch.dtype, None] = torch.bool,
 ) -> Tensor:
@@ -105,7 +107,7 @@ def names_to_onehot(
         dtype: PyTorch DType of the output tensor.
     """
     indices = names_to_indices(names, idx_to_name)
-    onehot = indices_to_onehot(indices, len(idx_to_name), device, dtype)
+    onehot = indices_to_onehot(indices, len(idx_to_name), device=device, dtype=dtype)
     return onehot
 
 
@@ -124,6 +126,7 @@ def probs_to_indices(
 
 def probs_to_onehot(
     probs: Tensor,
+    *,
     device: Union[str, torch.device, None] = None,
     dtype: Union[torch.dtype, None] = torch.bool,
 ) -> Tensor:
@@ -135,7 +138,7 @@ def probs_to_onehot(
     if device is None:
         device = probs.device
     indices = probs_to_indices(probs)
-    onehot = indices_to_onehot(indices, probs.shape[-1], device, dtype)
+    onehot = indices_to_onehot(indices, probs.shape[-1], device=device, dtype=dtype)
     return onehot
 
 
