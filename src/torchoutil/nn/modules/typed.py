@@ -25,10 +25,12 @@ class TModule(Generic[InType, OutType], nn.Module):
         return super().forward(*args, **kwargs)
 
     @overload
-    def compose(self, other: "TModule[Any, T1]") -> "TSequential[InType, T1]": ...
+    def compose(self, other: "TModule[Any, T1]") -> "TSequential[InType, T1]":
+        ...
 
     @overload
-    def compose(self, other: nn.Module) -> "TSequential[InType, Any]": ...
+    def compose(self, other: nn.Module) -> "TSequential[InType, Any]":
+        ...
 
     def compose(self, other) -> "TSequential[InType, Any]":
         return TSequential(self, other)
@@ -47,7 +49,8 @@ class TSequential(Generic[InType, OutType], TModule[InType, OutType], nn.Sequent
         *,
         unpack_tuple: bool = False,
         unpack_dict: bool = False,
-    ) -> None: ...
+    ) -> None:
+        ...
 
     @overload
     def __init__(
@@ -57,7 +60,8 @@ class TSequential(Generic[InType, OutType], TModule[InType, OutType], nn.Sequent
         *,
         unpack_tuple: bool = False,
         unpack_dict: bool = False,
-    ) -> None: ...
+    ) -> None:
+        ...
 
     @overload
     def __init__(
@@ -68,7 +72,8 @@ class TSequential(Generic[InType, OutType], TModule[InType, OutType], nn.Sequent
         *,
         unpack_tuple: bool = False,
         unpack_dict: bool = False,
-    ) -> None: ...
+    ) -> None:
+        ...
 
     @overload
     def __init__(
@@ -80,7 +85,8 @@ class TSequential(Generic[InType, OutType], TModule[InType, OutType], nn.Sequent
         *,
         unpack_tuple: bool = False,
         unpack_dict: bool = False,
-    ) -> None: ...
+    ) -> None:
+        ...
 
     @overload
     def __init__(
@@ -93,7 +99,8 @@ class TSequential(Generic[InType, OutType], TModule[InType, OutType], nn.Sequent
         *,
         unpack_tuple: bool = False,
         unpack_dict: bool = False,
-    ) -> None: ...
+    ) -> None:
+        ...
 
     @overload
     def __init__(
@@ -107,7 +114,8 @@ class TSequential(Generic[InType, OutType], TModule[InType, OutType], nn.Sequent
         *,
         unpack_tuple: bool = False,
         unpack_dict: bool = False,
-    ) -> None: ...
+    ) -> None:
+        ...
 
     @overload
     def __init__(
@@ -122,7 +130,8 @@ class TSequential(Generic[InType, OutType], TModule[InType, OutType], nn.Sequent
         *,
         unpack_tuple: bool = False,
         unpack_dict: bool = False,
-    ) -> None: ...
+    ) -> None:
+        ...
 
     @overload
     def __init__(
@@ -138,7 +147,8 @@ class TSequential(Generic[InType, OutType], TModule[InType, OutType], nn.Sequent
         *,
         unpack_tuple: bool = False,
         unpack_dict: bool = False,
-    ) -> None: ...
+    ) -> None:
+        ...
 
     @overload
     def __init__(
@@ -148,7 +158,8 @@ class TSequential(Generic[InType, OutType], TModule[InType, OutType], nn.Sequent
         *,
         unpack_tuple: bool = False,
         unpack_dict: bool = False,
-    ) -> None: ...
+    ) -> None:
+        ...
 
     @overload
     def __init__(
@@ -158,7 +169,8 @@ class TSequential(Generic[InType, OutType], TModule[InType, OutType], nn.Sequent
         *,
         unpack_tuple: bool = False,
         unpack_dict: bool = False,
-    ) -> None: ...
+    ) -> None:
+        ...
 
     @overload
     def __init__(
@@ -166,7 +178,8 @@ class TSequential(Generic[InType, OutType], TModule[InType, OutType], nn.Sequent
         *args: nn.Module,
         unpack_tuple: bool = False,
         unpack_dict: bool = False,
-    ) -> None: ...
+    ) -> None:
+        ...
 
     def __init__(
         self,
