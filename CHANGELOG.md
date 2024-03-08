@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## [0.2.2] UNRELEASED
+## [0.2.2] 2024-03-08
 ### Fixed
 - `ModelCheckpointRegister` now creates intermediate directories before download.
 - `MaskedMean` and `MaskedSum` dim argument.
