@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.2] 2024-03-08
+### Fixed
+- `ModelCheckpointRegister` now creates intermediate directories before download.
+- `MaskedMean` and `MaskedSum` dim argument.
+
+
 ## [0.2.1] 2024-03-07
 ### Added
 - `ModelCheckpointRegister` class to make download and loading easier from checkpoint.
@@ -9,6 +15,7 @@ All notable changes to this project will be documented in this file.
 ### Modified
 - `pack_to_hdf` now supports existing shape column.
 - `SizedDatasetLike` is now compatible with `Sequence`-like objects.
+
 
 ## [0.2.0] 2024-03-04
 ### Added
@@ -20,6 +27,7 @@ All notable changes to this project will be documented in this file.
 ### Modified
 - Use Literal for pad and crop functions typing.
 - Minimal torch version is now 1.10.
+
 
 ## [0.1.0] 2024-01-29
 ### Added

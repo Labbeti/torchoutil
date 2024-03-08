@@ -26,6 +26,7 @@ class IndicesToMultihot(nn.Module):
     def __init__(
         self,
         num_classes: int,
+        *,
         device: Union[str, torch.device, None] = None,
         dtype: Union[torch.dtype, None] = torch.bool,
     ) -> None:
@@ -39,7 +40,10 @@ class IndicesToMultihot(nn.Module):
         indices: Union[List[List[int]], List[Tensor]],
     ) -> Tensor:
         multihot = indices_to_multihot(
-            indices, self.num_classes, self.device, self.dtype
+            indices,
+            self.num_classes,
+            device=self.device,
+            dtype=self.dtype,
         )
         return multihot
 
@@ -118,6 +122,7 @@ class NamesToMultihot(nn.Module, Generic[T]):
     def __init__(
         self,
         idx_to_name: Mapping[int, T],
+        *,
         device: Union[str, torch.device, None] = None,
         dtype: Union[torch.dtype, None] = torch.bool,
     ) -> None:
@@ -130,7 +135,12 @@ class NamesToMultihot(nn.Module, Generic[T]):
         self,
         names: List[List[T]],
     ) -> Tensor:
-        multihot = names_to_multihot(names, self.idx_to_name, self.device, self.dtype)
+        multihot = names_to_multihot(
+            names,
+            self.idx_to_name,
+            device=self.device,
+            dtype=self.dtype,
+        )
         return multihot
 
     def extra_repr(self) -> str:
@@ -163,6 +173,7 @@ class ProbsToMultihot(nn.Module):
     def __init__(
         self,
         threshold: Union[float, Tensor],
+        *,
         device: Union[str, torch.device, None] = None,
         dtype: Union[torch.dtype, None] = torch.bool,
     ) -> None:
@@ -175,7 +186,12 @@ class ProbsToMultihot(nn.Module):
         self,
         probs: Tensor,
     ) -> Tensor:
-        multihot = probs_to_multihot(probs, self.threshold, self.device, self.dtype)
+        multihot = probs_to_multihot(
+            probs,
+            self.threshold,
+            device=self.device,
+            dtype=self.dtype,
+        )
         return multihot
 
     def extra_repr(self) -> str:

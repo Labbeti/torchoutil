@@ -190,17 +190,17 @@ class TSequential(Generic[InType, OutType], TModule[InType, OutType], nn.Sequent
         nn.Sequential.__init__(self, *args)
         TModule.__init__(self)
 
-        self._unpack_tuple = unpack_tuple
-        self._unpack_dict = unpack_dict
+        self.__unpack_tuple = unpack_tuple
+        self.__unpack_dict = unpack_dict
 
     def __call__(self, x: InType) -> OutType:
         return nn.Sequential.__call__(self, x)
 
     def forward(self, x: InType) -> OutType:
         for module in self:
-            if self._unpack_tuple and isinstance(x, tuple):
+            if self.__unpack_tuple and isinstance(x, tuple):
                 x = module(*x)
-            elif self._unpack_dict and isinstance(x, dict):
+            elif self.__unpack_dict and isinstance(x, dict):
                 x = module(**x)
             else:
                 x = module(x)

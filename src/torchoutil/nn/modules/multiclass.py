@@ -38,7 +38,12 @@ class IndicesToOneHot(nn.Module):
         self,
         indices: Union[List[int], Tensor],
     ) -> Tensor:
-        onehot = indices_to_onehot(indices, self.num_classes, self.device, self.dtype)
+        onehot = indices_to_onehot(
+            indices,
+            self.num_classes,
+            device=self.device,
+            dtype=self.dtype,
+        )
         return onehot
 
     def extra_repr(self) -> str:
@@ -128,7 +133,12 @@ class NamesToOneHot(nn.Module, Generic[T]):
         self,
         names: List[T],
     ) -> Tensor:
-        onehot = names_to_onehot(names, self.idx_to_name, self.device, self.dtype)
+        onehot = names_to_onehot(
+            names,
+            self.idx_to_name,
+            device=self.device,
+            dtype=self.dtype,
+        )
         return onehot
 
     def extra_repr(self) -> str:
@@ -164,7 +174,11 @@ class ProbsToOneHot(nn.Module):
         self,
         probs: Tensor,
     ) -> Tensor:
-        onehot = probs_to_onehot(probs, self.device, self.dtype)
+        onehot = probs_to_onehot(
+            probs,
+            device=self.device,
+            dtype=self.dtype,
+        )
         return onehot
 
     def extra_repr(self) -> str:

@@ -3,17 +3,15 @@
 
 import json
 import logging
+import os
 import os.path as osp
-
 from pathlib import Path
-from typing import Union, TypedDict
+from typing import Dict, List, Optional, Tuple, TypedDict, Union
 
 import torch
-
 from torch import Tensor
 
 from torchoutil.nn.functional.get import get_device
-
 
 pylog = logging.getLogger(__name__)
 
@@ -28,12 +26,14 @@ class CheckpointInfo(TypedDict):
 class ModelCheckpointRegister:
     def __init__(
         self,
-        infos: dict[str, CheckpointInfo],
+        infos: Dict[str, CheckpointInfo],
+        state_dict_key: Optional[str],
         ckpt_parent_path: Union[str, Path, None] = None,
     ) -> None:
         """
         Args:
             infos: Mapping model_name to their checkpoint information, with architecture, download url, hash value and filename.
+            state_dict_key: Optional key in the checkpoint data where state_dict is stored.
             ckpt_parent_path: Directory where checkpoints are saved. If None, defaults to `~/.cache/torch/hub/checkpoints`.
         """
         if ckpt_parent_path is None:
@@ -43,18 +43,23 @@ class ModelCheckpointRegister:
 
         super().__init__()
         self._infos = infos
+        self._state_dict_key = state_dict_key
         self._ckpt_parent_path = ckpt_parent_path
+
+    @property
+    def infos(self) -> Dict[str, CheckpointInfo]:
+        return self._infos
+
+    @property
+    def state_dict_key(self) -> Optional[str]:
+        return self._state_dict_key
 
     @property
     def ckpt_parent_path(self) -> Path:
         return self._ckpt_parent_path.resolve()
 
     @property
-    def infos(self) -> dict[str, CheckpointInfo]:
-        return self._infos
-
-    @property
-    def model_names(self) -> list[str]:
+    def model_names(self) -> List[str]:
         return list(self._infos.keys())
 
     def get_ckpt_path(self, model_name: str) -> Path:
@@ -73,7 +78,7 @@ class ModelCheckpointRegister:
         device: Union[str, torch.device, None] = None,
         offline: bool = False,
         verbose: int = 0,
-    ) -> dict[str, Tensor]:
+    ) -> Dict[str, Tensor]:
         """Load state_dict weights.
 
         Args:
@@ -104,12 +109,16 @@ class ModelCheckpointRegister:
                         f"Cannot find checkpoint model file in '{model_path}' with mode {offline=}."
                     )
                 else:
-                    self.download_ckpt(model_name_or_path, verbose)
+                    self.download_ckpt(model_name_or_path, verbose=verbose)
 
         del model_name_or_path
 
         data = torch.load(model_path, map_location=device)
-        state_dict = data["model"]
+
+        if self._state_dict_key is None:
+            state_dict = data
+        else:
+            state_dict = data[self._state_dict_key]
 
         if verbose >= 1:
             test_map = data.get("test_mAP", "unknown")
@@ -122,17 +131,31 @@ class ModelCheckpointRegister:
     def download_ckpt(
         self,
         model_name: str,
+        force: bool = False,
         verbose: int = 0,
-    ) -> None:
+    ) -> Tuple[Path, bool]:
         """Download checkpoint file."""
         fpath = self.get_ckpt_path(model_name)
-        fpath = str(fpath)
+        exists = fpath.exists()
+
+        if exists and not force:
+            return fpath, False
+
+        if exists and force:
+            os.remove(fpath)
+
+        os.makedirs(fpath.parent, exist_ok=True)
+
         url = self._infos[model_name]["url"]
-        torch.hub.download_url_to_file(url, fpath, progress=verbose >= 1)
+        torch.hub.download_url_to_file(url, str(fpath), progress=verbose >= 1)
+
+        return fpath, True
 
     def save(self, path: Union[str, Path]) -> None:
+        """Save info to JSON file."""
         args = {
             "infos": self._infos,
+            "state_dict_key": self._state_dict_key,
             "ckpt_parent_path": str(self._ckpt_parent_path),
         }
         with open(path, "r") as file:
@@ -140,6 +163,7 @@ class ModelCheckpointRegister:
 
     @classmethod
     def from_file(cls, path: Union[str, Path]) -> "ModelCheckpointRegister":
+        """Load register info from JSON file."""
         with open(path, "r") as file:
             args = json.load(file)
         return ModelCheckpointRegister(**args)
