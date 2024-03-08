@@ -15,7 +15,7 @@ class MaskedMean(nn.Module):
         self.dim = dim
 
     def forward(self, tensor: Tensor, non_pad_mask: Tensor) -> Tensor:
-        reduced = masked_mean(tensor, non_pad_mask)
+        reduced = masked_mean(tensor, non_pad_mask, self.dim)
         return reduced
 
     def extra_repr(self) -> str:
@@ -33,7 +33,7 @@ class MaskedSum(nn.Module):
         self.dim = dim
 
     def forward(self, tensor: Tensor, non_pad_mask: Tensor) -> Tensor:
-        reduced = masked_sum(tensor, non_pad_mask)
+        reduced = masked_sum(tensor, non_pad_mask, self.dim)
         return reduced
 
     def extra_repr(self) -> str:
