@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from typing import Any, Iterable, List, Literal, Sized, Tuple, Union
+from typing import Any, Dict, Iterable, List, Literal, Sized, Tuple, Union
 
 import torch
 from torch import Generator, Size, Tensor
@@ -10,7 +10,6 @@ from torch.types import Number
 
 from torchoutil.nn.functional.get import get_device
 from torchoutil.nn.functional.others import can_be_stacked, is_scalar
-
 
 PAD_ALIGNS = ("left", "right", "center", "random")
 PadAlign = Literal["left", "right", "center", "random"]
