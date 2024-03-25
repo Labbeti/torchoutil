@@ -54,7 +54,7 @@ import torch
 from torchoutil import lengths_to_non_pad_mask
 
 x = torch.as_tensor([3, 1, 2])
-pad_mask = lengths_to_non_pad_mask(x, max_len=4)
+mask = lengths_to_non_pad_mask(x, max_len=4)
 # Each row i contains x[i] True values for non-padding mask
 # tensor([[True, True, True, False],
 #         [True, False, False, False],
