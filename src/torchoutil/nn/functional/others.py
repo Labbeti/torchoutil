@@ -27,6 +27,12 @@ T = TypeVar("T")
 U = TypeVar("U")
 
 
+def count_parameters(model: nn.Module, only_trainable: bool = False) -> int:
+    params = (p for p in model.parameters() if not only_trainable or p.requires_grad)
+    count = sum(p.numel() for p in params)
+    return count
+
+
 def find(
     x: Tensor,
     value: Any,
@@ -39,15 +45,15 @@ def find(
             f"Function find does not supports 0-d tensors. (found {x.ndim=} == 0)"
         )
     mask = x.eq(value)
-    contains_eos = mask.any(dim=dim)
-    indices_eos = mask.int().argmax(dim=dim)
+    contains = mask.any(dim=dim)
+    indices = mask.int().argmax(dim=dim)
 
     if default is None:
-        if not contains_eos.all():
+        if not contains.all():
             raise RuntimeError(f"Cannot find {value=} in tensor.")
-        return indices_eos
+        return indices
     else:
-        output = torch.where(contains_eos, indices_eos, default)
+        output = torch.where(contains, indices, default)
         return output
 
 
