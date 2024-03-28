@@ -4,7 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## [0.2.3] UNRELEASED
 ### Added
+- `PositionalEncoding` layer for transformers networks.
+
 ### Fixed
+- `can_be_converted_to_tensor` now returns True if input is a Tensor.
 
 ## [0.2.2] 2024-03-08
 ### Fixed
