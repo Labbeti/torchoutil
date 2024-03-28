@@ -60,7 +60,7 @@ def find(
 @overload
 def move_to_rec(
     x: Mapping[T, U],
-    predicate: Optional[Callable[[Any], bool]] = None,
+    predicate: Optional[Callable[[Union[Tensor, nn.Module]], bool]] = None,
     **kwargs,
 ) -> Dict[T, U]:
     ...
@@ -69,7 +69,7 @@ def move_to_rec(
 @overload
 def move_to_rec(
     x: T,
-    predicate: Optional[Callable[[Any], bool]] = None,
+    predicate: Optional[Callable[[Union[Tensor, nn.Module]], bool]] = None,
     **kwargs,
 ) -> T:
     ...
@@ -77,7 +77,7 @@ def move_to_rec(
 
 def move_to_rec(
     x: Any,
-    predicate: Optional[Callable[[Any], bool]] = None,
+    predicate: Optional[Callable[[Union[Tensor, nn.Module]], bool]] = None,
     **kwargs,
 ) -> Any:
     """Move all modules and tensors recursively to a specific dtype or device."""
