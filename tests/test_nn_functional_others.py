@@ -30,6 +30,18 @@ class TestOthers(TestCase):
         lst = [torch.rand(10), torch.rand(10)]
         self.assertFalse(can_be_converted_to_tensor(lst))
 
+    def test_can_be_converted_to_tensor_6(self) -> None:
+        lst = [[torch.rand(10)]]
+        self.assertFalse(can_be_converted_to_tensor(lst))
+
+    def test_can_be_converted_to_tensor_7(self) -> None:
+        lst = torch.rand(10)
+        self.assertTrue(can_be_converted_to_tensor(lst))
+
+    def test_can_be_converted_to_tensor_8(self) -> None:
+        lst = [(), []]
+        self.assertTrue(can_be_converted_to_tensor(lst))
+
 
 if __name__ == "__main__":
     unittest.main()

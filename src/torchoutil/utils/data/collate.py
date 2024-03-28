@@ -19,7 +19,8 @@ class CollateDict:
 
     def __call__(self, batch_lst: List[Dict[str, Any]]) -> Dict[str, List[Any]]:
         result = list_dict_to_dict_list(
-            batch_lst, error_on_missing_key=self.error_on_missing_key
+            batch_lst,
+            error_on_missing_key=self.error_on_missing_key,
         )
         return result
 
@@ -46,10 +47,13 @@ class AdvancedCollateDict:
 
     def __call__(self, batch_lst: List[Dict[str, Any]]) -> Dict[str, Any]:
         batch_dict = list_dict_to_dict_list(
-            batch_lst, error_on_missing_key=self.error_on_missing_key
+            batch_lst,
+            error_on_missing_key=self.error_on_missing_key,
         )
         batch_keys = filter_iterable(
-            batch_dict.keys(), self.include_keys, self.exclude_keys
+            batch_dict.keys(),
+            self.include_keys,
+            self.exclude_keys,
         )
         batch_dict = {k: batch_dict[k] for k in batch_keys}
 
