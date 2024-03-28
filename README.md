@@ -28,7 +28,7 @@ Collection of functions and modules to help development in PyTorch.
 pip install torchoutil
 ```
 
-The only requirement is **pytorch**.
+The only requirement is **PyTorch**.
 
 To check if the package is installed and show the package version, you can use the following command:
 ```bash
@@ -108,9 +108,9 @@ x3 = x2[inv_perm]
 `torchoutil` also provides additional modules when some specific package are already installed in your environment.
 All extras can be installed with `pip install torchoutil[extras]`
 
-If `tensorboard` is installed, the function `load_event_file` can be used.
-If `numpy` is installed, the classes `FromNumpy` and  `ToNumpy` can be used and their related function.
-If `h5py` is installed, the function `pack_to_hdf` and class `HDFDataset` can be used.
+- If `tensorboard` is installed, the function `load_event_file` can be used. It is useful to load manually all data contained in an tensorboard event file.
+- If `numpy` is installed, the classes `FromNumpy` and  `ToNumpy` can be used and their related function. It is meant to be used to compose dynamic transforms into `Sequential` module.
+- If `h5py` is installed, the function `pack_to_hdf` and class `HDFDataset` can be used. Can be used to pack/read dataset to HDF files, and supports variable-length sequences of data.
 
 
 ## Contact
