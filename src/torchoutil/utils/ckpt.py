@@ -5,16 +5,13 @@ import json
 import logging
 import os
 import os.path as osp
-
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple, TypedDict, Union
 
 import torch
-
 from torch import Tensor
 
 from torchoutil.nn.functional.get import get_device
-
 
 pylog = logging.getLogger(__name__)
 
@@ -35,12 +32,12 @@ class ModelCheckpointRegister:
     ) -> None:
         """
         Args:
-            infos: Mapping model_name to their checkpoint information, with architecture, download url, hash value and filename.
+            infos: Maps model_name to their checkpoint information, with architecture, download url, hash value and filename.
             state_dict_key: Optional key in the checkpoint data where state_dict is stored.
             ckpt_parent_path: Directory where checkpoints are saved. If None, defaults to `~/.cache/torch/hub/checkpoints`.
         """
         if ckpt_parent_path is None:
-            ckpt_parent_path = _default_ckpt_parent_path()
+            ckpt_parent_path = get_default_ckpt_parent_path()
         else:
             ckpt_parent_path = Path(ckpt_parent_path)
 
@@ -172,7 +169,7 @@ class ModelCheckpointRegister:
         return ModelCheckpointRegister(**args)
 
 
-def _default_ckpt_parent_path() -> Path:
+def get_default_ckpt_parent_path() -> Path:
     """Default checkpoint path: `~/.cache/torch/hub/checkpoints`."""
     path = torch.hub.get_dir()
     path = Path(path)
