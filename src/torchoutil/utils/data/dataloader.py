@@ -4,7 +4,7 @@
 import os
 
 
-def get_num_cpus() -> int:
+def get_auto_num_cpus() -> int:
     """Returns the number of CPUs available for the process on Linux-based platforms.
     Useful for setting num_workers argument in DataLoaders.
 

@@ -28,7 +28,7 @@ from torch import Tensor, nn
 from torch.utils.data.dataloader import DataLoader
 
 from torchoutil.utils.collections import all_eq
-from torchoutil.utils.data.dataloader import get_num_cpus
+from torchoutil.utils.data.dataloader import get_auto_num_cpus
 from torchoutil.utils.data.dataset import SizedDatasetLike
 from torchoutil.utils.hdf.common import (
     HDF_ENCODING,
@@ -102,7 +102,7 @@ def pack_to_hdf(
         )
 
     if num_workers == "auto":
-        num_workers = get_num_cpus()
+        num_workers = get_auto_num_cpus()
         if verbose >= 2:
             pylog.debug(f"Found num_workers=='auto', set to {num_workers}.")
 
