@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## [0.2.3] UNRELEASED
+## [0.3.0] UNRELEASED
 ### Added
 - `PositionalEncoding` layer for transformers networks.
 
