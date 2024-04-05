@@ -68,6 +68,7 @@ def pad_dims(
 def pad_and_stack_rec(
     sequence: Union[Tensor, int, float, tuple, list],
     pad_value: Number,
+    *,
     dtype: Union[None, torch.dtype] = None,
     device: Union[str, torch.device, None] = None,
 ) -> Tensor:
@@ -102,7 +103,8 @@ def pad_and_stack_rec(
 
     elif isinstance(sequence, (list, tuple)):
         sequence = [
-            pad_and_stack_rec(elt, pad_value, dtype, device) for elt in sequence
+            pad_and_stack_rec(elt, pad_value, dtype=dtype, device=device)
+            for elt in sequence
         ]
         if can_be_stacked(sequence):
             return torch.stack(sequence)

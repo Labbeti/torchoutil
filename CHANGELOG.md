@@ -6,6 +6,9 @@ All notable changes to this project will be documented in this file.
 ### Added
 - `PositionalEncoding` layer for transformers networks.
 
+### Modified
+- Update keyword arguments for mask, pad, labels functions and modules.
+
 ### Fixed
 - `can_be_converted_to_tensor` now returns True if input is a Tensor.
 

@@ -81,6 +81,7 @@ def masked_equal(
 def generate_square_subsequent_mask(
     size: int,
     diagonal: int = 0,
+    *,
     device: Union[str, torch.device, None] = None,
     dtype: Optional[torch.dtype] = None,
 ) -> Tensor:

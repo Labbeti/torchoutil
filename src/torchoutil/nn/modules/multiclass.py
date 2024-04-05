@@ -26,6 +26,7 @@ class IndicesToOneHot(nn.Module):
     def __init__(
         self,
         num_classes: int,
+        *,
         device: Union[str, torch.device, None] = None,
         dtype: Union[torch.dtype, None] = torch.bool,
     ) -> None:
@@ -121,6 +122,7 @@ class NamesToOneHot(nn.Module, Generic[T]):
     def __init__(
         self,
         idx_to_name: Mapping[int, T],
+        *,
         device: Union[str, torch.device, None] = None,
         dtype: Union[torch.dtype, None] = torch.bool,
     ) -> None:
@@ -163,6 +165,7 @@ class ProbsToIndices(nn.Module):
 class ProbsToOneHot(nn.Module):
     def __init__(
         self,
+        *,
         device: Union[str, torch.device, None] = None,
         dtype: Union[torch.dtype, None] = torch.bool,
     ) -> None:
