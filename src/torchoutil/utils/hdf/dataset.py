@@ -220,9 +220,9 @@ class HDFDataset(Generic[T, U], Dataset[U]):
         if is_iterable_str(column):
             return {column_i: self.at(index, column_i) for column_i in column}
 
-        if column not in self.column_names:
+        if column not in self.all_columns:
             raise ValueError(
-                f"Invalid argument {column=}. (expected one of {tuple(self.column_names)})"
+                f"Invalid argument {column=}. (expected one of {tuple(self.all_columns)})"
             )
 
         if isinstance(index, slice):
