@@ -13,7 +13,7 @@ class TestRegister(TestCase):
     def test_cnext_register(self) -> None:
         register = ModelCheckpointRegister(
             infos={
-                "cnext_bl": {
+                "cnext_bl_70": {
                     "architecture": "ConvNeXt",
                     "url": "https://zenodo.org/record/8020843/files/convnext_tiny_465mAP_BL_AC_70kit.pth?download=1",
                     "hash": "0688ae503f5893be0b6b71cb92f8b428",
@@ -23,7 +23,7 @@ class TestRegister(TestCase):
             state_dict_key="model",
         )
 
-        model_name = "cnext_bl"
+        model_name = "cnext_bl_70"
         register.download_ckpt(model_name, force=True)
         state_dict = register.load_state_dict(model_name, offline=True, device="cpu")
 
