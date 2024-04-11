@@ -106,7 +106,7 @@ class ModelCheckpointRegister:
             if not osp.isfile(model_path):
                 if offline:
                     raise FileNotFoundError(
-                        f"Cannot find checkpoint model file in '{model_path}' with mode {offline=}."
+                        f"Cannot find checkpoint model file in '{model_path}' for model '{model_name_or_path}' with mode {offline=}."
                     )
                 else:
                     self.download_ckpt(model_name_or_path, verbose=verbose)
@@ -115,10 +115,11 @@ class ModelCheckpointRegister:
 
         data = torch.load(model_path, map_location=device)
 
-        if self._state_dict_key is None:
+        state_dict_key = self._state_dict_key
+        if state_dict_key is None:
             state_dict = data
         else:
-            state_dict = data[self._state_dict_key]
+            state_dict = data[state_dict_key]
 
         if verbose >= 1:
             test_map = data.get("test_mAP", "unknown")
