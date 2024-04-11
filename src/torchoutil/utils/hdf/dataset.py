@@ -128,6 +128,10 @@ class HDFDataset(Generic[T, U], Dataset[U]):
         return dict(self._hdf_file.attrs)
 
     @property
+    def metadata(self) -> str:
+        return self.attrs.get("metadata", "")
+
+    @property
     def column_names(self) -> List[str]:
         """The name of each column of the dataset."""
         column_names = self.all_columns
