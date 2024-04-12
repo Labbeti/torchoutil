@@ -5,9 +5,12 @@ All notable changes to this project will be documented in this file.
 ## [0.3.0] UNRELEASED
 ### Added
 - `PositionalEncoding` layer for transformers networks.
+- Property `metadata` to `HDFDataset`.
+- Function `create_params_groups_bias` for avoid apply weight decay to networks bias.
 
 ### Modified
 - Update keyword arguments for mask, pad, labels functions and modules.
+- Getting added column using `at` from `HDFDataset` when `return_added_columns` is `False`.
 
 ### Fixed
 - `can_be_converted_to_tensor` now returns True if input is a Tensor.
