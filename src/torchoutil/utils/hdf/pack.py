@@ -69,8 +69,7 @@ def pack_to_hdf(
     num_workers: Union[int, Literal["auto"]] = "auto",
     shape_suffix: str = SHAPE_SUFFIX,
     open_hdf: bool = True,
-    rdcc_nbytes: Optional[int] = 16 * 1024**2,
-    **hdf_kwargs,
+    file_kwargs: Optional[Dict[str, Any]] = None,
 ) -> HDFDataset[U, U]:
     """Pack a dataset to HDF file.
 
@@ -89,8 +88,7 @@ def pack_to_hdf(
             If "auto", it will be set to `len(os.sched_getaffinity(0))`. defaults to "auto".
         shape_suffix: Shape column suffix in HDF file. defaults to "_shape".
         open_hdf: If True, opens the output HDF dataset. defaults to True.
-        rdcc_nbytes: Number of bytes to pack HDF dataset. defaults to 16 MiB.
-        **hdf_kwargs: Keywords arguments given to h5py File.
+        file_kwargs: Options given to h5py file object. defaults to None.
     """
     # Check inputs
     if not isinstance(dataset, SizedDatasetLike):
@@ -99,6 +97,8 @@ def pack_to_hdf(
         )
     if len(dataset) == 0:
         raise ValueError("Cannot pack to hdf an empty dataset.")
+    if file_kwargs is None:
+        file_kwargs = {}
 
     hdf_fpath = Path(hdf_fpath).resolve()
     if hdf_fpath.exists() and not hdf_fpath.is_file():
@@ -212,8 +212,7 @@ def pack_to_hdf(
     with h5py.File(
         hdf_fpath,
         "w",
-        rdcc_nbytes=rdcc_nbytes,
-        **hdf_kwargs,
+        **file_kwargs,
     ) as hdf_file:
         # Step 2: Build hdf datasets in file
         hdf_dsets: Dict[str, HDFRawDataset] = {}
@@ -353,6 +352,7 @@ def pack_to_hdf(
             "item_type": item_type,
             "added_columns": added_columns,
             "shape_suffix": shape_suffix,
+            "file_kwargs": json.dumps(info),
         }
         if verbose >= 2:
             dumped_attributes = json.dumps(attributes, indent="\t")

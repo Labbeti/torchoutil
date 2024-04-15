@@ -79,6 +79,7 @@ class HDFDataset(Generic[T, U], Dataset[U]):
         open_hdf: bool = True,
         auto_open: bool = False,
         numpy_to_torch: bool = True,
+        file_kwargs: Optional[Dict[str, Any]] = None,
     ) -> None:
         """HDFDataset to read an packed hdf file.
 
@@ -91,6 +92,9 @@ class HDFDataset(Generic[T, U], Dataset[U]):
             keep_padding: Keys to keep padding values. defaults to ().
             return_added_columns: Returns the columns added by pack_to_hdf(.) function.
             open_hdf: If True, open the HDF file at start. defaults to True.
+            auto_open: If True, open HDF dataset only when __getitem__ or __len__ is called. defaults to False.
+            numpy_to_torch: If True, converts numpy array to PyTorch tensors. defaults to True.
+            file_kwargs: Options given to h5py file object. defaults to None.
         """
         hdf_fpath = Path(hdf_fpath).resolve()
         if not hdf_fpath.is_file():
@@ -102,6 +106,8 @@ class HDFDataset(Generic[T, U], Dataset[U]):
                 f"Cannot find HDF file in path {hdf_fpath=}. Possible HDF files are:\n - {names_str}"
             )
         keep_padding = list(keep_padding)
+        if file_kwargs is None:
+            file_kwargs = {}
 
         super().__init__()
         self._hdf_fpath = hdf_fpath
@@ -110,6 +116,7 @@ class HDFDataset(Generic[T, U], Dataset[U]):
         self._return_added_columns = return_added_columns
         self._auto_open = auto_open
         self._numpy_to_torch = numpy_to_torch
+        self._file_kwargs = file_kwargs
 
         self._hdf_file: Any = None
 
@@ -339,7 +346,7 @@ class HDFDataset(Generic[T, U], Dataset[U]):
             else:
                 raise RuntimeError("Cannot open the HDF file twice.")
 
-        self._hdf_file = h5py.File(self._hdf_fpath, "r", swmr=False)
+        self._hdf_file = h5py.File(self._hdf_fpath, "r", **self._file_kwargs)
         self._sanity_check()
 
     # Magic methods
@@ -403,6 +410,7 @@ class HDFDataset(Generic[T, U], Dataset[U]):
             "return_added_columns": self._return_added_columns,
             "auto_open": self._auto_open,
             "numpy_to_torch": self._numpy_to_torch,
+            "file_kwargs": self._file_kwargs,
             "is_open": self.is_open(),
         }
 
@@ -456,6 +464,7 @@ class HDFDataset(Generic[T, U], Dataset[U]):
         self._return_added_columns = data["return_added_columns"]
         self._auto_open = data["auto_open"]
         self._numpy_to_torch = data["numpy_to_torch"]
+        self._file_kwargs = data["file_kwargs"]
 
         self._hdf_file = None
 
@@ -470,15 +479,17 @@ class HDFDataset(Generic[T, U], Dataset[U]):
                 f"Incorrect length stored in HDF file. (found {lens=} and {len(self)=})"
             )
 
-        if hasattr(self, "__orig_class__"):
-            t_type = self.__orig_class__.__args__[0]  # type: ignore
-            if t_type is not Any and (
-                (issubclass(t_type, dict) and self.item_type != "dict")
-                or (issubclass(t_type, tuple) and self.item_type != "tuple")
-            ):
-                raise TypeError(
-                    f"Invalid HDFDataset typing. (found specified type '{t_type.__name__}' but the internal dataset contains type '{self.item_type}')"
-                )
+        if not hasattr(self, "__orig_class__"):
+            return None
+
+        t_type = self.__orig_class__.__args__[0]  # type: ignore
+        if t_type is not Any and (
+            (issubclass(t_type, dict) and self.item_type != "dict")
+            or (issubclass(t_type, tuple) and self.item_type != "tuple")
+        ):
+            raise TypeError(
+                f"Invalid HDFDataset typing. (found specified type '{t_type.__name__}' but the internal dataset contains type '{self.item_type}')"
+            )
 
     def _raw_at(self, index: Union[int, Iterable[int], slice], column: str) -> Any:
         if isinstance(index, Iterable):
