@@ -77,6 +77,8 @@ class HDFDataset(Generic[T, U], Dataset[U]):
         keep_padding: Iterable[str] = (),
         return_added_columns: bool = False,
         open_hdf: bool = True,
+        auto_open: bool = False,
+        numpy_to_torch: bool = True,
     ) -> None:
         """HDFDataset to read an packed hdf file.
 
@@ -106,6 +108,8 @@ class HDFDataset(Generic[T, U], Dataset[U]):
         self._transform = transform
         self._keep_padding = keep_padding
         self._return_added_columns = return_added_columns
+        self._auto_open = auto_open
+        self._numpy_to_torch = numpy_to_torch
 
         self._hdf_file: Any = None
 
@@ -205,10 +209,13 @@ class HDFDataset(Generic[T, U], Dataset[U]):
         column: ColumnType = None,
         raw: bool = False,
     ) -> Any:
-        if not self.is_open():
-            raise RuntimeError(
-                f"Cannot get_raw value with closed HDF file. ({self._hdf_file is not None=} and {bool(self._hdf_file)=})"
-            )
+        if self.is_closed():
+            if self._auto_open:
+                self.open()
+            else:
+                raise RuntimeError(
+                    f"Cannot get_raw value with closed HDF file. ({self._hdf_file is not None=} and {bool(self._hdf_file)=})"
+                )
 
         if index is None:
             index = slice(None)
@@ -225,9 +232,7 @@ class HDFDataset(Generic[T, U], Dataset[U]):
                 f"Invalid argument {column=}. (expected one of {tuple(self.all_columns)})"
             )
 
-        if isinstance(index, slice):
-            is_mult = True
-        elif is_iterable_int(index):
+        if isinstance(index, slice) or is_iterable_int(index):
             is_mult = True
         elif isinstance(index, int):
             if not (-len(self) <= index < len(self)):
@@ -277,7 +282,9 @@ class HDFDataset(Generic[T, U], Dataset[U]):
                 hdf_value = _decode_rec(hdf_value, HDF_ENCODING)
             # Convert numpy.array to torch.Tensor
             elif isinstance(hdf_value, np.ndarray):
-                if hdf_dtype != HDF_VOID_DTYPE:
+                if not self._numpy_to_torch:
+                    pass
+                elif hdf_dtype != HDF_VOID_DTYPE:
                     hdf_value = torch.from_numpy(hdf_value)
                 else:
                     hdf_value = hdf_value.tolist()
@@ -291,9 +298,13 @@ class HDFDataset(Generic[T, U], Dataset[U]):
             outputs = outputs[0]
         return outputs
 
-    def close(self) -> None:
+    def close(self, ignore_if_closed: bool = False) -> None:
         if not self.is_open():
-            raise RuntimeError("Cannot close the HDF file twice.")
+            if ignore_if_closed:
+                return None
+            else:
+                raise RuntimeError("Cannot close the HDF file twice.")
+
         self._hdf_file.close()
         self._hdf_file = None
 
@@ -321,10 +332,14 @@ class HDFDataset(Generic[T, U], Dataset[U]):
     def is_open(self) -> bool:
         return self._hdf_file is not None and bool(self._hdf_file)
 
-    def open(self) -> None:
+    def open(self, ignore_if_opened: bool = False) -> None:
         if self.is_open():
-            raise RuntimeError("Cannot open the HDF file twice.")
-        self._hdf_file = h5py.File(self._hdf_fpath, "r")
+            if ignore_if_opened:
+                return None
+            else:
+                raise RuntimeError("Cannot open the HDF file twice.")
+
+        self._hdf_file = h5py.File(self._hdf_fpath, "r", swmr=False)
         self._sanity_check()
 
     # Magic methods
@@ -386,6 +401,8 @@ class HDFDataset(Generic[T, U], Dataset[U]):
             "transform": self._transform,
             "keep_padding": self._keep_padding,
             "return_added_columns": self._return_added_columns,
+            "auto_open": self._auto_open,
+            "numpy_to_torch": self._numpy_to_torch,
             "is_open": self.is_open(),
         }
 
@@ -399,17 +416,26 @@ class HDFDataset(Generic[T, U], Dataset[U]):
         return hash_value
 
     def __len__(self) -> int:
+        auto_close = False
         if self.is_closed():
-            msg = f"Cannot length of a closed HDF file. ({self._hdf_file is not None=} and {bool(self._hdf_file)=})"
-            raise RuntimeError(msg)
+            if self._auto_open:
+                self.open()
+                auto_close = True
+            else:
+                msg = f"Cannot length of a closed HDF file. ({self._hdf_file is not None=} and {bool(self._hdf_file)=})"
+                raise RuntimeError(msg)
 
         if "length" in self._hdf_file.attrs:
-            return self._hdf_file.attrs["length"]
+            length = self._hdf_file.attrs["length"]
         elif len(self._hdf_file) > 0:
             dataset: HDFRawDataset = next(iter(self._hdf_file.values()))
-            return len(dataset)
+            length = len(dataset)
         else:
-            return 0
+            length = 0
+
+        if auto_close:
+            self.close()
+        return length
 
     def __repr__(self) -> str:
         repr_hparams = {"file": osp.basename(self._hdf_fpath), "size": len(self)}
@@ -428,6 +454,9 @@ class HDFDataset(Generic[T, U], Dataset[U]):
         self._transform = data["transform"]
         self._keep_padding = data["keep_padding"]
         self._return_added_columns = data["return_added_columns"]
+        self._auto_open = data["auto_open"]
+        self._numpy_to_torch = data["numpy_to_torch"]
+
         self._hdf_file = None
 
         if not is_init or (files_are_different and is_open):
