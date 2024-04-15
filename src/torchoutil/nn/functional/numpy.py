@@ -1,10 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from typing import Any, TypeGuard, Union
+from typing import Any, Union
 
 import torch
 from torch import Tensor
+from typing_extensions import TypeGuard
 
 from torchoutil.nn.functional.get import get_device
 from torchoutil.utils.packaging import _NUMPY_AVAILABLE
