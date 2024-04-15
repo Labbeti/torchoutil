@@ -10,6 +10,7 @@ from typing import Dict, List, Optional, Tuple, TypedDict, Union
 
 import torch
 from torch import Tensor
+from typing_extensions import NotRequired
 
 from torchoutil.nn.functional.get import get_device
 
@@ -21,6 +22,7 @@ class CheckpointInfo(TypedDict):
     url: str
     hash: str
     fname: str
+    state_dict_key: NotRequired[Optional[str]]
 
 
 class ModelCheckpointRegister:
@@ -62,6 +64,10 @@ class ModelCheckpointRegister:
     def model_names(self) -> List[str]:
         return list(self._infos.keys())
 
+    @property
+    def model_paths(self) -> List[Path]:
+        return [self.get_ckpt_path(model_name) for model_name in self.model_names]
+
     def get_ckpt_path(self, model_name: str) -> Path:
         if model_name not in self.model_names:
             raise ValueError(
@@ -94,8 +100,17 @@ class ModelCheckpointRegister:
         model_name_or_path = str(model_name_or_path)
 
         if osp.isfile(model_name_or_path):
-            model_path = model_name_or_path
+            model_path = Path(model_name_or_path).resolve().expanduser()
+            model_path_to_name = {
+                path.resolve().expanduser(): name
+                for path, name in zip(self.model_paths, self.model_names)
+            }
+            if model_path in model_path_to_name:
+                model_name = model_path_to_name[model_path]
+            else:
+                model_name = None
         else:
+            model_name = model_name_or_path
             try:
                 model_path = self.get_ckpt_path(model_name_or_path)
             except ValueError:
@@ -115,7 +130,9 @@ class ModelCheckpointRegister:
 
         data = torch.load(model_path, map_location=device)
 
-        state_dict_key = self._state_dict_key
+        info = self._infos.get(model_name, {})
+        state_dict_key = info.get("state_dict_key", self._state_dict_key)
+
         if state_dict_key is None:
             state_dict = data
         else:
