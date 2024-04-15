@@ -1,15 +1,13 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from typing import Union
+from typing import Any, TypeGuard, Union
 
 import torch
-
 from torch import Tensor
 
 from torchoutil.nn.functional.get import get_device
 from torchoutil.utils.packaging import _NUMPY_AVAILABLE
-
 
 if _NUMPY_AVAILABLE:
     import numpy as np
@@ -30,3 +28,6 @@ if _NUMPY_AVAILABLE:
     ) -> Tensor:
         device = get_device(device)
         return torch.from_numpy(x).to(dtype=dtype, device=device)
+
+    def is_numpy_scalar(x: Any) -> TypeGuard[np.generic]:
+        return np.isscalar(x) and x.__class__.__module__ != "__builtin__"
