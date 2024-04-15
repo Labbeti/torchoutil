@@ -109,8 +109,12 @@ def is_python_scalar(x: Any) -> TypeGuard[Union[int, float, bool, complex]]:
     return isinstance(x, (int, float, bool, complex))
 
 
+def is_torch_scalar(x: Any) -> TypeGuard[Tensor]:
+    return isinstance(x, Tensor) and x.ndim == 0
+
+
 def is_scalar(x: Any) -> TypeGuard[Union[int, float, bool, complex, Tensor]]:
-    return is_python_scalar(x) or (isinstance(x, Tensor) and x.ndim == 0)
+    return is_python_scalar(x) or is_torch_scalar(x)
 
 
 def can_be_stacked(
