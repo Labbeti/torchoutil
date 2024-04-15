@@ -18,9 +18,10 @@ class TestRegister(TestCase):
                     "url": "https://zenodo.org/record/8020843/files/convnext_tiny_465mAP_BL_AC_70kit.pth?download=1",
                     "hash": "0688ae503f5893be0b6b71cb92f8b428",
                     "fname": "convnext_tiny_465mAP_BL_AC_70kit.pth",
+                    "state_dict_key": "model",
                 },
             },
-            state_dict_key="model",
+            state_dict_key=None,
         )
 
         model_name = "cnext_bl_70"
