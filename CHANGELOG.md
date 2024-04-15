@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file.
 - `PositionalEncoding` layer for transformers networks.
 - Property `metadata` to `HDFDataset`.
 - Function `create_params_groups_bias` for avoid apply weight decay to networks bias.
+- Functions `is_numpy_scalar`, `is_torch_scalar` and `unzip`.
 
 ### Modified
 - Update keyword arguments for mask, pad, labels functions and modules.
