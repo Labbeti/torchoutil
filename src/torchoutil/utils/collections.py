@@ -13,12 +13,15 @@ from typing import (
     Tuple,
     TypeVar,
     Union,
+    overload,
 )
 
 from torchoutil.utils.type_checks import is_mapping_str_any
 
 T = TypeVar("T")
 U = TypeVar("U")
+V = TypeVar("V")
+W = TypeVar("W")
 
 
 def list_dict_to_dict_list(
@@ -172,3 +175,42 @@ def flat_list(lst: Iterable[Sequence[T]]) -> Tuple[List[T], List[int]]:
     flatten_lst = [element for sublst in lst for element in sublst]
     sizes = [len(sents) for sents in lst]
     return flatten_lst, sizes
+
+
+@overload
+def unzip(lst: Iterable[Tuple[T]]) -> Tuple[List[T]]:
+    ...
+
+
+@overload
+def unzip(lst: Iterable[Tuple[T, U]]) -> Tuple[List[T], List[U]]:
+    ...
+
+
+@overload
+def unzip(lst: Iterable[Tuple[T, U, V]]) -> Tuple[List[T], List[U], List[V]]:
+    ...
+
+
+@overload
+def unzip(
+    lst: Iterable[Tuple[T, U, V, W]]
+) -> Tuple[List[T], List[U], List[V], List[W]]:
+    ...
+
+
+def unzip(lst):
+    """Invert zip() function.
+
+    .. code-block:: python
+        :caption:  Example
+
+        >>> lst1 = [1, 2, 3, 4]
+        >>> lst2 = [5, 6, 7, 8]
+        >>> lst_zipped = list(zip(lst1, lst2))
+        >>> lst_zipped
+        ... [(1, 5), (2, 6), (3, 7), (4, 8)]
+        >>> unzip(lst_zipped)
+        ... ([1, 2, 3, 4], [5, 6, 7, 8])
+    """
+    return tuple(map(list, zip(*lst)))
