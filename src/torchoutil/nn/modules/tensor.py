@@ -294,6 +294,7 @@ class ToItem(nn.Module):
 class AsTensor(nn.Module):
     def __init__(
         self,
+        *,
         device: Union[str, torch.device, None] = None,
         dtype: Union[torch.dtype, None] = None,
     ) -> None:

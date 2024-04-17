@@ -1,12 +1,13 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from typing import Iterable, Literal, Union
+from typing import Iterable, Union
 
 import torch
 from torch import Generator, Tensor, nn
+from torch.types import Number
 
-from torchoutil.nn.functional.pad import pad_and_stack_rec, pad_dim, pad_dims, PadAlign
+from torchoutil.nn.functional.pad import PadAlign, pad_and_stack_rec, pad_dim, pad_dims
 from torchoutil.utils.collections import dump_dict
 
 
@@ -101,20 +102,26 @@ class PadDims(nn.Module):
 class PadAndStackRec(nn.Module):
     def __init__(
         self,
-        pad_value: float,
-        dtype: Union[None, torch.dtype] = None,
+        pad_value: Number,
+        *,
         device: Union[str, torch.device, None] = None,
+        dtype: Union[None, torch.dtype] = None,
     ) -> None:
         super().__init__()
         self.pad_value = pad_value
-        self.dtype = dtype
         self.device = device
+        self.dtype = dtype
 
     def forward(
         self,
         sequence: Union[Tensor, int, float, tuple, list],
     ) -> Tensor:
-        return pad_and_stack_rec(sequence, self.pad_value, self.dtype, self.device)
+        return pad_and_stack_rec(
+            sequence,
+            self.pad_value,
+            dtype=self.dtype,
+            device=self.device,
+        )
 
     def extra_repr(self) -> str:
         return dump_dict(

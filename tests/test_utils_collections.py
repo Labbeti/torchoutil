@@ -4,7 +4,11 @@
 import unittest
 from unittest import TestCase
 
-from torchoutil.utils.collections import flat_dict_of_dict, list_dict_to_dict_list
+from torchoutil.utils.collections import (
+    flat_dict_of_dict,
+    intersect_lists,
+    list_dict_to_dict_list,
+)
 
 
 class TestCollections(TestCase):
@@ -45,6 +49,34 @@ class TestListDictToDictList(TestCase):
         lst = [{"a": 1, "b": 2}, {"a": 4, "b": 3, "c": 5}]
         output = list_dict_to_dict_list(lst, default_val=0)
         self.assertDictEqual(output, {"a": [1, 4], "b": [2, 3], "c": [0, 5]})
+
+    def test_example_2(self) -> None:
+        lst = [{"a": 1, "b": 2}, {"a": 4, "b": 3, "c": 5}]
+
+        with self.assertRaises(ValueError):
+            list_dict_to_dict_list(
+                lst,
+                default_val=None,
+                key_mode="same",
+            )
+
+    def test_example_3(self) -> None:
+        lst = [{"a": 1, "b": 2, "c": 3}, {"a": 11, "b": 22, "c": 33}]
+        output = list_dict_to_dict_list(
+            lst,
+            default_val=None,
+            key_mode="same",
+        )
+        self.assertDictEqual(output, {"a": [1, 11], "b": [2, 22], "c": [3, 33]})
+
+
+class TestIntersectLists(TestCase):
+    def test_example_1(self) -> None:
+        input_ = [["a", "b", "b", "c"], ["c", "d", "b", "a"], ["b", "a", "a", "e"]]
+        expected = ["a", "b"]
+
+        output = intersect_lists(input_)
+        self.assertListEqual(output, expected)
 
 
 if __name__ == "__main__":

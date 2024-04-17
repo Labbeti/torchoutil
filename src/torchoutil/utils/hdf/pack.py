@@ -27,7 +27,8 @@ from h5py import Dataset as HDFRawDataset
 from torch import Tensor, nn
 from torch.utils.data.dataloader import DataLoader
 
-from torchoutil.utils.collections import all_eq
+from torchoutil.nn.functional.numpy import is_numpy_scalar
+from torchoutil.utils.collections import all_eq, unzip
 from torchoutil.utils.data.dataloader import get_auto_num_cpus
 from torchoutil.utils.data.dataset import SizedDatasetLike
 from torchoutil.utils.hdf.common import (
@@ -67,6 +68,8 @@ def pack_to_hdf(
     batch_size: int = 32,
     num_workers: Union[int, Literal["auto"]] = "auto",
     shape_suffix: str = SHAPE_SUFFIX,
+    open_hdf: bool = True,
+    file_kwargs: Optional[Dict[str, Any]] = None,
 ) -> HDFDataset[U, U]:
     """Pack a dataset to HDF file.
 
@@ -83,6 +86,9 @@ def pack_to_hdf(
         batch_size: The batch size of the dataloader. defaults to 32.
         num_workers: The number of workers of the dataloader.
             If "auto", it will be set to `len(os.sched_getaffinity(0))`. defaults to "auto".
+        shape_suffix: Shape column suffix in HDF file. defaults to "_shape".
+        open_hdf: If True, opens the output HDF dataset. defaults to True.
+        file_kwargs: Options given to h5py file object. defaults to None.
     """
     # Check inputs
     if not isinstance(dataset, SizedDatasetLike):
@@ -91,6 +97,8 @@ def pack_to_hdf(
         )
     if len(dataset) == 0:
         raise ValueError("Cannot pack to hdf an empty dataset.")
+    if file_kwargs is None:
+        file_kwargs = {}
 
     hdf_fpath = Path(hdf_fpath).resolve()
     if hdf_fpath.exists() and not hdf_fpath.is_file():
@@ -135,7 +143,7 @@ def pack_to_hdf(
     del pre_transform, item_0
 
     for attr_name, value in item_0_dict.items():
-        shape, hdf_dtype = _get_shape_and_dtype(value)
+        shape, hdf_dtype, _src_dtype = _get_shape_and_dtype(value)
         shapes_0[attr_name] = shape
         hdf_dtypes_0[attr_name] = hdf_dtype
 
@@ -164,7 +172,7 @@ def pack_to_hdf(
 
         for item in batch:
             for attr_name, value in item.items():
-                shape, hdf_dtype = _get_shape_and_dtype(value)
+                shape, hdf_dtype, _src_dtype = _get_shape_and_dtype(value)
                 all_eq_shapes[attr_name] &= max_shapes[attr_name] == shape
                 max_shapes[attr_name] = tuple(
                     map(max, zip(max_shapes[attr_name], shape))
@@ -201,7 +209,11 @@ def pack_to_hdf(
 
     added_columns = []
 
-    with h5py.File(hdf_fpath, "w") as hdf_file:
+    with h5py.File(
+        hdf_fpath,
+        "w",
+        **file_kwargs,
+    ) as hdf_file:
         # Step 2: Build hdf datasets in file
         hdf_dsets: Dict[str, HDFRawDataset] = {}
 
@@ -277,7 +289,7 @@ def pack_to_hdf(
             for item in batch:
                 for attr_name, value in item.items():
                     hdf_dset = hdf_dsets[attr_name]
-                    shape, hdf_dtype = _get_shape_and_dtype(value)
+                    shape, hdf_dtype, _src_dtype = _get_shape_and_dtype(value)
 
                     # Check every shape
                     if len(shape) != hdf_dset.ndim - 1:
@@ -340,6 +352,7 @@ def pack_to_hdf(
             "item_type": item_type,
             "added_columns": added_columns,
             "shape_suffix": shape_suffix,
+            "file_kwargs": json.dumps(info),
         }
         if verbose >= 2:
             dumped_attributes = json.dumps(attributes, indent="\t")
@@ -357,7 +370,7 @@ def pack_to_hdf(
     if verbose >= 2:
         pylog.debug(f"Data into has been packed into HDF file '{hdf_fpath}'.")
 
-    hdf_dataset = HDFDataset(hdf_fpath, open_hdf=True, return_added_columns=False)
+    hdf_dataset = HDFDataset(hdf_fpath, open_hdf=open_hdf, return_added_columns=False)
     return hdf_dataset
 
 
@@ -390,66 +403,75 @@ def _checksum(
 
 
 def _get_shape_and_dtype(
-    value: Union[int, float, str, Tensor, list]
-) -> Tuple[Tuple[int, ...], _HDFDType]:
+    x: Union[int, float, str, list, Tensor, np.ndarray]
+) -> Tuple[Tuple[int, ...], _HDFDType, str]:
     """Returns the shape and the hdf_dtype for an input."""
-    if isinstance(value, int):
+    if isinstance(x, int):
         shape = ()
         hdf_dtype = "i"
+        src_dtype = "int"
 
-    elif isinstance(value, float):
+    elif isinstance(x, float):
         shape = ()
         hdf_dtype = "f"
+        src_dtype = "float"
 
-    elif isinstance(value, str):
+    elif isinstance(x, str):
         shape = ()
         hdf_dtype = HDF_STRING_DTYPE
+        src_dtype = "str"
 
-    elif isinstance(value, Tensor):
-        shape = tuple(value.shape)
-        if value.is_floating_point():
+    elif isinstance(x, Tensor):
+        shape = tuple(x.shape)
+        if x.is_floating_point():
             hdf_dtype = "f"
         else:
             hdf_dtype = "i"
+        src_dtype = str(x.dtype)
 
-    elif isinstance(value, np.ndarray):
-        shape = tuple(value.shape)
-        hdf_dtype = value.dtype.kind
-        if hdf_dtype == "u":
+    elif isinstance(x, np.ndarray) or is_numpy_scalar(x):
+        shape = tuple(x.shape)
+        dtype_kind = x.dtype.kind
+        if dtype_kind == "u":
             hdf_dtype = "i"
+        else:
+            hdf_dtype = dtype_kind
+        src_dtype = str(x.dtype)
 
-    elif isinstance(value, (list, tuple)):
-        if len(value) == 0:
+    elif isinstance(x, (list, tuple)):
+        if len(x) == 0:
             shape = (0,)
             hdf_dtype = HDF_VOID_DTYPE
+            src_dtype = "void"
         else:
-            sub_shapes_and_dtypes = list(map(_get_shape_and_dtype, value))
-            sub_shapes = [shape for shape, _ in sub_shapes_and_dtypes]
-            sub_dtypes = [dtype for _, dtype in sub_shapes_and_dtypes]
+            sub_data = list(map(_get_shape_and_dtype, x))
+            sub_shapes, sub_hdf_dtypes, sub_src_dtypes = unzip(sub_data)
             sub_dims = list(map(len, sub_shapes))
 
             if not all_eq(sub_dims):
                 raise TypeError(
                     f"Unsupported list of heterogeneous shapes lengths. (found {sub_dims=})"
                 )
-            if not all_eq(sub_dtypes):
+            if not all_eq(sub_hdf_dtypes):
                 raise TypeError(
-                    f"Unsupported list of heterogeneous types. (found {sub_dtypes=})"
+                    f"Unsupported list of heterogeneous types. (found {sub_hdf_dtypes=})"
                 )
-            # Check for avoid ragged array like [["a", "b"], ["c"], ["d", "e"]]
+            # Check to avoid ragged array like [["a", "b"], ["c"], ["d", "e"]]
             if not all_eq(sub_shapes):
                 raise TypeError(
-                    f"Unsupported list of heterogeneous shapes. (found {sub_shapes=} for {value=})"
+                    f"Unsupported list of heterogeneous shapes. (found {sub_shapes=} for {x=})"
                 )
 
             max_subshape = tuple(
                 max(shape[i] for shape in sub_shapes) for i in range(len(sub_shapes[0]))
             )
-            shape = (len(value),) + max_subshape
-            hdf_dtype = sub_dtypes[0]
+            shape = (len(x),) + max_subshape
+            hdf_dtype = sub_hdf_dtypes[0]
+
+            src_dtype = str(list(dict.fromkeys(sub_src_dtypes)))
     else:
         raise TypeError(
-            f"Unsupported type {value.__class__.__name__} in function get_shape_and_dtype."
+            f"Unsupported type {x.__class__.__name__} in function get_shape_and_dtype."
         )
 
-    return shape, hdf_dtype
+    return shape, hdf_dtype, src_dtype

@@ -39,7 +39,7 @@ class SizedDatasetLike(Generic[T], Protocol):
 class TransformWrapper(Generic[T, U], Dataset[U]):
     def __init__(
         self,
-        dataset: Dataset[T],
+        dataset: SizedDatasetLike[T],
         transform: Optional[Callable[[T], U]],
     ) -> None:
         super().__init__()

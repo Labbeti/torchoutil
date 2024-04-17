@@ -2,6 +2,23 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.3.0] 2024-04-17
+### Added
+- `PositionalEncoding` layer for transformers networks.
+- Property `metadata` to `HDFDataset`.
+- Function `create_params_groups_bias` for avoid apply weight decay to networks bias.
+- Functions `is_numpy_scalar`, `is_torch_scalar` and `unzip`.
+- Options `auto_open`, `numpy_to_torch` and `file_kwargs` to customize loading in `HDFDataset`.
+
+### Modified
+- Update keyword arguments for mask, pad, labels functions and modules.
+- Getting added column using `at` from `HDFDataset` when `return_added_columns` is `False`.
+- Renamed `ModelCheckpointRegister` to `RegistryHub` and add hash value check after download.
+
+### Fixed
+- `can_be_converted_to_tensor` now returns True if input is a Tensor.
+
+
 ## [0.2.2] 2024-03-08
 ### Fixed
 - `ModelCheckpointRegister` now creates intermediate directories before download.

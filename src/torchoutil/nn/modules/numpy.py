@@ -8,14 +8,13 @@ from torch import Tensor, nn
 
 from torchoutil.utils.packaging import _NUMPY_AVAILABLE
 
-
 if _NUMPY_AVAILABLE:
     import numpy as np
 
-    from torchoutil.nn.functional.numpy import to_numpy, from_numpy
+    from torchoutil.nn.functional.numpy import from_numpy, to_numpy
 
     class ToNumpy(nn.Module):
-        def __init__(self, dtype: Union[str, np.dtype, None] = None) -> None:
+        def __init__(self, *, dtype: Union[str, np.dtype, None] = None) -> None:
             super().__init__()
             self.dtype = dtype
 
@@ -25,8 +24,9 @@ if _NUMPY_AVAILABLE:
     class FromNumpy(nn.Module):
         def __init__(
             self,
-            dtype: Union[torch.dtype, None] = None,
+            *,
             device: Union[str, torch.device, None] = None,
+            dtype: Union[torch.dtype, None] = None,
         ) -> None:
             super().__init__()
             self.device = device

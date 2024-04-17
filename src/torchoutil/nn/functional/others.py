@@ -23,9 +23,14 @@ from typing_extensions import TypeGuard
 
 from torchoutil.nn.functional.get import get_device
 
-
 T = TypeVar("T")
 U = TypeVar("U")
+
+
+def count_parameters(model: nn.Module, only_trainable: bool = False) -> int:
+    params = (p for p in model.parameters() if not only_trainable or p.requires_grad)
+    count = sum(p.numel() for p in params)
+    return count
 
 
 def find(
@@ -40,22 +45,22 @@ def find(
             f"Function find does not supports 0-d tensors. (found {x.ndim=} == 0)"
         )
     mask = x.eq(value)
-    contains_eos = mask.any(dim=dim)
-    indices_eos = mask.int().argmax(dim=dim)
+    contains = mask.any(dim=dim)
+    indices = mask.int().argmax(dim=dim)
 
     if default is None:
-        if not contains_eos.all():
+        if not contains.all():
             raise RuntimeError(f"Cannot find {value=} in tensor.")
-        return indices_eos
+        return indices
     else:
-        output = torch.where(contains_eos, indices_eos, default)
+        output = torch.where(contains, indices, default)
         return output
 
 
 @overload
 def move_to_rec(
     x: Mapping[T, U],
-    predicate: Optional[Callable[[Any], bool]] = None,
+    predicate: Optional[Callable[[Union[Tensor, nn.Module]], bool]] = None,
     **kwargs,
 ) -> Dict[T, U]:
     ...
@@ -64,7 +69,7 @@ def move_to_rec(
 @overload
 def move_to_rec(
     x: T,
-    predicate: Optional[Callable[[Any], bool]] = None,
+    predicate: Optional[Callable[[Union[Tensor, nn.Module]], bool]] = None,
     **kwargs,
 ) -> T:
     ...
@@ -72,7 +77,7 @@ def move_to_rec(
 
 def move_to_rec(
     x: Any,
-    predicate: Optional[Callable[[Any], bool]] = None,
+    predicate: Optional[Callable[[Union[Tensor, nn.Module]], bool]] = None,
     **kwargs,
 ) -> Any:
     """Move all modules and tensors recursively to a specific dtype or device."""
@@ -100,14 +105,20 @@ def move_to_rec(
         return x
 
 
+def is_python_scalar(x: Any) -> TypeGuard[Union[int, float, bool, complex]]:
+    return isinstance(x, (int, float, bool, complex))
+
+
+def is_torch_scalar(x: Any) -> TypeGuard[Tensor]:
+    return isinstance(x, Tensor) and x.ndim == 0
+
+
 def is_scalar(x: Any) -> TypeGuard[Union[int, float, bool, complex, Tensor]]:
-    return isinstance(x, (int, float, bool, complex)) or (
-        isinstance(x, Tensor) and x.ndim == 0
-    )
+    return is_python_scalar(x) or is_torch_scalar(x)
 
 
 def can_be_stacked(
-    tensors: Union[List[Any], Tuple[Any, ...]]
+    tensors: Union[List[Any], Tuple[Any, ...]],
 ) -> TypeGuard[Union[List[Tensor], Tuple[Tensor, ...]]]:
     if len(tensors) == 0:
         return True
@@ -119,19 +130,17 @@ def can_be_stacked(
 
 
 def can_be_converted_to_tensor(x: Any) -> bool:
-    if isinstance(x, (int, float, bool, complex)):
+    if isinstance(x, Tensor):
         return True
-    elif isinstance(x, (List, Tuple)):
-        return __can_be_converted_to_tensor_list_tuple(x)
     else:
-        return False
+        return __can_be_converted_to_tensor_nested(x)
 
 
 def __can_be_converted_to_tensor_list_tuple(x: Union[List, Tuple]) -> bool:
     if len(x) == 0:
         return True
 
-    valid_items = all(can_be_converted_to_tensor(xi) for xi in x)
+    valid_items = all(__can_be_converted_to_tensor_nested(xi) for xi in x)
     if not valid_items:
         return False
 
@@ -140,5 +149,14 @@ def __can_be_converted_to_tensor_list_tuple(x: Union[List, Tuple]) -> bool:
     elif all(isinstance(xi, Sized) for xi in x):
         len0 = len(x[0])
         return all(len(xi) == len0 for xi in x[1:])
+    else:
+        return False
+
+
+def __can_be_converted_to_tensor_nested(x: Any) -> bool:
+    if is_python_scalar(x):
+        return True
+    elif isinstance(x, (List, Tuple)):
+        return __can_be_converted_to_tensor_list_tuple(x)
     else:
         return False
