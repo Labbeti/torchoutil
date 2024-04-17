@@ -7,6 +7,7 @@ from typing import (
     Dict,
     Iterable,
     List,
+    Literal,
     Mapping,
     Optional,
     Sequence,
@@ -18,47 +19,86 @@ from typing import (
 
 from torchoutil.utils.type_checks import is_mapping_str_any
 
+K = TypeVar("K")
 T = TypeVar("T")
 U = TypeVar("U")
 V = TypeVar("V")
 W = TypeVar("W")
 
+KEY_MODES = ("same", "intersect", "union")
+KeyMode = Literal["intersect", "same", "union"]
+
+
+@overload
+def list_dict_to_dict_list(
+    lst: Sequence[Mapping[K, V]],
+    key_mode: Literal["intersect", "same"],
+    default_val: W = None,
+) -> Dict[K, List[V]]:
+    ...
+
+
+@overload
+def list_dict_to_dict_list(
+    lst: Sequence[Mapping[K, V]],
+    key_mode: Literal["union"] = "union",
+    default_val: W = None,
+) -> Dict[K, List[Union[V, W]]]:
+    ...
+
 
 def list_dict_to_dict_list(
-    lst: Sequence[Mapping[str, T]],
-    default_val: U = None,
-    error_on_missing_key: bool = False,
-) -> Dict[str, List[Union[T, U]]]:
-    """Convert a list of dicts to a dict of lists.
+    lst: Sequence[Mapping[K, V]],
+    key_mode: KeyMode = "union",
+    default_val: W = None,
+) -> Dict[K, List[Union[V, W]]]:
+    """Convert list of dicts to dict of lists.
 
-    Example 1
-    ----------
-    >>> lst = [{'a': 1, 'b': 2}, {'a': 4, 'b': 3, 'c': 5}]
-    >>> output = list_dict_to_dict_list(lst, default_val=0)
-    {'a': [1, 4], 'b': [2, 3], 'c': [0, 5]}
+    Args:
+        lst: The list of dict to merge.
+        key_mode: Can be "same" or "intersect".
+            If "same", all the dictionaries must contains the same keys otherwise a ValueError will be raised.
+            If "intersect", only the intersection of all keys will be used in output.
+            If "union", the output dict will contains the union of all keys, and the missing value will use the argument default_val.
+        default_val: Default value of an element when key_mode is "union". defaults to None.
     """
-    if len(lst) == 0:
+    if len(lst) <= 0:
         return {}
 
-    if error_on_missing_key:
-        keys = set(lst[0])
-        for dic in lst:
-            if keys != set(dic.keys()):
-                raise ValueError(
-                    f"Invalid dict keys for list_dict_to_dict_list. (found {keys} and {dic.keys()})"
-                )
+    keys = set(lst[0].keys())
+    if key_mode == "same":
+        if not all(keys == set(item.keys()) for item in lst[1:]):
+            raise ValueError("Invalid keys for batch.")
+    elif key_mode == "intersect":
+        keys = intersect_lists([item.keys() for item in lst])
+    elif key_mode == "union":
+        keys = union_lists([item.keys() for item in lst])
+    else:
+        raise ValueError(
+            f"Invalid argument key_mode={key_mode}. (expected one of {KEY_MODES})"
+        )
 
-    keys = {}
-    for dic in lst:
-        keys.update(dict.fromkeys(dic.keys()))
+    return {key: [item.get(key, default_val) for item in lst] for key in keys}
 
-    out = {
-        key: [
-            lst[i][key] if key in lst[i].keys() else default_val
-            for i in range(len(lst))
-        ]
-        for key in keys
-    }
+
+def intersect_lists(lst_of_lst: Sequence[Iterable[T]]) -> List[T]:
+    """Performs intersection of elements in lists (like set intersection), but keep their original order."""
+    if len(lst_of_lst) <= 0:
+        return []
+    out = list(dict.fromkeys(lst_of_lst[0]))
+    for lst_i in lst_of_lst[1:]:
+        out = [name for name in out if name in lst_i]
+        if len(out) == 0:
+            break
+    return out
+
+
+def union_lists(lst_of_lst: Iterable[Iterable[T]]) -> List[T]:
+    """Performs union of elements in lists (like set union), but keep their original order."""
+    out = {}
+    for lst_i in lst_of_lst:
+        out |= dict.fromkeys(lst_i)
+    out = list(out)
     return out
 
 

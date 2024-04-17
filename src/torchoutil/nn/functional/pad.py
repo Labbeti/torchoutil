@@ -69,8 +69,8 @@ def pad_and_stack_rec(
     sequence: Union[Tensor, int, float, tuple, list],
     pad_value: Number,
     *,
-    dtype: Union[None, torch.dtype] = None,
     device: Union[str, torch.device, None] = None,
+    dtype: Union[None, torch.dtype] = None,
 ) -> Tensor:
     """Recursive version of torch.nn.utils.rnn.pad_sequence, with padding of Tensors.
 

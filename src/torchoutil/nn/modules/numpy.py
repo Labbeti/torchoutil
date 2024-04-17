@@ -25,8 +25,8 @@ if _NUMPY_AVAILABLE:
         def __init__(
             self,
             *,
-            dtype: Union[torch.dtype, None] = None,
             device: Union[str, torch.device, None] = None,
+            dtype: Union[torch.dtype, None] = None,
         ) -> None:
             super().__init__()
             self.device = device
