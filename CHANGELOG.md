@@ -2,6 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
+
 ## [0.3.0] UNRELEASED
 ### Added
 - `PositionalEncoding` layer for transformers networks.
@@ -12,9 +13,11 @@ All notable changes to this project will be documented in this file.
 ### Modified
 - Update keyword arguments for mask, pad, labels functions and modules.
 - Getting added column using `at` from `HDFDataset` when `return_added_columns` is `False`.
+- Renamed `ModelCheckpointRegister` to `RegistryHub` and add hash value check after download.
 
 ### Fixed
 - `can_be_converted_to_tensor` now returns True if input is a Tensor.
+
 
 ## [0.2.2] 2024-03-08
 ### Fixed
