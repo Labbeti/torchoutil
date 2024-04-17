@@ -2,13 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
-
-## [0.3.0] UNRELEASED
+## [0.3.0] 2024-04-17
 ### Added
 - `PositionalEncoding` layer for transformers networks.
 - Property `metadata` to `HDFDataset`.
 - Function `create_params_groups_bias` for avoid apply weight decay to networks bias.
 - Functions `is_numpy_scalar`, `is_torch_scalar` and `unzip`.
+- Options `auto_open`, `numpy_to_torch` and `file_kwargs` to customize loading in `HDFDataset`.
 
 ### Modified
 - Update keyword arguments for mask, pad, labels functions and modules.
