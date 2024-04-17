@@ -21,7 +21,6 @@ Submodules
 .. toctree::
    :maxdepth: 4
 
-   torchoutil.utils.ckpt
    torchoutil.utils.collections
    torchoutil.utils.packaging
    torchoutil.utils.return_types
