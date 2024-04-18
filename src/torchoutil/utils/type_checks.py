@@ -1,8 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from typing import Any, Dict, Iterable, Mapping, Union
+from typing import Any, Dict, Iterable, List, Mapping, Union
 
+from torch import Tensor
 from typing_extensions import TypeGuard
 
 
@@ -34,3 +35,7 @@ def is_iterable_iterable_int(x: Any) -> TypeGuard[Iterable[Iterable[int]]]:
 
 def is_mapping_str_any(x: Any) -> TypeGuard[Mapping[str, Any]]:
     return isinstance(x, Mapping) and all(isinstance(key, str) for key in x.keys())
+
+
+def is_list_tensor(x: Any) -> TypeGuard[List[Tensor]]:
+    return isinstance(x, list) and all(isinstance(xi, Tensor) for xi in x)
