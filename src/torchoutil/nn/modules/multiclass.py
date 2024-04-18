@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from typing import Generic, List, Mapping, TypeVar, Union
+from typing import Generic, List, Mapping, Optional, TypeVar, Union
 
 import torch
 from torch import Tensor, nn
@@ -27,11 +27,13 @@ class IndicesToOneHot(nn.Module):
         self,
         num_classes: int,
         *,
+        padding_idx: Optional[int] = None,
         device: Union[str, torch.device, None] = None,
         dtype: Union[torch.dtype, None] = torch.bool,
     ) -> None:
         super().__init__()
         self.num_classes = num_classes
+        self.padding_idx = padding_idx
         self.device = device
         self.dtype = dtype
 
@@ -42,6 +44,7 @@ class IndicesToOneHot(nn.Module):
         onehot = indices_to_onehot(
             indices,
             self.num_classes,
+            padding_idx=self.padding_idx,
             device=self.device,
             dtype=self.dtype,
         )
@@ -51,6 +54,7 @@ class IndicesToOneHot(nn.Module):
         return dump_dict(
             dict(
                 num_classes=self.num_classes,
+                padding_idx=self.padding_idx,
                 device=self.device,
                 dtype=self.dtype,
             ),

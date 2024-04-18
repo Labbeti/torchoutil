@@ -19,7 +19,7 @@ if _NUMPY_AVAILABLE:
             self.dtype = dtype
 
         def forward(self, x: Union[Tensor, np.ndarray, list]) -> np.ndarray:
-            return to_numpy(x, self.dtype)
+            return to_numpy(x, dtype=self.dtype)
 
     class FromNumpy(nn.Module):
         def __init__(
@@ -33,4 +33,4 @@ if _NUMPY_AVAILABLE:
             self.dtype = dtype
 
         def forward(self, x: np.ndarray) -> Tensor:
-            return from_numpy(x, self.dtype, self.device)
+            return from_numpy(x, dtype=self.dtype, device=self.device)

@@ -4,7 +4,7 @@
 """Helper functions for conversion between classes indices, onehot, names and probabilities for multiclass classification.
 """
 
-from typing import List, Mapping, Sequence, TypeVar, Union
+from typing import List, Mapping, Optional, Sequence, TypeVar, Union
 
 import torch
 from torch import Tensor
@@ -19,6 +19,7 @@ def indices_to_onehot(
     indices: Union[Sequence[int], Tensor],
     num_classes: int,
     *,
+    padding_idx: Optional[int] = None,
     device: Union[str, torch.device, None] = None,
     dtype: Union[torch.dtype, None] = torch.bool,
 ) -> Tensor:
@@ -32,8 +33,18 @@ def indices_to_onehot(
     """
     device = get_device(device)
     indices = torch.as_tensor(indices, device=device, dtype=torch.long)
+
+    if padding_idx is not None:
+        mask = indices == padding_idx
+        indices = torch.where(mask, num_classes, indices)
+        num_classes += 1
+
     onehot = F.one_hot(indices, num_classes)
     onehot = onehot.to(dtype=dtype)
+
+    if padding_idx is not None:
+        onehot = onehot[..., :-1].contiguous()
+
     return onehot
 
 

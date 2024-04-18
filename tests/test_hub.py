@@ -9,7 +9,7 @@ from torch import Tensor
 from torchoutil.hub.registry import RegistryHub
 
 
-class TestRegister(TestCase):
+class TestRegistryHub(TestCase):
     def test_cnext_register(self) -> None:
         register = RegistryHub(
             infos={
@@ -25,7 +25,7 @@ class TestRegister(TestCase):
         )
 
         model_name = "cnext_bl_70"
-        register.download_file(model_name, force=True)
+        register.download_file(model_name, force=False)
         state_dict = register.load_state_dict(model_name, offline=True, device="cpu")
 
         assert isinstance(state_dict, dict)

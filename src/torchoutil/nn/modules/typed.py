@@ -5,6 +5,8 @@ from typing import Any, Generic, OrderedDict, TypeVar, overload
 
 from torch import nn
 
+from torchoutil.nn.functional.others import count_parameters
+
 InType = TypeVar("InType", covariant=False, contravariant=True)
 OutType = TypeVar("OutType", covariant=True, contravariant=False)
 T1 = TypeVar("T1")
@@ -38,6 +40,15 @@ class TModule(Generic[InType, OutType], nn.Module):
     def duplicate(self, num: int) -> "TSequential[InType, OutType]":
         duplicated = [self] * num
         return TSequential(*duplicated)
+
+    def count_parameters(
+        self,
+        *,
+        recurse: bool = True,
+        only_trainable: bool = False,
+    ) -> int:
+        """Returns the number of parameters in this module."""
+        return count_parameters(self, recurse=recurse, only_trainable=only_trainable)
 
 
 class TSequential(Generic[InType, OutType], TModule[InType, OutType], nn.Sequential):

@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+
+## [0.3.1] UNRELEASED
+### Added
+- Method `count_parameters` to `TModule`.
+- Option `padding_idx` to `indices_to_onehot` function.
+
+### Fixed
+- Remove invalid test file.
+- Function `is_scalar` now returns True for numpy scalars when numpy package is installed.
+
+
 ## [0.3.0] 2024-04-17
 ### Added
 - `PositionalEncoding` layer for transformers networks.
