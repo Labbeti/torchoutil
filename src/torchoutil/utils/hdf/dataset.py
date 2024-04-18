@@ -66,7 +66,7 @@ def _is_index(index: Any) -> TypeGuard[IndexType]:
 
 
 def _is_column(column: Any) -> TypeGuard[ColumnType]:
-    return isinstance(column, str) or is_iterable_str(column) or column is None
+    return is_iterable_str(column, accept_str=True) or column is None
 
 
 class HDFDataset(Generic[T, U], Dataset[U]):
@@ -231,7 +231,7 @@ class HDFDataset(Generic[T, U], Dataset[U]):
         if column is None:
             column = self.column_names
 
-        if is_iterable_str(column):
+        if is_iterable_str(column, accept_str=False):
             return {column_i: self.at(index, column_i) for column_i in column}
 
         if column not in self.all_columns:

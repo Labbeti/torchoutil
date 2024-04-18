@@ -15,9 +15,11 @@ def is_iterable_int(x: Any) -> TypeGuard[Iterable[int]]:
     return isinstance(x, Iterable) and all(isinstance(xi, int) for xi in x)
 
 
-def is_iterable_str(x: Any) -> TypeGuard[Iterable[str]]:
-    return not isinstance(x, str) and (
-        isinstance(x, Iterable) and all(isinstance(xi, str) for xi in x)
+def is_iterable_str(x: Any, *, accept_str: bool) -> TypeGuard[Iterable[str]]:
+    return (accept_str and isinstance(x, str)) or (
+        not isinstance(x, str)
+        and isinstance(x, Iterable)
+        and all(isinstance(xi, str) for xi in x)
     )
 
 
