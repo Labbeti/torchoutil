@@ -28,6 +28,7 @@ def indices_to_onehot(
     Args:
         indices: List of list of label indices.
         num_classes: Number maximal of unique classes.
+        padding_idx: Class index to ignore. Output will contains only zeroes for this value. defaults to None.
         device: PyTorch device of the output tensor.
         dtype: PyTorch DType of the output tensor.
     """
@@ -39,7 +40,7 @@ def indices_to_onehot(
         indices = torch.where(mask, num_classes, indices)
         num_classes += 1
 
-    onehot = F.one_hot(indices, num_classes)
+    onehot: Tensor = F.one_hot(indices, num_classes)
     onehot = onehot.to(dtype=dtype)
 
     if padding_idx is not None:
