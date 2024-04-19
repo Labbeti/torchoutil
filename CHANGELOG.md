@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file.
 ### Added
 - Method `count_parameters` to `TModule`.
 - Option `padding_idx` to `indices_to_onehot` function.
+- Function `dict_list_to_list_dict` to collections utils.
 
 ### Fixed
 - Remove invalid test file.

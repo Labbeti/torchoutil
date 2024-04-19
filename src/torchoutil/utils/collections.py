@@ -68,7 +68,7 @@ def list_dict_to_dict_list(
     keys = set(lst[0].keys())
     if key_mode == "same":
         if not all(keys == set(item.keys()) for item in lst[1:]):
-            raise ValueError("Invalid keys for batch.")
+            raise ValueError(f"Invalid keys with {key_mode=}.")
     elif key_mode == "intersect":
         keys = intersect_lists([item.keys() for item in lst])
     elif key_mode == "union":
@@ -79,6 +79,63 @@ def list_dict_to_dict_list(
         )
 
     return {key: [item.get(key, default_val) for item in lst] for key in keys}
+
+
+@overload
+def dict_list_to_list_dict(
+    dic: Mapping[T, Sequence[U]],
+    key_mode: Literal["same", "intersect"],
+    default_val: Any = None,
+) -> List[Dict[T, U]]:
+    ...
+
+
+@overload
+def dict_list_to_list_dict(
+    dic: Mapping[T, Sequence[U]],
+    key_mode: Literal["union"] = "union",
+    default_val: W = None,
+) -> List[Dict[T, Union[U, W]]]:
+    ...
+
+
+def dict_list_to_list_dict(
+    dic: Mapping[T, Sequence[U]],
+    key_mode: KeyMode = "union",
+    default_val: W = None,
+) -> List[Dict[T, Union[U, W]]]:
+    """Convert dict of lists with same sizes to list of dicts.
+
+    Example 1
+    ----------
+    ```
+    >>> dic = {"a": [1, 2], "b": [3, 4]}
+    >>> dict_list_to_list_dict(dic)
+    ... [{"a": 1, "b": 3}, {"a": 2, "b": 4}]
+    ```
+    """
+    if len(dic) == 0:
+        return []
+
+    lengths = [len(seq) for seq in dic.values()]
+    if key_mode == "same":
+        if not all_eq(lengths):
+            raise ValueError("Invalid sequences for batch.")
+        length = lengths[0]
+    elif key_mode == "intersect":
+        length = min(lengths)
+    elif key_mode == "union":
+        length = max(lengths)
+    else:
+        raise ValueError(
+            f"Invalid argument key_mode={key_mode}. (expected one of {KEY_MODES})"
+        )
+
+    result = [
+        {k: (v[i] if i < len(v) else default_val) for k, v in dic.items()}
+        for i in range(length)
+    ]
+    return result
 
 
 def intersect_lists(lst_of_lst: Sequence[Iterable[T]]) -> List[T]:
