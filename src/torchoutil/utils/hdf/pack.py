@@ -97,8 +97,6 @@ def pack_to_hdf(
         )
     if len(dataset) == 0:
         raise ValueError("Cannot pack to hdf an empty dataset.")
-    if file_kwargs is None:
-        file_kwargs = {}
 
     hdf_fpath = Path(hdf_fpath).resolve()
     if hdf_fpath.exists() and not hdf_fpath.is_file():
@@ -108,6 +106,9 @@ def pack_to_hdf(
         raise ValueError(
             f"Cannot overwrite file {hdf_fpath}. Please remove it or use overwrite=True option."
         )
+
+    if file_kwargs is None:
+        file_kwargs = {}
 
     if num_workers == "auto":
         num_workers = get_auto_num_cpus()
