@@ -44,7 +44,7 @@ from torchoutil.utils.type_checks import (
     is_iterable_str,
 )
 
-logger = logging.getLogger(__name__)
+pylog = logging.getLogger(__name__)
 
 
 T = TypeVar("T")
@@ -475,7 +475,7 @@ class HDFDataset(Generic[T, U], Dataset[U]):
     def _sanity_check(self) -> None:
         lens = [dset.shape[0] for dset in self._hdf_file.values()]
         if not all_eq(lens) or lens[0] != len(self):
-            logger.error(
+            pylog.error(
                 f"Incorrect length stored in HDF file. (found {lens=} and {len(self)=})"
             )
 

@@ -6,7 +6,7 @@ import json
 import math
 import shutil
 from pathlib import Path
-from typing import Callable, Literal, Optional, TypeVar, Union
+from typing import Callable, List, Literal, Optional, TypeVar, Union
 
 import torch
 from torch import nn
@@ -35,7 +35,16 @@ def pack_to_pickle(
     overwrite: bool = False,
     content_mode: ContentMode = "item",
     fmt: Optional[str] = None,
-) -> PickleDataset:
+    save_fn: Callable[[Union[U, List[U]], Path], None] = torch.save,
+) -> PickleDataset[U, U]:
+    """Pack a dataset to pickle files.
+
+    Args:
+        dataset: Dataset-like to pack.
+        root: Directory to store pickled data.
+        pre_transform: Transform to apply to each item before saving. defaults to None.
+    """
+
     # Check inputs
     if not isinstance(dataset, SizedDatasetLike):
         raise TypeError(
@@ -99,13 +108,15 @@ def pack_to_pickle(
             for item in batch_lst:
                 fname = fnames[i]
                 path = content_dpath.joinpath(fname)
-                torch.save(item, path)
+                save_fn(item, path)
                 i += 1
+
         elif content_mode == "batch":
             fname = fnames[i]
             path = content_dpath.joinpath(fname)
-            torch.save(batch_lst, path)
+            save_fn(batch_lst, path)
             i += 1
+
         else:
             raise ValueError(f"Invalid argument {content_mode=}.")
 

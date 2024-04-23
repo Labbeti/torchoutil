@@ -20,7 +20,7 @@ from tensorboard.backend.event_processing.event_file_loader import (  # type: ig
     EventFileLoader,
 )
 
-logger = logging.getLogger(__name__)
+pylog = logging.getLogger(__name__)
 
 
 _EVENT_FILE_PREFIX = "events.out.tfevents."
@@ -86,7 +86,7 @@ def load_event_file(
 
         if ignore_underscore_tags and tag.startswith("_"):
             if verbose >= 2:
-                logger.debug(
+                pylog.debug(
                     f'Skip value with tag "{tag}" which begins by an underscore.'
                 )
             continue
