@@ -23,7 +23,7 @@ class PickleDataset(Generic[T, U], Dataset[U]):
         root: Union[str, Path],
         transform: Optional[Callable[[T], U]] = None,
         *,
-        load_fn: Callable[[Path, ...], Union[T, List[T]]] = torch.load,
+        load_fn: Callable[..., Union[T, List[T]]] = torch.load,
         load_kwds: Optional[Dict[str, Any]] = None,
         use_cache: bool = False,
     ) -> None:
