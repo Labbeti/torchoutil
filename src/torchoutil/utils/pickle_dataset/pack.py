@@ -14,7 +14,11 @@ from torch.utils.data.dataloader import DataLoader
 
 from torchoutil.utils.data.dataloader import get_auto_num_cpus
 from torchoutil.utils.data.dataset import SizedDatasetLike
-from torchoutil.utils.pickle_dataset.common import CONTENT_DNAME, INFO_FNAME
+from torchoutil.utils.pickle_dataset.common import (
+    CONTENT_DNAME,
+    INFO_FNAME,
+    ContentMode,
+)
 from torchoutil.utils.pickle_dataset.dataset import PickleDataset
 
 T = TypeVar("T")
@@ -29,6 +33,8 @@ def pack_to_pickle(
     batch_size: int = 32,
     num_workers: Union[int, Literal["auto"]] = "auto",
     overwrite: bool = False,
+    content_mode: ContentMode = "item",
+    fmt: Optional[str] = None,
 ) -> PickleDataset:
     # Check inputs
     if not isinstance(dataset, SizedDatasetLike):
@@ -72,32 +78,51 @@ def pack_to_pickle(
         pin_memory=False,
     )
 
-    num_digits = math.ceil(math.log10(len(dataset)))
-    fmt = f"{{i:0{num_digits}d}}.pt"
+    if content_mode == "item":
+        num_files = len(dataset)
+    elif content_mode == "batch":
+        num_files = math.ceil(len(dataset) / batch_size)
+    else:
+        raise ValueError(f"Invalid argument {content_mode=}.")
+
+    if fmt is None:
+        num_digits = math.ceil(math.log10(num_files))
+        fmt = f"{{i:0{num_digits}d}}.pt"
+
+    fnames = [fmt.format(i=i) for i in range(num_files)]
 
     i = 0
     for batch_lst in loader:
         batch_lst = [pre_transform(item) for item in batch_lst]
-        for item in batch_lst:
-            fname = fmt.format(i=i)
-            path = content_dpath.joinpath(fname)
-            torch.save(item, path)
-            i += 1
 
-    attributes = {
+        if content_mode == "item":
+            for item in batch_lst:
+                fname = fnames[i]
+                path = content_dpath.joinpath(fname)
+                torch.save(item, path)
+                i += 1
+        elif content_mode == "batch":
+            fname = fnames[i]
+            path = content_dpath.joinpath(fname)
+            torch.save(batch_lst, path)
+            i += 1
+        else:
+            raise ValueError(f"Invalid argument {content_mode=}.")
+
+    info = {
         "source_dataset": dataset.__class__.__name__,
         "length": len(dataset),
-        "content_dname": CONTENT_DNAME,
         "creation_date": creation_date,
-        "creation_kwargs": {
-            "batch_size": batch_size,
-            "num_workers": num_workers,
-        },
+        "batch_size": batch_size,
+        "content_mode": content_mode,
+        "content_dname": CONTENT_DNAME,
+        "num_files": len(fnames),
+        "files": fnames,
     }
 
     info_fpath = root.joinpath(INFO_FNAME)
     with open(info_fpath, "w") as file:
-        json.dump(attributes, file, indent="\t")
+        json.dump(info, file, indent="\t")
 
     dataset = PickleDataset(root)
     return dataset
