@@ -34,7 +34,7 @@ def pack_to_pickle(
     num_workers: Union[int, Literal["auto"]] = "auto",
     overwrite: bool = False,
     content_mode: ContentMode = "item",
-    fmt: Optional[str] = None,
+    custom_file_fmt: Optional[str] = None,
     save_fn: Callable[[Union[U, List[U]], Path], None] = torch.save,
 ) -> PickleDataset[U, U]:
     """Pack a dataset to pickle files.
@@ -43,6 +43,16 @@ def pack_to_pickle(
         dataset: Dataset-like to pack.
         root: Directory to store pickled data.
         pre_transform: Transform to apply to each item before saving. defaults to None.
+        batch_size: Batch size used by the dataloader. defaults to 32.
+        num_workers: Number of workers used by the dataloader. defaults to "auto".
+        overwrite: If True, overwrite all data in root directory. defaults to False.
+        content_mode: Specify how the data should be stored.
+            If "item", each dataset item will be stored in a separate file.
+            If "batch", each dataset item will be stored in a batch file of size batch_size.
+        custom_file_fmt: Custom file format.
+            If None, defaults to "{{i:0{num_digits}d}}.pt".
+            defaults to None.
+        save_fn: Custom save function to save an item or a batch. defaults to torch.save.
     """
 
     # Check inputs
@@ -94,11 +104,13 @@ def pack_to_pickle(
     else:
         raise ValueError(f"Invalid argument {content_mode=}.")
 
-    if fmt is None:
+    if custom_file_fmt is None:
         num_digits = math.ceil(math.log10(num_files))
-        fmt = f"{{i:0{num_digits}d}}.pt"
+        file_fmt = f"{{i:0{num_digits}d}}.pt"
+    else:
+        file_fmt = custom_file_fmt
 
-    fnames = [fmt.format(i=i) for i in range(num_files)]
+    fnames = [file_fmt.format(i=i) for i in range(num_files)]
 
     i = 0
     for batch_lst in loader:
@@ -107,14 +119,18 @@ def pack_to_pickle(
         if content_mode == "item":
             for item in batch_lst:
                 fname = fnames[i]
-                path = content_dpath.joinpath(fname)
-                save_fn(item, path)
+                fpath = content_dpath.joinpath(fname)
+                if custom_file_fmt is not None:
+                    fpath.parent.mkdir(parents=True, exist_ok=True)
+                save_fn(item, fpath)
                 i += 1
 
         elif content_mode == "batch":
             fname = fnames[i]
-            path = content_dpath.joinpath(fname)
-            save_fn(batch_lst, path)
+            fpath = content_dpath.joinpath(fname)
+            if custom_file_fmt is not None:
+                fpath.parent.mkdir(parents=True, exist_ok=True)
+            save_fn(batch_lst, fpath)
             i += 1
 
         else:
@@ -124,6 +140,7 @@ def pack_to_pickle(
         "source_dataset": dataset.__class__.__name__,
         "length": len(dataset),
         "creation_date": creation_date,
+        "file_fmt": file_fmt,
         "batch_size": batch_size,
         "content_mode": content_mode,
         "content_dname": CONTENT_DNAME,
