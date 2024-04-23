@@ -75,9 +75,6 @@ class IndicesToNames(nn.Module, Generic[T]):
 
 
 class MultihotToIndices(nn.Module):
-    def __init__(self) -> None:
-        super().__init__()
-
     def forward(
         self,
         multihot: Tensor,
