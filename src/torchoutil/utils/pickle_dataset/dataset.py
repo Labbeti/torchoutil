@@ -9,7 +9,11 @@ from typing import Any, Callable, Dict, Generic, List, Optional, TypeVar, Union
 import torch
 from torch.utils.data.dataset import Dataset
 
-from torchoutil.utils.pickle_dataset.common import INFO_FNAME, ContentMode
+from torchoutil.utils.pickle_dataset.common import (
+    ATTRS_FNAME,
+    ContentMode,
+    PickleAttributes,
+)
 
 pylog = logging.getLogger(__name__)
 
@@ -47,32 +51,32 @@ class PickleDataset(Generic[T, U], Dataset[U]):
         self._load_kwds = load_kwds
         self._use_cache = use_cache
 
-        self._info = {}
+        self._attrs = {}
         self._fpaths = []
         self._cache = None
         self._cache_idx = None
         self._reload_data()
 
     @property
-    def info(self) -> Dict[str, Any]:
-        return self._info
+    def attrs(self) -> PickleAttributes:
+        return self._attrs  # type: ignore
 
     @property
     def content_mode(self) -> Optional[ContentMode]:
-        return self._info.get("content_mode")
+        return self._attrs.get("content_mode")
 
     @property
     def batch_size(self) -> int:
-        return self._info["batch_size"]
+        return self._attrs["batch_size"]
 
     def __getitem__(self, idx: int) -> U:
         item = self._load_item(idx)
         if self._transform is not None:
             item = self._transform(item)
-        return item
+        return item  # type: ignore
 
     def __len__(self) -> int:
-        return self._info["length"]
+        return self._attrs["length"]
 
     def _load_item(self, idx: int) -> T:
         if self.content_mode == "item":
@@ -97,28 +101,28 @@ class PickleDataset(Generic[T, U], Dataset[U]):
             item_or_batch = self._cache
 
         if self.content_mode == "item":
-            item = item_or_batch
+            item: T = item_or_batch  # type: ignore
         else:
-            batch = item_or_batch
+            batch: List[T] = item_or_batch  # type: ignore
             local_idx = idx % batch_size
             item = batch[local_idx]
 
         return item
 
     def _reload_data(self) -> None:
-        info_fpath = self._root.joinpath(INFO_FNAME)
+        attrs_fpath = self._root.joinpath(ATTRS_FNAME)
 
-        if info_fpath.is_file():
-            with open(info_fpath, "r") as file:
-                info = json.load(file)
+        if attrs_fpath.is_file():
+            with open(attrs_fpath, "r") as file:
+                attrs = json.load(file)
         else:
-            info = {}
+            attrs = {}
 
-        content_dname = info["content_dname"]
+        content_dname = attrs["content_dname"]
         content_dpath = self._root.joinpath(content_dname)
 
-        fnames = info["files"]
+        fnames = attrs["files"]
         fpaths = [content_dpath.joinpath(fname) for fname in fnames]
 
-        self._info = info
+        self._attrs = attrs
         self._fpaths = fpaths

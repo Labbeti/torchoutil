@@ -17,7 +17,7 @@ from typing import (
     overload,
 )
 
-from torchoutil.utils.type_checks import is_mapping_str_any
+from torchoutil.utils.type_checks import is_mapping_str
 
 K = TypeVar("K")
 T = TypeVar("T")
@@ -247,7 +247,7 @@ def flat_dict_of_dict(
     """
     output = {}
     for k, v in nested_dic.items():
-        if is_mapping_str_any(v):
+        if is_mapping_str(v):
             v = flat_dict_of_dict(v, sep, flat_iterables)
             v = {f"{k}{sep}{kv}": vv for kv, vv in v.items()}
             output.update(v)

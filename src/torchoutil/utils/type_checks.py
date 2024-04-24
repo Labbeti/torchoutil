@@ -1,10 +1,36 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from typing import Any, Dict, Iterable, List, Mapping, Union
+from typing import (
+    Any,
+    ClassVar,
+    Dict,
+    Iterable,
+    List,
+    Mapping,
+    Protocol,
+    Union,
+    runtime_checkable,
+)
 
 from torch import Tensor
 from typing_extensions import TypeGuard
+
+
+@runtime_checkable
+class DataclassInstance(Protocol):
+    # Class meant for typing purpose only
+    __dataclass_fields__: ClassVar[dict[str, Any]]
+
+
+@runtime_checkable
+class NamedTupleInstance(Protocol):
+    # Class meant for typing purpose only
+    _fields: tuple[str, ...]
+    _fields_defaults: dict[str, Any]
+
+    def _asdict(self) -> dict[str, Any]:
+        ...
 
 
 def is_dict_str(x: Any) -> TypeGuard[Dict[str, Any]]:
@@ -35,9 +61,9 @@ def is_iterable_iterable_int(x: Any) -> TypeGuard[Iterable[Iterable[int]]]:
     )
 
 
-def is_mapping_str_any(x: Any) -> TypeGuard[Mapping[str, Any]]:
-    return isinstance(x, Mapping) and all(isinstance(key, str) for key in x.keys())
-
-
 def is_list_tensor(x: Any) -> TypeGuard[List[Tensor]]:
     return isinstance(x, list) and all(isinstance(xi, Tensor) for xi in x)
+
+
+def is_mapping_str(x: Any) -> TypeGuard[Mapping[str, Any]]:
+    return isinstance(x, Mapping) and all(isinstance(key, str) for key in x.keys())

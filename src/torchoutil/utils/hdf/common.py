@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from typing import Dict, Tuple, TypeVar
+from typing import Dict, Tuple, TypedDict, TypeVar
 
 import h5py
 
@@ -24,3 +24,17 @@ def _tuple_to_dict(x: Tuple[T, ...]) -> Dict[str, T]:
 
 def _dict_to_tuple(x: Dict[str, T]) -> Tuple[T, ...]:
     return tuple(x.values())
+
+
+class HDFAttributes(TypedDict):
+    creation_date: str
+    source_dataset: str
+    length: int
+    metadata: str
+    encoding: str
+    info: str
+    global_hash_value: int
+    item_type: str
+    added_columns: list[str]
+    shape_suffix: str
+    file_kwargs: str

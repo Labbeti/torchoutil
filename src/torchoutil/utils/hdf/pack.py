@@ -30,7 +30,7 @@ from torch.utils.data.dataloader import DataLoader
 from torchoutil.nn.functional.numpy import is_numpy_scalar
 from torchoutil.utils.collections import all_eq, unzip
 from torchoutil.utils.data.dataloader import get_auto_num_cpus
-from torchoutil.utils.data.dataset import SizedDatasetLike
+from torchoutil.utils.data.dataset import SizedDatasetLike, TransformWrapper
 from torchoutil.utils.hdf.common import (
     HDF_ENCODING,
     HDF_STRING_DTYPE,
@@ -154,8 +154,9 @@ def pack_to_hdf(
         attr_name: True for attr_name in item_0_dict.keys()
     }
 
+    wrapped = TransformWrapper(dataset, dict_pre_transform)
     loader = DataLoader(
-        dataset,  # type: ignore
+        wrapped,  # type: ignore
         batch_size=batch_size,
         shuffle=False,
         num_workers=num_workers,
@@ -169,8 +170,6 @@ def pack_to_hdf(
         desc="Pre compute shapes...",
         disable=verbose <= 0,
     ):
-        batch = [dict_pre_transform(item) for item in batch]
-
         for item in batch:
             for attr_name, value in item.items():
                 shape, hdf_dtype, _src_dtype = _get_shape_and_dtype(value)

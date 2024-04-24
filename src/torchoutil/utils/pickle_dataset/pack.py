@@ -3,8 +3,10 @@
 
 import datetime
 import json
+import logging
 import math
 import shutil
+from dataclasses import asdict, is_dataclass
 from pathlib import Path
 from typing import Callable, List, Literal, Optional, TypeVar, Union
 
@@ -13,16 +15,20 @@ from torch import nn
 from torch.utils.data.dataloader import DataLoader
 
 from torchoutil.utils.data.dataloader import get_auto_num_cpus
-from torchoutil.utils.data.dataset import SizedDatasetLike
+from torchoutil.utils.data.dataset import SizedDatasetLike, TransformWrapper
 from torchoutil.utils.pickle_dataset.common import (
+    ATTRS_FNAME,
     CONTENT_DNAME,
-    INFO_FNAME,
     ContentMode,
 )
 from torchoutil.utils.pickle_dataset.dataset import PickleDataset
+from torchoutil.utils.type_checks import is_mapping_str
 
 T = TypeVar("T")
 U = TypeVar("U")
+
+
+pylog = logging.getLogger(__name__)
 
 
 @torch.inference_mode()
@@ -81,14 +87,13 @@ def pack_to_pickle(
 
     content_dpath.mkdir(parents=True, exist_ok=True)
 
-    if pre_transform is None:
-        pre_transform = nn.Identity()
-
     now = datetime.datetime.now()
     creation_date = now.strftime("%Y-%m-%d_%H-%M-%S")
 
+    wrapped = TransformWrapper(dataset, pre_transform)
+
     loader = DataLoader(
-        dataset,  # type: ignore
+        wrapped,  # type: ignore
         batch_size=batch_size,
         shuffle=False,
         num_workers=num_workers,
@@ -98,9 +103,9 @@ def pack_to_pickle(
     )
 
     if content_mode == "item":
-        num_files = len(dataset)
+        num_files = len(wrapped)
     elif content_mode == "batch":
-        num_files = math.ceil(len(dataset) / batch_size)
+        num_files = math.ceil(len(wrapped) / batch_size)
     else:
         raise ValueError(f"Invalid argument {content_mode=}.")
 
@@ -116,8 +121,6 @@ def pack_to_pickle(
 
     i = 0
     for batch_lst in loader:
-        batch_lst = [pre_transform(item) for item in batch_lst]
-
         if content_mode == "item":
             for item in batch_lst:
                 fname = fnames[i]
@@ -138,20 +141,45 @@ def pack_to_pickle(
         else:
             raise ValueError(f"Invalid argument {content_mode=}.")
 
-    info = {
-        "source_dataset": dataset.__class__.__name__,
-        "length": len(dataset),
+    if hasattr(dataset, "info"):
+        info = dataset.info  # type: ignore
+        if is_dataclass(info):
+            info = asdict(info)
+        elif is_mapping_str(info):
+            info = dict(info.items())  # type: ignore
+        else:
+            info = {}
+    else:
+        info = {}
+
+    if hasattr(dataset, "attrs"):
+        source_attrs = dataset.attrs  # type: ignore
+        if is_dataclass(source_attrs):
+            info = asdict(source_attrs)
+        elif is_mapping_str(source_attrs):
+            source_attrs = dict(source_attrs.items())  # type: ignore
+        else:
+            pylog.warning(f"Ignore source attributes type {type(source_attrs)}.")
+            source_attrs = {}
+    else:
+        source_attrs = {}
+
+    attributes = {
+        "source_dataset": wrapped.__class__.__name__,
+        "length": len(wrapped),
         "creation_date": creation_date,
         "batch_size": batch_size,
         "content_mode": content_mode,
         "content_dname": CONTENT_DNAME,
+        "info": info,
+        "source_attrs": source_attrs,
         "num_files": len(fnames),
         "files": fnames,
     }
 
-    info_fpath = root.joinpath(INFO_FNAME)
-    with open(info_fpath, "w") as file:
-        json.dump(info, file, indent="\t")
+    attrs_fpath = root.joinpath(ATTRS_FNAME)
+    with open(attrs_fpath, "w") as file:
+        json.dump(attributes, file, indent="\t")
 
-    dataset = PickleDataset(root)
-    return dataset
+    pickle_dataset = PickleDataset(root)
+    return pickle_dataset

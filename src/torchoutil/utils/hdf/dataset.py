@@ -36,6 +36,7 @@ from torchoutil.utils.hdf.common import (
     HDF_STRING_DTYPE,
     HDF_VOID_DTYPE,
     SHAPE_SUFFIX,
+    HDFAttributes,
     _dict_to_tuple,
 )
 from torchoutil.utils.type_checks import (
@@ -135,8 +136,8 @@ class HDFDataset(Generic[T, U], Dataset[U]):
         return list(self.get_hdf_keys())
 
     @property
-    def attrs(self) -> Dict[str, Any]:
-        return dict(self._hdf_file.attrs)
+    def attrs(self) -> HDFAttributes:
+        return dict(self._hdf_file.attrs)  # type: ignore
 
     @property
     def metadata(self) -> str:
