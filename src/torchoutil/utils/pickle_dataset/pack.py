@@ -142,7 +142,6 @@ def pack_to_pickle(
         "source_dataset": dataset.__class__.__name__,
         "length": len(dataset),
         "creation_date": creation_date,
-        "file_fmt": file_fmt,
         "batch_size": batch_size,
         "content_mode": content_mode,
         "content_dname": CONTENT_DNAME,
