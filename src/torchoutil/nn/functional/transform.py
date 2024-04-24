@@ -1,6 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+from typing import Iterable, List, Union
+
+import torch
 from torch import Tensor
 
 
@@ -33,4 +36,39 @@ def repeat_interleave_nd(x: Tensor, repeats: int, dim: int = 0) -> Tensor:
     shape[dim + 1] = repeats
     x = x.expand(*shape)
     x = x.flatten(dim, dim + 1)
+    return x
+
+
+def resample_nearest(
+    x: Tensor,
+    rates: Union[float, Iterable[float]],
+    dims: Union[int, Iterable[int]] = -1,
+) -> Tensor:
+    """Nearest resampling using a rate.
+
+    Args:
+        x: Input tensor.
+        rate: The
+    """
+    if isinstance(dims, int):
+        dims = [dims]
+    else:
+        dims = list(dims)
+
+    if isinstance(rates, float):
+        rates = [rates] * len(dims)
+    else:
+        rates = list(rates)  # type: ignore
+        if len(rates) != len(dims):
+            raise ValueError(f"Invalid arguments sizes {len(rates)=} != {len(dims)}.")
+
+    slices: List[Union[slice, Tensor]] = [slice(None)] * len(x.shape)
+    for dim, rate in zip(dims, rates):
+        length = x.shape[dim]
+        step = 1.0 / rate
+        indexes = torch.arange(0, length, step)
+        indexes = indexes.round().long().clamp(max=length - 1)
+        slices[dim] = indexes
+
+    x = x[slices]
     return x

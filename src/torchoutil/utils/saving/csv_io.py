@@ -5,7 +5,7 @@ import csv
 import io
 import os
 from pathlib import Path
-from typing import Any, Mapping, Sequence, Union
+from typing import Any, Dict, List, Mapping, Sequence, Union
 
 from torchoutil.utils.collections import dict_list_to_list_dict
 from torchoutil.utils.saving.common import to_builtin
@@ -49,3 +49,11 @@ def save_to_csv(
     if fpath is not None:
         fpath.write_text(content)
     return content
+
+
+def load_csv(fpath: Union[str, Path]) -> Dict[str, List[Any]]:
+    with open(fpath, "r") as file:
+        reader = csv.DictReader(file)
+        reader.fieldnames
+
+    raise NotImplementedError

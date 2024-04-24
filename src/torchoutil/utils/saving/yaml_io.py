@@ -66,3 +66,9 @@ def save_to_yaml(
     if fpath is not None:
         fpath.write_text(content, encoding="utf-8")
     return content
+
+
+def load_yaml(fpath: Union[str, Path]) -> Any:
+    with open(fpath, "r") as file:
+        data = yaml.safe_load(file)
+    return data

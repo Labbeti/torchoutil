@@ -12,4 +12,4 @@ from .multilabel import *
 from .numpy import *
 from .others import *
 from .pad import *
-from .repeat import *
+from .transform import *
