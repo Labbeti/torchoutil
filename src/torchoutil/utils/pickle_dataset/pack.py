@@ -34,7 +34,7 @@ def pack_to_pickle(
     num_workers: Union[int, Literal["auto"]] = "auto",
     overwrite: bool = False,
     content_mode: ContentMode = "item",
-    custom_file_fmt: Optional[str] = None,
+    custom_file_fmt: Union[None, str, Callable[[int], str]] = None,
     save_fn: Callable[[Union[U, List[U]], Path], None] = torch.save,
 ) -> PickleDataset[U, U]:
     """Pack a dataset to pickle files.
@@ -106,11 +106,13 @@ def pack_to_pickle(
 
     if custom_file_fmt is None:
         num_digits = math.ceil(math.log10(num_files))
-        file_fmt = f"{{i:0{num_digits}d}}.pt"
+        file_fmt = f"{{:0{num_digits}d}}.pt".format
+    elif isinstance(custom_file_fmt, str):
+        file_fmt = custom_file_fmt.format
     else:
         file_fmt = custom_file_fmt
 
-    fnames = [file_fmt.format(i=i) for i in range(num_files)]
+    fnames = [file_fmt(i) for i in range(num_files)]
 
     i = 0
     for batch_lst in loader:
