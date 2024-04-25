@@ -32,6 +32,20 @@ class NamedTupleInstance(Protocol):
     def _asdict(self) -> dict[str, Any]:
         ...
 
+    def __getitem__(self, idx):
+        ...
+
+    def __len__(self) -> int:
+        ...
+
+
+def is_dataclass_instance(x: Any) -> TypeGuard[DataclassInstance]:
+    return isinstance(x, DataclassInstance)
+
+
+def is_namedtuple_instance(x: Any) -> TypeGuard[NamedTupleInstance]:
+    return isinstance(x, NamedTupleInstance)
+
 
 def is_dict_str(x: Any) -> TypeGuard[Dict[str, Any]]:
     return isinstance(x, dict) and all(isinstance(key, str) for key in x.keys())

@@ -51,9 +51,8 @@ def save_to_csv(
     return content
 
 
-def load_csv(fpath: Union[str, Path]) -> Dict[str, List[Any]]:
+def load_csv(fpath: Union[str, Path], **kwargs) -> List[Dict[str, Any]]:
     with open(fpath, "r") as file:
-        reader = csv.DictReader(file)
-        reader.fieldnames
-
-    raise NotImplementedError
+        reader = csv.DictReader(file, **kwargs)
+        data = list(reader)
+    return data

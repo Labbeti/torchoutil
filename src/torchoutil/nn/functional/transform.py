@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from typing import Iterable, List, Union
+from typing import Callable, Iterable, List, Union
 
 import torch
 from torch import Tensor
@@ -43,6 +43,7 @@ def resample_nearest(
     x: Tensor,
     rates: Union[float, Iterable[float]],
     dims: Union[int, Iterable[int]] = -1,
+    round_fn: Callable[[Tensor], Tensor] = torch.floor,
 ) -> Tensor:
     """Nearest resampling using a rate.
 
@@ -55,7 +56,7 @@ def resample_nearest(
     else:
         dims = list(dims)
 
-    if isinstance(rates, float):
+    if isinstance(rates, (float, int)):
         rates = [rates] * len(dims)
     else:
         rates = list(rates)  # type: ignore
@@ -67,7 +68,7 @@ def resample_nearest(
         length = x.shape[dim]
         step = 1.0 / rate
         indexes = torch.arange(0, length, step)
-        indexes = indexes.round().long().clamp(max=length - 1)
+        indexes = round_fn(indexes).long().clamp(min=0, max=length - 1)
         slices[dim] = indexes
 
     x = x[slices]

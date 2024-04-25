@@ -3,7 +3,7 @@
 
 import os
 from argparse import Namespace
-from dataclasses import asdict, is_dataclass
+from dataclasses import asdict
 from pathlib import Path
 from typing import Any, Mapping, Union
 
@@ -34,6 +34,12 @@ def save_to_yaml(
     make_parents: bool = True,
     **kwargs,
 ) -> str:
+    if resolve and not _OMEGACONF_AVAILABLE:
+        raise ValueError(
+            "Cannot resolve config for yaml without omegaconf package."
+            "Please use resolve=False or install omegaconf with 'pip install torchoutil[extras]'."
+        )
+
     if fpath is not None:
         fpath = Path(fpath).resolve().expanduser()
         if not overwrite and fpath.exists():
@@ -44,21 +50,19 @@ def save_to_yaml(
     if isinstance(data, Namespace):
         data = data.__dict__
 
-    elif is_dataclass(data) or isinstance(data, DataclassInstance):
-        if isinstance(data, type):
-            raise TypeError(f"Invalid argument type {type(data)}.")
+    elif isinstance(data, DataclassInstance):
         data = asdict(data)
 
     elif isinstance(data, NamedTupleInstance):
         data = data._asdict()
 
     elif _OMEGACONF_AVAILABLE and isinstance(data, DictConfig):
-        data = OmegaConf.to_container(data, resolve=resolve)  # type: ignore
+        data = OmegaConf.to_container(data, resolve=False)  # type: ignore
 
     if to_builtins:
         data = to_builtin(data)
 
-    if resolve:
+    if _OMEGACONF_AVAILABLE and resolve:
         data_cfg = OmegaConf.create(data)  # type: ignore
         data = OmegaConf.to_container(data_cfg, resolve=True)  # type: ignore
 
