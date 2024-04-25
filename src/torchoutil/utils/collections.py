@@ -17,7 +17,7 @@ from typing import (
     overload,
 )
 
-from torchoutil.utils.type_checks import is_mapping_str_any
+from torchoutil.utils.type_checks import is_mapping_str
 
 K = TypeVar("K")
 T = TypeVar("T")
@@ -68,7 +68,7 @@ def list_dict_to_dict_list(
     keys = set(lst[0].keys())
     if key_mode == "same":
         if not all(keys == set(item.keys()) for item in lst[1:]):
-            raise ValueError("Invalid keys for batch.")
+            raise ValueError(f"Invalid keys with {key_mode=}.")
     elif key_mode == "intersect":
         keys = intersect_lists([item.keys() for item in lst])
     elif key_mode == "union":
@@ -79,6 +79,63 @@ def list_dict_to_dict_list(
         )
 
     return {key: [item.get(key, default_val) for item in lst] for key in keys}
+
+
+@overload
+def dict_list_to_list_dict(
+    dic: Mapping[T, Sequence[U]],
+    key_mode: Literal["same", "intersect"],
+    default_val: Any = None,
+) -> List[Dict[T, U]]:
+    ...
+
+
+@overload
+def dict_list_to_list_dict(
+    dic: Mapping[T, Sequence[U]],
+    key_mode: Literal["union"] = "union",
+    default_val: W = None,
+) -> List[Dict[T, Union[U, W]]]:
+    ...
+
+
+def dict_list_to_list_dict(
+    dic: Mapping[T, Sequence[U]],
+    key_mode: KeyMode = "union",
+    default_val: W = None,
+) -> List[Dict[T, Union[U, W]]]:
+    """Convert dict of lists with same sizes to list of dicts.
+
+    Example 1
+    ----------
+    ```
+    >>> dic = {"a": [1, 2], "b": [3, 4]}
+    >>> dict_list_to_list_dict(dic)
+    ... [{"a": 1, "b": 3}, {"a": 2, "b": 4}]
+    ```
+    """
+    if len(dic) == 0:
+        return []
+
+    lengths = [len(seq) for seq in dic.values()]
+    if key_mode == "same":
+        if not all_eq(lengths):
+            raise ValueError("Invalid sequences for batch.")
+        length = lengths[0]
+    elif key_mode == "intersect":
+        length = min(lengths)
+    elif key_mode == "union":
+        length = max(lengths)
+    else:
+        raise ValueError(
+            f"Invalid argument key_mode={key_mode}. (expected one of {KEY_MODES})"
+        )
+
+    result = [
+        {k: (v[i] if i < len(v) else default_val) for k, v in dic.items()}
+        for i in range(length)
+    ]
+    return result
 
 
 def intersect_lists(lst_of_lst: Sequence[Iterable[T]]) -> List[T]:
@@ -152,8 +209,22 @@ def all_eq(it: Iterable[T], eq_fn: Optional[Callable[[T, T], bool]] = None) -> b
         return all(eq_fn(first, elt) for elt in it)
 
 
+def all_ne(it: Iterable[T], ne_fn: Optional[Callable[[T, T], bool]] = None) -> bool:
+    """Returns true if all elements in inputs are differents."""
+    it = list(it)
+    if ne_fn is None:
+        return all(
+            it[i] != it[j] for i in range(len(it)) for j in range(i + 1, len(it))
+        )
+    else:
+        return all(
+            ne_fn(it[i], it[j]) for i in range(len(it)) for j in range(i + 1, len(it))
+        )
+
+
 def flat_dict_of_dict(
     nested_dic: Mapping[str, Any],
+    *,
     sep: str = ".",
     flat_iterables: bool = False,
     overwrite: bool = True,
@@ -188,25 +259,67 @@ def flat_dict_of_dict(
         flat_iterables: If True, flat iterable and use index as key.
         overwrite: If True, overwrite duplicated keys in output. Otherwise duplicated keys will raises a ValueError.
     """
+
+    def _flat_dict_of_dict_impl(nested_dic: Mapping[str, Any]) -> Dict[str, Any]:
+        output = {}
+        for k, v in nested_dic.items():
+            if is_mapping_str(v):
+                v = _flat_dict_of_dict_impl(v)
+                v = {f"{k}{sep}{kv}": vv for kv, vv in v.items()}
+                output.update(v)
+
+            elif flat_iterables and isinstance(v, Iterable) and not isinstance(v, str):
+                v = {f"{i}": vi for i, vi in enumerate(v)}
+                v = _flat_dict_of_dict_impl(v)
+                v = {f"{k}{sep}{kv}": vv for kv, vv in v.items()}
+                output.update(v)
+
+            elif overwrite or k not in output:
+                output[k] = v
+
+            else:
+                raise ValueError(f"Ambiguous flatten dict with key '{k}'.")
+        return output
+
+    return _flat_dict_of_dict_impl(nested_dic)
+
+
+def unflat_dict_of_dict(dic: Mapping[str, Any], sep: str = ".") -> Dict[str, Any]:
+    """Unflat a dictionary.
+
+    Example 1
+    ----------
+    ```
+    >>> dic = {
+        "a.a": 1,
+        "b.a": 2,
+        "b.b": 3,
+        "c": 4,
+    }
+    >>> unflat_dict_of_dict(dic)
+    ... {"a": {"a": 1}, "b": {"a": 2, "b": 3}, "c": 4}
+    ```
+    """
     output = {}
-    for k, v in nested_dic.items():
-        if is_mapping_str_any(v):
-            v = flat_dict_of_dict(v, sep, flat_iterables)
-            v = {f"{k}{sep}{kv}": vv for kv, vv in v.items()}
-            output.update(v)
-
-        elif flat_iterables and isinstance(v, Iterable) and not isinstance(v, str):
-            v = {f"{i}": vi for i, vi in enumerate(v)}
-            v = flat_dict_of_dict(v, sep, flat_iterables)
-            v = {f"{k}{sep}{kv}": vv for kv, vv in v.items()}
-            output.update(v)
-
-        elif overwrite or k not in output:
+    for k, v in dic.items():
+        if sep not in k:
             output[k] = v
-
         else:
-            raise ValueError(f"Ambiguous flatten dict with key '{k}'.")
+            idx = k.index(sep)
+            k, kk = k[:idx], k[idx + 1 :]
+            if k not in output:
+                output[k] = {}
+            elif not isinstance(output[k], Mapping):
+                raise ValueError(
+                    f"Invalid dict argument. (found keys {k} and {k}{sep}{kk})"
+                )
 
+            output[k][kk] = v
+
+    output = {
+        k: (unflat_dict_of_dict(v) if isinstance(v, Mapping) else v)
+        for k, v in output.items()
+    }
     return output
 
 
@@ -215,6 +328,18 @@ def flat_list(lst: Iterable[Sequence[T]]) -> Tuple[List[T], List[int]]:
     flatten_lst = [element for sublst in lst for element in sublst]
     sizes = [len(sents) for sents in lst]
     return flatten_lst, sizes
+
+
+def unflat_list(flatten_lst: Sequence[T], sizes: Iterable[int]) -> List[List[T]]:
+    """Unflat a list to a list of sublists of given sizes."""
+    lst = []
+    start = 0
+    stop = 0
+    for count in sizes:
+        stop += count
+        lst.append(flatten_lst[start:stop])
+        start = stop
+    return lst
 
 
 @overload

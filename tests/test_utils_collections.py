@@ -1,17 +1,22 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import random
 import unittest
 from unittest import TestCase
 
 from torchoutil.utils.collections import (
     flat_dict_of_dict,
+    flat_list,
     intersect_lists,
     list_dict_to_dict_list,
+    unflat_dict_of_dict,
+    unflat_list,
 )
+from torchoutil.utils.type_checks import is_list_list_str, is_list_str
 
 
-class TestCollections(TestCase):
+class TestFlatDict(TestCase):
     def test_example_1(self) -> None:
         x = {
             "a": 1,
@@ -42,6 +47,18 @@ class TestCollections(TestCase):
     def test_example_4(self) -> None:
         x = {"a": {"b": 1}, "a.b": 2}
         self.assertRaises(ValueError, flat_dict_of_dict, x, overwrite=False)
+
+    def test_unflat_dict_example_1(self) -> None:
+        x = {
+            "a.a": 1,
+            "b.a": 2,
+            "b.b": 3,
+            "c": 4,
+        }
+        y = {"a": {"a": 1}, "b": {"a": 2, "b": 3}, "c": 4}
+
+        y_hat = unflat_dict_of_dict(x)
+        self.assertEqual(y_hat, y)
 
 
 class TestListDictToDictList(TestCase):
@@ -77,6 +94,31 @@ class TestIntersectLists(TestCase):
 
         output = intersect_lists(input_)
         self.assertListEqual(output, expected)
+
+
+class TestFlatList(TestCase):
+    def test_example_1(self) -> None:
+        lst = [
+            list(map(str, range(random.randint(0, 100))))
+            for _ in range(random.randint(0, 10))
+        ]
+        for sublst in lst:
+            random.shuffle(sublst)
+        random.shuffle(lst)
+
+        self.assertTrue(is_list_list_str(lst))
+
+        flatten, sizes = flat_list(lst)
+
+        self.assertTrue(is_list_str(flatten))
+        self.assertEqual(len(lst), len(sizes))
+        self.assertEqual(len(flatten), sum(sizes))
+
+        unflat = unflat_list(flatten, sizes)
+
+        self.assertTrue(is_list_list_str(unflat))
+        self.assertEqual(len(lst), len(unflat))
+        self.assertListEqual(lst, unflat)
 
 
 if __name__ == "__main__":

@@ -22,15 +22,25 @@ from torch import Tensor, nn
 from typing_extensions import TypeGuard
 
 from torchoutil.nn.functional.get import get_device
+from torchoutil.nn.functional.numpy import is_numpy_scalar
 
 T = TypeVar("T")
 U = TypeVar("U")
 
 
-def count_parameters(model: nn.Module, only_trainable: bool = False) -> int:
-    params = (p for p in model.parameters() if not only_trainable or p.requires_grad)
-    count = sum(p.numel() for p in params)
-    return count
+def count_parameters(
+    model: nn.Module,
+    *,
+    recurse: bool = True,
+    only_trainable: bool = False,
+) -> int:
+    params = (
+        param
+        for param in model.parameters(recurse)
+        if not only_trainable or param.requires_grad
+    )
+    num_params = sum(param.numel() for param in params)
+    return num_params
 
 
 def find(
@@ -106,15 +116,17 @@ def move_to_rec(
 
 
 def is_python_scalar(x: Any) -> TypeGuard[Union[int, float, bool, complex]]:
+    """Returns True if x is a builtin scalar type (int, float, bool, complex)."""
     return isinstance(x, (int, float, bool, complex))
 
 
 def is_torch_scalar(x: Any) -> TypeGuard[Tensor]:
+    """Returns True if x is a zero-dimensional torch Tensor."""
     return isinstance(x, Tensor) and x.ndim == 0
 
 
 def is_scalar(x: Any) -> TypeGuard[Union[int, float, bool, complex, Tensor]]:
-    return is_python_scalar(x) or is_torch_scalar(x)
+    return is_python_scalar(x) or is_torch_scalar(x) or is_numpy_scalar(x)
 
 
 def can_be_stacked(

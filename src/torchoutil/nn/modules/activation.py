@@ -10,6 +10,10 @@ from torchoutil.utils.collections import dump_dict
 
 
 class SoftmaxMultidim(nn.Module):
+    """
+    For more information, see :func:`~torchoutil.nn.functional.activation.softmax_multidim`.
+    """
+
     def __init__(
         self,
         dims: Union[Iterable[int], None] = (-1,),

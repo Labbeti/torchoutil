@@ -14,8 +14,8 @@ from typing import (
 
 from torch.utils.data.dataset import Dataset
 
-T = TypeVar("T", covariant=True)
-U = TypeVar("U", covariant=True)
+T = TypeVar("T", covariant=False)
+U = TypeVar("U", covariant=False)
 
 
 class EmptyDataset(Dataset[None]):
@@ -58,7 +58,7 @@ class TransformWrapper(Generic[T, U], Dataset[U]):
         else:
             raise TypeError("Wrapped dataset is not Sized.")
 
-    def unwrap(self) -> Dataset[T]:
+    def unwrap(self) -> SizedDatasetLike[T]:
         return self._dataset
 
     @property

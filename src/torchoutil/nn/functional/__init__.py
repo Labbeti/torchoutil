@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+from torch.nn.functional import *
 
 from .activation import *
 from .crop import *
@@ -12,4 +13,4 @@ from .multilabel import *
 from .numpy import *
 from .others import *
 from .pad import *
-from .repeat import *
+from .transform import *

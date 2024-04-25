@@ -23,6 +23,10 @@ T = TypeVar("T")
 
 
 class IndicesToMultihot(nn.Module):
+    """
+    For more information, see :func:`~torchoutil.nn.functional.multilabel.indices_to_multihot`.
+    """
+
     def __init__(
         self,
         num_classes: int,
@@ -59,6 +63,10 @@ class IndicesToMultihot(nn.Module):
 
 
 class IndicesToNames(nn.Module, Generic[T]):
+    """
+    For more information, see :func:`~torchoutil.nn.functional.multilabel.indices_to_names`.
+    """
+
     def __init__(
         self,
         idx_to_name: Mapping[int, T],
@@ -75,8 +83,9 @@ class IndicesToNames(nn.Module, Generic[T]):
 
 
 class MultihotToIndices(nn.Module):
-    def __init__(self) -> None:
-        super().__init__()
+    """
+    For more information, see :func:`~torchoutil.nn.functional.multilabel.multihot_to_indices`.
+    """
 
     def forward(
         self,
@@ -87,6 +96,10 @@ class MultihotToIndices(nn.Module):
 
 
 class MultihotToNames(nn.Module, Generic[T]):
+    """
+    For more information, see :func:`~torchoutil.nn.functional.multilabel.multihot_to_names`.
+    """
+
     def __init__(
         self,
         idx_to_name: Mapping[int, T],
@@ -103,6 +116,10 @@ class MultihotToNames(nn.Module, Generic[T]):
 
 
 class NamesToIndices(nn.Module, Generic[T]):
+    """
+    For more information, see :func:`~torchoutil.nn.functional.multilabel.names_to_indices`.
+    """
+
     def __init__(
         self,
         idx_to_name: Mapping[int, T],
@@ -119,6 +136,10 @@ class NamesToIndices(nn.Module, Generic[T]):
 
 
 class NamesToMultihot(nn.Module, Generic[T]):
+    """
+    For more information, see :func:`~torchoutil.nn.functional.multilabel.names_to_multihot`.
+    """
+
     def __init__(
         self,
         idx_to_name: Mapping[int, T],
@@ -154,6 +175,10 @@ class NamesToMultihot(nn.Module, Generic[T]):
 
 
 class ProbsToIndices(nn.Module):
+    """
+    For more information, see :func:`~torchoutil.nn.functional.multilabel.probs_to_indices`.
+    """
+
     def __init__(
         self,
         threshold: Union[float, Tensor],
@@ -170,6 +195,10 @@ class ProbsToIndices(nn.Module):
 
 
 class ProbsToMultihot(nn.Module):
+    """
+    For more information, see :func:`~torchoutil.nn.functional.multilabel.probs_to_multihot`.
+    """
+
     def __init__(
         self,
         threshold: Union[float, Tensor],
@@ -205,6 +234,10 @@ class ProbsToMultihot(nn.Module):
 
 
 class ProbsToNames(nn.Module, Generic[T]):
+    """
+    For more information, see :func:`~torchoutil.nn.functional.multilabel.probs_to_names`.
+    """
+
     def __init__(
         self,
         threshold: Union[float, Tensor],

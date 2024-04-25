@@ -22,4 +22,4 @@ Submodules
    torchoutil.nn.functional.numpy
    torchoutil.nn.functional.others
    torchoutil.nn.functional.pad
-   torchoutil.nn.functional.repeat
+   torchoutil.nn.functional.transform

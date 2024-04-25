@@ -22,8 +22,13 @@ jobs:
 
     strategy:
       matrix:
-        os: [ubuntu-latest,windows-latest,macos-latest]
-        python-version: ["3.8", "3.11"]
+        os: [ubuntu-latest, windows-latest]
+        python-version: ["3.8", "3.12"]
+        include:
+          - os: macos-13
+            python-version: 3.8
+          - os: macos-latest
+            python-version: 3.12
 
     steps:
     # --- INSTALLATIONS ---
@@ -31,7 +36,7 @@ jobs:
       uses: actions/checkout@v2
 
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
         cache: 'pip'
@@ -40,6 +45,16 @@ jobs:
       shell: bash
       run: |
         python -m pip install -e .[extras,dev]
+
+    - name: Additional install soundfile (Ubuntu)
+      if: matrix.os == 'ubuntu-latest'
+      run: |
+        sudo apt-get install libsndfile1
+
+    - name: Additional install soundfile (macOS)
+      if: matrix.os == 'macos-latest' || matrix.os == 'macos-13'
+      run: |
+        brew install libsndfile
 
     # --- TESTS ---
     - name: Lint with flake8

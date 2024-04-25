@@ -36,6 +36,7 @@ from torchoutil.utils.hdf.common import (
     HDF_STRING_DTYPE,
     HDF_VOID_DTYPE,
     SHAPE_SUFFIX,
+    HDFAttributes,
     _dict_to_tuple,
 )
 from torchoutil.utils.type_checks import (
@@ -44,7 +45,7 @@ from torchoutil.utils.type_checks import (
     is_iterable_str,
 )
 
-logger = logging.getLogger(__name__)
+pylog = logging.getLogger(__name__)
 
 
 T = TypeVar("T")
@@ -66,7 +67,7 @@ def _is_index(index: Any) -> TypeGuard[IndexType]:
 
 
 def _is_column(column: Any) -> TypeGuard[ColumnType]:
-    return isinstance(column, str) or is_iterable_str(column) or column is None
+    return is_iterable_str(column, accept_str=True) or column is None
 
 
 class HDFDataset(Generic[T, U], Dataset[U]):
@@ -135,8 +136,8 @@ class HDFDataset(Generic[T, U], Dataset[U]):
         return list(self.get_hdf_keys())
 
     @property
-    def attrs(self) -> Dict[str, Any]:
-        return dict(self._hdf_file.attrs)
+    def attrs(self) -> HDFAttributes:
+        return dict(self._hdf_file.attrs)  # type: ignore
 
     @property
     def metadata(self) -> str:
@@ -231,7 +232,7 @@ class HDFDataset(Generic[T, U], Dataset[U]):
         if column is None:
             column = self.column_names
 
-        if is_iterable_str(column):
+        if is_iterable_str(column, accept_str=False):
             return {column_i: self.at(index, column_i) for column_i in column}
 
         if column not in self.all_columns:
@@ -475,7 +476,7 @@ class HDFDataset(Generic[T, U], Dataset[U]):
     def _sanity_check(self) -> None:
         lens = [dset.shape[0] for dset in self._hdf_file.values()]
         if not all_eq(lens) or lens[0] != len(self):
-            logger.error(
+            pylog.error(
                 f"Incorrect length stored in HDF file. (found {lens=} and {len(self)=})"
             )
 

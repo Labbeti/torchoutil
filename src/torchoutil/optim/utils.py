@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import logging
-from typing import Any, Iterable, List, Optional, Tuple, Union
+from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
 
 from torch import nn
 from torch.nn.parameter import Parameter
@@ -11,7 +11,7 @@ from torch.optim.optimizer import Optimizer
 pylog = logging.getLogger(__name__)
 
 
-def get_lr(optim: Optimizer, idx: int = 0) -> float:
+def get_lr(optim: Optimizer, idx: int = 0, key: str = "lr") -> float:
     """
     Get the learning rate of the first group of an optimizer.
 
@@ -19,17 +19,17 @@ def get_lr(optim: Optimizer, idx: int = 0) -> float:
         optim: The optimizer to get.
         idx: The group index of the learning rate in the optimizer. defaults to 0.
     """
-    return get_lrs(optim)[idx]
+    return get_lrs(optim, key)[idx]
 
 
-def get_lrs(optim: Optimizer) -> List[float]:
+def get_lrs(optim: Optimizer, key: str = "lr") -> List[float]:
     """
     Get the learning rates in all groups of an optimizer.
 
     Args:
         optim: The optimizer to get.
     """
-    return [group["lr"] for group in optim.param_groups]
+    return [group[key] for group in optim.param_groups]
 
 
 def create_params_groups_bias(
@@ -37,15 +37,15 @@ def create_params_groups_bias(
     weight_decay: float,
     skip_list: Optional[Iterable[str]] = (),
     verbose: int = 2,
-) -> list[dict[str, Any]]:
+) -> List[Dict[str, Any]]:
     if isinstance(model, nn.Module):
         params = model.named_parameters()
     else:
         params = model
     del model
 
-    decay: list[Parameter] = []
-    no_decay: list[Parameter] = []
+    decay: List[Parameter] = []
+    no_decay: List[Parameter] = []
 
     if skip_list is None:
         skip_list = {}

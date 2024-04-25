@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from typing import Any, Dict, Iterable, List, Literal, Sized, Tuple, Union
+from typing import Any, Callable, Dict, Iterable, List, Literal, Sized, Tuple, Union
 
 import torch
 from torch import Generator, Size, Tensor
@@ -13,13 +13,14 @@ from torchoutil.nn.functional.others import can_be_stacked, is_scalar
 
 PAD_ALIGNS = ("left", "right", "center", "random")
 PadAlign = Literal["left", "right", "center", "random"]
+PadValue = Union[Number, Callable[[Tensor], Number]]
 
 
 def pad_dim(
     x: Tensor,
     target_length: int,
     align: PadAlign = "left",
-    pad_value: float = 0.0,
+    pad_value: PadValue = 0.0,
     dim: int = -1,
     mode: str = "constant",
     generator: Union[int, Generator, None] = None,
@@ -32,7 +33,7 @@ def pad_dims(
     x: Tensor,
     target_lengths: Iterable[int],
     aligns: Iterable[PadAlign] = ("left",),
-    pad_value: float = 0.0,
+    pad_value: PadValue = 0.0,
     dims: Iterable[int] = (-1,),
     mode: str = "constant",
     generator: Union[int, Generator, None] = None,
@@ -59,6 +60,9 @@ def pad_dims(
         raise ValueError(
             f"Invalid number of aligns ({len(aligns)}) with the number of dimensions ({len(dims)})."
         )
+
+    if isinstance(pad_value, Callable):
+        pad_value = pad_value(x)
 
     pad_seq = __generate_pad_seq(x.shape, target_lengths, dims, aligns, generator)
     x = F.pad(x, pad_seq, mode=mode, value=pad_value)

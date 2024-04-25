@@ -7,23 +7,33 @@ import torch
 from torch import Generator, Tensor, nn
 from torch.types import Number
 
-from torchoutil.nn.functional.pad import PadAlign, pad_and_stack_rec, pad_dim, pad_dims
+from torchoutil.nn.functional.pad import (
+    PadAlign,
+    PadValue,
+    pad_and_stack_rec,
+    pad_dim,
+    pad_dims,
+)
 from torchoutil.utils.collections import dump_dict
 
 
 class PadDim(nn.Module):
+    """
+    For more information, see :func:`~torchoutil.nn.functional.pad.pad_dim`.
+    """
+
     def __init__(
         self,
         target_length: int,
         align: PadAlign = "left",
-        pad_value: float = 0.0,
+        pad_value: PadValue = 0.0,
         dim: int = -1,
         mode: str = "constant",
         generator: Union[int, Generator, None] = None,
     ) -> None:
         super().__init__()
         self.target_length = target_length
-        self.align = align
+        self.align: PadAlign = align
         self.pad_value = pad_value
         self.dim = dim
         self.mode = mode
@@ -35,12 +45,12 @@ class PadDim(nn.Module):
     ) -> Tensor:
         return pad_dim(
             x,
-            self.target_length,
-            self.align,  # type: ignore
-            self.pad_value,
-            self.dim,
-            self.mode,
-            self.generator,
+            target_length=self.target_length,
+            align=self.align,
+            pad_value=self.pad_value,
+            dim=self.dim,
+            mode=self.mode,
+            generator=self.generator,
         )
 
     def extra_repr(self) -> str:
@@ -56,11 +66,15 @@ class PadDim(nn.Module):
 
 
 class PadDims(nn.Module):
+    """
+    For more information, see :func:`~torchoutil.nn.functional.pad.pad_dims`.
+    """
+
     def __init__(
         self,
         target_lengths: Iterable[int],
         aligns: Iterable[PadAlign] = ("left",),
-        pad_value: float = 0.0,
+        pad_value: PadValue = 0.0,
         dims: Iterable[int] = (-1,),
         mode: str = "constant",
         generator: Union[int, Generator, None] = None,
@@ -79,12 +93,12 @@ class PadDims(nn.Module):
     ) -> Tensor:
         return pad_dims(
             x,
-            self.target_lengths,
-            self.aligns,
-            self.pad_value,
-            self.dims,
-            self.mode,
-            self.generator,
+            target_lengths=self.target_lengths,
+            aligns=self.aligns,
+            pad_value=self.pad_value,
+            dims=self.dims,
+            mode=self.mode,
+            generator=self.generator,
         )
 
     def extra_repr(self) -> str:
@@ -100,6 +114,10 @@ class PadDims(nn.Module):
 
 
 class PadAndStackRec(nn.Module):
+    """
+    For more information, see :func:`~torchoutil.nn.functional.pad.pad_and_stack_rec`.
+    """
+
     def __init__(
         self,
         pad_value: Number,

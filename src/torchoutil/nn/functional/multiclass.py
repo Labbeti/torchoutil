@@ -4,7 +4,7 @@
 """Helper functions for conversion between classes indices, onehot, names and probabilities for multiclass classification.
 """
 
-from typing import List, Mapping, Sequence, TypeVar, Union
+from typing import List, Mapping, Optional, Sequence, TypeVar, Union
 
 import torch
 from torch import Tensor
@@ -16,24 +16,37 @@ T = TypeVar("T")
 
 
 def indices_to_onehot(
-    indices: Union[Sequence[int], Tensor],
+    indices: Union[Sequence[int], Tensor, Sequence],
     num_classes: int,
     *,
+    padding_idx: Optional[int] = None,
     device: Union[str, torch.device, None] = None,
     dtype: Union[torch.dtype, None] = torch.bool,
 ) -> Tensor:
     """Convert indices of labels to onehot boolean encoding.
 
     Args:
-        indices: List of list of label indices.
+        indices: List label indices.
+            Can be a nested list of indices, but it should be convertible to Tensor.
         num_classes: Number maximal of unique classes.
+        padding_idx: Class index to ignore. Output will contains only zeroes for this value. defaults to None.
         device: PyTorch device of the output tensor.
         dtype: PyTorch DType of the output tensor.
     """
     device = get_device(device)
     indices = torch.as_tensor(indices, device=device, dtype=torch.long)
-    onehot = F.one_hot(indices, num_classes)
+
+    if padding_idx is not None:
+        mask = indices == padding_idx
+        indices = torch.where(mask, num_classes, indices)
+        num_classes += 1
+
+    onehot: Tensor = F.one_hot(indices, num_classes)
     onehot = onehot.to(dtype=dtype)
+
+    if padding_idx is not None:
+        onehot = onehot[..., :-1].contiguous()
+
     return onehot
 
 
@@ -58,7 +71,7 @@ def onehot_to_indices(
     Args:
         onehot: OneHot labels encoded as 2D matrix.
     """
-    return onehot.argmax(dim=-1).tolist()
+    return onehot.int().argmax(dim=-1).tolist()
 
 
 def onehot_to_names(
