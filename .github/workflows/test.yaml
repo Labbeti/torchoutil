@@ -46,11 +46,6 @@ jobs:
       run: |
         python -m pip install -e .[extras,dev]
 
-    - name: Install soundfile for torchaudio
-      run: |
-        sudo apt-get update
-        sudo apt-get install libsndfile1
-
     # --- TESTS ---
     - name: Lint with flake8
       run: |

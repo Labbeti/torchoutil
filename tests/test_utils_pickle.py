@@ -8,6 +8,7 @@ from unittest import TestCase
 
 import numpy as np
 import torch
+import torchaudio
 from torch import Generator
 from torch.utils.data.dataset import Subset
 from torchvision.datasets import CIFAR10
@@ -90,6 +91,9 @@ class TestCIFAR10ToPickle(TestCase):
 
 class TestSpeechCommandsToPickle(TestCase):
     def test_example_1(self) -> None:
+        if torchaudio.get_audio_backend() is None:
+            return None
+
         # Pack to pickle
         from torch import nn
         from torchaudio.datasets import SPEECHCOMMANDS
