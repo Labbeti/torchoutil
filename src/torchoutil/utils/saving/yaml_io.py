@@ -27,7 +27,7 @@ def save_to_yaml(
     fpath: Union[str, Path, None],
     *,
     overwrite: bool = True,
-    to_builtins: bool = True,
+    to_builtins: bool = False,
     make_parents: bool = True,
     resolve: bool = False,
     sort_keys: bool = False,
