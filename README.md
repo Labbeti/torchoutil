@@ -80,6 +80,43 @@ indices = multihot_to_indices(multihot)
 # [[0], [1, 2], []]
 ```
 
+### Easely pre-compute transforms
+
+Here is an example of pre-computing spectrograms of torchaudio `SPEECHCOMMANDS` dataset, using `pack_to_pickle` function:
+
+```python
+from torch import nn
+from torchaudio.datasets import SPEECHCOMMANDS
+from torchaudio.transforms import Spectrogram
+from torchoutil.utils.pickle_dataset import pack_to_pickle
+
+speech_commands_root = "path/to/speech_commands"
+pickle_root = "path/to/pickle_dataset"
+
+dataset = SPEECHCOMMANDS(speech_commands_root, download=True, subset="validation")
+
+class MyTransform(nn.Module):
+    def __init__(self) -> None:
+        super().__init__()
+        self.spectrogram_extractor = Spectrogram()
+
+    def forward(self, item):
+        waveform = item[0]
+        spectrogram = self.spectrogram_extractor(waveform)
+        return (spectrogram,) + item[1:]
+
+pack_to_pickle(dataset, pickle_root, MyTransform())
+```
+
+Then you can load the pre-computed dataset using `PickleDataset`:
+```python
+from torchoutil.utils.pickle_dataset import PickleDataset
+
+pickle_root = "path/to/pickle_dataset"
+pickle_dataset = PickleDataset(pickle_root)
+pickle_dataset[0]  # == first transformed item, i.e. transform(dataset[0])
+```
+
 ### ...and more tensor manipulations!
 
 ```python

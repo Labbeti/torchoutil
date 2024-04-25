@@ -116,7 +116,7 @@ class PickleDataset(Generic[T, U], Dataset[U]):
             with open(attrs_fpath, "r") as file:
                 attrs = json.load(file)
         else:
-            attrs = {}
+            raise FileNotFoundError(f"Cannot find attribute file '{str(attrs_fpath)}'.")
 
         content_dname = attrs["content_dname"]
         content_dpath = self._root.joinpath(content_dname)

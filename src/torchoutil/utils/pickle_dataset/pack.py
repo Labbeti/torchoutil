@@ -165,7 +165,7 @@ def pack_to_pickle(
         source_attrs = {}
 
     attributes = {
-        "source_dataset": wrapped.__class__.__name__,
+        "source_dataset": wrapped.unwrap().__class__.__name__,
         "length": len(wrapped),
         "creation_date": creation_date,
         "batch_size": batch_size,
