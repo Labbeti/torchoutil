@@ -10,6 +10,7 @@ All notable changes to this project will be documented in this file.
 - Function `dict_list_to_list_dict` to collections utils.
 - Class `PickleDataset` and function `pack_to_pickle` to utils.
 - Class `ResampleNearest` and function `resample_nearest`.
+- Class `TransformDrop` and function `transform_drop`.
 
 ### Fixed
 - Remove invalid test file.

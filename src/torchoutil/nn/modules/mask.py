@@ -10,6 +10,10 @@ from torchoutil.utils.collections import dump_dict
 
 
 class MaskedMean(nn.Module):
+    """
+    For more information, see :func:`~torchoutil.nn.functional.mask.masked_mean`.
+    """
+
     def __init__(self, dim: Union[None, int, Iterable[int]] = None) -> None:
         super().__init__()
         self.dim = dim
@@ -28,6 +32,10 @@ class MaskedMean(nn.Module):
 
 
 class MaskedSum(nn.Module):
+    """
+    For more information, see :func:`~torchoutil.nn.functional.mask.masked_sum`.
+    """
+
     def __init__(self, dim: Union[None, int, Iterable[int]] = None) -> None:
         super().__init__()
         self.dim = dim

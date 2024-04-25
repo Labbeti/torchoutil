@@ -1,10 +1,14 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from typing import Callable, Iterable, List, Union
+import math
+import random
+from typing import Callable, Iterable, List, TypeVar, Union
 
 import torch
 from torch import Tensor
+
+T = TypeVar("T")
 
 
 def repeat_interleave_nd(x: Tensor, repeats: int, dim: int = 0) -> Tensor:
@@ -72,4 +76,30 @@ def resample_nearest(
         slices[dim] = indexes
 
     x = x[slices]
+    return x
+
+
+def transform_drop(
+    transform: Callable[[T], T],
+    x: T,
+    p: float,
+) -> T:
+    """Apply a transform on a tensor with a probability of p.
+
+    Args:
+        transform: Transform to apply.
+        x: Argument of the transform.
+        p: Probability p to apply the transform. Cannot be negative.
+            If > 1, it will apply the transform floor(p) times and apply a last time with a probability of p - floor(p).
+    """
+    if p < 0.0:
+        raise ValueError(f"Invalid argument {p=} < 0")
+
+    p_floor = math.floor(p)
+    for _ in range(p_floor):
+        x = transform(x)
+
+    if random.random() + p_floor < p:
+        x = transform(x)
+
     return x

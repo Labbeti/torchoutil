@@ -18,6 +18,10 @@ from torchoutil.utils.collections import dump_dict
 
 
 class PadDim(nn.Module):
+    """
+    For more information, see :func:`~torchoutil.nn.functional.pad.pad_dim`.
+    """
+
     def __init__(
         self,
         target_length: int,
@@ -62,6 +66,10 @@ class PadDim(nn.Module):
 
 
 class PadDims(nn.Module):
+    """
+    For more information, see :func:`~torchoutil.nn.functional.pad.pad_dims`.
+    """
+
     def __init__(
         self,
         target_lengths: Iterable[int],
@@ -85,8 +93,8 @@ class PadDims(nn.Module):
     ) -> Tensor:
         return pad_dims(
             x,
-            target_length=self.target_lengths,
-            align=self.aligns,
+            target_lengths=self.target_lengths,
+            aligns=self.aligns,
             pad_value=self.pad_value,
             dims=self.dims,
             mode=self.mode,
@@ -106,6 +114,10 @@ class PadDims(nn.Module):
 
 
 class PadAndStackRec(nn.Module):
+    """
+    For more information, see :func:`~torchoutil.nn.functional.pad.pad_and_stack_rec`.
+    """
+
     def __init__(
         self,
         pad_value: Number,

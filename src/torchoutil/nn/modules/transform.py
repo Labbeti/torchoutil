@@ -1,13 +1,19 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from typing import Callable, Iterable, Union
+from typing import Callable, Generic, Iterable, TypeVar, Union
 
 import torch
 from torch import Tensor, nn
 
-from torchoutil.nn.functional.transform import repeat_interleave_nd, resample_nearest
+from torchoutil.nn.functional.transform import (
+    repeat_interleave_nd,
+    resample_nearest,
+    transform_drop,
+)
 from torchoutil.utils.collections import dump_dict
+
+T = TypeVar("T")
 
 
 class Repeat(nn.Module):
@@ -36,6 +42,10 @@ class RepeatInterleave(nn.Module):
 
 
 class RepeatInterleaveNd(nn.Module):
+    """
+    For more information, see :func:`~torchoutil.nn.functional.transform.resample_nearest`.
+    """
+
     def __init__(self, repeats: int, dim: int) -> None:
         super().__init__()
         self.repeats = repeats
@@ -49,6 +59,10 @@ class RepeatInterleaveNd(nn.Module):
 
 
 class ResampleNearest(nn.Module):
+    """
+    For more information, see :func:`~torchoutil.nn.functional.transform.resample_nearest`.
+    """
+
     def __init__(
         self,
         rates: Union[float, Iterable[float]],
@@ -70,3 +84,28 @@ class ResampleNearest(nn.Module):
 
     def extra_repr(self) -> str:
         return dump_dict(dict(rates=self.rates, dims=self.dims))
+
+
+class TransformDrop(Generic[T], nn.Module):
+    """
+    For more information, see :func:`~torchoutil.nn.functional.transform.transform_drop`.
+    """
+
+    def __init__(
+        self,
+        transform: Callable[[T], T],
+        p: float,
+    ) -> None:
+        super().__init__()
+        self.transform = transform
+        self.p = p
+
+    def forward(self, x: T) -> T:
+        return transform_drop(
+            transform=self.transform,
+            x=x,
+            p=self.p,
+        )
+
+    def extra_repr(self) -> str:
+        return dump_dict(dict(p=self.p))

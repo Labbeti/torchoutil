@@ -14,6 +14,10 @@ if _NUMPY_AVAILABLE:
     from torchoutil.nn.functional.numpy import from_numpy, to_numpy
 
     class ToNumpy(nn.Module):
+        """
+        For more information, see :func:`~torchoutil.nn.functional.numpy.to_numpy`.
+        """
+
         def __init__(self, *, dtype: Union[str, np.dtype, None] = None) -> None:
             super().__init__()
             self.dtype = dtype
@@ -22,6 +26,10 @@ if _NUMPY_AVAILABLE:
             return to_numpy(x, dtype=self.dtype)
 
     class FromNumpy(nn.Module):
+        """
+        For more information, see :func:`~torchoutil.nn.functional.numpy.from_numpy`.
+        """
+
         def __init__(
             self,
             *,
