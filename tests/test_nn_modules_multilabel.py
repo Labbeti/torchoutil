@@ -19,7 +19,7 @@ from torchoutil.nn.modules.typed import TSequential
 
 
 class TestMultilabel(TestCase):
-    def test_modules(self) -> None:
+    def test_example_1(self) -> None:
         num_samples = int(torch.randint(0, 20, ()).item())
         num_classes = int(torch.randint(1, 20, ()).item())
         threshold = torch.rand(())
