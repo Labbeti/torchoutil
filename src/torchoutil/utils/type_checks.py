@@ -20,16 +20,16 @@ from typing_extensions import TypeGuard
 @runtime_checkable
 class DataclassInstance(Protocol):
     # Class meant for typing purpose only
-    __dataclass_fields__: ClassVar[dict[str, Any]]
+    __dataclass_fields__: ClassVar[Dict[str, Any]]
 
 
 @runtime_checkable
 class NamedTupleInstance(Protocol):
     # Class meant for typing purpose only
     _fields: tuple[str, ...]
-    _fields_defaults: dict[str, Any]
+    _fields_defaults: Dict[str, Any]
 
-    def _asdict(self) -> dict[str, Any]:
+    def _asdict(self) -> Dict[str, Any]:
         ...
 
     def __getitem__(self, idx):

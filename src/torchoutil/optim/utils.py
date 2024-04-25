@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import logging
-from typing import Any, Iterable, List, Optional, Tuple, Union
+from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
 
 from torch import nn
 from torch.nn.parameter import Parameter
@@ -37,15 +37,15 @@ def create_params_groups_bias(
     weight_decay: float,
     skip_list: Optional[Iterable[str]] = (),
     verbose: int = 2,
-) -> list[dict[str, Any]]:
+) -> List[Dict[str, Any]]:
     if isinstance(model, nn.Module):
         params = model.named_parameters()
     else:
         params = model
     del model
 
-    decay: list[Parameter] = []
-    no_decay: list[Parameter] = []
+    decay: List[Parameter] = []
+    no_decay: List[Parameter] = []
 
     if skip_list is None:
         skip_list = {}
