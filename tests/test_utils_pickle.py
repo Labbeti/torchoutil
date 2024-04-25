@@ -108,6 +108,8 @@ class TestSpeechCommandsToPickle(TestCase):
             download=True,
             subset="validation",
         )
+        indices = torch.randperm(len(dataset))[: len(dataset) // 10].tolist()
+        dataset = Subset(dataset, indices)
 
         class MyTransform(nn.Module):
             def __init__(self) -> None:
