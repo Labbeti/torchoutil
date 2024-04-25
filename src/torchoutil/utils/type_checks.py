@@ -79,6 +79,18 @@ def is_iterable_tensor(x: Any) -> TypeGuard[Iterable[Tensor]]:
     return isinstance(x, Iterable) and all(isinstance(xi, Tensor) for xi in x)
 
 
+def is_list_list_str(x: Any) -> TypeGuard[List[List[str]]]:
+    return (
+        isinstance(x, list)
+        and all(isinstance(xi, list) for xi in x)
+        and all(isinstance(xij, str) for xi in x for xij in xi)
+    )
+
+
+def is_list_str(x: Any) -> TypeGuard[List[str]]:
+    return isinstance(x, list) and all(isinstance(xi, str) for xi in x)
+
+
 def is_list_tensor(x: Any) -> TypeGuard[List[Tensor]]:
     return isinstance(x, list) and all(isinstance(xi, Tensor) for xi in x)
 

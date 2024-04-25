@@ -209,8 +209,22 @@ def all_eq(it: Iterable[T], eq_fn: Optional[Callable[[T, T], bool]] = None) -> b
         return all(eq_fn(first, elt) for elt in it)
 
 
+def all_ne(it: Iterable[T], ne_fn: Optional[Callable[[T, T], bool]] = None) -> bool:
+    """Returns true if all elements in inputs are differents."""
+    it = list(it)
+    if ne_fn is None:
+        return all(
+            it[i] != it[j] for i in range(len(it)) for j in range(i + 1, len(it))
+        )
+    else:
+        return all(
+            ne_fn(it[i], it[j]) for i in range(len(it)) for j in range(i + 1, len(it))
+        )
+
+
 def flat_dict_of_dict(
     nested_dic: Mapping[str, Any],
+    *,
     sep: str = ".",
     flat_iterables: bool = False,
     overwrite: bool = True,
@@ -245,25 +259,66 @@ def flat_dict_of_dict(
         flat_iterables: If True, flat iterable and use index as key.
         overwrite: If True, overwrite duplicated keys in output. Otherwise duplicated keys will raises a ValueError.
     """
+
+    def _flat_dict_of_dict_impl(nested_dic: Mapping[str, Any]) -> Dict[str, Any]:
+        output = {}
+        for k, v in nested_dic.items():
+            if is_mapping_str(v):
+                v = _flat_dict_of_dict_impl(v)
+                v = {f"{k}{sep}{kv}": vv for kv, vv in v.items()}
+                output.update(v)
+
+            elif flat_iterables and isinstance(v, Iterable) and not isinstance(v, str):
+                v = {f"{i}": vi for i, vi in enumerate(v)}
+                v = _flat_dict_of_dict_impl(v)
+                v = {f"{k}{sep}{kv}": vv for kv, vv in v.items()}
+                output.update(v)
+
+            elif overwrite or k not in output:
+                output[k] = v
+
+            else:
+                raise ValueError(f"Ambiguous flatten dict with key '{k}'.")
+
+    return _flat_dict_of_dict_impl(nested_dic)
+
+
+def unflat_dict_of_dict(dic: Mapping[str, Any], sep: str = ".") -> Dict[str, Any]:
+    """Unflat a dictionary.
+
+    Example 1
+    ----------
+    ```
+    >>> dic = {
+        "a.a": 1,
+        "b.a": 2,
+        "b.b": 3,
+        "c": 4,
+    }
+    >>> unflat_dict_of_dict(dic)
+    ... {"a": {"a": 1}, "b": {"a": 2, "b": 3}, "c": 4}
+    ```
+    """
     output = {}
-    for k, v in nested_dic.items():
-        if is_mapping_str(v):
-            v = flat_dict_of_dict(v, sep, flat_iterables)
-            v = {f"{k}{sep}{kv}": vv for kv, vv in v.items()}
-            output.update(v)
-
-        elif flat_iterables and isinstance(v, Iterable) and not isinstance(v, str):
-            v = {f"{i}": vi for i, vi in enumerate(v)}
-            v = flat_dict_of_dict(v, sep, flat_iterables)
-            v = {f"{k}{sep}{kv}": vv for kv, vv in v.items()}
-            output.update(v)
-
-        elif overwrite or k not in output:
+    for k, v in dic.items():
+        if sep not in k:
             output[k] = v
-
         else:
-            raise ValueError(f"Ambiguous flatten dict with key '{k}'.")
+            idx = k.index(sep)
+            k, kk = k[:idx], k[idx + 1 :]
+            if k not in output:
+                output[k] = {}
+            elif not isinstance(output[k], Mapping):
+                raise ValueError(
+                    f"Invalid dict argument. (found keys {k} and {k}{sep}{kk})"
+                )
 
+            output[k][kk] = v
+
+    output = {
+        k: (unflat_dict_of_dict(v) if isinstance(v, Mapping) else v)
+        for k, v in output.items()
+    }
     return output
 
 
@@ -272,6 +327,18 @@ def flat_list(lst: Iterable[Sequence[T]]) -> Tuple[List[T], List[int]]:
     flatten_lst = [element for sublst in lst for element in sublst]
     sizes = [len(sents) for sents in lst]
     return flatten_lst, sizes
+
+
+def unflat_list(flatten_lst: Sequence[T], sizes: Iterable[int]) -> List[List[T]]:
+    """Unflat a list to a list of sublists of given sizes."""
+    lst = []
+    start = 0
+    stop = 0
+    for count in sizes:
+        stop += count
+        lst.append(flatten_lst[start:stop])
+        start = stop
+    return lst
 
 
 @overload
