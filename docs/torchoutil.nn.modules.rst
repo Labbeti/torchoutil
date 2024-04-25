@@ -20,6 +20,6 @@ Submodules
    torchoutil.nn.modules.multilabel
    torchoutil.nn.modules.numpy
    torchoutil.nn.modules.pad
-   torchoutil.nn.modules.repeat
    torchoutil.nn.modules.tensor
+   torchoutil.nn.modules.transform
    torchoutil.nn.modules.typed

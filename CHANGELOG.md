@@ -3,7 +3,7 @@
 All notable changes to this project will be documented in this file.
 
 
-## [0.3.1] UNRELEASED
+## [0.3.1] 2024-04-25
 ### Added
 - Method `count_parameters` to `TModule`.
 - Option `padding_idx` to `indices_to_onehot` function.
