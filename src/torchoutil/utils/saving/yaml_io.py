@@ -28,10 +28,10 @@ def save_to_yaml(
     *,
     overwrite: bool = True,
     to_builtins: bool = True,
+    make_parents: bool = True,
     resolve: bool = False,
     sort_keys: bool = False,
     indent: int | None = None,
-    make_parents: bool = True,
     **kwargs,
 ) -> str:
     if resolve and not _OMEGACONF_AVAILABLE:
