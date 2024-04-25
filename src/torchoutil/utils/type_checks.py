@@ -9,6 +9,7 @@ from typing import (
     List,
     Mapping,
     Protocol,
+    Tuple,
     Union,
     runtime_checkable,
 )
@@ -26,7 +27,7 @@ class DataclassInstance(Protocol):
 @runtime_checkable
 class NamedTupleInstance(Protocol):
     # Class meant for typing purpose only
-    _fields: tuple[str, ...]
+    _fields: Tuple[str, ...]
     _fields_defaults: Dict[str, Any]
 
     def _asdict(self) -> Dict[str, Any]:

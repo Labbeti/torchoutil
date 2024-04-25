@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from typing import Dict, Tuple, TypedDict, TypeVar
+from typing import Dict, List, Tuple, TypedDict, TypeVar
 
 import h5py
 
@@ -35,6 +35,6 @@ class HDFAttributes(TypedDict):
     info: str
     global_hash_value: int
     item_type: str
-    added_columns: list[str]
+    added_columns: List[str]
     shape_suffix: str
     file_kwargs: str
