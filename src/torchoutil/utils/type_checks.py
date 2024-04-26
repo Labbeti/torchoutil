@@ -88,6 +88,14 @@ def is_list_list_str(x: Any) -> TypeGuard[List[List[str]]]:
     )
 
 
+def is_list_bool(x: Any) -> TypeGuard[List[bool]]:
+    return isinstance(x, list) and all(isinstance(xi, bool) for xi in x)
+
+
+def is_list_int(x: Any) -> TypeGuard[List[int]]:
+    return isinstance(x, list) and all(isinstance(xi, int) for xi in x)
+
+
 def is_list_str(x: Any) -> TypeGuard[List[str]]:
     return isinstance(x, list) and all(isinstance(xi, str) for xi in x)
 
