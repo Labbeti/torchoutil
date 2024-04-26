@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from torch.nn import *
+from torch.nn.modules import *
 
 from .activation import *
 from .crop import *
