@@ -12,7 +12,7 @@ from torch.utils.data.dataset import Dataset
 from torchoutil.utils.pickle_dataset.common import (
     ATTRS_FNAME,
     ContentMode,
-    PickleAttributes,
+    PickleDatasetAttributes,
 )
 
 pylog = logging.getLogger(__name__)
@@ -58,7 +58,7 @@ class PickleDataset(Generic[T, U], Dataset[U]):
         self._reload_data()
 
     @property
-    def attrs(self) -> PickleAttributes:
+    def attrs(self) -> PickleDatasetAttributes:
         return self._attrs  # type: ignore
 
     @property
@@ -115,6 +115,15 @@ class PickleDataset(Generic[T, U], Dataset[U]):
         if attrs_fpath.is_file():
             with open(attrs_fpath, "r") as file:
                 attrs = json.load(file)
+
+            missing = list(
+                set(PickleDatasetAttributes.__required_keys__).difference(attrs)
+            )
+            if len(missing) > 0:
+                raise RuntimeError(
+                    f"Missing {len(missing)} keys in attribute file. (with {missing=})"
+                )
+
         else:
             raise FileNotFoundError(f"Cannot find attribute file '{str(attrs_fpath)}'.")
 
