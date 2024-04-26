@@ -52,6 +52,10 @@ def is_dict_str(x: Any) -> TypeGuard[Dict[str, Any]]:
     return isinstance(x, dict) and all(isinstance(key, str) for key in x.keys())
 
 
+def is_iterable_bool(x: Any) -> TypeGuard[Iterable[bool]]:
+    return isinstance(x, Iterable) and all(isinstance(xi, bool) for xi in x)
+
+
 def is_iterable_int(x: Any) -> TypeGuard[Iterable[int]]:
     return isinstance(x, Iterable) and all(isinstance(xi, int) for xi in x)
 
