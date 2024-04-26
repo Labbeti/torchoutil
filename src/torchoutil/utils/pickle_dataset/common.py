@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from typing import Any, Dict, List, Literal, TypedDict
+from typing import Any, Dict, List, Literal, Optional, TypedDict
 
 CONTENT_DNAME = "data"
 ATTRS_FNAME = "attributes.json"
@@ -16,6 +16,7 @@ class PickleAttributes(TypedDict):
     batch_size: int
     content_mode: ContentMode
     content_dname: str
+    subdir_size: Optional[int]
     info: Dict[str, Any]
     source_attrs: "PickleAttributes"
     num_files: int

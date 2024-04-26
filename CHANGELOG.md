@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.3.2] UNRELEASED
+### Added
+- Option `subdir_size` to `pack_to_pickle`.
+
 
 ## [0.3.1] 2024-04-25
 ### Added

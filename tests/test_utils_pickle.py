@@ -72,9 +72,49 @@ class TestCIFAR10ToPickle(TestCase):
             ).tolist(),
         )
 
-        path = "/tmp/test_cifar10"
+        path = "/tmp/test_cifar10_batch"
         pkl_dataset = pack_to_pickle(
             dataset, path, overwrite=True, content_mode="batch"
+        )
+
+        assert len(dataset) == len(pkl_dataset)
+
+        idx = 0
+        image0, label0 = dataset[idx]
+        image1, label1 = pkl_dataset[idx]
+
+        assert len(dataset) == len(pkl_dataset)
+        assert label0 == label1, f"{label0=}, {label1=}"
+        assert np.equal(image0, image1).all()
+
+    def test_cifar10_pack_to_pickle_subdir(self) -> None:
+        dataset = CIFAR10(
+            "/tmp",
+            train=False,
+            transform=ToNumpy(),
+            target_transform=TSequential(IndicesToOneHot(10), ToList()),
+            download=True,
+        )
+
+        seed = int(torch.randint(0, 10000, ()).item())
+        generator = Generator().manual_seed(seed)
+        dataset = Subset(
+            dataset,
+            torch.randint(
+                0,
+                len(dataset),
+                (max(len(dataset) // 10, 1),),
+                generator=generator,
+            ).tolist(),
+        )
+
+        path = "/tmp/test_cifar10_subdir"
+        pkl_dataset = pack_to_pickle(
+            dataset,
+            path,
+            overwrite=True,
+            content_mode="item",
+            subdir_size=100,
         )
 
         assert len(dataset) == len(pkl_dataset)

@@ -42,6 +42,7 @@ def pack_to_pickle(
     content_mode: ContentMode = "item",
     custom_file_fmt: Union[None, str, Callable[[int], str]] = None,
     save_fn: Callable[[Union[U, List[U]], Path], None] = torch.save,
+    subdir_size: Optional[int] = 100,
 ) -> PickleDataset[U, U]:
     """Pack a dataset to pickle files.
 
@@ -59,6 +60,7 @@ def pack_to_pickle(
             If None, defaults to "{{i:0{num_digits}d}}.pt".
             defaults to None.
         save_fn: Custom save function to save an item or a batch. defaults to torch.save.
+        subdir_size: Optional number of file per folder. defaults to 100.
     """
 
     # Check inputs
@@ -119,22 +121,31 @@ def pack_to_pickle(
 
     fnames = [file_fmt(i) for i in range(num_files)]
 
+    if subdir_size is not None and len(fnames) > subdir_size:
+        num_subdirs = len(fnames) // subdir_size
+        sub_dnames = [f"{i}" for i in range(num_subdirs)]
+        fnames = [
+            str(Path(sub_dnames[i // subdir_size]).joinpath(fname))
+            for i, fname in enumerate(fnames)
+        ]
+
+    fpaths = [content_dpath.joinpath(fname) for fname in fnames]
+
+    if custom_file_fmt is not None or subdir_size is not None:
+        unique_parents = dict.fromkeys(fpath.parent for fpath in fpaths)
+        for parent in unique_parents:
+            parent.mkdir(parents=True, exist_ok=True)
+
     i = 0
     for batch_lst in loader:
         if content_mode == "item":
             for item in batch_lst:
-                fname = fnames[i]
-                fpath = content_dpath.joinpath(fname)
-                if custom_file_fmt is not None:
-                    fpath.parent.mkdir(parents=True, exist_ok=True)
+                fpath = fpaths[i]
                 save_fn(item, fpath)
                 i += 1
 
         elif content_mode == "batch":
-            fname = fnames[i]
-            fpath = content_dpath.joinpath(fname)
-            if custom_file_fmt is not None:
-                fpath.parent.mkdir(parents=True, exist_ok=True)
+            fpath = fpaths[i]
             save_fn(batch_lst, fpath)
             i += 1
 
@@ -171,6 +182,7 @@ def pack_to_pickle(
         "batch_size": batch_size,
         "content_mode": content_mode,
         "content_dname": CONTENT_DNAME,
+        "subdir_size": subdir_size,
         "info": info,
         "source_attrs": source_attrs,
         "num_files": len(fnames),
