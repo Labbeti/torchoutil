@@ -6,6 +6,9 @@ All notable changes to this project will be documented in this file.
 ### Added
 - Option `subdir_size` to `pack_to_pickle`.
 
+### Fixed
+- Function `can_be_converted_to_tensor` now accepts numpy arrays and scalars.
+
 
 ## [0.3.1] 2024-04-25
 ### Added

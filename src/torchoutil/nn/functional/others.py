@@ -23,6 +23,27 @@ from typing_extensions import TypeGuard
 
 from torchoutil.nn.functional.get import get_device
 from torchoutil.nn.functional.numpy import is_numpy_scalar
+from torchoutil.utils.packaging import _NUMPY_AVAILABLE
+
+if _NUMPY_AVAILABLE:
+    import numpy as np
+
+    _ACCEPTED_NUMPY_DTYPES = (
+        np.float64,
+        np.float32,
+        np.float16,
+        np.complex64,
+        np.complex128,
+        np.int64,
+        np.int32,
+        np.int16,
+        np.int8,
+        np.uint8,
+        bool,
+    )
+else:
+    _ACCEPTED_NUMPY_DTYPES = ()
+
 
 T = TypeVar("T")
 U = TypeVar("U")
@@ -167,6 +188,12 @@ def __can_be_converted_to_tensor_list_tuple(x: Union[List, Tuple]) -> bool:
 
 def __can_be_converted_to_tensor_nested(x: Any) -> bool:
     if is_python_scalar(x):
+        return True
+    elif (
+        _NUMPY_AVAILABLE
+        and isinstance(x, (np.ndarray, np.generic))
+        and x.dtype in _ACCEPTED_NUMPY_DTYPES
+    ):
         return True
     elif isinstance(x, (List, Tuple)):
         return __can_be_converted_to_tensor_list_tuple(x)
