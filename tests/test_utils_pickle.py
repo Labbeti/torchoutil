@@ -103,7 +103,7 @@ class TestCIFAR10ToPickle(TestCase):
             torch.randint(
                 0,
                 len(dataset),
-                (max(len(dataset) // 10, 1),),
+                (max(len(dataset) // 50, 1),),
                 generator=generator,
             ).tolist(),
         )

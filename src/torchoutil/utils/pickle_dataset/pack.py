@@ -122,7 +122,7 @@ def pack_to_pickle(
     fnames = [file_fmt(i) for i in range(num_files)]
 
     if subdir_size is not None and len(fnames) > subdir_size:
-        num_subdirs = len(fnames) // subdir_size
+        num_subdirs = math.ceil(len(fnames) / subdir_size)
         sub_dnames = [f"{i}" for i in range(num_subdirs)]
         fnames = [
             str(Path(sub_dnames[i // subdir_size]).joinpath(fname))
