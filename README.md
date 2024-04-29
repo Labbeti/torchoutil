@@ -80,7 +80,7 @@ indices = multihot_to_indices(multihot)
 # [[0], [1, 2], []]
 ```
 
-### Easely pre-compute transforms
+### Easily pre-compute transforms
 
 Here is an example of pre-computing spectrograms of torchaudio `SPEECHCOMMANDS` dataset, using `pack_to_pickle` function:
 
