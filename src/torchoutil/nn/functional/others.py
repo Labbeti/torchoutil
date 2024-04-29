@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import itertools
 from typing import (
     Any,
     Callable,
@@ -55,12 +56,18 @@ def count_parameters(
     *,
     recurse: bool = True,
     only_trainable: bool = False,
+    buffers: bool = False,
 ) -> int:
+    """Returns the number of parameters in a module."""
     params = (
         param
         for param in model.parameters(recurse)
         if not only_trainable or param.requires_grad
     )
+
+    if buffers:
+        params = itertools.chain(params, (buffer for buffer in model.buffers(recurse)))
+
     num_params = sum(param.numel() for param in params)
     return num_params
 
@@ -148,12 +155,21 @@ def is_torch_scalar(x: Any) -> TypeGuard[Tensor]:
 
 
 def is_scalar(x: Any) -> TypeGuard[Union[int, float, bool, complex, Tensor]]:
+    """Returns True if input is a scalar.
+
+    Accepted scalars list is:
+    - Python numbers (int, float, bool, complex)
+    - PyTorch zero-dimensional tensors
+    - Numpy zero-dimensional arrays
+    - Numpy generic scalars
+    """
     return is_python_scalar(x) or is_torch_scalar(x) or is_numpy_scalar(x)
 
 
 def can_be_stacked(
     tensors: Union[List[Any], Tuple[Any, ...]],
 ) -> TypeGuard[Union[List[Tensor], Tuple[Tensor, ...]]]:
+    """Returns True if inputs can be passed to `torch.stack` function."""
     if not is_list_tensor(tensors) and not is_tuple_tensor(tensors):
         return False
     if len(tensors) == 0:
@@ -164,6 +180,7 @@ def can_be_stacked(
 
 
 def can_be_converted_to_tensor(x: Any) -> bool:
+    """Returns True if inputs can be passed to `torch.as_tensor` function."""
     if isinstance(x, Tensor):
         return True
     else:
