@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import copy
 from typing import (
     Any,
     Callable,
@@ -379,3 +380,10 @@ def unzip(lst):
         ... ([1, 2, 3, 4], [5, 6, 7, 8])
     """
     return tuple(map(list, zip(*lst)))
+
+
+def prod(x: Iterable[T], /, start: T = 1) -> T:
+    result = copy.copy(start)
+    for xi in x:
+        result *= xi
+    return result
