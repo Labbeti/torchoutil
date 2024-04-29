@@ -3,6 +3,7 @@
 
 import json
 import logging
+import sys
 from pathlib import Path
 from typing import Any, Callable, Dict, Generic, List, Optional, TypeVar, Union
 
@@ -116,9 +117,15 @@ class PickleDataset(Generic[T, U], Dataset[U]):
             with open(attrs_fpath, "r") as file:
                 attrs = json.load(file)
 
-            missing = list(
-                set(PickleDatasetAttributes.__required_keys__).difference(attrs)
-            )
+            # Disable check for python <= 3.8 because __required_keys__ does not exists in this version
+            if sys.version_info.major < 3 or (
+                sys.version_info.major == 3 and sys.version_info.minor <= 8
+            ):
+                missing = []
+            else:
+                missing = list(
+                    set(PickleDatasetAttributes.__required_keys__).difference(attrs)
+                )
             if len(missing) > 0:
                 raise RuntimeError(
                     f"Missing {len(missing)} keys in attribute file. (with {missing=})"
