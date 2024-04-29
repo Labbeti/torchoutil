@@ -45,7 +45,7 @@ def indices_to_onehot(
     onehot = onehot.to(dtype=dtype)
 
     if padding_idx is not None:
-        onehot = onehot[..., :-1].contiguous()
+        onehot = onehot[..., :-1]
 
     return onehot
 

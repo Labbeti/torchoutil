@@ -41,7 +41,7 @@ class TestCanBeConvertedToTensor(TestCase):
                 np.float64(42),
                 [[np.float64(42)], np.ndarray([2])],
                 np.random.rand(10, 5),
-                [[np.float128(42)], np.ndarray([2])],
+                [[np.complex128(42)], np.ndarray([2])],
             ]
 
         for example in examples:
