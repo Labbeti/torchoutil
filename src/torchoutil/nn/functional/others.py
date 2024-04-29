@@ -24,6 +24,7 @@ from typing_extensions import TypeGuard
 from torchoutil.nn.functional.get import get_device
 from torchoutil.nn.functional.numpy import is_numpy_scalar
 from torchoutil.utils.packaging import _NUMPY_AVAILABLE
+from torchoutil.utils.type_checks import is_list_tensor, is_tuple_tensor
 
 if _NUMPY_AVAILABLE:
     import numpy as np
@@ -153,10 +154,10 @@ def is_scalar(x: Any) -> TypeGuard[Union[int, float, bool, complex, Tensor]]:
 def can_be_stacked(
     tensors: Union[List[Any], Tuple[Any, ...]],
 ) -> TypeGuard[Union[List[Tensor], Tuple[Tensor, ...]]]:
+    if not is_list_tensor(tensors) and not is_tuple_tensor(tensors):
+        return False
     if len(tensors) == 0:
         return True
-    if not all(isinstance(tensor, Tensor) for tensor in tensors):
-        return False
     shape0 = tensors[0].shape
     result = all(tensor.shape == shape0 for tensor in tensors[1:])
     return result

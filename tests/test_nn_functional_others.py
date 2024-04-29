@@ -9,6 +9,7 @@ import torch
 
 from torchoutil.nn.functional.others import (
     can_be_converted_to_tensor,
+    can_be_stacked,
     is_numpy_scalar,
     is_python_scalar,
     is_scalar,
@@ -21,37 +22,49 @@ if _NUMPY_AVAILABLE:
 
 
 class TestCanBeConvertedToTensor(TestCase):
-    def test_example_1(self) -> None:
-        lst = [[1, 0, 0], [2, 3, 4]]
-        self.assertTrue(can_be_converted_to_tensor(lst))
+    def test_examples(self) -> None:
+        examples = [
+            [[1, 0, 0], [2, 3, 4]],
+            [[1, 0, 0], [2, 3]],
+            [[[True], [False]], [[False], [True]]],
+            [[[]], [[]]],
+            [torch.rand(10), torch.rand(10)],
+            [torch.rand(10, 5), torch.rand(10, 3)],
+            [torch.rand(10, 5), torch.rand(10, 5)],
+            [[torch.rand(10)]],
+            torch.rand(10, 5),
+            [(), []],
+        ]
 
-    def test_example_2(self) -> None:
-        lst = [[1, 0, 0], [2, 3]]
-        self.assertFalse(can_be_converted_to_tensor(lst))
+        if _NUMPY_AVAILABLE:
+            examples += [
+                np.float64(42),
+                [[np.float64(42)], np.ndarray([2])],
+                np.random.rand(10, 5),
+                [[np.float128(42)], np.ndarray([2])],
+            ]
 
-    def test_example_3(self) -> None:
-        lst = [[[True], [False]], [[False], [True]]]
-        self.assertTrue(can_be_converted_to_tensor(lst))
+        for example in examples:
+            try:
+                torch.as_tensor(example)
+                convertible = True
+            except ValueError:
+                convertible = False
+            except TypeError:
+                convertible = False
 
-    def test_example_4(self) -> None:
-        lst = [[[]], [[]]]
-        self.assertTrue(can_be_converted_to_tensor(lst))
+            try:
+                torch.stack(example)
+                stackable = True
+            except TypeError:
+                stackable = False
+            except RuntimeError:
+                stackable = False
 
-    def test_example_5(self) -> None:
-        lst = [torch.rand(10), torch.rand(10)]
-        self.assertFalse(can_be_converted_to_tensor(lst))
-
-    def test_example_6(self) -> None:
-        lst = [[torch.rand(10)]]
-        self.assertFalse(can_be_converted_to_tensor(lst))
-
-    def test_example_7(self) -> None:
-        lst = torch.rand(10)
-        self.assertTrue(can_be_converted_to_tensor(lst))
-
-    def test_example_8(self) -> None:
-        lst = [(), []]
-        self.assertTrue(can_be_converted_to_tensor(lst))
+            assert (
+                can_be_converted_to_tensor(example) == convertible
+            ), f"can_be_converted_to_tensor: {example=}"
+            assert can_be_stacked(example) == stackable, f"can_be_stacked: {example=}"
 
 
 class TestIsScalar(TestCase):

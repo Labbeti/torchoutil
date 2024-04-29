@@ -110,3 +110,7 @@ def is_list_tensor(x: Any) -> TypeGuard[List[Tensor]]:
 
 def is_mapping_str(x: Any) -> TypeGuard[Mapping[str, Any]]:
     return isinstance(x, Mapping) and all(isinstance(key, str) for key in x.keys())
+
+
+def is_tuple_tensor(x: Any) -> Tuple[Tensor, ...]:
+    return isinstance(x, tuple) and all(isinstance(xi, Tensor) for xi in x)
