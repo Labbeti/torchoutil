@@ -113,26 +113,25 @@ class PickleDataset(Generic[T, U], Dataset[U]):
     def _reload_data(self) -> None:
         attrs_fpath = self._root.joinpath(ATTRS_FNAME)
 
-        if attrs_fpath.is_file():
-            with open(attrs_fpath, "r") as file:
-                attrs = json.load(file)
-
-            # Disable check for python <= 3.8 because __required_keys__ does not exists in this version
-            if sys.version_info.major < 3 or (
-                sys.version_info.major == 3 and sys.version_info.minor <= 8
-            ):
-                missing = []
-            else:
-                missing = list(
-                    set(PickleDatasetAttributes.__required_keys__).difference(attrs)
-                )
-            if len(missing) > 0:
-                raise RuntimeError(
-                    f"Missing {len(missing)} keys in attribute file. (with {missing=})"
-                )
-
-        else:
+        if not attrs_fpath.is_file():
             raise FileNotFoundError(f"Cannot find attribute file '{str(attrs_fpath)}'.")
+
+        with open(attrs_fpath, "r") as file:
+            attrs = json.load(file)
+
+        # Disable check for python <= 3.8 because __required_keys__ does not exists in this version
+        if sys.version_info.major < 3 or (
+            sys.version_info.major == 3 and sys.version_info.minor <= 8
+        ):
+            missing = []
+        else:
+            missing = list(
+                set(PickleDatasetAttributes.__required_keys__).difference(attrs)
+            )
+        if len(missing) > 0:
+            raise RuntimeError(
+                f"Missing {len(missing)} keys in attribute file. (with {missing=})"
+            )
 
         content_dname = attrs["content_dname"]
         content_dpath = self._root.joinpath(content_dname)

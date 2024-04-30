@@ -94,6 +94,7 @@ speech_commands_root = "path/to/speech_commands"
 pickle_root = "path/to/pickle_dataset"
 
 dataset = SPEECHCOMMANDS(speech_commands_root, download=True, subset="validation")
+# dataset[0] is a tuple, contains waveform and other metadata
 
 class MyTransform(nn.Module):
     def __init__(self) -> None:
