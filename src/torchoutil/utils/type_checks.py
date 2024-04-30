@@ -41,11 +41,11 @@ class NamedTupleInstance(Protocol):
 
 
 def is_dataclass_instance(x: Any) -> TypeGuard[DataclassInstance]:
-    return isinstance(x, DataclassInstance)
+    return not isinstance(x, type) and isinstance(x, DataclassInstance)
 
 
 def is_namedtuple_instance(x: Any) -> TypeGuard[NamedTupleInstance]:
-    return isinstance(x, NamedTupleInstance)
+    return not isinstance(x, type) and isinstance(x, NamedTupleInstance)
 
 
 def is_dict_str(x: Any) -> TypeGuard[Dict[str, Any]]:

@@ -128,6 +128,7 @@ class PickleDataset(Generic[T, U], Dataset[U]):
             missing = list(
                 set(PickleDatasetAttributes.__required_keys__).difference(attrs)
             )
+
         if len(missing) > 0:
             raise RuntimeError(
                 f"Missing {len(missing)} keys in attribute file. (with {missing=})"

@@ -9,7 +9,12 @@ from typing import Any, Mapping, Union
 
 from torchoutil.utils.packaging import _OMEGACONF_AVAILABLE, _YAML_AVAILABLE
 from torchoutil.utils.saving.common import to_builtin
-from torchoutil.utils.type_checks import DataclassInstance, NamedTupleInstance
+from torchoutil.utils.type_checks import (
+    DataclassInstance,
+    NamedTupleInstance,
+    is_dataclass_instance,
+    is_namedtuple_instance,
+)
 
 if _YAML_AVAILABLE:
     import yaml
@@ -50,10 +55,10 @@ def save_to_yaml(
     if isinstance(data, Namespace):
         data = data.__dict__
 
-    elif isinstance(data, DataclassInstance):
+    elif is_dataclass_instance(data):
         data = asdict(data)
 
-    elif isinstance(data, NamedTupleInstance):
+    elif is_namedtuple_instance(data):
         data = data._asdict()
 
     elif _OMEGACONF_AVAILABLE and isinstance(data, DictConfig):
