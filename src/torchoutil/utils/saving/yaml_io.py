@@ -36,7 +36,7 @@ def save_to_yaml(
     make_parents: bool = True,
     resolve: bool = False,
     sort_keys: bool = False,
-    indent: int | None = None,
+    indent: Union[int, None] = None,
     **kwargs,
 ) -> str:
     if resolve and not _OMEGACONF_AVAILABLE:
