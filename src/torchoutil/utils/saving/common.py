@@ -2,14 +2,40 @@
 # -*- coding: utf-8 -*-
 
 from pathlib import Path
-from typing import Any, Iterable, Mapping
+from typing import Any, Dict, Iterable, List, Mapping, TypeVar, Union, overload
 
 from torch import Tensor
+from torch.types import Number as TorchNumber
 
 from torchoutil.utils.packaging import _NUMPY_AVAILABLE
 
 if _NUMPY_AVAILABLE:
     import numpy as np
+
+
+T = TypeVar("T")
+K = TypeVar("K")
+V = TypeVar("V")
+
+
+@overload
+def to_builtin(x: Path) -> str:
+    ...
+
+
+@overload
+def to_builtin(x: Tensor) -> Union[List, TorchNumber]:
+    ...
+
+
+@overload
+def to_builtin(x: Mapping[K, V]) -> Dict[K, V]:
+    ...
+
+
+@overload
+def to_builtin(x: T) -> T:
+    ...
 
 
 def to_builtin(x: Any) -> Any:

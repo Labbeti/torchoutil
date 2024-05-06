@@ -6,12 +6,11 @@ from typing import Union
 import torch
 from torch import Tensor, nn
 
+from torchoutil.nn.functional.numpy import numpy_to_tensor, to_numpy
 from torchoutil.utils.packaging import _NUMPY_AVAILABLE
 
 if _NUMPY_AVAILABLE:
     import numpy as np
-
-    from torchoutil.nn.functional.numpy import from_numpy, to_numpy
 
     class ToNumpy(nn.Module):
         """
@@ -25,9 +24,9 @@ if _NUMPY_AVAILABLE:
         def forward(self, x: Union[Tensor, np.ndarray, list]) -> np.ndarray:
             return to_numpy(x, dtype=self.dtype)
 
-    class FromNumpy(nn.Module):
+    class NumpyToTensor(nn.Module):
         """
-        For more information, see :func:`~torchoutil.nn.functional.numpy.from_numpy`.
+        For more information, see :func:`~torchoutil.nn.functional.numpy.numpy_to_tensor`.
         """
 
         def __init__(
@@ -41,4 +40,4 @@ if _NUMPY_AVAILABLE:
             self.dtype = dtype
 
         def forward(self, x: np.ndarray) -> Tensor:
-            return from_numpy(x, dtype=self.dtype, device=self.device)
+            return numpy_to_tensor(x, dtype=self.dtype, device=self.device)
