@@ -6,7 +6,6 @@ import json
 import logging
 import math
 import shutil
-from dataclasses import asdict, is_dataclass
 from pathlib import Path
 from typing import Callable, List, Literal, Optional, TypeVar, Union
 
@@ -16,13 +15,18 @@ from torch.utils.data.dataloader import DataLoader
 
 from torchoutil.utils.data.dataloader import get_auto_num_cpus
 from torchoutil.utils.data.dataset import SizedDatasetLike, TransformWrapper
+from torchoutil.utils.packaging import _TQDM_AVAILABLE
 from torchoutil.utils.pickle_dataset.common import (
     ATTRS_FNAME,
     CONTENT_DNAME,
     ContentMode,
 )
 from torchoutil.utils.pickle_dataset.dataset import PickleDataset
-from torchoutil.utils.type_checks import is_mapping_str
+from torchoutil.utils.saving.common import to_builtin
+
+if _TQDM_AVAILABLE:
+    import tqdm
+
 
 T = TypeVar("T")
 U = TypeVar("U")
@@ -43,6 +47,7 @@ def pack_to_pickle(
     custom_file_fmt: Union[None, str, Callable[[int], str]] = None,
     save_fn: Callable[[Union[U, List[U]], Path], None] = torch.save,
     subdir_size: Optional[int] = 100,
+    verbose: int = 0,
 ) -> PickleDataset[U, U]:
     """Pack a dataset to pickle files.
 
@@ -61,6 +66,7 @@ def pack_to_pickle(
             defaults to None.
         save_fn: Custom save function to save an item or a batch. defaults to torch.save.
         subdir_size: Optional number of file per folder. defaults to 100.
+        verbose: Verbose level during packing. Higher value means more messages. defaults to 0.
     """
 
     # Check inputs
@@ -136,6 +142,9 @@ def pack_to_pickle(
         for parent in unique_parents:
             parent.mkdir(parents=True, exist_ok=True)
 
+    if _TQDM_AVAILABLE and verbose >= 1:
+        loader = tqdm.tqdm(loader)
+
     i = 0
     for batch_lst in loader:
         if content_mode == "item":
@@ -154,24 +163,13 @@ def pack_to_pickle(
 
     if hasattr(dataset, "info"):
         info = dataset.info  # type: ignore
-        if is_dataclass(info):
-            info = asdict(info)
-        elif is_mapping_str(info):
-            info = dict(info.items())  # type: ignore
-        else:
-            info = {}
+        info = to_builtin(info)
     else:
         info = {}
 
     if hasattr(dataset, "attrs"):
         source_attrs = dataset.attrs  # type: ignore
-        if is_dataclass(source_attrs):
-            info = asdict(source_attrs)
-        elif is_mapping_str(source_attrs):
-            source_attrs = dict(source_attrs.items())  # type: ignore
-        else:
-            pylog.warning(f"Ignore source attributes type {type(source_attrs)}.")
-            source_attrs = {}
+        source_attrs = to_builtin(source_attrs)
     else:
         source_attrs = {}
 

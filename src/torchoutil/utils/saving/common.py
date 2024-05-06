@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+from dataclasses import asdict
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Mapping, TypeVar, Union, overload
 
@@ -8,6 +9,7 @@ from torch import Tensor
 from torch.types import Number as TorchNumber
 
 from torchoutil.utils.packaging import _NUMPY_AVAILABLE
+from torchoutil.utils.type_checks import is_dataclass_instance, is_namedtuple_instance
 
 if _NUMPY_AVAILABLE:
     import numpy as np
@@ -44,6 +46,10 @@ def to_builtin(x: Any) -> Any:
         return x
     elif isinstance(x, Path):
         return str(x)
+    elif is_dataclass_instance(x):
+        return asdict(x)
+    elif is_namedtuple_instance(x):
+        return x._asdict()
     elif isinstance(x, Tensor):
         return x.tolist()
     elif _NUMPY_AVAILABLE and isinstance(x, np.ndarray):
