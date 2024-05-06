@@ -142,3 +142,11 @@ class PickleDataset(Generic[T, U], Dataset[U]):
 
         self._attrs = attrs
         self._fpaths = fpaths
+
+    @classmethod
+    def is_pickle_root(cls, root: Union[str, Path]) -> bool:
+        try:
+            PickleDataset(root)
+            return True
+        except (FileNotFoundError, RuntimeError):
+            return False
