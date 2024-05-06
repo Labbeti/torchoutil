@@ -28,7 +28,7 @@ class DataclassInstance(Protocol):
 class NamedTupleInstance(Protocol):
     # Class meant for typing purpose only
     _fields: Tuple[str, ...]
-    _fields_defaults: Dict[str, Any]
+    _field_defaults: Dict[str, Any]
 
     def _asdict(self) -> Dict[str, Any]:
         ...
