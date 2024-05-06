@@ -12,7 +12,7 @@ from torchoutil.utils.saving.common import to_builtin
 
 
 def save_to_csv(
-    data: Sequence[Mapping[str, Any]] | Mapping[str, Sequence[Any]],
+    data: Union[Sequence[Mapping[str, Any]], Mapping[str, Sequence[Any]]],
     fpath: Union[str, Path, None],
     *,
     overwrite: bool = True,

@@ -28,7 +28,7 @@ if _OMEGACONF_AVAILABLE:
 
 
 def save_to_yaml(
-    data: Mapping[str, Any] | Namespace | DataclassInstance | NamedTupleInstance,
+    data: Union[Mapping[str, Any], Namespace, DataclassInstance, NamedTupleInstance],
     fpath: Union[str, Path, None],
     *,
     overwrite: bool = True,
