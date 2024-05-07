@@ -385,5 +385,5 @@ def unzip(lst):
 def prod(x: Iterable[T], /, start: T = 1) -> T:
     result = copy.copy(start)
     for xi in x:
-        result *= xi
+        result = result * xi
     return result

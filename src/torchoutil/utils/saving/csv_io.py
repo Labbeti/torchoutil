@@ -3,7 +3,6 @@
 
 import csv
 import io
-import os
 from pathlib import Path
 from typing import Any, Dict, List, Mapping, Sequence, Union
 
@@ -23,7 +22,7 @@ def save_to_csv(
     if isinstance(data, Mapping):
         data = dict_list_to_list_dict(data)
     else:
-        data = list(data)
+        data = [dict(data_i.items()) for data_i in data]
 
     if len(data) <= 0:
         raise ValueError(f"Invalid argument {data=}. (found empty iterable)")
@@ -33,7 +32,7 @@ def save_to_csv(
         if not overwrite and fpath.exists():
             raise FileExistsError(f"File {fpath} already exists.")
         elif make_parents:
-            os.makedirs(fpath.parent, exist_ok=True)
+            fpath.parent.mkdir(parents=True, exist_ok=True)
 
     if to_builtins:
         data = to_builtin(data)
