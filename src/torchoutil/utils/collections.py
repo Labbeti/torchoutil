@@ -68,8 +68,11 @@ def list_dict_to_dict_list(
 
     keys = set(lst[0].keys())
     if key_mode == "same":
-        if not all(keys == set(item.keys()) for item in lst[1:]):
-            raise ValueError(f"Invalid keys with {key_mode=}.")
+        invalids = [list(item.keys()) for item in lst[1:] if keys != set(item.keys())]
+        if len(invalids):
+            raise ValueError(
+                f"Invalid keys with {key_mode=}. (with {keys=} and {invalids=})"
+            )
     elif key_mode == "intersect":
         keys = intersect_lists([item.keys() for item in lst])
     elif key_mode == "union":
