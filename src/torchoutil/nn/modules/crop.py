@@ -23,7 +23,7 @@ class CropDim(nn.Module):
     ) -> None:
         super().__init__()
         self.target_length = target_length
-        self.align = align
+        self.align: CropAlign = align
         self.dim = dim
         self.generator = generator
 
@@ -34,7 +34,7 @@ class CropDim(nn.Module):
         return crop_dim(
             x,
             self.target_length,
-            self.align,  # type: ignore
+            self.align,
             self.dim,
             self.generator,
         )
