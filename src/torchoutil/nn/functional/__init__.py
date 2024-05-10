@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from torch.nn.functional import *
-
 from .activation import *
 from .crop import *
 from .get import *
