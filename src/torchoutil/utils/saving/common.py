@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 from argparse import Namespace
+from collections import Counter
 from dataclasses import asdict
 from enum import Enum
 from pathlib import Path
@@ -36,6 +37,11 @@ def to_builtin(x: Path) -> str:
 
 
 @overload
+def to_builtin(x: Counter[K, V]) -> Dict[K, V]:
+    ...
+
+
+@overload
 def to_builtin(x: Namespace) -> Dict[str, Any]:
     ...
 
@@ -64,6 +70,8 @@ def to_builtin(x: Any) -> Any:
         return x.name
     elif isinstance(x, Path):
         return str(x)
+    elif isinstance(x, Counter):
+        return dict(x)
     elif isinstance(x, Tensor):
         return x.tolist()
     elif _NUMPY_AVAILABLE and isinstance(x, np.ndarray):
