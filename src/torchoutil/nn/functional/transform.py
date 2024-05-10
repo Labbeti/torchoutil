@@ -53,7 +53,9 @@ def resample_nearest(
 
     Args:
         x: Input tensor.
-        rate: The
+        rate: The reduction factor of each axis, e.g. a factor of 0.5 will divide the input axes by 2.
+        dims: Dimensions to apply resampling. defaults to -1.
+        round_fn: Rounding function to compute sub-indices. defaults to torch.floor.
     """
     if isinstance(dims, int):
         dims = [dims]
