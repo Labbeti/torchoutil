@@ -23,6 +23,13 @@ if not _NUMPY_AVAILABLE:
     ) -> NoReturn:
         raise RuntimeError(_NUMPY_UNAVAIBLE_MESSAGE.format(fn="to_numpy"))
 
+    def tensor_to_numpy(
+        x: Any,
+        *,
+        dtype: Any = None,
+    ) -> NoReturn:
+        raise RuntimeError(_NUMPY_UNAVAIBLE_MESSAGE.format(fn="tensor_to_numpy"))
+
     def numpy_to_tensor(
         x: Any,
         *,
@@ -43,9 +50,16 @@ else:
         dtype: Union[str, np.dtype, None] = None,
     ) -> np.ndarray:
         if isinstance(x, Tensor):
-            return x.cpu().numpy().astype(dtype=dtype)
+            return tensor_to_numpy(x, dtype=dtype)
         else:
             return np.asarray(x, dtype=dtype)
+
+    def tensor_to_numpy(
+        x: Tensor,
+        *,
+        dtype: Union[str, np.dtype, None] = None,
+    ) -> np.ndarray:
+        return x.cpu().numpy().astype(dtype=dtype)
 
     def numpy_to_tensor(
         x: np.ndarray,

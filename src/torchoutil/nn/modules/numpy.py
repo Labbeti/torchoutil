@@ -6,7 +6,7 @@ from typing import Union
 import torch
 from torch import Tensor, nn
 
-from torchoutil.nn.functional.numpy import numpy_to_tensor, to_numpy
+from torchoutil.nn.functional.numpy import numpy_to_tensor, tensor_to_numpy, to_numpy
 from torchoutil.utils.packaging import _NUMPY_AVAILABLE
 
 if _NUMPY_AVAILABLE:
@@ -23,6 +23,18 @@ if _NUMPY_AVAILABLE:
 
         def forward(self, x: Union[Tensor, np.ndarray, list]) -> np.ndarray:
             return to_numpy(x, dtype=self.dtype)
+
+    class TensorToNumpy(nn.Module):
+        """
+        For more information, see :func:`~torchoutil.nn.functional.numpy.tensor_to_numpy`.
+        """
+
+        def __init__(self, *, dtype: Union[str, np.dtype, None] = None) -> None:
+            super().__init__()
+            self.dtype = dtype
+
+        def forward(self, x: Union[Tensor, np.ndarray, list]) -> np.ndarray:
+            return tensor_to_numpy(x, dtype=self.dtype)
 
     class NumpyToTensor(nn.Module):
         """
