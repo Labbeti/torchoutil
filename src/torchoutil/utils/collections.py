@@ -30,6 +30,16 @@ KEY_MODES = ("same", "intersect", "union")
 KeyMode = Literal["intersect", "same", "union"]
 
 
+def sorted_dict(
+    x: Mapping[K, V],
+    /,
+    *,
+    key: Optional[Callable[[K], Any]] = None,
+    reverse: bool = False,
+) -> Dict[K, V]:
+    return {k: x[k] for k in sorted(x.keys(), key=key, reverse=reverse)}
+
+
 @overload
 def list_dict_to_dict_list(
     lst: Sequence[Mapping[K, V]],
