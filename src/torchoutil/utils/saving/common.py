@@ -65,8 +65,6 @@ def to_builtin(x: Any) -> Any:
         return x.name
     elif isinstance(x, Path):
         return str(x)
-    elif isinstance(x, Counter):
-        return dict(x)
     elif isinstance(x, Tensor):
         return x.tolist()
     elif _NUMPY_AVAILABLE and isinstance(x, np.ndarray):
@@ -78,6 +76,8 @@ def to_builtin(x: Any) -> Any:
     # Non-terminal cases
     elif isinstance(x, Namespace):
         return to_builtin(x.__dict__)
+    elif isinstance(x, Counter):
+        return to_builtin(dict(x))
     elif is_dataclass_instance(x):
         return to_builtin(asdict(x))
     elif is_namedtuple_instance(x):
