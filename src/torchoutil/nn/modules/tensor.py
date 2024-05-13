@@ -363,3 +363,18 @@ class Pow(nn.Module):
 class FFT(nn.Module):
     def forward(self, x: Tensor) -> Tensor:
         return torch.fft.fft(x)
+
+
+class Log(nn.Module):
+    def forward(self, x: Tensor) -> Tensor:
+        return x.log()
+
+
+class Log10(nn.Module):
+    def forward(self, x: Tensor) -> Tensor:
+        return x.log10()
+
+
+class Log2(nn.Module):
+    def forward(self, x: Tensor) -> Tensor:
+        return x.log2()
