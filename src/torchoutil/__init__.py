@@ -13,4 +13,9 @@ __status__ = "Development"
 __version__ = "0.3.2"
 
 
+# Redundant imports to avoid to import PyTorch modules
+from . import hub as hub
+from . import nn as nn
+from . import optim as optim
+from . import utils as utils
 from .nn.functional import *
