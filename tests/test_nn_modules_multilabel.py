@@ -37,7 +37,8 @@ class TestMultilabel(TestCase):
             IndicesToMultihot(num_classes),
         )
         result = pipeline(multihot)
-        self.assertTrue(torch.equal(multihot, result))
+
+        assert torch.equal(multihot, result)
 
 
 if __name__ == "__main__":

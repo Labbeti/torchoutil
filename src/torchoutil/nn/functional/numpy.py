@@ -49,6 +49,7 @@ else:
         *,
         dtype: Union[str, np.dtype, None] = None,
     ) -> np.ndarray:
+        """Convert input to numpy array."""
         if isinstance(x, Tensor):
             return tensor_to_numpy(x, dtype=dtype)
         else:
@@ -59,6 +60,7 @@ else:
         *,
         dtype: Union[str, np.dtype, None] = None,
     ) -> np.ndarray:
+        """Convert PyTorch tensor to numpy array."""
         return x.cpu().numpy().astype(dtype=dtype)
 
     def numpy_to_tensor(
@@ -67,9 +69,10 @@ else:
         device: Union[str, torch.device, None] = None,
         dtype: Union[torch.dtype, None] = None,
     ) -> Tensor:
+        """Convert numpy array to PyTorch tensor."""
         device = get_device(device)
         return torch.from_numpy(x).to(dtype=dtype, device=device)
 
     def is_numpy_scalar(x: Any) -> TypeGuard[Union[np.generic, np.ndarray]]:
-        """Returns True if x is a numpy generic type or a zero-dimensional numpy array."""
+        """Returns True if x is an instance of a numpy generic type or a zero-dimensional numpy array."""
         return isinstance(x, np.generic) or (isinstance(x, np.ndarray) and x.ndim == 0)

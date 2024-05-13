@@ -37,11 +37,6 @@ def to_builtin(x: Path) -> str:
 
 
 @overload
-def to_builtin(x: Counter[K, V]) -> Dict[K, V]:
-    ...
-
-
-@overload
 def to_builtin(x: Namespace) -> Dict[str, Any]:
     ...
 

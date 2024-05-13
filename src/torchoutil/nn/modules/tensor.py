@@ -346,3 +346,20 @@ class Imag(nn.Module):
             return torch.zeros_like(x)
         else:
             return x.imag
+
+
+class Pow(nn.Module):
+    def __init__(self, exponent: Union[Number, Tensor]) -> None:
+        super().__init__()
+        self.exponent = exponent
+
+    def forward(self, x: Tensor) -> Tensor:
+        return x.pow(self.exponent)
+
+    def extra_repr(self) -> str:
+        return dump_dict(dict(exponent=self.exponent))
+
+
+class FFT(nn.Module):
+    def forward(self, x: Tensor) -> Tensor:
+        return torch.fft.fft(x)

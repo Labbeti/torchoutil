@@ -7,14 +7,14 @@ import torch
 from torch import Tensor, nn
 
 from torchoutil.nn.functional.multiclass import (
-    indices_to_names,
-    indices_to_onehot,
-    names_to_indices,
-    names_to_onehot,
-    onehot_to_indices,
-    onehot_to_names,
-    probs_to_indices,
-    probs_to_names,
+    index_to_name,
+    index_to_onehot,
+    name_to_index,
+    name_to_onehot,
+    onehot_to_index,
+    onehot_to_name,
+    probs_to_index,
+    probs_to_name,
     probs_to_onehot,
 )
 from torchoutil.utils.collections import dump_dict
@@ -22,9 +22,9 @@ from torchoutil.utils.collections import dump_dict
 T = TypeVar("T")
 
 
-class IndicesToOneHot(nn.Module):
+class IndexToOnehot(nn.Module):
     """
-    For more information, see :func:`~torchoutil.nn.functional.multiclass.indices_to_onehot`.
+    For more information, see :func:`~torchoutil.nn.functional.multiclass.index_to_onehot`.
     """
 
     def __init__(
@@ -43,10 +43,10 @@ class IndicesToOneHot(nn.Module):
 
     def forward(
         self,
-        indices: Union[List[int], Tensor],
+        index: Union[List[int], Tensor],
     ) -> Tensor:
-        onehot = indices_to_onehot(
-            indices,
+        onehot = index_to_onehot(
+            index,
             self.num_classes,
             padding_idx=self.padding_idx,
             device=self.device,
@@ -66,9 +66,9 @@ class IndicesToOneHot(nn.Module):
         )
 
 
-class IndicesToNames(nn.Module, Generic[T]):
+class IndexToName(nn.Module, Generic[T]):
     """
-    For more information, see :func:`~torchoutil.nn.functional.multiclass.indices_to_names`.
+    For more information, see :func:`~torchoutil.nn.functional.multiclass.index_to_name`.
     """
 
     def __init__(
@@ -80,15 +80,15 @@ class IndicesToNames(nn.Module, Generic[T]):
 
     def forward(
         self,
-        indices: Union[List[int], Tensor],
+        index: Union[List[int], Tensor],
     ) -> List[T]:
-        names = indices_to_names(indices, self.idx_to_name)
-        return names
+        name = index_to_name(index, self.idx_to_name)
+        return name
 
 
-class OneHotToIndices(nn.Module):
+class OnehotToIndex(nn.Module):
     """
-    For more information, see :func:`~torchoutil.nn.functional.multiclass.onehot_to_indices`.
+    For more information, see :func:`~torchoutil.nn.functional.multiclass.onehot_to_index`.
     """
 
     def __init__(self) -> None:
@@ -98,13 +98,13 @@ class OneHotToIndices(nn.Module):
         self,
         onehot: Tensor,
     ) -> List[int]:
-        names = onehot_to_indices(onehot)
-        return names
+        name = onehot_to_index(onehot)
+        return name
 
 
-class OneHotToNames(nn.Module, Generic[T]):
+class OnehotToName(nn.Module, Generic[T]):
     """
-    For more information, see :func:`~torchoutil.nn.functional.multiclass.onehot_to_names`.
+    For more information, see :func:`~torchoutil.nn.functional.multiclass.onehot_to_name`.
     """
 
     def __init__(
@@ -118,13 +118,13 @@ class OneHotToNames(nn.Module, Generic[T]):
         self,
         onehot: Tensor,
     ) -> List[T]:
-        names = onehot_to_names(onehot, self.idx_to_name)
-        return names
+        name = onehot_to_name(onehot, self.idx_to_name)
+        return name
 
 
-class NamesToIndices(nn.Module, Generic[T]):
+class NameToIndex(nn.Module, Generic[T]):
     """
-    For more information, see :func:`~torchoutil.nn.functional.multiclass.names_to_indices`.
+    For more information, see :func:`~torchoutil.nn.functional.multiclass.name_to_index`.
     """
 
     def __init__(
@@ -136,15 +136,15 @@ class NamesToIndices(nn.Module, Generic[T]):
 
     def forward(
         self,
-        names: List[T],
+        name: List[T],
     ) -> List[int]:
-        indices = names_to_indices(names, self.idx_to_name)
-        return indices
+        index = name_to_index(name, self.idx_to_name)
+        return index
 
 
-class NamesToOneHot(nn.Module, Generic[T]):
+class NameToOnehot(nn.Module, Generic[T]):
     """
-    For more information, see :func:`~torchoutil.nn.functional.multiclass.names_to_onehot`.
+    For more information, see :func:`~torchoutil.nn.functional.multiclass.name_to_onehot`.
     """
 
     def __init__(
@@ -161,10 +161,10 @@ class NamesToOneHot(nn.Module, Generic[T]):
 
     def forward(
         self,
-        names: List[T],
+        name: List[T],
     ) -> Tensor:
-        onehot = names_to_onehot(
-            names,
+        onehot = name_to_onehot(
+            name,
             self.idx_to_name,
             device=self.device,
             dtype=self.dtype,
@@ -181,20 +181,20 @@ class NamesToOneHot(nn.Module, Generic[T]):
         )
 
 
-class ProbsToIndices(nn.Module):
+class ProbsToIndex(nn.Module):
     """
-    For more information, see :func:`~torchoutil.nn.functional.multiclass.probs_to_indices`.
+    For more information, see :func:`~torchoutil.nn.functional.multiclass.probs_to_index`.
     """
 
     def forward(
         self,
         probs: Tensor,
     ) -> List[int]:
-        indices = probs_to_indices(probs)
-        return indices
+        index = probs_to_index(probs)
+        return index
 
 
-class ProbsToOneHot(nn.Module):
+class ProbsToOnehot(nn.Module):
     """
     For more information, see :func:`~torchoutil.nn.functional.multiclass.probs_to_onehot`.
     """
@@ -230,9 +230,9 @@ class ProbsToOneHot(nn.Module):
         )
 
 
-class ProbsToNames(nn.Module, Generic[T]):
+class ProbsToName(nn.Module, Generic[T]):
     """
-    For more information, see :func:`~torchoutil.nn.functional.multiclass.probs_to_names`.
+    For more information, see :func:`~torchoutil.nn.functional.multiclass.probs_to_name`.
     """
 
     def __init__(
@@ -246,5 +246,5 @@ class ProbsToNames(nn.Module, Generic[T]):
         self,
         probs: Tensor,
     ) -> List[T]:
-        names = probs_to_names(probs, self.idx_to_name)
-        return names
+        name = probs_to_name(probs, self.idx_to_name)
+        return name
