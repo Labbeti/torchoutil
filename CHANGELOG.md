@@ -13,6 +13,7 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 - Function `can_be_converted_to_tensor` now accepts numpy arrays and scalars.
+- Module imports like `torchoutil.nn`.
 
 
 ## [0.3.1] 2024-04-25
