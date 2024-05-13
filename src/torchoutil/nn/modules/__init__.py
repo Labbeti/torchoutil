@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+from torch.nn.modules import *
+
 from .activation import SoftmaxMultidim
 from .crop import CropDim, CropDims
 from .layer import PositionalEncoding

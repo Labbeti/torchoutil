@@ -23,28 +23,16 @@ from torch import Tensor, nn
 from typing_extensions import TypeGuard
 
 from torchoutil.nn.functional.get import get_device
-from torchoutil.nn.functional.numpy import is_numpy_scalar
+from torchoutil.nn.functional.numpy import ACCEPTED_NUMPY_DTYPES
 from torchoutil.utils.packaging import _NUMPY_AVAILABLE
-from torchoutil.utils.type_checks import is_list_tensor, is_tuple_tensor
+from torchoutil.utils.type_checks import (
+    is_list_tensor,
+    is_python_scalar,
+    is_tuple_tensor,
+)
 
 if _NUMPY_AVAILABLE:
     import numpy as np
-
-    _ACCEPTED_NUMPY_DTYPES = (
-        np.float64,
-        np.float32,
-        np.float16,
-        np.complex64,
-        np.complex128,
-        np.int64,
-        np.int32,
-        np.int16,
-        np.int8,
-        np.uint8,
-        bool,
-    )
-else:
-    _ACCEPTED_NUMPY_DTYPES = ()
 
 
 T = TypeVar("T")
@@ -144,28 +132,6 @@ def move_to_rec(
         return x
 
 
-def is_python_scalar(x: Any) -> TypeGuard[Union[int, float, bool, complex]]:
-    """Returns True if x is a builtin scalar type (int, float, bool, complex)."""
-    return isinstance(x, (int, float, bool, complex))
-
-
-def is_torch_scalar(x: Any) -> TypeGuard[Tensor]:
-    """Returns True if x is a zero-dimensional torch Tensor."""
-    return isinstance(x, Tensor) and x.ndim == 0
-
-
-def is_scalar(x: Any) -> TypeGuard[Union[int, float, bool, complex, Tensor]]:
-    """Returns True if input is a scalar.
-
-    Accepted scalars list is:
-    - Python numbers (int, float, bool, complex)
-    - PyTorch zero-dimensional tensors
-    - Numpy zero-dimensional arrays
-    - Numpy generic scalars
-    """
-    return is_python_scalar(x) or is_torch_scalar(x) or is_numpy_scalar(x)
-
-
 def can_be_stacked(
     tensors: Union[List[Any], Tuple[Any, ...]],
 ) -> TypeGuard[Union[List[Tensor], Tuple[Tensor, ...]]]:
@@ -210,7 +176,7 @@ def __can_be_converted_to_tensor_nested(x: Any) -> bool:
     elif (
         _NUMPY_AVAILABLE
         and isinstance(x, (np.ndarray, np.generic))
-        and x.dtype in _ACCEPTED_NUMPY_DTYPES
+        and x.dtype in ACCEPTED_NUMPY_DTYPES
     ):
         return True
     elif isinstance(x, (List, Tuple)):

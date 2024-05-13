@@ -9,13 +9,24 @@ from typing import (
     List,
     Mapping,
     Protocol,
+    Sequence,
     Tuple,
     Union,
     runtime_checkable,
 )
 
+import torch
 from torch import Tensor
 from typing_extensions import TypeGuard
+
+from torchoutil.utils.packaging import _NUMPY_AVAILABLE
+
+if _NUMPY_AVAILABLE:
+    import numpy as np
+
+    def is_numpy_scalar(x: Any) -> TypeGuard[Union[np.generic, np.ndarray]]:
+        """Returns True if x is an instance of a numpy generic type or a zero-dimensional numpy array."""
+        return isinstance(x, np.generic) or (isinstance(x, np.ndarray) and x.ndim == 0)
 
 
 @runtime_checkable
@@ -40,6 +51,32 @@ class NamedTupleInstance(Protocol):
         ...
 
 
+def is_python_scalar(x: Any) -> TypeGuard[Union[int, float, bool, complex]]:
+    """Returns True if x is a builtin scalar type (int, float, bool, complex)."""
+    return isinstance(x, (int, float, bool, complex))
+
+
+def is_torch_scalar(x: Any) -> TypeGuard[Tensor]:
+    """Returns True if x is a zero-dimensional torch Tensor."""
+    return isinstance(x, Tensor) and x.ndim == 0
+
+
+def is_scalar(x: Any) -> TypeGuard[Union[int, float, bool, complex, Tensor]]:
+    """Returns True if input is a scalar.
+
+    Accepted scalars list is:
+    - Python numbers (int, float, bool, complex)
+    - PyTorch zero-dimensional tensors
+    - Numpy zero-dimensional arrays
+    - Numpy generic scalars
+    """
+    return (
+        is_python_scalar(x)
+        or is_torch_scalar(x)
+        or (_NUMPY_AVAILABLE and is_numpy_scalar(x))
+    )
+
+
 def is_dataclass_instance(x: Any) -> TypeGuard[DataclassInstance]:
     return not isinstance(x, type) and isinstance(x, DataclassInstance)
 
@@ -52,18 +89,100 @@ def is_dict_str(x: Any) -> TypeGuard[Dict[str, Any]]:
     return isinstance(x, dict) and all(isinstance(key, str) for key in x.keys())
 
 
-def is_iterable_bool(x: Any) -> TypeGuard[Iterable[bool]]:
-    return isinstance(x, Iterable) and all(isinstance(xi, bool) for xi in x)
+def is_iterable_bool(
+    x: Any,
+    *,
+    accept_tensor: bool = False,
+) -> TypeGuard[Iterable[bool]]:
+    return isinstance(x, Iterable) and (
+        all(isinstance(xi, bool) for xi in x)
+        or (
+            accept_tensor
+            and all(
+                isinstance(xi, Tensor) and xi.ndim == 0 and xi.dtype == torch.bool
+                for xi in x
+            )
+        )
+    )
 
 
-def is_iterable_int(x: Any) -> TypeGuard[Iterable[int]]:
-    return isinstance(x, Iterable) and all(isinstance(xi, int) for xi in x)
+def is_sequence_bool(
+    x: Any,
+    *,
+    accept_tensor: bool = False,
+) -> TypeGuard[Sequence[bool]]:
+    return isinstance(x, Sequence) and (
+        all(isinstance(xi, bool) for xi in x)
+        or (
+            accept_tensor
+            and all(
+                isinstance(xi, Tensor) and xi.ndim == 0 and xi.dtype == torch.bool
+                for xi in x
+            )
+        )
+    )
 
 
-def is_iterable_str(x: Any, *, accept_str: bool) -> TypeGuard[Iterable[str]]:
+def is_sequence_int(
+    x: Any,
+    *,
+    accept_tensor: bool = False,
+) -> TypeGuard[Sequence[int]]:
+    return isinstance(x, Sequence) and (
+        all(isinstance(xi, int) for xi in x)
+        or (
+            accept_tensor
+            and all(
+                isinstance(xi, Tensor)
+                and xi.ndim == 0
+                and not xi.is_floating_point()
+                and not xi.is_complex()
+                for xi in x
+            )
+        )
+    )
+
+
+def is_iterable_int(
+    x: Any,
+    *,
+    accept_tensor: bool = False,
+) -> TypeGuard[Iterable[int]]:
+    return isinstance(x, Iterable) and (
+        all(isinstance(xi, int) for xi in x)
+        or (
+            accept_tensor
+            and all(
+                isinstance(xi, Tensor)
+                and xi.ndim == 0
+                and not xi.is_floating_point()
+                and not xi.is_complex()
+                for xi in x
+            )
+        )
+    )
+
+
+def is_iterable_str(
+    x: Any,
+    *,
+    accept_str: bool = True,
+) -> TypeGuard[Iterable[str]]:
     return (accept_str and isinstance(x, str)) or (
         not isinstance(x, str)
         and isinstance(x, Iterable)
+        and all(isinstance(xi, str) for xi in x)
+    )
+
+
+def is_sequence_str(
+    x: Any,
+    *,
+    accept_str: bool = True,
+) -> TypeGuard[Sequence[str]]:
+    return (accept_str and isinstance(x, str)) or (
+        not isinstance(x, str)
+        and isinstance(x, Sequence)
         and all(isinstance(xi, str) for xi in x)
     )
 
@@ -112,5 +231,5 @@ def is_mapping_str(x: Any) -> TypeGuard[Mapping[str, Any]]:
     return isinstance(x, Mapping) and all(isinstance(key, str) for key in x.keys())
 
 
-def is_tuple_tensor(x: Any) -> Tuple[Tensor, ...]:
+def is_tuple_tensor(x: Any) -> TypeGuard[Tuple[Tensor, ...]]:
     return isinstance(x, tuple) and all(isinstance(xi, Tensor) for xi in x)

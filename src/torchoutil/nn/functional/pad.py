@@ -9,7 +9,8 @@ from torch.nn import functional as F
 from torch.types import Number
 
 from torchoutil.nn.functional.get import get_device
-from torchoutil.nn.functional.others import can_be_stacked, is_scalar
+from torchoutil.nn.functional.others import can_be_stacked
+from torchoutil.utils.type_checks import is_scalar
 
 PAD_ALIGNS = ("left", "right", "center", "random")
 PadAlign = Literal["left", "right", "center", "random"]

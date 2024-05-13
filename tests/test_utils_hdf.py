@@ -38,7 +38,7 @@ class TestHDF(TestCase):
 
         assert len(dataset) == len(hdf_dataset)
         assert np.equal(image0, image1).bool().all()
-        assert label0 == label1
+        assert np.equal(label0, label1).bool().all()
 
         hdf_dataset.close()
         os.remove(path)

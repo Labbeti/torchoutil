@@ -36,18 +36,28 @@ torchoutil-info
 ```
 
 
-## Usage
+## Examples
 
-### Batch of padded sequences
+### Multilabel conversions
 ```python
 import torch
-from torchoutil import masked_mean
+from torchoutil import probs_to_name
 
-x = torch.as_tensor([1, 2, 3, 4])
-mask = torch.as_tensor([True, True, False, False])
-result = masked_mean(x, mask)
-# result contains the mean of the values marked as True: 1.5
+probs = torch.as_tensor([[0.9, 0.1], [0.4, 0.6]])
+names = probs_to_name(probs, idx_to_name={0: "Cat", 1: "Dog"})
+# ["Cat", "Dog"]
 ```
+
+```python
+import torch
+from torchoutil import multihot_to_indices
+
+multihot = torch.as_tensor([[1, 0, 0], [0, 1, 1], [0, 0, 0]])
+indices = multihot_to_indices(multihot)
+# [[0], [1, 2], []]
+```
+
+### Masked operations
 
 ```python
 import torch
@@ -61,26 +71,17 @@ mask = lengths_to_non_pad_mask(x, max_len=4)
 #         [True, True, False, False]])
 ```
 
-### Multilabel conversions
 ```python
 import torch
-from torchoutil import probs_to_names
+from torchoutil import masked_mean
 
-probs = torch.as_tensor([[0.9, 0.1], [0.6, 0.9]])
-names = probs_to_names(probs, threshold=0.5, idx_to_name={0: "Cat", 1: "Dog"})
-# [["Cat"], ["Cat", "Dog"]]
+x = torch.as_tensor([1, 2, 3, 4])
+mask = torch.as_tensor([True, True, False, False])
+result = masked_mean(x, mask)
+# result contains the mean of the values marked as True: 1.5
 ```
 
-```python
-import torch
-from torchoutil import multihot_to_indices
-
-multihot = torch.as_tensor([[1, 0, 0], [0, 1, 1], [0, 0, 0]])
-indices = multihot_to_indices(multihot)
-# [[0], [1, 2], []]
-```
-
-### Easily pre-compute transforms
+### Pre-compute datasets to pickle or HDF files
 
 Here is an example of pre-computing spectrograms of torchaudio `SPEECHCOMMANDS` dataset, using `pack_to_pickle` function:
 
@@ -118,7 +119,7 @@ pickle_dataset = PickleDataset(pickle_root)
 pickle_dataset[0]  # == first transformed item, i.e. transform(dataset[0])
 ```
 
-### ...and more tensor manipulations!
+### Other tensors manipulations!
 
 ```python
 import torch
@@ -142,7 +143,7 @@ x3 = x2[inv_perm]
 # inv_perm are indices that allow us to get x3 from x2, i.e. x1 == x3 here
 ```
 
-## Extras
+## Extras requirements
 `torchoutil` also provides additional modules when some specific package are already installed in your environment.
 All extras can be installed with `pip install torchoutil[extras]`
 

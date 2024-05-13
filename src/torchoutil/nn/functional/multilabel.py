@@ -4,12 +4,13 @@
 """Helper functions for conversion between classes indices, multihot, names and probabilities for multilabel classification.
 """
 
-from typing import List, Mapping, Sequence, TypeVar, Union
+from typing import Hashable, Iterable, List, Mapping, Sequence, TypeVar, Union
 
 import torch
 from torch import Tensor
 
 from torchoutil.nn.functional.get import get_device
+from torchoutil.utils.type_checks import is_scalar, is_sequence_bool, is_sequence_int
 
 T = TypeVar("T")
 
@@ -36,14 +37,18 @@ def indices_to_multihot(
     else:
         device = get_device(device)
 
-    bsize = len(indices)
-    multihot = torch.full((bsize, num_classes), False, dtype=dtype, device=device)
-    for i, indices_i in enumerate(indices):
-        if isinstance(indices_i, Tensor):
-            indices_i = indices_i.to(device=device)
+    def indices_to_multihot_impl(x) -> Tensor:
+        if (isinstance(x, Tensor) and x.ndim == 1) or is_sequence_int(x):
+            x = torch.as_tensor(x, dtype=torch.long, device=device)
+            multihot = torch.full((num_classes,), False, dtype=dtype, device=device)
+            multihot.scatter_(0, x, True)
+            return multihot
+        elif isinstance(x, Iterable):
+            return torch.stack([indices_to_multihot_impl(xi) for xi in x])
         else:
-            indices_i = torch.as_tensor(indices_i, dtype=torch.long, device=device)
-        multihot[i].scatter_(0, indices_i, True)
+            raise ValueError(f"Invalid argument {x=}.")
+
+    multihot = indices_to_multihot_impl(indices)
     return multihot
 
 
@@ -57,11 +62,19 @@ def indices_to_names(
         indices: List of list of label indices.
         idx_to_name: Mapping to convert a class index to its name.
     """
-    names = []
-    for indices_i in indices:
-        names_i = [idx_to_name[idx] for idx in indices_i]  # type: ignore
-        names.append(names_i)
-    return names
+
+    def indices_to_names_impl(x) -> Union[int, list]:
+        if is_scalar(x):
+            return idx_to_name[x]  # type: ignore
+        elif isinstance(x, Iterable):
+            return [indices_to_names_impl(xi) for xi in x]
+        else:
+            raise ValueError(
+                f"Invalid argument {x=}. (not present in idx_to_name and not an iterable type)"
+            )
+
+    names = indices_to_names_impl(indices)
+    return names  # type: ignore
 
 
 def multihot_to_indices(
@@ -72,13 +85,22 @@ def multihot_to_indices(
     Args:
         multihot: Multihot labels encoded as 2D matrix.
     """
-    preds = []
-    for multihot_i in multihot:
-        if not isinstance(multihot_i, Tensor):
-            multihot_i = torch.as_tensor(multihot_i)
-        preds_i = torch.where(multihot_i)[0].tolist()
-        preds.append(preds_i)
-    return preds
+
+    def multihot_to_indices_impl(
+        x: Union[Tensor, Sequence],
+    ) -> list:
+        if (isinstance(x, Tensor) and x.ndim == 1) or is_sequence_bool(x):
+            x = torch.as_tensor(x, dtype=torch.bool)
+            preds = torch.where(x)[0].tolist()
+            return preds
+        elif (isinstance(x, Tensor) and x.ndim > 1) or isinstance(x, Sequence):
+            return [multihot_to_indices_impl(multihot_i) for multihot_i in x]
+        else:
+            raise ValueError(
+                f"Invalid argument {x=}. (not present in idx_to_name and not an iterable type)"
+            )
+
+    return multihot_to_indices_impl(multihot)
 
 
 def multihot_to_names(
@@ -107,11 +129,20 @@ def names_to_indices(
         idx_to_name: Mapping to convert a class index to its name.
     """
     name_to_idx = {name: idx for idx, name in idx_to_name.items()}
-    indices = []
-    for names_i in names:
-        indices_i = [name_to_idx[name] for name in names_i]
-        indices.append(indices_i)
-    return indices
+    del idx_to_name
+
+    def names_to_indices_impl(x) -> Union[int, list]:
+        if isinstance(x, Hashable) and x in name_to_idx:
+            return name_to_idx[x]  # type: ignore
+        elif isinstance(x, Iterable):
+            return [names_to_indices_impl(xi) for xi in x]
+        else:
+            raise ValueError(
+                f"Invalid argument {x=}. (not present in idx_to_name and not an iterable type)"
+            )
+
+    indices = names_to_indices_impl(names)
+    return indices  # type: ignore
 
 
 def names_to_multihot(

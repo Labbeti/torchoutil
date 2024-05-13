@@ -4,19 +4,20 @@
 """Helper functions for conversion between classes indices, onehot, names and probabilities for multiclass classification.
 """
 
-from typing import List, Mapping, Optional, Sequence, TypeVar, Union
+from typing import Hashable, Iterable, List, Mapping, Optional, Sequence, TypeVar, Union
 
 import torch
 from torch import Tensor
 from torch.nn import functional as F
 
 from torchoutil.nn.functional.get import get_device
+from torchoutil.utils.type_checks import is_scalar
 
 T = TypeVar("T")
 
 
 def index_to_onehot(
-    indices: Union[Sequence[int], Tensor, Sequence],
+    index: Union[Sequence[int], Tensor, Sequence],
     num_classes: int,
     *,
     padding_idx: Optional[int] = None,
@@ -34,14 +35,14 @@ def index_to_onehot(
         dtype: PyTorch DType of the output tensor.
     """
     device = get_device(device)
-    indices = torch.as_tensor(indices, device=device, dtype=torch.long)
+    index = torch.as_tensor(index, device=device, dtype=torch.long)
 
     if padding_idx is not None:
-        mask = indices == padding_idx
-        indices = torch.where(mask, num_classes, indices)
+        mask = index == padding_idx
+        index = torch.where(mask, num_classes, index)
         num_classes += 1
 
-    onehot: Tensor = F.one_hot(indices, num_classes)
+    onehot: Tensor = F.one_hot(index, num_classes)
     onehot = onehot.to(dtype=dtype)
 
     if padding_idx is not None:
@@ -51,8 +52,8 @@ def index_to_onehot(
 
 
 def index_to_name(
-    indices: Union[Sequence[int], Tensor],
-    idx_to_name: Mapping[int, T],
+    index: Union[Sequence[int], Tensor, Sequence],
+    idx_to_name: Union[Mapping[int, T], Sequence[T]],
 ) -> List[T]:
     """Convert indices of labels to names using a mapping.
 
@@ -60,23 +61,42 @@ def index_to_name(
         indices: List of list of label indices.
         idx_to_name: Mapping to convert a class index to its name.
     """
-    return [idx_to_name[indices_i] for indices_i in indices]  # type: ignore
+
+    def index_to_name_impl(x) -> Union[T, list]:
+        if is_scalar(x):
+            return idx_to_name[x]  # type: ignore
+        elif isinstance(x, Iterable):
+            return [index_to_name_impl(xi) for xi in x]
+        else:
+            raise ValueError(
+                f"Invalid argument {x=}. (not present in idx_to_name and not an iterable type)"
+            )
+
+    name = index_to_name_impl(index)
+    return name  # type: ignore
 
 
 def onehot_to_index(
     onehot: Tensor,
+    *,
+    dim: int = -1,
 ) -> List[int]:
     """Convert onehot boolean encoding to indices of labels.
 
     Args:
         onehot: Onehot labels encoded as 2D matrix.
     """
-    return onehot.int().argmax(dim=-1).tolist()
+    onehot = onehot.int()
+    index = onehot.argmax(dim=dim)
+    index = index.tolist()
+    return index
 
 
 def onehot_to_name(
     onehot: Tensor,
-    idx_to_name: Mapping[int, T],
+    idx_to_name: Union[Mapping[int, T], Sequence[T]],
+    *,
+    dim: int = -1,
 ) -> List[T]:
     """Convert onehot boolean encoding to names using a mapping.
 
@@ -84,14 +104,14 @@ def onehot_to_name(
         onehot: Onehot labels encoded as 2D matrix.
         idx_to_name: Mapping to convert a class index to its name.
     """
-    indices = onehot_to_index(onehot)
+    indices = onehot_to_index(onehot, dim=dim)
     names = index_to_name(indices, idx_to_name)
     return names
 
 
 def name_to_index(
-    names: List[T],
-    idx_to_name: Mapping[int, T],
+    name: List[T],
+    idx_to_name: Union[Mapping[int, T], Sequence[T]],
 ) -> List[int]:
     """Convert names to indices of labels.
 
@@ -99,14 +119,29 @@ def name_to_index(
         names: List of list of label names.
         idx_to_name: Mapping to convert a class index to its name.
     """
-    name_to_idx = {name: idx for idx, name in idx_to_name.items()}
-    indices = [name_to_idx[name] for name in names]
-    return indices
+    if isinstance(idx_to_name, Mapping):
+        name_to_idx = {name: idx for idx, name in idx_to_name.items()}
+    else:
+        name_to_idx = {name: idx for idx, name in enumerate(idx_to_name)}
+    del idx_to_name
+
+    def name_to_index_impl(x) -> Union[T, list]:
+        if isinstance(x, Hashable) and x in name_to_idx:
+            return name_to_idx[x]  # type: ignore
+        elif isinstance(x, Iterable):
+            return [name_to_index_impl(xi) for xi in x]
+        else:
+            raise ValueError(
+                f"Invalid argument {x=}. (not present in name_to_idx and not an iterable type)"
+            )
+
+    index = name_to_index_impl(name)
+    return index  # type: ignore
 
 
 def name_to_onehot(
-    names: List[T],
-    idx_to_name: Mapping[int, T],
+    name: List[T],
+    idx_to_name: Union[Mapping[int, T], Sequence[T]],
     *,
     device: Union[str, torch.device, None] = None,
     dtype: Union[torch.dtype, None] = torch.bool,
@@ -119,27 +154,30 @@ def name_to_onehot(
         device: PyTorch device of the output tensor.
         dtype: PyTorch DType of the output tensor.
     """
-    indices = name_to_index(names, idx_to_name)
-    onehot = index_to_onehot(indices, len(idx_to_name), device=device, dtype=dtype)
+    index = name_to_index(name, idx_to_name)
+    onehot = index_to_onehot(index, len(idx_to_name), device=device, dtype=dtype)
     return onehot
 
 
 def probs_to_index(
     probs: Tensor,
+    *,
+    dim: int = -1,
 ) -> List[int]:
     """Convert matrix of probabilities to indices of labels.
 
     Args:
         probs: Output probabilities for each classes.
     """
-    indices = probs.argmax(dim=-1)
-    indices = indices.tolist()
-    return indices
+    index = probs.argmax(dim=dim)
+    index = index.tolist()
+    return index
 
 
 def probs_to_onehot(
     probs: Tensor,
     *,
+    dim: int = -1,
     device: Union[str, torch.device, None] = None,
     dtype: Union[torch.dtype, None] = torch.bool,
 ) -> Tensor:
@@ -150,14 +188,16 @@ def probs_to_onehot(
     """
     if device is None:
         device = probs.device
-    indices = probs_to_index(probs)
+    indices = probs_to_index(probs, dim=dim)
     onehot = index_to_onehot(indices, probs.shape[-1], device=device, dtype=dtype)
     return onehot
 
 
 def probs_to_name(
     probs: Tensor,
-    idx_to_name: Mapping[int, T],
+    idx_to_name: Union[Mapping[int, T], Sequence[T]],
+    *,
+    dim: int = -1,
 ) -> List[T]:
     """Convert matrix of probabilities to labels names.
 
@@ -165,6 +205,6 @@ def probs_to_name(
         probs: Output probabilities for each classes.
         idx_to_name: Mapping to convert a class index to its name.
     """
-    indices = probs_to_index(probs)
+    indices = probs_to_index(probs, dim=dim)
     names = index_to_name(indices, idx_to_name)
     return names

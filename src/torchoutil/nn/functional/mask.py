@@ -75,7 +75,7 @@ def masked_equal(
         return False
     mask = mask.bool().logical_not().logical_or(x1.eq(x2))
     equal = mask.all().item()
-    return equal
+    return equal  # type: ignore
 
 
 def generate_square_subsequent_mask(

@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+from torch.nn.functional import *
+
 from .activation import softmax_multidim
 from .crop import crop_dim, crop_dims
 from .get import get_device
@@ -48,15 +50,12 @@ from .multilabel import (
     probs_to_multihot,
     probs_to_names,
 )
-from .numpy import is_numpy_scalar, numpy_to_tensor, tensor_to_numpy, to_numpy
+from .numpy import numpy_to_tensor, tensor_to_numpy, to_numpy
 from .others import (
     can_be_converted_to_tensor,
     can_be_stacked,
     count_parameters,
     find,
-    is_python_scalar,
-    is_scalar,
-    is_torch_scalar,
     move_to_rec,
 )
 from .pad import cat_padded_batch, pad_and_stack_rec, pad_dim, pad_dims

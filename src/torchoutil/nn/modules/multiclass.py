@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from typing import Generic, List, Mapping, Optional, TypeVar, Union
+from typing import Generic, List, Mapping, Optional, Sequence, TypeVar, Union
 
 import torch
 from torch import Tensor, nn
@@ -73,7 +73,7 @@ class IndexToName(nn.Module, Generic[T]):
 
     def __init__(
         self,
-        idx_to_name: Mapping[int, T],
+        idx_to_name: Union[Mapping[int, T], Sequence[T]],
     ) -> None:
         super().__init__()
         self.idx_to_name = idx_to_name
@@ -91,15 +91,19 @@ class OnehotToIndex(nn.Module):
     For more information, see :func:`~torchoutil.nn.functional.multiclass.onehot_to_index`.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, dim: int = -1) -> None:
         super().__init__()
+        self.dim = dim
 
     def forward(
         self,
         onehot: Tensor,
     ) -> List[int]:
-        name = onehot_to_index(onehot)
-        return name
+        index = onehot_to_index(onehot, dim=self.dim)
+        return index
+
+    def extra_repr(self) -> str:
+        return dump_dict(dict(dim=self.dim))
 
 
 class OnehotToName(nn.Module, Generic[T]):
@@ -109,17 +113,22 @@ class OnehotToName(nn.Module, Generic[T]):
 
     def __init__(
         self,
-        idx_to_name: Mapping[int, T],
+        idx_to_name: Union[Mapping[int, T], Sequence[T]],
+        dim: int = -1,
     ) -> None:
         super().__init__()
         self.idx_to_name = idx_to_name
+        self.dim = dim
 
     def forward(
         self,
         onehot: Tensor,
     ) -> List[T]:
-        name = onehot_to_name(onehot, self.idx_to_name)
+        name = onehot_to_name(onehot, self.idx_to_name, dim=self.dim)
         return name
+
+    def extra_repr(self) -> str:
+        return dump_dict(dict(dim=self.dim))
 
 
 class NameToIndex(nn.Module, Generic[T]):
@@ -129,7 +138,7 @@ class NameToIndex(nn.Module, Generic[T]):
 
     def __init__(
         self,
-        idx_to_name: Mapping[int, T],
+        idx_to_name: Union[Mapping[int, T], Sequence[T]],
     ) -> None:
         super().__init__()
         self.idx_to_name = idx_to_name
@@ -149,7 +158,7 @@ class NameToOnehot(nn.Module, Generic[T]):
 
     def __init__(
         self,
-        idx_to_name: Mapping[int, T],
+        idx_to_name: Union[Mapping[int, T], Sequence[T]],
         *,
         device: Union[str, torch.device, None] = None,
         dtype: Union[torch.dtype, None] = torch.bool,
@@ -186,12 +195,19 @@ class ProbsToIndex(nn.Module):
     For more information, see :func:`~torchoutil.nn.functional.multiclass.probs_to_index`.
     """
 
+    def __init__(self, dim: int = -1) -> None:
+        super().__init__()
+        self.dim = dim
+
     def forward(
         self,
         probs: Tensor,
     ) -> List[int]:
-        index = probs_to_index(probs)
+        index = probs_to_index(probs, dim=self.dim)
         return index
+
+    def extra_repr(self) -> str:
+        return dump_dict(dict(dim=self.dim))
 
 
 class ProbsToOnehot(nn.Module):
@@ -202,10 +218,12 @@ class ProbsToOnehot(nn.Module):
     def __init__(
         self,
         *,
+        dim: int = -1,
         device: Union[str, torch.device, None] = None,
         dtype: Union[torch.dtype, None] = torch.bool,
     ) -> None:
         super().__init__()
+        self.dim = dim
         self.device = device
         self.dtype = dtype
 
@@ -215,6 +233,7 @@ class ProbsToOnehot(nn.Module):
     ) -> Tensor:
         onehot = probs_to_onehot(
             probs,
+            dim=self.dim,
             device=self.device,
             dtype=self.dtype,
         )
@@ -223,6 +242,7 @@ class ProbsToOnehot(nn.Module):
     def extra_repr(self) -> str:
         return dump_dict(
             dict(
+                dim=self.dim,
                 device=self.device,
                 dtype=self.dtype,
             ),
@@ -237,14 +257,19 @@ class ProbsToName(nn.Module, Generic[T]):
 
     def __init__(
         self,
-        idx_to_name: Mapping[int, T],
+        idx_to_name: Union[Mapping[int, T], Sequence[T]],
+        dim: int = -1,
     ) -> None:
         super().__init__()
         self.idx_to_name = idx_to_name
+        self.dim = dim
 
     def forward(
         self,
         probs: Tensor,
     ) -> List[T]:
-        name = probs_to_name(probs, self.idx_to_name)
+        name = probs_to_name(probs, self.idx_to_name, dim=self.dim)
         return name
+
+    def extra_repr(self) -> str:
+        return dump_dict(dict(dim=self.dim))

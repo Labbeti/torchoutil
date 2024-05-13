@@ -1,15 +1,24 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import random
 import unittest
 from dataclasses import dataclass
 from typing import NamedTuple
 from unittest import TestCase
 
+import numpy as np
+import torch
+
+from torchoutil.nn.functional.numpy import _NUMPY_AVAILABLE
 from torchoutil.utils.type_checks import (
     is_dataclass_instance,
     is_iterable_str,
     is_namedtuple_instance,
+    is_numpy_scalar,
+    is_python_scalar,
+    is_scalar,
+    is_torch_scalar,
 )
 
 
@@ -64,6 +73,37 @@ class TestTypeChecks(TestCase):
         assert not is_dataclass_instance(NT2)
         assert not is_dataclass_instance(nt1)
         assert not is_dataclass_instance(nt2)
+
+
+class TestIsScalar(TestCase):
+    def test_example_1(self) -> None:
+        tests = [
+            (1, True),
+            (1.0, True),
+            (False, True),
+            (1j + 2, True),
+            (torch.rand(()), True),
+            (torch.rand((0,)), False),
+            (torch.rand(10), False),
+            ([], False),
+            ([[]], False),
+            ((), False),
+            ("test", False),
+        ]
+
+        if _NUMPY_AVAILABLE:
+            tests += [
+                (np.float64(random.random()), True),
+                (np.int64(random.randint(0, 100)), True),
+                (np.random.random(()), True),
+                (np.random.random((0,)), False),
+                (np.random.random((10,)), False),
+            ]
+
+        for x, expected in tests:
+            result = is_scalar(x)
+            msg = f"{x=} ({is_python_scalar(x)}, {is_torch_scalar(x)}, {is_numpy_scalar(x)})"
+            assert result == expected, msg
 
 
 if __name__ == "__main__":

@@ -46,9 +46,15 @@ class TModule(Generic[InType, OutType], nn.Module):
         *,
         recurse: bool = True,
         only_trainable: bool = False,
+        buffers: bool = False,
     ) -> int:
         """Returns the number of parameters in this module."""
-        return count_parameters(self, recurse=recurse, only_trainable=only_trainable)
+        return count_parameters(
+            self,
+            recurse=recurse,
+            only_trainable=only_trainable,
+            buffers=buffers,
+        )
 
 
 class TSequential(Generic[InType, OutType], TModule[InType, OutType], nn.Sequential):
@@ -198,8 +204,8 @@ class TSequential(Generic[InType, OutType], TModule[InType, OutType], nn.Sequent
         unpack_tuple: bool = False,
         unpack_dict: bool = False,
     ) -> None:  # type: ignore
-        nn.Sequential.__init__(self, *args)
         TModule.__init__(self)
+        nn.Sequential.__init__(self, *args)
 
         self.__unpack_tuple = unpack_tuple
         self.__unpack_dict = unpack_dict
