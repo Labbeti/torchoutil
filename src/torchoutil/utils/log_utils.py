@@ -4,9 +4,9 @@
 import logging
 import sys
 from functools import cache
-from logging import Logger
+from logging import Formatter, Logger, StreamHandler
 from types import ModuleType
-from typing import List, Optional, Sequence, Union
+from typing import List, Sequence, Union
 
 pylog = logging.getLogger(__name__)
 
@@ -35,7 +35,7 @@ def setup_logging_verbose(
         Sequence[Logger],
     ],
     verbose: int,
-    fmt: Optional[str] = DEFAULT_FMT,
+    fmt: Union[str, None, Formatter] = DEFAULT_FMT,
 ) -> None:
     level = _verbose_to_logging_level(verbose)
     return setup_logging_level(package_or_logger, level=level, fmt=fmt)
@@ -51,23 +51,24 @@ def setup_logging_level(
         Sequence[Logger],
     ],
     level: int,
-    fmt: Optional[str] = DEFAULT_FMT,
+    fmt: Union[str, None, Formatter] = DEFAULT_FMT,
 ) -> None:
     logger_lst = _get_loggers(package_or_logger)
-    handler = logging.StreamHandler(sys.stdout)
-    if fmt is not None:
-        handler.setFormatter(logging.Formatter(fmt))
+    if isinstance(fmt, str):
+        fmt = Formatter(fmt)
 
     for logger in logger_lst:
         found = False
+
         for handler in logger.handlers:
-            if (
-                isinstance(handler, logging.StreamHandler)
-                and handler.stream is sys.stdout
-            ):
+            if isinstance(handler, StreamHandler) and handler.stream is sys.stdout:
+                handler.setFormatter(fmt)
                 found = True
                 break
+
         if not found:
+            handler = StreamHandler(sys.stdout)
+            handler.setFormatter(fmt)
             logger.addHandler(handler)
 
         logger.setLevel(level)
