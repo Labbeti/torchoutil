@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from typing import Generic, List, Mapping, TypeVar, Union
+from typing import Generic, List, Mapping, Optional, TypeVar, Union
 
 import torch
 from torch import Tensor, nn
@@ -31,11 +31,13 @@ class IndicesToMultihot(nn.Module):
         self,
         num_classes: int,
         *,
+        padding_idx: Optional[int] = None,
         device: Union[str, torch.device, None] = None,
         dtype: Union[torch.dtype, None] = torch.bool,
     ) -> None:
         super().__init__()
         self.num_classes = num_classes
+        self.padding_idx = padding_idx
         self.device = device
         self.dtype = dtype
 
@@ -46,6 +48,7 @@ class IndicesToMultihot(nn.Module):
         multihot = indices_to_multihot(
             indices,
             self.num_classes,
+            padding_idx=self.padding_idx,
             device=self.device,
             dtype=self.dtype,
         )
@@ -55,6 +58,7 @@ class IndicesToMultihot(nn.Module):
         return dump_dict(
             dict(
                 num_classes=self.num_classes,
+                padding_idx=self.padding_idx,
                 device=self.device,
                 dtype=self.dtype,
             ),
@@ -87,11 +91,15 @@ class MultihotToIndices(nn.Module):
     For more information, see :func:`~torchoutil.nn.functional.multilabel.multihot_to_indices`.
     """
 
+    def __init__(self, padding_idx: Optional[int] = None) -> None:
+        super().__init__()
+        self.padding_idx = padding_idx
+
     def forward(
         self,
         multihot: Tensor,
     ) -> List[List[int]]:
-        names = multihot_to_indices(multihot)
+        names = multihot_to_indices(multihot, padding_idx=self.padding_idx)
         return names
 
 
@@ -182,15 +190,18 @@ class ProbsToIndices(nn.Module):
     def __init__(
         self,
         threshold: Union[float, Tensor],
+        *,
+        padding_idx: Optional[int] = None,
     ) -> None:
         super().__init__()
         self.threshold = threshold
+        self.padding_idx = padding_idx
 
     def forward(
         self,
         probs: Tensor,
     ) -> List[List[int]]:
-        indices = probs_to_indices(probs, self.threshold)
+        indices = probs_to_indices(probs, self.threshold, padding_idx=self.padding_idx)
         return indices
 
 
