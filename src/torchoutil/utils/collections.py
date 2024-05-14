@@ -255,7 +255,7 @@ def flat_dict_of_dict(
     ...         "b": 10,
     ...     },
     ... }
-    >>> flat_dict(dic)
+    >>> flat_dict_of_dict(dic)
     ... {"a": 1, "b.a": 2, "b.b": 10}
     ```
 
@@ -263,7 +263,7 @@ def flat_dict_of_dict(
     ---------
     ```
     >>> dic = {"a": ["hello", "world"], "b": 3}
-    >>> flat_dict(dic, flat_iterables=True)
+    >>> flat_dict_of_dict(dic, flat_iterables=True)
     ... {"a.0": "hello", "a.1": "world", "b": 3}
     ```
 
