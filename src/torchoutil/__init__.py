@@ -13,4 +13,6 @@ __status__ = "Development"
 __version__ = "0.3.2"
 
 
+from torch import *
+
 from .nn.functional import *

@@ -11,6 +11,7 @@ All notable changes to this project will be documented in this file.
 
 ### Modified
 - Rename fn `from_numpy` to `numpy_to_tensor` to avoid confusion with `torch.from_numpy`.
+- Rename fns `save_to_yaml` to `to_yaml` and `save_to_csv` to `to_csv`.
 
 ### Fixed
 - Function `can_be_converted_to_tensor` now accepts numpy arrays and scalars.

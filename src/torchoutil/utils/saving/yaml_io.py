@@ -20,7 +20,7 @@ if _OMEGACONF_AVAILABLE:
     from omegaconf import OmegaConf
 
 
-def save_to_yaml(
+def to_yaml(
     data: Union[Mapping[str, Any], Namespace, DataclassInstance, NamedTupleInstance],
     fpath: Union[str, Path, None],
     *,
@@ -32,9 +32,9 @@ def save_to_yaml(
     indent: Union[int, None] = None,
     **kwargs,
 ) -> str:
-    if resolve and not _OMEGACONF_AVAILABLE:
+    if not _OMEGACONF_AVAILABLE and resolve:
         raise ValueError(
-            "Cannot resolve config for yaml without omegaconf package."
+            "Cannot resolve yaml config without omegaconf package."
             "Please use resolve=False or install omegaconf with 'pip install torchoutil[extras]'."
         )
 
@@ -48,7 +48,7 @@ def save_to_yaml(
     if to_builtins:
         data = to_builtin(data)
 
-    if _OMEGACONF_AVAILABLE and resolve:
+    if resolve:
         data_cfg = OmegaConf.create(data)  # type: ignore
         data = OmegaConf.to_container(data_cfg, resolve=True)  # type: ignore
 

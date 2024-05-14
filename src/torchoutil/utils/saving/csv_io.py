@@ -10,14 +10,14 @@ from torchoutil.utils.collections import dict_list_to_list_dict
 from torchoutil.utils.saving.common import to_builtin
 
 
-def save_to_csv(
+def to_csv(
     data: Union[Sequence[Mapping[str, Any]], Mapping[str, Sequence[Any]]],
     fpath: Union[str, Path, None],
     *,
     overwrite: bool = True,
-    to_builtins: bool = True,
+    to_builtins: bool = False,
     make_parents: bool = True,
-    **kwargs,
+    **writer_kwargs,
 ) -> str:
     if isinstance(data, Mapping):
         data = dict_list_to_list_dict(data)
@@ -39,7 +39,7 @@ def save_to_csv(
 
     fieldnames = list(data[0].keys())  # type: ignore
     file = io.StringIO()
-    writer = csv.DictWriter(file, fieldnames, **kwargs)
+    writer = csv.DictWriter(file, fieldnames, **writer_kwargs)
     writer.writeheader()
     writer.writerows(data)  # type: ignore
     file.close()
@@ -50,8 +50,8 @@ def save_to_csv(
     return content
 
 
-def load_csv(fpath: Union[str, Path], **kwargs) -> List[Dict[str, Any]]:
+def load_csv(fpath: Union[str, Path], **reader_kwargs) -> List[Dict[str, Any]]:
     with open(fpath, "r") as file:
-        reader = csv.DictReader(file, **kwargs)
+        reader = csv.DictReader(file, **reader_kwargs)
         data = list(reader)
     return data
