@@ -7,6 +7,7 @@ from typing import (
     Dict,
     Iterable,
     List,
+    Literal,
     Mapping,
     Protocol,
     Sequence,
@@ -21,7 +22,12 @@ from typing_extensions import TypeGuard
 
 from torchoutil.utils.packaging import _NUMPY_AVAILABLE
 
-if _NUMPY_AVAILABLE:
+if not _NUMPY_AVAILABLE:
+
+    def is_numpy_scalar(x: Any) -> Literal[False]:
+        return False
+
+else:
     import numpy as np
 
     def is_numpy_scalar(x: Any) -> TypeGuard[Union[np.generic, np.ndarray]]:

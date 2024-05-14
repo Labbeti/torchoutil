@@ -28,8 +28,10 @@ from torchoutil.utils.collections import all_eq
 from torchoutil.utils.packaging import _NUMPY_AVAILABLE
 from torchoutil.utils.type_checks import (
     is_list_tensor,
+    is_numpy_scalar,
     is_python_scalar,
     is_scalar,
+    is_torch_scalar,
     is_tuple_tensor,
 )
 
@@ -170,6 +172,15 @@ def shape(x: Any) -> Size:
         return shape
     else:
         raise ValueError(f"Invalid argument {x}. (cannot compute shape)")
+
+
+def to_scalar(x: Any) -> Union[int, float, bool, complex]:
+    if is_python_scalar(x):
+        return x
+    elif is_torch_scalar(x) or is_numpy_scalar(x):
+        return x.item()
+    else:
+        raise ValueError(f"Invalid argument {x=}. (expected scalar number object)")
 
 
 def __can_be_converted_to_tensor_list_tuple(x: Union[List, Tuple]) -> bool:
