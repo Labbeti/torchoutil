@@ -57,6 +57,8 @@ from .others import (
     count_parameters,
     find,
     move_to_rec,
+    ndim,
+    shape,
 )
 from .pad import cat_padded_batch, pad_and_stack_rec, pad_dim, pad_dims
 from .transform import repeat_interleave_nd, resample_nearest, transform_drop

@@ -19,15 +19,17 @@ from typing import (
 )
 
 import torch
-from torch import Tensor, nn
+from torch import Size, Tensor, nn
 from typing_extensions import TypeGuard
 
 from torchoutil.nn.functional.get import get_device
 from torchoutil.nn.functional.numpy import ACCEPTED_NUMPY_DTYPES
+from torchoutil.utils.collections import all_eq
 from torchoutil.utils.packaging import _NUMPY_AVAILABLE
 from torchoutil.utils.type_checks import (
     is_list_tensor,
     is_python_scalar,
+    is_scalar,
     is_tuple_tensor,
 )
 
@@ -153,6 +155,23 @@ def can_be_converted_to_tensor(x: Any) -> bool:
         return __can_be_converted_to_tensor_nested(x)
 
 
+def ndim(x: Any) -> int:
+    valid, ndim = _search_ndim(x)
+    if valid:
+        return ndim
+    else:
+        raise ValueError(f"Invalid argument {x}. (cannot compute ndim)")
+
+
+def shape(x: Any) -> Size:
+    valid, shape = _search_shape(x)
+    if valid:
+        shape = Size(shape)
+        return shape
+    else:
+        raise ValueError(f"Invalid argument {x}. (cannot compute shape)")
+
+
 def __can_be_converted_to_tensor_list_tuple(x: Union[List, Tuple]) -> bool:
     if len(x) == 0:
         return True
@@ -183,3 +202,37 @@ def __can_be_converted_to_tensor_nested(x: Any) -> bool:
         return __can_be_converted_to_tensor_list_tuple(x)
     else:
         return False
+
+
+def _search_ndim(x: Any) -> Tuple[bool, int]:
+    if is_scalar(x) or isinstance(x, str):
+        return True, 0
+    elif isinstance(x, Tensor) or (_NUMPY_AVAILABLE and isinstance(x, np.ndarray)):
+        return True, x.ndim
+    elif isinstance(x, Iterable):
+        ndims = [_search_ndim(xi)[1] for xi in x]
+        if len(ndims) == 0:
+            return True, 1
+        elif all_eq(ndims):
+            return True, ndims[0] + 1
+        else:
+            return False, -1
+    else:
+        raise TypeError(f"Invalid argument type {type(x)}.")
+
+
+def _search_shape(x: Any) -> Tuple[bool, Tuple[int, ...]]:
+    if is_scalar(x) or isinstance(x, str):
+        return True, ()
+    elif isinstance(x, Tensor) or (_NUMPY_AVAILABLE and isinstance(x, np.ndarray)):
+        return True, tuple(x.shape)
+    elif isinstance(x, Iterable):
+        shapes = [_search_shape(xi)[1] for xi in x]
+        if len(shapes) == 0:
+            return True, (0,)
+        elif all_eq(shapes):
+            return True, (len(shapes),) + shapes[0]
+        else:
+            return False, ()
+    else:
+        raise TypeError(f"Invalid argument type {type(x)}.")

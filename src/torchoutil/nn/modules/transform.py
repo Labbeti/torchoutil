@@ -4,7 +4,7 @@
 from typing import Callable, Generic, Iterable, TypeVar, Union
 
 import torch
-from torch import Tensor, nn
+from torch import Generator, Tensor, nn
 
 from torchoutil.nn.functional.transform import (
     repeat_interleave_nd,
@@ -95,16 +95,19 @@ class TransformDrop(Generic[T], nn.Module):
         self,
         transform: Callable[[T], T],
         p: float,
+        generator: Union[int, Generator, None] = None,
     ) -> None:
         super().__init__()
         self.transform = transform
         self.p = p
+        self.generator = generator
 
     def forward(self, x: T) -> T:
         return transform_drop(
             transform=self.transform,
             x=x,
             p=self.p,
+            generator=self.generator,
         )
 
     def extra_repr(self) -> str:

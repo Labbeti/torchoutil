@@ -37,10 +37,6 @@ class TModule(Generic[InType, OutType], nn.Module):
     def compose(self, other) -> "TSequential[InType, Any]":
         return TSequential(self, other)
 
-    def duplicate(self, num: int) -> "TSequential[InType, OutType]":
-        duplicated = [self] * num
-        return TSequential(*duplicated)
-
     def count_parameters(
         self,
         *,

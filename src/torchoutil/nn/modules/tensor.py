@@ -365,6 +365,11 @@ class FFT(nn.Module):
         return torch.fft.fft(x)
 
 
+class IFFT(nn.Module):
+    def forward(self, x: Tensor) -> Tensor:
+        return torch.fft.ifft(x)
+
+
 class Log(nn.Module):
     def forward(self, x: Tensor) -> Tensor:
         return x.log()

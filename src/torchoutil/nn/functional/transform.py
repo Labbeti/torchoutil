@@ -2,13 +2,13 @@
 # -*- coding: utf-8 -*-
 
 import math
-import random
 from typing import Callable, Iterable, List, TypeVar, Union
 
 import torch
-from torch import Tensor
+from torch import Generator, Tensor
 
 T = TypeVar("T")
+U = TypeVar("U")
 
 
 def repeat_interleave_nd(x: Tensor, repeats: int, dim: int = 0) -> Tensor:
@@ -85,6 +85,7 @@ def transform_drop(
     transform: Callable[[T], T],
     x: T,
     p: float,
+    generator: Union[int, Generator, None] = None,
 ) -> T:
     """Apply a transform on a tensor with a probability of p.
 
@@ -96,12 +97,15 @@ def transform_drop(
     """
     if p < 0.0:
         raise ValueError(f"Invalid argument {p=} < 0")
+    if isinstance(generator, int):
+        generator = Generator().manual_seed(generator)
 
     p_floor = math.floor(p)
     for _ in range(p_floor):
         x = transform(x)
 
-    if random.random() + p_floor < p:
+    sampled = torch.rand((), generator=generator)
+    if sampled + p_floor < p:
         x = transform(x)
 
     return x

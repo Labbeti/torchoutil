@@ -33,6 +33,7 @@ from .numpy import NumpyToTensor, TensorToNumpy, ToNumpy
 from .pad import PadAndStackRec, PadDim, PadDims
 from .tensor import (
     FFT,
+    IFFT,
     Abs,
     Angle,
     AsTensor,

@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file.
 - Option `subdir_size` to `pack_to_pickle`.
 - `CosDecayScheduler` and `CosDecayRule` classes.
 - `sorted_dict` to collections.
+- Functions `ndim` and `shape` to search information in tensor-like objects.
 
 ### Modified
 - Rename fn `from_numpy` to `numpy_to_tensor` to avoid confusion with `torch.from_numpy`.
