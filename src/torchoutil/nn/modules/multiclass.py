@@ -66,7 +66,7 @@ class IndexToOnehot(nn.Module):
         )
 
 
-class IndexToName(nn.Module, Generic[T]):
+class IndexToName(Generic[T], nn.Module):
     """
     For more information, see :func:`~torchoutil.nn.functional.multiclass.index_to_name`.
     """
@@ -106,7 +106,7 @@ class OnehotToIndex(nn.Module):
         return dump_dict(dict(dim=self.dim))
 
 
-class OnehotToName(nn.Module, Generic[T]):
+class OnehotToName(Generic[T], nn.Module):
     """
     For more information, see :func:`~torchoutil.nn.functional.multiclass.onehot_to_name`.
     """
@@ -131,7 +131,7 @@ class OnehotToName(nn.Module, Generic[T]):
         return dump_dict(dict(dim=self.dim))
 
 
-class NameToIndex(nn.Module, Generic[T]):
+class NameToIndex(Generic[T], nn.Module):
     """
     For more information, see :func:`~torchoutil.nn.functional.multiclass.name_to_index`.
     """
@@ -151,7 +151,7 @@ class NameToIndex(nn.Module, Generic[T]):
         return index
 
 
-class NameToOnehot(nn.Module, Generic[T]):
+class NameToOnehot(Generic[T], nn.Module):
     """
     For more information, see :func:`~torchoutil.nn.functional.multiclass.name_to_onehot`.
     """
@@ -250,7 +250,7 @@ class ProbsToOnehot(nn.Module):
         )
 
 
-class ProbsToName(nn.Module, Generic[T]):
+class ProbsToName(Generic[T], nn.Module):
     """
     For more information, see :func:`~torchoutil.nn.functional.multiclass.probs_to_name`.
     """

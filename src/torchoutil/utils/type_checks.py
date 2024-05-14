@@ -7,7 +7,6 @@ from typing import (
     Dict,
     Iterable,
     List,
-    Literal,
     Mapping,
     Protocol,
     Sequence,
@@ -22,17 +21,18 @@ from typing_extensions import TypeGuard
 
 from torchoutil.utils.packaging import _NUMPY_AVAILABLE
 
-if not _NUMPY_AVAILABLE:
-
-    def is_numpy_scalar(x: Any) -> Literal[False]:
-        return False
-
-else:
+if _NUMPY_AVAILABLE:
     import numpy as np
 
-    def is_numpy_scalar(x: Any) -> TypeGuard[Union[np.generic, np.ndarray]]:
-        """Returns True if x is an instance of a numpy generic type or a zero-dimensional numpy array."""
+
+def is_numpy_scalar(x: Any) -> bool:
+    """Returns True if x is an instance of a numpy generic type or a zero-dimensional numpy array.
+    If numpy is not installed, this function always returns False.
+    """
+    if _NUMPY_AVAILABLE:
         return isinstance(x, np.generic) or (isinstance(x, np.ndarray) and x.ndim == 0)
+    else:
+        return False
 
 
 @runtime_checkable

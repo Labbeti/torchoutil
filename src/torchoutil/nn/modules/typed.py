@@ -1,13 +1,13 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from typing import Any, Generic, OrderedDict, TypeVar, overload
+from typing import Any, Generic, OrderedDict, Type, TypeVar, get_args, overload
 
 from torch import nn
 
 from torchoutil.nn.functional.others import count_parameters
 
-InType = TypeVar("InType", covariant=False, contravariant=True)
+InType = TypeVar("InType", covariant=False, contravariant=False)
 OutType = TypeVar("OutType", covariant=True, contravariant=False)
 T1 = TypeVar("T1")
 T2 = TypeVar("T2")
@@ -25,6 +25,14 @@ class TModule(Generic[InType, OutType], nn.Module):
 
     def forward(self, *args: InType, **kwargs: InType) -> OutType:
         return super().forward(*args, **kwargs)
+
+    @property
+    def in_type(self) -> Type[InType]:
+        return get_args(self.__orig_bases__[0])[0]  # type: ignore
+
+    @property
+    def out_type(self) -> Type[OutType]:
+        return get_args(self.__orig_bases__[0])[1]  # type: ignore
 
     @overload
     def compose(self, other: "TModule[Any, T1]") -> "TSequential[InType, T1]":
@@ -206,6 +214,14 @@ class TSequential(Generic[InType, OutType], TModule[InType, OutType], nn.Sequent
         self.__unpack_tuple = unpack_tuple
         self.__unpack_dict = unpack_dict
 
+    @property
+    def unpack_tuple(self) -> bool:
+        return self.__unpack_tuple
+
+    @property
+    def unpack_dict(self) -> bool:
+        return self.__unpack_dict
+
     def __call__(self, x: InType) -> OutType:
         return nn.Sequential.__call__(self, x)
 
@@ -220,7 +236,7 @@ class TSequential(Generic[InType, OutType], TModule[InType, OutType], nn.Sequent
         return x  # type: ignore
 
 
-def __test_typing() -> None:
+def __test_typing_1() -> None:
     import torch
     from torch import Tensor
 

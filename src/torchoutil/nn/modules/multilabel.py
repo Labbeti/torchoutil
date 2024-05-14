@@ -66,7 +66,7 @@ class IndicesToMultihot(nn.Module):
         )
 
 
-class IndicesToNames(nn.Module, Generic[T]):
+class IndicesToNames(Generic[T], nn.Module):
     """
     For more information, see :func:`~torchoutil.nn.functional.multilabel.indices_to_names`.
     """
@@ -103,7 +103,7 @@ class MultihotToIndices(nn.Module):
         return names
 
 
-class MultihotToNames(nn.Module, Generic[T]):
+class MultihotToNames(Generic[T], nn.Module):
     """
     For more information, see :func:`~torchoutil.nn.functional.multilabel.multihot_to_names`.
     """
@@ -123,7 +123,7 @@ class MultihotToNames(nn.Module, Generic[T]):
         return names
 
 
-class NamesToIndices(nn.Module, Generic[T]):
+class NamesToIndices(Generic[T], nn.Module):
     """
     For more information, see :func:`~torchoutil.nn.functional.multilabel.names_to_indices`.
     """
@@ -143,7 +143,7 @@ class NamesToIndices(nn.Module, Generic[T]):
         return indices
 
 
-class NamesToMultihot(nn.Module, Generic[T]):
+class NamesToMultihot(Generic[T], nn.Module):
     """
     For more information, see :func:`~torchoutil.nn.functional.multilabel.names_to_multihot`.
     """
@@ -244,7 +244,7 @@ class ProbsToMultihot(nn.Module):
         )
 
 
-class ProbsToNames(nn.Module, Generic[T]):
+class ProbsToNames(Generic[T], nn.Module):
     """
     For more information, see :func:`~torchoutil.nn.functional.multilabel.probs_to_names`.
     """
