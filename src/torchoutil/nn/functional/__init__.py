@@ -61,4 +61,10 @@ from .others import (
     shape,
 )
 from .pad import cat_padded_batch, pad_and_stack_rec, pad_dim, pad_dims
-from .transform import repeat_interleave_nd, resample_nearest, transform_drop
+from .transform import (
+    repeat_interleave_nd,
+    resample_nearest_freqs,
+    resample_nearest_rates,
+    resample_nearest_steps,
+    transform_drop,
+)

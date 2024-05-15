@@ -59,7 +59,9 @@ from .tensor import (
 from .transform import (
     RepeatInterleave,
     RepeatInterleaveNd,
-    ResampleNearest,
+    ResampleNearestFreqs,
+    ResampleNearestRates,
+    ResampleNearestSteps,
     TransformDrop,
 )
 from .typed import TModule, TSequential

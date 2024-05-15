@@ -7,6 +7,8 @@ from typing import Callable, Iterable, List, TypeVar, Union
 import torch
 from torch import Generator, Tensor
 
+from torchoutil.utils.type_checks import is_scalar
+
 T = TypeVar("T")
 U = TypeVar("U")
 
@@ -43,13 +45,14 @@ def repeat_interleave_nd(x: Tensor, repeats: int, dim: int = 0) -> Tensor:
     return x
 
 
-def resample_nearest(
+def resample_nearest_rates(
     x: Tensor,
     rates: Union[float, Iterable[float]],
+    *,
     dims: Union[int, Iterable[int]] = -1,
     round_fn: Callable[[Tensor], Tensor] = torch.floor,
 ) -> Tensor:
-    """Nearest resampling using a rate.
+    """Nearest neigbour resampling using tensor slices.
 
     Args:
         x: Input tensor.
@@ -62,17 +65,58 @@ def resample_nearest(
     else:
         dims = list(dims)
 
-    if isinstance(rates, (float, int)):
-        rates = [rates] * len(dims)
+    if is_scalar(rates):
+        steps = [1.0 / rates] * len(dims)
     else:
-        rates = list(rates)  # type: ignore
-        if len(rates) != len(dims):
-            raise ValueError(f"Invalid arguments sizes {len(rates)=} != {len(dims)}.")
+        steps = [1.0 / rate for rate in rates]
 
-    slices: List[Union[slice, Tensor]] = [slice(None)] * len(x.shape)
-    for dim, rate in zip(dims, rates):
+    return resample_nearest_steps(
+        x,
+        steps,
+        dims=dims,
+        round_fn=round_fn,
+    )
+
+
+def resample_nearest_freqs(
+    x: Tensor,
+    orig_freq: int,
+    new_freq: int,
+    *,
+    dims: Union[int, Iterable[int]] = -1,
+    round_fn: Callable[[Tensor], Tensor] = torch.floor,
+) -> Tensor:
+    return resample_nearest_steps(
+        x,
+        orig_freq / new_freq,
+        dims=dims,
+        round_fn=round_fn,
+    )
+
+
+def resample_nearest_steps(
+    x: Tensor,
+    steps: Union[float, Iterable[float]],
+    *,
+    dims: Union[int, Iterable[int]] = -1,
+    round_fn: Callable[[Tensor], Tensor] = torch.floor,
+) -> Tensor:
+    if isinstance(dims, int):
+        dims = [dims]
+    else:
+        dims = list(dims)
+
+    if is_scalar(steps):
+        steps = [steps] * len(dims)
+    else:
+        steps = list(steps)  # type: ignore
+        if len(steps) != len(dims):
+            raise ValueError(f"Invalid arguments sizes {len(steps)=} != {len(dims)}.")
+
+    slices: List[Union[slice, Tensor]] = [slice(None)] * x.ndim
+
+    for dim, step in zip(dims, steps):
         length = x.shape[dim]
-        step = 1.0 / rate
         indexes = torch.arange(0, length, step)
         indexes = round_fn(indexes).long().clamp(min=0, max=length - 1)
         slices[dim] = indexes
