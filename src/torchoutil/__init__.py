@@ -15,4 +15,9 @@ __version__ = "0.3.2"
 
 from torch import *
 
+# Re-import for language servers
+from . import hub as hub
+from . import nn as nn
+from . import optim as optim
+from . import utils as utils
 from .nn.functional import *
