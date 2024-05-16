@@ -1,9 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from typing import Any, Generic, OrderedDict, Type, TypeVar, get_args, overload
+from typing import Any, Generic, Literal, OrderedDict, Type, TypeVar, get_args, overload
 
-from torch import nn
+import torch
+from torch import Tensor, nn
+from torch.types import Device
 
 from torchoutil.nn.functional.others import count_parameters
 
@@ -19,6 +21,29 @@ T6 = TypeVar("T6")
 
 class TModule(Generic[InType, OutType], nn.Module):
     """Typed version of torch.nn.Module. Can specify an input and output type."""
+
+    def __init__(
+        self,
+        *,
+        detect_device: Literal["proxy", "first_param", "none"] = "none",
+    ) -> None:
+        super().__init__()
+        self.__detect_device = detect_device
+        self.register_buffer("__proxy", torch.empty((0,)), persistent=False)
+        self.__proxy: Tensor
+
+    @property
+    def device(self) -> Device:
+        if self.__detect_device == "proxy":
+            return self.__proxy.device
+        elif self.__detect_device == "first_param":
+            try:
+                param0 = next(iter(self.parameters()))
+                return param0.device
+            except StopIteration:
+                return None
+        else:
+            return None
 
     def __call__(self, *args: InType, **kwargs: InType) -> OutType:
         return super().__call__(*args, **kwargs)
