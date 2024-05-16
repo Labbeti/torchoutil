@@ -42,8 +42,8 @@ def to_csv(
     writer = csv.DictWriter(file, fieldnames, **writer_kwargs)
     writer.writeheader()
     writer.writerows(data)  # type: ignore
-    file.close()
     content = file.getvalue()
+    file.close()
 
     if fpath is not None:
         fpath.write_text(content)
