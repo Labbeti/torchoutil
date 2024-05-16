@@ -5,6 +5,7 @@ from typing import Any, Union
 
 import torch
 from torch import Tensor, nn
+from torch.types import Device
 
 from torchoutil.nn.functional.numpy import numpy_to_tensor, tensor_to_numpy, to_numpy
 from torchoutil.utils.packaging import _NUMPY_AVAILABLE
@@ -53,7 +54,7 @@ class NumpyToTensor(nn.Module):
     def __init__(
         self,
         *,
-        device: Union[str, torch.device, None] = None,
+        device: Device = None,
         dtype: Union[torch.dtype, None] = None,
     ) -> None:
         super().__init__()

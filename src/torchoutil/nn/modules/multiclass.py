@@ -5,6 +5,7 @@ from typing import Generic, List, Mapping, Optional, Sequence, TypeVar, Union
 
 import torch
 from torch import Tensor, nn
+from torch.types import Device
 
 from torchoutil.nn.functional.multiclass import (
     index_to_name,
@@ -32,7 +33,7 @@ class IndexToOnehot(nn.Module):
         num_classes: int,
         *,
         padding_idx: Optional[int] = None,
-        device: Union[str, torch.device, None] = None,
+        device: Device = None,
         dtype: Union[torch.dtype, None] = torch.bool,
     ) -> None:
         super().__init__()
@@ -160,7 +161,7 @@ class NameToOnehot(Generic[T], nn.Module):
         self,
         idx_to_name: Union[Mapping[int, T], Sequence[T]],
         *,
-        device: Union[str, torch.device, None] = None,
+        device: Device = None,
         dtype: Union[torch.dtype, None] = torch.bool,
     ) -> None:
         super().__init__()
@@ -219,7 +220,7 @@ class ProbsToOnehot(nn.Module):
         self,
         *,
         dim: int = -1,
-        device: Union[str, torch.device, None] = None,
+        device: Device = None,
         dtype: Union[torch.dtype, None] = torch.bool,
     ) -> None:
         super().__init__()

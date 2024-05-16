@@ -5,6 +5,7 @@ from typing import Iterable, List, Optional, Union
 
 import torch
 from torch import Tensor
+from torch.types import Device
 
 from torchoutil.nn.functional.get import get_device
 
@@ -82,7 +83,7 @@ def generate_square_subsequent_mask(
     size: int,
     diagonal: int = 0,
     *,
-    device: Union[str, torch.device, None] = None,
+    device: Device = None,
     dtype: Optional[torch.dtype] = None,
 ) -> Tensor:
     device = get_device(device)

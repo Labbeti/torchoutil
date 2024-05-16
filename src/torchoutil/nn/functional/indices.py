@@ -5,7 +5,7 @@ from typing import Any, Dict, List, Union
 
 import torch
 from torch import Tensor
-from torch.types import Number
+from torch.types import Device, Number
 
 from torchoutil.nn.functional.get import _DEVICE_CUDA_IF_AVAILABLE, get_device
 
@@ -32,7 +32,7 @@ def get_inverse_perm(indices: Tensor, dim: int = -1) -> Tensor:
 def randperm_diff(
     size: int,
     generator: Union[None, int, torch.Generator] = None,
-    device: Union[str, torch.device, None] = _DEVICE_CUDA_IF_AVAILABLE,
+    device: Device = _DEVICE_CUDA_IF_AVAILABLE,
 ) -> Tensor:
     """This function ensure that every value i cannot be the element at index i.
     The output will be a tensor of shape (size,).

@@ -9,6 +9,7 @@ from typing import Hashable, Iterable, List, Mapping, Optional, Sequence, TypeVa
 import torch
 from torch import Tensor
 from torch.nn import functional as F
+from torch.types import Device
 
 from torchoutil.nn.functional.get import get_device
 from torchoutil.utils.type_checks import is_scalar
@@ -21,7 +22,7 @@ def index_to_onehot(
     num_classes: int,
     *,
     padding_idx: Optional[int] = None,
-    device: Union[str, torch.device, None] = None,
+    device: Device = None,
     dtype: Union[torch.dtype, None] = torch.bool,
 ) -> Tensor:
     """Convert indices of labels to onehot boolean encoding.
@@ -143,7 +144,7 @@ def name_to_onehot(
     name: List[T],
     idx_to_name: Union[Mapping[int, T], Sequence[T]],
     *,
-    device: Union[str, torch.device, None] = None,
+    device: Device = None,
     dtype: Union[torch.dtype, None] = torch.bool,
 ) -> Tensor:
     """Convert names to onehot boolean encoding.
@@ -178,7 +179,7 @@ def probs_to_onehot(
     probs: Tensor,
     *,
     dim: int = -1,
-    device: Union[str, torch.device, None] = None,
+    device: Device = None,
     dtype: Union[torch.dtype, None] = torch.bool,
 ) -> Tensor:
     """Convert matrix of probabilities to onehot boolean encoding.

@@ -21,6 +21,7 @@ from typing import (
 
 import torch
 from torch import Tensor
+from torch.types import Device
 from typing_extensions import NotRequired
 
 from torchoutil.hub.download import HashType, hash_file
@@ -92,7 +93,7 @@ class RegistryHub(Generic[T]):
         self,
         name_or_path: Union[T, str, Path],
         *,
-        device: Union[str, torch.device, None] = None,
+        device: Device = None,
         offline: bool = False,
         load_fn: Callable = torch.load,
         verbose: int = 0,

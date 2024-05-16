@@ -8,7 +8,7 @@ from typing import List, Optional, Union
 import torch
 from torch import Tensor, nn
 from torch.nn import functional as F
-from torch.types import Number
+from torch.types import Device, Number
 
 from torchoutil.nn.functional.get import get_device
 from torchoutil.utils import return_types
@@ -295,7 +295,7 @@ class AsTensor(nn.Module):
     def __init__(
         self,
         *,
-        device: Union[str, torch.device, None] = None,
+        device: Device = None,
         dtype: Union[torch.dtype, None] = None,
     ) -> None:
         device = get_device(device)

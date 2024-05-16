@@ -2,10 +2,10 @@
 # -*- coding: utf-8 -*-
 
 import math
-from typing import Union
 
 import torch
 from torch import Tensor, nn
+from torch.types import Device
 
 from torchoutil.nn.functional.get import get_device
 
@@ -16,7 +16,7 @@ class PositionalEncoding(nn.Module):
         emb_size: int,
         dropout_p: float,
         maxlen: int = 5000,
-        device: Union[str, torch.device, None] = None,
+        device: Device = None,
     ) -> None:
         """Vanilla Positional Encoding for transformers networks.
 
@@ -38,7 +38,7 @@ class PositionalEncoding(nn.Module):
 def init_pos_emb(
     emb_size: int,
     maxlen: int = 5000,
-    device: Union[str, torch.device, None] = None,
+    device: Device = None,
 ) -> Tensor:
     """Returns positional embedding tensor of shape (1, maxlen, emb_size)."""
     device = get_device(device)

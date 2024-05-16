@@ -6,7 +6,7 @@ from typing import Any, Callable, Dict, Iterable, List, Literal, Sized, Tuple, U
 import torch
 from torch import Generator, Size, Tensor
 from torch.nn import functional as F
-from torch.types import Number
+from torch.types import Device, Number
 
 from torchoutil.nn.functional.get import get_device
 from torchoutil.nn.functional.others import can_be_stacked
@@ -74,7 +74,7 @@ def pad_and_stack_rec(
     sequence: Union[Tensor, int, float, tuple, list],
     pad_value: Number,
     *,
-    device: Union[str, torch.device, None] = None,
+    device: Device = None,
     dtype: Union[None, torch.dtype] = None,
 ) -> Tensor:
     """Recursive version of torch.nn.utils.rnn.pad_sequence, with padding of Tensors.

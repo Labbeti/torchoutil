@@ -36,6 +36,7 @@ class CosDecayRule:
                 f"Replacing {n_steps=} by n_steps=1 in {self.__class__.__name__}."
             )
             n_steps = max(n_steps, 1)
+
         super().__init__()
         self.n_steps = n_steps
 

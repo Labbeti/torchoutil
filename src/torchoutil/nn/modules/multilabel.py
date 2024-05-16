@@ -5,6 +5,7 @@ from typing import Generic, List, Mapping, Optional, TypeVar, Union
 
 import torch
 from torch import Tensor, nn
+from torch.types import Device
 
 from torchoutil.nn.functional.multilabel import (
     indices_to_multihot,
@@ -32,7 +33,7 @@ class IndicesToMultihot(nn.Module):
         num_classes: int,
         *,
         padding_idx: Optional[int] = None,
-        device: Union[str, torch.device, None] = None,
+        device: Device = None,
         dtype: Union[torch.dtype, None] = torch.bool,
     ) -> None:
         super().__init__()
@@ -152,7 +153,7 @@ class NamesToMultihot(Generic[T], nn.Module):
         self,
         idx_to_name: Mapping[int, T],
         *,
-        device: Union[str, torch.device, None] = None,
+        device: Device = None,
         dtype: Union[torch.dtype, None] = torch.bool,
     ) -> None:
         super().__init__()
@@ -214,7 +215,7 @@ class ProbsToMultihot(nn.Module):
         self,
         threshold: Union[float, Tensor],
         *,
-        device: Union[str, torch.device, None] = None,
+        device: Device = None,
         dtype: Union[torch.dtype, None] = torch.bool,
     ) -> None:
         super().__init__()

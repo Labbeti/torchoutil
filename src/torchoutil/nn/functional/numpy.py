@@ -5,6 +5,7 @@ from typing import Union
 
 import torch
 from torch import Tensor
+from torch.types import Device
 
 from torchoutil.nn.functional.get import get_device
 from torchoutil.utils.packaging import _NUMPY_AVAILABLE
@@ -51,7 +52,7 @@ else:
     def numpy_to_tensor(
         x: np.ndarray,
         *,
-        device: Union[str, torch.device, None] = None,
+        device: Device = None,
         dtype: Union[torch.dtype, None] = None,
     ) -> Tensor:
         """Convert numpy array to PyTorch tensor."""

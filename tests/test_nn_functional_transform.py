@@ -6,7 +6,10 @@ from unittest import TestCase
 
 import torch
 
-from torchoutil.nn.functional.transform import repeat_interleave_nd, resample_nearest
+from torchoutil.nn.functional.transform import (
+    repeat_interleave_nd,
+    resample_nearest_rates,
+)
 
 
 class TestRepeat(TestCase):
@@ -22,13 +25,13 @@ class TestRepeat(TestCase):
 class TestResampleNearest(TestCase):
     def test_example_1(self) -> None:
         x = torch.arange(10, 20)
-        result = resample_nearest(x, 0.5)
+        result = resample_nearest_rates(x, 0.5)
         expected = torch.as_tensor([10, 12, 14, 16, 18])
         assert torch.equal(result, expected)
 
     def test_example_2(self) -> None:
         x = torch.arange(10, 20)
-        result = resample_nearest(x, 2)
+        result = resample_nearest_rates(x, 2)
         expected = torch.as_tensor(
             [
                 10,
@@ -57,7 +60,7 @@ class TestResampleNearest(TestCase):
 
     def test_example_3(self) -> None:
         x = torch.stack([torch.arange(10, 20), torch.arange(20, 30)])
-        result = resample_nearest(x, 0.5)
+        result = resample_nearest_rates(x, 0.5)
         expected = torch.as_tensor([[10, 12, 14, 16, 18], [20, 22, 24, 26, 28]])
         assert torch.equal(result, expected)
 

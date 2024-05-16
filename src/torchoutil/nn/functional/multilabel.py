@@ -8,6 +8,7 @@ from typing import Hashable, Iterable, List, Mapping, Optional, Sequence, TypeVa
 
 import torch
 from torch import Tensor
+from torch.types import Device
 
 from torchoutil.nn.functional.get import get_device
 from torchoutil.nn.functional.pad import pad_and_stack_rec
@@ -21,7 +22,7 @@ def indices_to_multihot(
     num_classes: int,
     *,
     padding_idx: Optional[int] = None,
-    device: Union[str, torch.device, None] = None,
+    device: Device = None,
     dtype: Union[torch.dtype, None] = torch.bool,
 ) -> Tensor:
     """Convert indices of labels to multihot boolean encoding.
@@ -182,7 +183,7 @@ def names_to_multihot(
     names: List[List[T]],
     idx_to_name: Mapping[int, T],
     *,
-    device: Union[str, torch.device, None] = None,
+    device: Device = None,
     dtype: Union[torch.dtype, None] = torch.bool,
 ) -> Tensor:
     """Convert names to multihot boolean encoding.
@@ -224,7 +225,7 @@ def probs_to_multihot(
     probs: Tensor,
     threshold: Union[float, Sequence[float], Tensor],
     *,
-    device: Union[str, torch.device, None] = None,
+    device: Device = None,
     dtype: Union[torch.dtype, None] = torch.bool,
 ) -> Tensor:
     """Convert matrix of probabilities to multihot boolean encoding.
