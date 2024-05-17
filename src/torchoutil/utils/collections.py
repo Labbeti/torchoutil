@@ -190,17 +190,17 @@ def dump_dict(
 
 
 def pass_filter(
-    name: T,
+    x: T,
     include: Optional[Iterable[T]] = None,
     exclude: Optional[Iterable[T]] = None,
 ) -> bool:
     """Returns True if name in include set and not in exclude set."""
     if include is not None and exclude is not None:
-        return (name in include) and (name not in exclude)
+        return (x in include) and (x not in exclude)
     if include is not None:
-        return name in include
+        return x in include
     elif exclude is not None:
-        return name not in exclude
+        return x not in exclude
     else:
         return True
 
@@ -337,14 +337,17 @@ def unflat_dict_of_dict(dic: Mapping[str, Any], sep: str = ".") -> Dict[str, Any
     return output
 
 
-def flat_list(lst: Iterable[Sequence[T]]) -> Tuple[List[T], List[int]]:
+def flat_list_of_list(lst: Iterable[Sequence[T]]) -> Tuple[List[T], List[int]]:
     """Return a flat version of the input list of sublists with each sublist size."""
-    flatten_lst = [element for sublst in lst for element in sublst]
+    flatten_lst = [elt for sublst in lst for elt in sublst]
     sizes = [len(sents) for sents in lst]
     return flatten_lst, sizes
 
 
-def unflat_list(flatten_lst: Sequence[T], sizes: Iterable[int]) -> List[List[T]]:
+def unflat_list_of_list(
+    flatten_lst: Sequence[T],
+    sizes: Iterable[int],
+) -> List[List[T]]:
     """Unflat a list to a list of sublists of given sizes."""
     lst = []
     start = 0

@@ -71,9 +71,9 @@ def to_builtin(x: Any) -> Any:
         return x.tolist()
     elif _NUMPY_AVAILABLE and isinstance(x, np.generic):
         return x.item()
-    elif _OMEGACONF_AVAILABLE and isinstance(x, (DictConfig, ListConfig)):
-        return OmegaConf.to_container(x, resolve=False, enum_to_str=True)
     # Non-terminal cases
+    elif _OMEGACONF_AVAILABLE and isinstance(x, (DictConfig, ListConfig)):
+        return to_builtin(OmegaConf.to_container(x, resolve=False, enum_to_str=True))
     elif isinstance(x, Namespace):
         return to_builtin(x.__dict__)
     elif isinstance(x, Counter):

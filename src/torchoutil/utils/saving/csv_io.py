@@ -17,7 +17,7 @@ def to_csv(
     overwrite: bool = True,
     to_builtins: bool = False,
     make_parents: bool = True,
-    **writer_kwargs,
+    **csv_writer_kwargs,
 ) -> str:
     if isinstance(data, Mapping):
         data = dict_list_to_list_dict(data)
@@ -39,7 +39,7 @@ def to_csv(
 
     fieldnames = list(data[0].keys())  # type: ignore
     file = io.StringIO()
-    writer = csv.DictWriter(file, fieldnames, **writer_kwargs)
+    writer = csv.DictWriter(file, fieldnames, **csv_writer_kwargs)
     writer.writeheader()
     writer.writerows(data)  # type: ignore
     content = file.getvalue()
@@ -50,8 +50,8 @@ def to_csv(
     return content
 
 
-def load_csv(fpath: Union[str, Path], **reader_kwargs) -> List[Dict[str, Any]]:
+def load_csv(fpath: Union[str, Path], **csv_reader_kwargs) -> List[Dict[str, Any]]:
     with open(fpath, "r") as file:
-        reader = csv.DictReader(file, **reader_kwargs)
+        reader = csv.DictReader(file, **csv_reader_kwargs)
         data = list(reader)
     return data

@@ -7,7 +7,7 @@ from typing import Callable, Iterable, List, Optional, Union
 import torch
 from torch import Generator, Tensor
 
-from torchoutil.utils.collections import flat_list
+from torchoutil.utils.collections import flat_list_of_list
 
 
 def random_split(
@@ -62,7 +62,7 @@ def balanced_monolabel_split(
 
     indices_per_class = _shuffle_indices_per_class(indices_per_class, generator)
     splits = _split_indices_per_class(indices_per_class, lengths, math.floor)
-    flatten = [flat_list(split)[0] for split in splits]
+    flatten = [flat_list_of_list(split)[0] for split in splits]
     return flatten
 
 

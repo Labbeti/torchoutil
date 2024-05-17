@@ -7,7 +7,7 @@ from functools import cache
 from logging import FileHandler, Formatter, Logger, StreamHandler
 from pathlib import Path
 from types import ModuleType
-from typing import List, Optional, Sequence, Union
+from typing import IO, List, Literal, Optional, Sequence, Union
 
 pylog = logging.getLogger(__name__)
 
@@ -35,11 +35,15 @@ def setup_logging_verbose(
         Sequence[Union[str, ModuleType, None]],
         Sequence[Logger],
     ],
-    verbose: int,
+    verbose: Optional[int],
     fmt: Union[str, None, Formatter] = DEFAULT_FMT,
+    stream: Union[IO[str], Literal["auto"]] = "auto",
 ) -> None:
-    level = _verbose_to_logging_level(verbose)
-    return setup_logging_level(package_or_logger, level=level, fmt=fmt)
+    if verbose is None:
+        level = None
+    else:
+        level = _verbose_to_logging_level(verbose)
+    return setup_logging_level(package_or_logger, level=level, fmt=fmt, stream=stream)
 
 
 def setup_logging_level(
@@ -51,28 +55,35 @@ def setup_logging_level(
         Sequence[Union[str, ModuleType, None]],
         Sequence[Logger],
     ],
-    level: int,
+    level: Optional[int],
     fmt: Union[str, None, Formatter] = DEFAULT_FMT,
+    stream: Union[IO[str], Literal["auto"]] = "auto",
 ) -> None:
     logger_lst = _get_loggers(package_or_logger)
     if isinstance(fmt, str):
         fmt = Formatter(fmt)
+    if stream == "auto":
+        if running_on_interpreter():
+            stream = sys.stdout
+        else:
+            stream = sys.stderr
 
     for logger in logger_lst:
         found = False
 
         for handler in logger.handlers:
-            if isinstance(handler, StreamHandler) and handler.stream is sys.stdout:
+            if isinstance(handler, StreamHandler) and handler.stream is stream:
                 handler.setFormatter(fmt)
                 found = True
                 break
 
         if not found:
-            handler = StreamHandler(sys.stdout)
+            handler = StreamHandler(stream)
             handler.setFormatter(fmt)
             logger.addHandler(handler)
 
-        logger.setLevel(level)
+        if level is not None:
+            logger.setLevel(level)
 
 
 def _get_loggers(
@@ -133,3 +144,24 @@ class CustomFileHandler(FileHandler):
         filename.parent.mkdir(parents=True, exist_ok=True)
 
         super().__init__(filename, mode, encoding, delay, errors)
+
+
+def running_on_interpreter() -> bool:
+    return get_ipython_name() is None
+
+
+def running_on_terminal() -> bool:
+    return get_ipython_name() == "TerminalInteractiveShell"
+
+
+def running_on_notebook() -> bool:
+    return get_ipython_name() == "ZMQInteractiveShell"
+
+
+def get_ipython_name() -> (
+    Optional[Literal["TerminalInteractiveShell", "ZMQInteractiveShell"]]
+):
+    try:
+        return get_ipython().__class__.__name__
+    except NameError:
+        return None

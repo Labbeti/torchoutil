@@ -30,7 +30,7 @@ def to_yaml(
     resolve: bool = False,
     sort_keys: bool = False,
     indent: Union[int, None] = None,
-    **kwargs,
+    **yaml_dump_kwargs,
 ) -> str:
     if not _OMEGACONF_AVAILABLE and resolve:
         raise ValueError(
@@ -45,14 +45,14 @@ def to_yaml(
         elif make_parents:
             fpath.parent.mkdir(parents=True, exist_ok=True)
 
+    if resolve:
+        data = OmegaConf.create(data)  # type: ignore
+        data = OmegaConf.to_container(data, resolve=True)  # type: ignore
+
     if to_builtins:
         data = to_builtin(data)
 
-    if resolve:
-        data_cfg = OmegaConf.create(data)  # type: ignore
-        data = OmegaConf.to_container(data_cfg, resolve=True)  # type: ignore
-
-    content = yaml.dump(data, sort_keys=sort_keys, indent=indent, **kwargs)
+    content = yaml.dump(data, sort_keys=sort_keys, indent=indent, **yaml_dump_kwargs)
     if fpath is not None:
         fpath.write_text(content, encoding="utf-8")
     return content
