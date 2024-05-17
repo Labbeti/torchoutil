@@ -11,13 +11,13 @@ from torchoutil.nn.functional.numpy import numpy_to_tensor, tensor_to_numpy, to_
 from torchoutil.utils.packaging import _NUMPY_AVAILABLE
 
 if not _NUMPY_AVAILABLE:
-    import numpy as np
-
-else:
 
     class np:
         dtype = Any
         ndarray = Any
+
+else:
+    import numpy as np
 
 
 class ToNumpy(nn.Module):
