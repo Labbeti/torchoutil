@@ -54,6 +54,8 @@ from .tensor import (
     Permute,
     Pow,
     Real,
+    Repeat,
+    RepeatInterleave,
     Reshape,
     Squeeze,
     TensorTo,
@@ -63,7 +65,6 @@ from .tensor import (
     Unsqueeze,
 )
 from .transform import (
-    RepeatInterleave,
     RepeatInterleaveNd,
     ResampleNearestFreqs,
     ResampleNearestRates,

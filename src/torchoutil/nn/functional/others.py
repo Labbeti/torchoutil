@@ -183,38 +183,6 @@ def to_scalar(x: Any) -> Union[int, float, bool, complex]:
         raise ValueError(f"Invalid argument {x=}. (expected scalar number object)")
 
 
-def __can_be_converted_to_tensor_list_tuple(x: Union[List, Tuple]) -> bool:
-    if len(x) == 0:
-        return True
-
-    valid_items = all(__can_be_converted_to_tensor_nested(xi) for xi in x)
-    if not valid_items:
-        return False
-
-    if all(not isinstance(xi, Sized) for xi in x):
-        return True
-    elif all(isinstance(xi, Sized) for xi in x):
-        len0 = len(x[0])
-        return all(len(xi) == len0 for xi in x[1:])
-    else:
-        return False
-
-
-def __can_be_converted_to_tensor_nested(x: Any) -> bool:
-    if is_python_scalar(x):
-        return True
-    elif (
-        _NUMPY_AVAILABLE
-        and isinstance(x, (np.ndarray, np.generic))
-        and x.dtype in ACCEPTED_NUMPY_DTYPES
-    ):
-        return True
-    elif isinstance(x, (List, Tuple)):
-        return __can_be_converted_to_tensor_list_tuple(x)
-    else:
-        return False
-
-
 def _search_ndim(x: Any) -> Tuple[bool, int]:
     if is_scalar(x) or isinstance(x, str):
         return True, 0
@@ -247,3 +215,35 @@ def _search_shape(x: Any) -> Tuple[bool, Tuple[int, ...]]:
             return False, ()
     else:
         raise TypeError(f"Invalid argument type {type(x)}.")
+
+
+def __can_be_converted_to_tensor_list_tuple(x: Union[List, Tuple]) -> bool:
+    if len(x) == 0:
+        return True
+
+    valid_items = all(__can_be_converted_to_tensor_nested(xi) for xi in x)
+    if not valid_items:
+        return False
+
+    if all(not isinstance(xi, Sized) for xi in x):
+        return True
+    elif all(isinstance(xi, Sized) for xi in x):
+        len0 = len(x[0])
+        return all(len(xi) == len0 for xi in x[1:])
+    else:
+        return False
+
+
+def __can_be_converted_to_tensor_nested(x: Any) -> bool:
+    if is_python_scalar(x):
+        return True
+    elif (
+        _NUMPY_AVAILABLE
+        and isinstance(x, (np.ndarray, np.generic))
+        and x.dtype in ACCEPTED_NUMPY_DTYPES
+    ):
+        return True
+    elif isinstance(x, (List, Tuple)):
+        return __can_be_converted_to_tensor_list_tuple(x)
+    else:
+        return False

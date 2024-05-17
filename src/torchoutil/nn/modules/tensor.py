@@ -383,3 +383,41 @@ class Log10(nn.Module):
 class Log2(nn.Module):
     def forward(self, x: Tensor) -> Tensor:
         return x.log2()
+
+
+class Repeat(nn.Module):
+    def __init__(self, *repeats: int) -> None:
+        super().__init__()
+        self.repeats = repeats
+
+    def forward(self, x: Tensor) -> Tensor:
+        return x.repeat(self.repeats)
+
+    def extra_repr(self) -> str:
+        return dump_dict(dict(repeats=self.repeats))
+
+
+class RepeatInterleave(nn.Module):
+    def __init__(
+        self,
+        repeats: Union[int, Tensor],
+        dim: int,
+        output_size: Optional[int] = None,
+    ) -> None:
+        super().__init__()
+        self.repeats = repeats
+        self.dim = dim
+        self.output_size = output_size
+
+    def forward(self, x: Tensor) -> Tensor:
+        return x.repeat_interleave(self.repeats, self.dim, output_size=self.output_size)
+
+    def extra_repr(self) -> str:
+        return dump_dict(
+            dict(
+                repeats=self.repeats,
+                dim=self.dim,
+                output_size=self.output_size,
+            ),
+            ignore_none=True,
+        )

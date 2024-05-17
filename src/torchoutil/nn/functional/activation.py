@@ -10,7 +10,7 @@ def softmax_multidim(
     input: Tensor,
     dims: Union[Iterable[int], None] = (-1,),
 ) -> Tensor:
-    """A multi-dimensional version of torch.softmax."""
+    """A multi-dimensional version of torch.softmax along multiple dimensions at the same time."""
     if dims is not None:
         dims = tuple(dims)
 
