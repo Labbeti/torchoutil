@@ -10,6 +10,8 @@ from .mask import MaskedMean, MaskedSum
 from .mixins import (
     ConfigModuleMixin,
     ProxyDeviceModuleMixin,
+    TModule,
+    TSequential,
     TypedModuleMixin,
     TypedSequentialMixin,
 )

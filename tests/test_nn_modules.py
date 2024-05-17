@@ -7,7 +7,7 @@ from unittest import TestCase
 import torch
 
 from torchoutil.nn.modules import CropDim, PadDim, ResampleNearestRates
-from torchoutil.nn.modules.typed import TSequential
+from torchoutil.nn.modules.mixins import TSequential
 
 
 class TestTransforms(TestCase):

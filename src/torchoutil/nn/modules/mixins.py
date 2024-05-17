@@ -354,6 +354,10 @@ class TypedSequentialMixin(
         return copy.copy(self._modules)
 
 
+TModule = TypedModuleMixin
+TSequential = TypedSequentialMixin
+
+
 def __test_typing_1() -> None:
     import torch
     from torch import Tensor
