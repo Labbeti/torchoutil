@@ -100,7 +100,7 @@ class ConfigModuleMixin(nn.Module):
         super().__init__()
         self.__config: Dict[str, Any]
 
-    def add_module(self, name: str, module: nn.Module | None) -> None:
+    def add_module(self, name: str, module: Union[nn.Module, None]) -> None:
         self.__update_config(name, module)
         return super().add_module(name, module)
 
