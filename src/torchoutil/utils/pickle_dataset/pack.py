@@ -51,6 +51,23 @@ def pack_to_pickle(
 ) -> PickleDataset[U, U]:
     """Pack a dataset to pickle files.
 
+    Here is an example how files are stored on disk for a dataset containing 1000 items:
+
+    .. code-block:: text
+        :caption:  Dataset folder tree example
+
+        {root}
+        ├── attributes.json
+        └── data
+            ├── 00
+            |   └── 100 pt files
+            ├── 01
+            |   └── 100 pt files
+            ├── ...
+            |   └── ...
+            └── 09
+                └── 100 pt files
+
     Args:
         dataset: Dataset-like to pack.
         root: Directory to store pickled data.
@@ -65,7 +82,9 @@ def pack_to_pickle(
             If None, defaults to "{{i:0{num_digits}d}}.pt".
             defaults to None.
         save_fn: Custom save function to save an item or a batch. defaults to torch.save.
-        subdir_size: Optional number of file per folder. defaults to 100.
+        subdir_size: Optional number of files per folder.
+            Using None will disable subdir an put all files in data/ folder.
+            defaults to 100.
         verbose: Verbose level during packing. Higher value means more messages. defaults to 0.
     """
 
@@ -129,7 +148,9 @@ def pack_to_pickle(
 
     if subdir_size is not None and len(fnames) > subdir_size:
         num_subdirs = math.ceil(len(fnames) / subdir_size)
-        sub_dnames = [f"{i}" for i in range(num_subdirs)]
+        num_digits = math.ceil(math.log10(num_subdirs))
+        dir_fmt = f"{{:0{num_digits}d}}".format
+        sub_dnames = [dir_fmt(i) for i in range(num_subdirs)]
         fnames = [
             str(Path(sub_dnames[i // subdir_size]).joinpath(fname))
             for i, fname in enumerate(fnames)
