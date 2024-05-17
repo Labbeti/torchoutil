@@ -4,9 +4,10 @@
 import logging
 import sys
 from functools import cache
-from logging import Formatter, Logger, StreamHandler
+from logging import FileHandler, Formatter, Logger, StreamHandler
+from pathlib import Path
 from types import ModuleType
-from typing import List, Sequence, Union
+from typing import List, Optional, Sequence, Union
 
 pylog = logging.getLogger(__name__)
 
@@ -112,3 +113,23 @@ def _verbose_to_logging_level(verbose: int) -> int:
     else:
         level = logging.DEBUG
     return level
+
+
+class CustomFileHandler(FileHandler):
+    """FileHandler that build intermediate directories.
+
+    Used for export hydra logs to a file contained in a folder that does not exists yet at the start of the program.
+    """
+
+    def __init__(
+        self,
+        filename: Union[str, Path],
+        mode: str = "a",
+        encoding: Optional[str] = None,
+        delay: bool = True,
+        errors: Optional[str] = None,
+    ) -> None:
+        filename = Path(filename)
+        filename.parent.mkdir(parents=True, exist_ok=True)
+
+        super().__init__(filename, mode, encoding, delay, errors)
