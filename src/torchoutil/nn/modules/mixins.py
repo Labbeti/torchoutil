@@ -5,22 +5,23 @@ import copy
 import re
 from typing import (
     Any,
-    ClassVar,
     Dict,
     Generic,
+    Iterator,
     List,
     Literal,
+    Optional,
     OrderedDict,
-    Tuple,
     Type,
     TypeVar,
+    Union,
     get_args,
     overload,
 )
 
 import torch
 from torch import Tensor, nn
-from torch.types import Device
+from torch.nn.parameter import Parameter
 
 from torchoutil.nn.functional.others import count_parameters
 from torchoutil.utils.type_checks import is_dict_str, is_mapping_str
@@ -30,17 +31,19 @@ OutType = TypeVar("OutType", covariant=True, contravariant=False)
 OutType2 = TypeVar("OutType2", covariant=True, contravariant=False)
 
 
-class ProxyDeviceModuleMixin(nn.Module):
-    _DEVICE_DETECT_MODES: ClassVar[Tuple[str, ...]] = ("proxy", "first_param", "none")
+DEVICE_DETECT_MODES = ("proxy", "first_param", "none")
+DeviceDetectMode = Literal["proxy", "first_param", "none"]
 
+
+class ProxyDeviceModuleMixin(nn.Module):
     def __init__(
         self,
         *,
-        device_detect_mode: Literal["proxy", "first_param", "none"] = "none",
+        device_detect_mode: DeviceDetectMode = "proxy",
     ) -> None:
-        if device_detect_mode not in ProxyDeviceModuleMixin._DEVICE_DETECT_MODES:
+        if device_detect_mode not in DEVICE_DETECT_MODES:
             raise ValueError(
-                f"Invalid argument {device_detect_mode=}. (expected one of {ProxyDeviceModuleMixin._DEVICE_DETECT_MODES})"
+                f"Invalid argument {device_detect_mode=}. (expected one of {DEVICE_DETECT_MODES})"
             )
 
         super().__init__()
@@ -53,17 +56,40 @@ class ProxyDeviceModuleMixin(nn.Module):
         return self.__device_detect_mode
 
     @property
-    def device(self) -> Device:
+    def device(self) -> Optional[torch.device]:
+        """Returns the Module device according to device_detect_mode property."""
         if self.__device_detect_mode == "proxy":
             return self.__proxy.device
         elif self.__device_detect_mode == "first_param":
             try:
-                param0 = next(iter(self.parameters()))
-                return param0.device
+                device0 = next(iter(self.devices(params=True, buffers=False)))
+                return device0
             except StopIteration:
                 return None
         else:
             return None
+
+    def devices(
+        self,
+        *,
+        params: bool = True,
+        buffers: bool = True,
+        recurse: bool = True,
+    ) -> Iterator[torch.device]:
+        """Returns an iterator over all unique devices in module."""
+        its: List[Union[Tensor, Parameter]] = []
+        if params:
+            its.append(self.parameters(recurse=recurse))
+        if buffers:
+            its.append(self.buffers(recurse=recurse))
+
+        devices = {}
+        for it in its:
+            for param_or_buffer in it:
+                device = param_or_buffer.device
+                if device not in devices:
+                    yield device
+                devices[param_or_buffer.device] = None
 
 
 class ConfigModuleMixin(nn.Module):
@@ -151,21 +177,6 @@ class TypedModuleMixin(Generic[InType, OutType], nn.Module):
 
     def compose(self, other) -> "TypedSequentialMixin[InType, Any]":
         return TypedSequentialMixin(self, other)
-
-    def count_parameters(
-        self,
-        *,
-        recurse: bool = True,
-        only_trainable: bool = False,
-        buffers: bool = False,
-    ) -> int:
-        """Returns the number of parameters in this module."""
-        return count_parameters(
-            self,
-            recurse=recurse,
-            only_trainable=only_trainable,
-            buffers=buffers,
-        )
 
 
 class TypedSequentialMixin(
@@ -354,8 +365,216 @@ class TypedSequentialMixin(
         return copy.copy(self._modules)
 
 
-TModule = TypedModuleMixin
-TSequential = TypedSequentialMixin
+class EModule(
+    Generic[InType, OutType],
+    ProxyDeviceModuleMixin,
+    ConfigModuleMixin,
+    TypedModuleMixin[InType, OutType],
+):
+    """Enriched torch.nn.Module with proxy device, forward typing and automatic configuration detection from attributes.
+
+    The default behaviour is the same than PyTorch Module class.
+    """
+
+    def __init__(
+        self,
+        *,
+        device_detect_mode: DeviceDetectMode = "proxy",
+    ) -> None:
+        ProxyDeviceModuleMixin.__init__(self, device_detect_mode=device_detect_mode)
+        ConfigModuleMixin.__init__(self)
+        TypedModuleMixin.__init__(self)
+
+    def count_parameters(
+        self,
+        *,
+        recurse: bool = True,
+        only_trainable: bool = False,
+        buffers: bool = False,
+    ) -> int:
+        """Returns the number of parameters in this module."""
+        return count_parameters(
+            self,
+            recurse=recurse,
+            only_trainable=only_trainable,
+            buffers=buffers,
+        )
+
+
+class ESequential(
+    Generic[InType, OutType],
+    EModule[InType, OutType],
+    TypedSequentialMixin[InType, OutType],
+):
+    """Enriched torch.nn.Sequential with proxy device, forward typing and automatic configuration detection from attributes.
+
+    The default behaviour is the same than PyTorch Sequential class.
+    """
+
+    @overload
+    def __init__(
+        self,
+        /,
+        *,
+        unpack_tuple: bool = False,
+        unpack_dict: bool = False,
+        device_detect_mode: DeviceDetectMode = "proxy",
+    ) -> None:
+        ...
+
+    @overload
+    def __init__(
+        self,
+        arg0: TypedModuleMixin[InType, OutType],
+        /,
+        *,
+        unpack_tuple: bool = False,
+        unpack_dict: bool = False,
+        device_detect_mode: DeviceDetectMode = "proxy",
+    ) -> None:
+        ...
+
+    @overload
+    def __init__(
+        self,
+        arg0: TypedModuleMixin[InType, Any],
+        arg1: TypedModuleMixin[Any, OutType],
+        /,
+        *,
+        unpack_tuple: bool = False,
+        unpack_dict: bool = False,
+        device_detect_mode: DeviceDetectMode = "proxy",
+    ) -> None:
+        ...
+
+    @overload
+    def __init__(
+        self,
+        arg0: TypedModuleMixin[InType, Any],
+        arg1: TypedModuleMixin[Any, Any],
+        arg2: TypedModuleMixin[Any, OutType],
+        /,
+        *,
+        unpack_tuple: bool = False,
+        unpack_dict: bool = False,
+        device_detect_mode: DeviceDetectMode = "proxy",
+    ) -> None:
+        ...
+
+    @overload
+    def __init__(
+        self,
+        arg0: TypedModuleMixin[InType, Any],
+        arg1: TypedModuleMixin[Any, Any],
+        arg2: TypedModuleMixin[Any, Any],
+        arg3: TypedModuleMixin[Any, OutType],
+        /,
+        *,
+        unpack_tuple: bool = False,
+        unpack_dict: bool = False,
+        device_detect_mode: DeviceDetectMode = "proxy",
+    ) -> None:
+        ...
+
+    @overload
+    def __init__(
+        self,
+        arg0: TypedModuleMixin[InType, Any],
+        arg1: TypedModuleMixin[Any, Any],
+        arg2: TypedModuleMixin[Any, Any],
+        arg3: TypedModuleMixin[Any, Any],
+        arg4: TypedModuleMixin[Any, OutType],
+        /,
+        *,
+        unpack_tuple: bool = False,
+        unpack_dict: bool = False,
+        device_detect_mode: DeviceDetectMode = "proxy",
+    ) -> None:
+        ...
+
+    @overload
+    def __init__(
+        self,
+        arg0: TypedModuleMixin[InType, Any],
+        arg1: TypedModuleMixin[Any, Any],
+        arg2: TypedModuleMixin[Any, Any],
+        arg3: TypedModuleMixin[Any, Any],
+        arg4: TypedModuleMixin[Any, Any],
+        arg5: TypedModuleMixin[Any, OutType],
+        /,
+        *,
+        unpack_tuple: bool = False,
+        unpack_dict: bool = False,
+        device_detect_mode: DeviceDetectMode = "proxy",
+    ) -> None:
+        ...
+
+    @overload
+    def __init__(
+        self,
+        arg0: TypedModuleMixin[InType, Any],
+        arg1: TypedModuleMixin[Any, Any],
+        arg2: TypedModuleMixin[Any, Any],
+        arg3: TypedModuleMixin[Any, Any],
+        arg4: TypedModuleMixin[Any, Any],
+        arg5: TypedModuleMixin[Any, Any],
+        arg6: TypedModuleMixin[Any, OutType],
+        /,
+        *,
+        unpack_tuple: bool = False,
+        unpack_dict: bool = False,
+        device_detect_mode: DeviceDetectMode = "proxy",
+    ) -> None:
+        ...
+
+    @overload
+    def __init__(
+        self,
+        arg: "OrderedDict[str, TypedModuleMixin[InType, OutType]]",
+        /,
+        *,
+        unpack_tuple: bool = False,
+        unpack_dict: bool = False,
+        device_detect_mode: DeviceDetectMode = "proxy",
+    ) -> None:
+        ...
+
+    @overload
+    def __init__(
+        self,
+        arg: "OrderedDict[str, nn.Module]",
+        /,
+        *,
+        unpack_tuple: bool = False,
+        unpack_dict: bool = False,
+        device_detect_mode: DeviceDetectMode = "proxy",
+    ) -> None:
+        ...
+
+    @overload
+    def __init__(
+        self,
+        *args: nn.Module,
+        unpack_tuple: bool = False,
+        unpack_dict: bool = False,
+        device_detect_mode: DeviceDetectMode = "proxy",
+    ) -> None:
+        ...
+
+    def __init__(
+        self,
+        *args,
+        unpack_tuple: bool = False,
+        unpack_dict: bool = False,
+        device_detect_mode: DeviceDetectMode = "proxy",
+    ) -> None:
+        EModule.__init__(self, device_detect_mode=device_detect_mode)
+        TypedSequentialMixin.__init__(
+            self,
+            *args,
+            unpack_tuple=unpack_tuple,
+            unpack_dict=unpack_dict,
+        )
 
 
 def __test_typing_1() -> None:
@@ -378,7 +597,7 @@ def __test_typing_1() -> None:
     xa = LayerA()(x)
     xb = LayerB()(x)
 
-    seq = TypedSequentialMixin(LayerA(), LayerA(), LayerB())
+    seq = ESequential(LayerA(), LayerA(), LayerB())
     xab = seq(x)
 
     seq = LayerA().compose(LayerA()).compose(LayerB())
@@ -400,7 +619,7 @@ def __test_typing_1() -> None:
         def forward(self, x: bool) -> str:
             return str(x)
 
-    seq = TypedSequentialMixin(LayerD(), LayerE())
+    seq = ESequential(LayerD(), LayerE())
     y = seq(torch.rand())
 
     assert isinstance(y, str)

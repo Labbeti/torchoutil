@@ -9,9 +9,9 @@ from .layer import PositionalEncoding
 from .mask import MaskedMean, MaskedSum
 from .mixins import (
     ConfigModuleMixin,
+    EModule,
+    ESequential,
     ProxyDeviceModuleMixin,
-    TModule,
-    TSequential,
     TypedModuleMixin,
     TypedSequentialMixin,
 )
