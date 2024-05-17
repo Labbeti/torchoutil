@@ -48,7 +48,7 @@ class Mean(nn.Module):
             dict(
                 dim=self.dim,
             ),
-            ignore_none=True,
+            ignore_lst=(None,),
         )
 
 
@@ -312,7 +312,7 @@ class AsTensor(nn.Module):
                 device=self.device,
                 dtype=self.dtype,
             ),
-            ignore_none=True,
+            ignore_lst=(None,),
         )
 
 
@@ -419,5 +419,5 @@ class RepeatInterleave(nn.Module):
                 dim=self.dim,
                 output_size=self.output_size,
             ),
-            ignore_none=True,
+            ignore_lst=(None,),
         )

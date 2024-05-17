@@ -63,7 +63,7 @@ class IndexToOnehot(nn.Module):
                 device=self.device,
                 dtype=self.dtype,
             ),
-            ignore_none=True,
+            ignore_lst=(None,),
         )
 
 
@@ -187,7 +187,7 @@ class NameToOnehot(Generic[T], nn.Module):
                 device=self.device,
                 dtype=self.dtype,
             ),
-            ignore_none=True,
+            ignore_lst=(None,),
         )
 
 
@@ -247,7 +247,7 @@ class ProbsToOnehot(nn.Module):
                 device=self.device,
                 dtype=self.dtype,
             ),
-            ignore_none=True,
+            ignore_lst=(None,),
         )
 
 

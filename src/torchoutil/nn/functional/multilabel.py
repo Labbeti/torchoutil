@@ -76,23 +76,33 @@ def indices_to_multihot(
 def indices_to_names(
     indices: Union[Sequence[Union[Sequence[int], Tensor]], Tensor],
     idx_to_name: Mapping[int, T],
+    *,
+    padding_idx: Optional[int] = None,
 ) -> List[List[T]]:
     """Convert indices of labels to names using a mapping.
 
     Args:
         indices: List of list of label indices.
         idx_to_name: Mapping to convert a class index to its name.
+        padding_idx: Optional pad value to ignore.
     """
 
     def _indices_to_names_impl(x) -> Union[int, list]:
         if is_scalar(x):
             return idx_to_name[x]  # type: ignore
         elif isinstance(x, Iterable):
-            return [_indices_to_names_impl(xi) for xi in x]
+            return [
+                _indices_to_names_impl(xi)
+                for xi in x
+                if padding_idx is None or not is_scalar(xi) or xi != padding_idx
+            ]
         else:
             raise ValueError(
                 f"Invalid argument {x=}. (not present in idx_to_name and not an iterable type)"
             )
+
+    if not isinstance(indices, Iterable):
+        raise TypeError(f"Invalid argument {indices=}. (not an iterable)")
 
     names = _indices_to_names_impl(indices)
     return names  # type: ignore

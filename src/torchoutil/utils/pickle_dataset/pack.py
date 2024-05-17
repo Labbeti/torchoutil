@@ -59,13 +59,13 @@ def pack_to_pickle(
         {root}
         ├── attributes.json
         └── data
-            ├── 00
+            ├── 0
             |   └── 100 pt files
-            ├── 01
+            ├── 1
             |   └── 100 pt files
             ├── ...
             |   └── ...
-            └── 09
+            └── 9
                 └── 100 pt files
 
     Args:

@@ -174,17 +174,18 @@ def union_lists(lst_of_lst: Iterable[Iterable[T]]) -> List[T]:
 
 
 def dump_dict(
-    dic: Mapping[str, Any],
+    dic: Mapping[str, T],
     /,
     join: str = ", ",
     fmt: str = "{key}={value}",
-    ignore_none: bool = False,
+    ignore_lst: Iterable[T] = (),
 ) -> str:
     """Dump dictionary to string."""
+    ignore_lst = dict.fromkeys(ignore_lst)
     result = join.join(
         fmt.format(key=key, value=value)
         for key, value in dic.items()
-        if not (value is None and ignore_none)
+        if value not in ignore_lst
     )
     return result
 

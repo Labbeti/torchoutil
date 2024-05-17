@@ -63,7 +63,7 @@ class IndicesToMultihot(nn.Module):
                 device=self.device,
                 dtype=self.dtype,
             ),
-            ignore_none=True,
+            ignore_lst=(None,),
         )
 
 
@@ -75,16 +75,31 @@ class IndicesToNames(Generic[T], nn.Module):
     def __init__(
         self,
         idx_to_name: Mapping[int, T],
+        *,
+        padding_idx: Optional[int] = None,
     ) -> None:
         super().__init__()
         self.idx_to_name = idx_to_name
+        self.padding_idx = padding_idx
 
     def forward(
         self,
         indices: Union[List[List[int]], List[Tensor]],
     ) -> List[List[T]]:
-        names = indices_to_names(indices, self.idx_to_name)
+        names = indices_to_names(
+            indices,
+            self.idx_to_name,
+            padding_idx=self.padding_idx,
+        )
         return names
+
+    def extra_repr(self) -> str:
+        return dump_dict(
+            dict(
+                padding_idx=self.padding_idx,
+            ),
+            ignore_lst=(None,),
+        )
 
 
 class MultihotToIndices(nn.Module):
@@ -92,7 +107,7 @@ class MultihotToIndices(nn.Module):
     For more information, see :func:`~torchoutil.nn.functional.multilabel.multihot_to_indices`.
     """
 
-    def __init__(self, padding_idx: Optional[int] = None) -> None:
+    def __init__(self, *, padding_idx: Optional[int] = None) -> None:
         super().__init__()
         self.padding_idx = padding_idx
 
@@ -102,6 +117,14 @@ class MultihotToIndices(nn.Module):
     ) -> List[List[int]]:
         names = multihot_to_indices(multihot, padding_idx=self.padding_idx)
         return names
+
+    def extra_repr(self) -> str:
+        return dump_dict(
+            dict(
+                padding_idx=self.padding_idx,
+            ),
+            ignore_lst=(None,),
+        )
 
 
 class MultihotToNames(Generic[T], nn.Module):
@@ -179,7 +202,7 @@ class NamesToMultihot(Generic[T], nn.Module):
                 device=self.device,
                 dtype=self.dtype,
             ),
-            ignore_none=True,
+            ignore_lst=(None,),
         )
 
 
@@ -241,7 +264,7 @@ class ProbsToMultihot(nn.Module):
                 device=self.device,
                 dtype=self.dtype,
             ),
-            ignore_none=True,
+            ignore_lst=(None,),
         )
 
 
