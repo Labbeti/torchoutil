@@ -9,6 +9,7 @@ All notable changes to this project will be documented in this file.
 - `sorted_dict` to collections.
 - Functions `ndim` and `shape` to search information in tensor-like objects.
 - Function `to_scalar` to convert scalar-like objects to built-in scalar objects.
+- Mixin classes to improve module features.
 
 ### Modified
 - Rename fn `from_numpy` to `numpy_to_tensor` to avoid confusion with `torch.from_numpy`.

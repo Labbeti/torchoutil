@@ -239,3 +239,7 @@ def is_mapping_str(x: Any) -> TypeGuard[Mapping[str, Any]]:
 
 def is_tuple_tensor(x: Any) -> TypeGuard[Tuple[Tensor, ...]]:
     return isinstance(x, tuple) and all(isinstance(xi, Tensor) for xi in x)
+
+
+def is_tuple_str(x: Any) -> TypeGuard[Tuple[str, ...]]:
+    return isinstance(x, tuple) and all(isinstance(xi, str) for xi in x)
