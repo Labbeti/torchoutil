@@ -6,6 +6,7 @@ from unittest import TestCase
 
 import torch
 
+from torchoutil.nn.modules.mixins import ESequential
 from torchoutil.nn.modules.multiclass import (
     IndexToName,
     IndexToOnehot,
@@ -15,7 +16,6 @@ from torchoutil.nn.modules.multiclass import (
     OnehotToName,
     ProbsToOnehot,
 )
-from torchoutil.nn.modules.typed import TSequential
 
 
 class TestMulticlass(TestCase):
@@ -30,7 +30,7 @@ class TestMulticlass(TestCase):
             onehot = ProbsToOnehot()(probs)
 
             # dummy pipeline to convert labels multiple times
-            pipeline = TSequential(
+            pipeline = ESequential(
                 OnehotToName(idx_to_name),
                 NameToIndex(idx_to_name),
                 IndexToOnehot(len(idx_to_name)),

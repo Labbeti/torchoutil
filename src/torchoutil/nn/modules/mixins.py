@@ -12,10 +12,9 @@ from typing import (
     Literal,
     Optional,
     OrderedDict,
-    Type,
+    Protocol,
     TypeVar,
     Union,
-    get_args,
     overload,
 )
 
@@ -26,7 +25,7 @@ from torch.nn.parameter import Parameter
 from torchoutil.nn.functional.others import count_parameters
 from torchoutil.utils.type_checks import is_dict_str, is_mapping_str
 
-InType = TypeVar("InType", covariant=False, contravariant=False)
+InType = TypeVar("InType", covariant=False, contravariant=True)
 OutType = TypeVar("OutType", covariant=True, contravariant=False)
 OutType2 = TypeVar("OutType2", covariant=True, contravariant=False)
 
@@ -77,7 +76,7 @@ class ProxyDeviceModuleMixin(nn.Module):
         recurse: bool = True,
     ) -> Iterator[torch.device]:
         """Returns an iterator over all unique devices in module."""
-        its: List[Union[Tensor, Parameter]] = []
+        its: List[Iterator[Union[Tensor, Parameter]]] = []
         if params:
             its.append(self.parameters(recurse=recurse))
         if buffers:
@@ -150,14 +149,6 @@ class TypedModuleMixin(Generic[InType, OutType], nn.Module):
     def __init__(self) -> None:
         super().__init__()
 
-    @property
-    def in_type(self) -> Type[InType]:
-        return get_args(self.__orig_bases__[0])[0]  # type: ignore
-
-    @property
-    def out_type(self) -> Type[OutType]:
-        return get_args(self.__orig_bases__[0])[1]  # type: ignore
-
     def __call__(self, *args: InType, **kwargs: InType) -> OutType:
         return super().__call__(*args, **kwargs)
 
@@ -185,145 +176,6 @@ class TypedSequentialMixin(
     nn.Sequential,
 ):
     """Typed version of torch.nn.Sequential, designed to work with torchoutil.nn.TModules."""
-
-    @overload
-    def __init__(
-        self,
-        /,
-        *,
-        unpack_tuple: bool = False,
-        unpack_dict: bool = False,
-    ) -> None:
-        ...
-
-    @overload
-    def __init__(
-        self,
-        arg0: TypedModuleMixin[InType, OutType],
-        /,
-        *,
-        unpack_tuple: bool = False,
-        unpack_dict: bool = False,
-    ) -> None:
-        ...
-
-    @overload
-    def __init__(
-        self,
-        arg0: TypedModuleMixin[InType, Any],
-        arg1: TypedModuleMixin[Any, OutType],
-        /,
-        *,
-        unpack_tuple: bool = False,
-        unpack_dict: bool = False,
-    ) -> None:
-        ...
-
-    @overload
-    def __init__(
-        self,
-        arg0: TypedModuleMixin[InType, Any],
-        arg1: TypedModuleMixin[Any, Any],
-        arg2: TypedModuleMixin[Any, OutType],
-        /,
-        *,
-        unpack_tuple: bool = False,
-        unpack_dict: bool = False,
-    ) -> None:
-        ...
-
-    @overload
-    def __init__(
-        self,
-        arg0: TypedModuleMixin[InType, Any],
-        arg1: TypedModuleMixin[Any, Any],
-        arg2: TypedModuleMixin[Any, Any],
-        arg3: TypedModuleMixin[Any, OutType],
-        /,
-        *,
-        unpack_tuple: bool = False,
-        unpack_dict: bool = False,
-    ) -> None:
-        ...
-
-    @overload
-    def __init__(
-        self,
-        arg0: TypedModuleMixin[InType, Any],
-        arg1: TypedModuleMixin[Any, Any],
-        arg2: TypedModuleMixin[Any, Any],
-        arg3: TypedModuleMixin[Any, Any],
-        arg4: TypedModuleMixin[Any, OutType],
-        /,
-        *,
-        unpack_tuple: bool = False,
-        unpack_dict: bool = False,
-    ) -> None:
-        ...
-
-    @overload
-    def __init__(
-        self,
-        arg0: TypedModuleMixin[InType, Any],
-        arg1: TypedModuleMixin[Any, Any],
-        arg2: TypedModuleMixin[Any, Any],
-        arg3: TypedModuleMixin[Any, Any],
-        arg4: TypedModuleMixin[Any, Any],
-        arg5: TypedModuleMixin[Any, OutType],
-        /,
-        *,
-        unpack_tuple: bool = False,
-        unpack_dict: bool = False,
-    ) -> None:
-        ...
-
-    @overload
-    def __init__(
-        self,
-        arg0: TypedModuleMixin[InType, Any],
-        arg1: TypedModuleMixin[Any, Any],
-        arg2: TypedModuleMixin[Any, Any],
-        arg3: TypedModuleMixin[Any, Any],
-        arg4: TypedModuleMixin[Any, Any],
-        arg5: TypedModuleMixin[Any, Any],
-        arg6: TypedModuleMixin[Any, OutType],
-        /,
-        *,
-        unpack_tuple: bool = False,
-        unpack_dict: bool = False,
-    ) -> None:
-        ...
-
-    @overload
-    def __init__(
-        self,
-        arg: "OrderedDict[str, TypedModuleMixin[InType, OutType]]",
-        /,
-        *,
-        unpack_tuple: bool = False,
-        unpack_dict: bool = False,
-    ) -> None:
-        ...
-
-    @overload
-    def __init__(
-        self,
-        arg: "OrderedDict[str, nn.Module]",
-        /,
-        *,
-        unpack_tuple: bool = False,
-        unpack_dict: bool = False,
-    ) -> None:
-        ...
-
-    @overload
-    def __init__(
-        self,
-        *args: nn.Module,
-        unpack_tuple: bool = False,
-        unpack_dict: bool = False,
-    ) -> None:
-        ...
 
     def __init__(
         self,
@@ -401,6 +253,11 @@ class EModule(
         )
 
 
+class SupportsTypedForward(Protocol[InType, OutType]):
+    def forward(self, x: InType) -> OutType:
+        ...
+
+
 class ESequential(
     Generic[InType, OutType],
     EModule[InType, OutType],
@@ -425,7 +282,7 @@ class ESequential(
     @overload
     def __init__(
         self,
-        arg0: TypedModuleMixin[InType, OutType],
+        arg0: SupportsTypedForward[InType, OutType],
         /,
         *,
         unpack_tuple: bool = False,
@@ -437,8 +294,8 @@ class ESequential(
     @overload
     def __init__(
         self,
-        arg0: TypedModuleMixin[InType, Any],
-        arg1: TypedModuleMixin[Any, OutType],
+        arg0: SupportsTypedForward[InType, Any],
+        arg1: SupportsTypedForward[Any, OutType],
         /,
         *,
         unpack_tuple: bool = False,
@@ -450,9 +307,9 @@ class ESequential(
     @overload
     def __init__(
         self,
-        arg0: TypedModuleMixin[InType, Any],
-        arg1: TypedModuleMixin[Any, Any],
-        arg2: TypedModuleMixin[Any, OutType],
+        arg0: SupportsTypedForward[InType, Any],
+        arg1: SupportsTypedForward[Any, Any],
+        arg2: SupportsTypedForward[Any, OutType],
         /,
         *,
         unpack_tuple: bool = False,
@@ -464,10 +321,25 @@ class ESequential(
     @overload
     def __init__(
         self,
-        arg0: TypedModuleMixin[InType, Any],
-        arg1: TypedModuleMixin[Any, Any],
-        arg2: TypedModuleMixin[Any, Any],
-        arg3: TypedModuleMixin[Any, OutType],
+        arg0: SupportsTypedForward[InType, Any],
+        arg1: SupportsTypedForward[Any, Any],
+        arg2: SupportsTypedForward[Any, Any],
+        arg3: SupportsTypedForward[Any, OutType],
+        /,
+        *,
+        unpack_tuple: bool = False,
+        unpack_dict: bool = False,
+    ) -> None:
+        ...
+
+    @overload
+    def __init__(
+        self,
+        arg0: SupportsTypedForward[InType, Any],
+        arg1: SupportsTypedForward[Any, Any],
+        arg2: SupportsTypedForward[Any, Any],
+        arg3: SupportsTypedForward[Any, Any],
+        arg4: SupportsTypedForward[Any, OutType],
         /,
         *,
         unpack_tuple: bool = False,
@@ -479,11 +351,12 @@ class ESequential(
     @overload
     def __init__(
         self,
-        arg0: TypedModuleMixin[InType, Any],
-        arg1: TypedModuleMixin[Any, Any],
-        arg2: TypedModuleMixin[Any, Any],
-        arg3: TypedModuleMixin[Any, Any],
-        arg4: TypedModuleMixin[Any, OutType],
+        arg0: SupportsTypedForward[InType, Any],
+        arg1: SupportsTypedForward[Any, Any],
+        arg2: SupportsTypedForward[Any, Any],
+        arg3: SupportsTypedForward[Any, Any],
+        arg4: SupportsTypedForward[Any, Any],
+        arg5: SupportsTypedForward[Any, OutType],
         /,
         *,
         unpack_tuple: bool = False,
@@ -495,12 +368,13 @@ class ESequential(
     @overload
     def __init__(
         self,
-        arg0: TypedModuleMixin[InType, Any],
-        arg1: TypedModuleMixin[Any, Any],
-        arg2: TypedModuleMixin[Any, Any],
-        arg3: TypedModuleMixin[Any, Any],
-        arg4: TypedModuleMixin[Any, Any],
-        arg5: TypedModuleMixin[Any, OutType],
+        arg0: SupportsTypedForward[InType, Any],
+        arg1: SupportsTypedForward[Any, Any],
+        arg2: SupportsTypedForward[Any, Any],
+        arg3: SupportsTypedForward[Any, Any],
+        arg4: SupportsTypedForward[Any, Any],
+        arg5: SupportsTypedForward[Any, Any],
+        arg6: SupportsTypedForward[Any, OutType],
         /,
         *,
         unpack_tuple: bool = False,
@@ -512,25 +386,7 @@ class ESequential(
     @overload
     def __init__(
         self,
-        arg0: TypedModuleMixin[InType, Any],
-        arg1: TypedModuleMixin[Any, Any],
-        arg2: TypedModuleMixin[Any, Any],
-        arg3: TypedModuleMixin[Any, Any],
-        arg4: TypedModuleMixin[Any, Any],
-        arg5: TypedModuleMixin[Any, Any],
-        arg6: TypedModuleMixin[Any, OutType],
-        /,
-        *,
-        unpack_tuple: bool = False,
-        unpack_dict: bool = False,
-        device_detect_mode: DeviceDetectMode = "proxy",
-    ) -> None:
-        ...
-
-    @overload
-    def __init__(
-        self,
-        arg: "OrderedDict[str, TypedModuleMixin[InType, OutType]]",
+        arg: "OrderedDict[str, SupportsTypedForward[InType, OutType]]",
         /,
         *,
         unpack_tuple: bool = False,

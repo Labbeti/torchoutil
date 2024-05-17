@@ -11,7 +11,7 @@ from torch import Tensor
 from torch.utils.data.dataset import Subset
 from torchvision.datasets import CIFAR10
 
-from torchoutil.nn import IndexToOnehot, ToList, ToNumpy, TSequential
+from torchoutil.nn import ESequential, IndexToOnehot, ToList, ToNumpy
 from torchoutil.utils.hdf import pack_to_hdf
 
 
@@ -21,7 +21,7 @@ class TestHDF(TestCase):
             "/tmp",
             train=False,
             transform=ToNumpy(),
-            target_transform=TSequential(IndexToOnehot(10), ToList()),
+            target_transform=ESequential(IndexToOnehot(10), ToList()),
             download=True,
         )
         dataset = Subset(

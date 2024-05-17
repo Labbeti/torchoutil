@@ -6,6 +6,7 @@ from unittest import TestCase
 
 import torch
 
+from torchoutil.nn.modules.mixins import ESequential
 from torchoutil.nn.modules.multilabel import (
     IndicesToMultihot,
     IndicesToNames,
@@ -14,7 +15,6 @@ from torchoutil.nn.modules.multilabel import (
     NamesToIndices,
     NamesToMultihot,
 )
-from torchoutil.nn.modules.typed import TSequential
 
 
 class TestMultilabel(TestCase):
@@ -29,7 +29,7 @@ class TestMultilabel(TestCase):
             multihot = torch.rand(num_steps, num_samples, num_classes).ge(threshold)
 
             # dummy pipeline to convert labels multiple times
-            pipeline = TSequential(
+            pipeline = ESequential(
                 MultihotToIndices(),
                 IndicesToNames(idx_to_name),
                 NamesToMultihot(idx_to_name),

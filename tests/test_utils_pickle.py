@@ -12,7 +12,7 @@ from torch import Generator
 from torch.utils.data.dataset import Subset
 from torchvision.datasets import CIFAR10
 
-from torchoutil.nn import IndexToOnehot, ToList, ToNumpy, TSequential
+from torchoutil.nn import ESequential, IndexToOnehot, ToList, ToNumpy
 from torchoutil.utils.pickle_dataset import pack_to_pickle
 
 
@@ -22,7 +22,7 @@ class TestCIFAR10ToPickle(TestCase):
             "/tmp",
             train=False,
             transform=ToNumpy(),
-            target_transform=TSequential(IndexToOnehot(10), ToList()),
+            target_transform=ESequential(IndexToOnehot(10), ToList()),
             download=True,
         )
 
@@ -56,7 +56,7 @@ class TestCIFAR10ToPickle(TestCase):
             "/tmp",
             train=False,
             transform=ToNumpy(),
-            target_transform=TSequential(IndexToOnehot(10), ToList()),
+            target_transform=ESequential(IndexToOnehot(10), ToList()),
             download=True,
         )
 
@@ -92,7 +92,7 @@ class TestCIFAR10ToPickle(TestCase):
             "/tmp",
             train=False,
             transform=ToNumpy(),
-            target_transform=TSequential(IndexToOnehot(10), ToList()),
+            target_transform=ESequential(IndexToOnehot(10), ToList()),
             download=True,
         )
 
