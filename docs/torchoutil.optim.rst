@@ -12,4 +12,5 @@ Submodules
 .. toctree::
    :maxdepth: 4
 
+   torchoutil.optim.schedulers
    torchoutil.optim.utils

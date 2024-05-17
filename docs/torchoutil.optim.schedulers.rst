@@ -1,7 +1,7 @@
-torchoutil.nn.modules.typed module
+torchoutil.optim.schedulers module
 ==================================
 
-.. automodule:: torchoutil.nn.modules.typed
+.. automodule:: torchoutil.optim.schedulers
    :members:
    :undoc-members:
    :show-inheritance:
