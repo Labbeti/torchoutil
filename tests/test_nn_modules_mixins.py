@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import unittest
+from pathlib import Path
 from unittest import TestCase
 
 import torch
@@ -44,7 +45,7 @@ class TestInheritEModule(TestCase):
         assert module.config == expected_config
         assert module.count_parameters() == in_features * out_features + out_features
 
-        path = "/tmp/state_dict.pt"
+        path = Path("/tmp/state_dict.pt")
         with open(path, "wb") as file:
             torch.save(module.state_dict(), file)
             state_dict = torch.load(path)
