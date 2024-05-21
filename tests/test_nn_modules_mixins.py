@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 
 import unittest
-from tempfile import NamedTemporaryFile
 from unittest import TestCase
 
 import torch
@@ -45,7 +44,7 @@ class TestInheritEModule(TestCase):
         assert module.config == expected_config
         assert module.count_parameters() == in_features * out_features + out_features
 
-        with NamedTemporaryFile("wb") as file:
+        with open("/tmp/state_dict.pt", "wb") as file:
             path = file.name
             torch.save(module.state_dict(), file)
             state_dict = torch.load(path)
