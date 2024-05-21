@@ -46,6 +46,7 @@ class TestInheritEModule(TestCase):
         assert module.count_parameters() == in_features * out_features + out_features
 
         path = Path("/tmp/state_dict.pt")
+        path.parent.mkdir(parents=True, exist_ok=True)
         with open(path, "wb") as file:
             torch.save(module.state_dict(), file)
             state_dict = torch.load(path)
