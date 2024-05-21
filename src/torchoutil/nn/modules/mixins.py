@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import copy
+import logging
 import re
 from typing import (
     Any,
@@ -29,9 +30,11 @@ InType = TypeVar("InType", covariant=False, contravariant=True)
 OutType = TypeVar("OutType", covariant=True, contravariant=False)
 OutType2 = TypeVar("OutType2", covariant=True, contravariant=False)
 
-
 DEVICE_DETECT_MODES = ("proxy", "first_param", "none")
 DeviceDetectMode = Literal["proxy", "first_param", "none"]
+
+
+pylog = logging.getLogger(__name__)
 
 
 class ProxyDeviceModuleMixin(nn.Module):
@@ -48,27 +51,25 @@ class ProxyDeviceModuleMixin(nn.Module):
         super().__init__()
         self.__device_detect_mode = device_detect_mode
         self.register_buffer("__proxy", torch.empty((0,)), persistent=False)
-        self.__proxy: Tensor
 
     @property
     def device_detect_mode(self) -> str:
         return self.__device_detect_mode
 
-    @property
-    def device(self) -> Optional[torch.device]:
+    def get_device(self) -> Optional[torch.device]:
         """Returns the Module device according to device_detect_mode property."""
         if self.__device_detect_mode == "proxy":
-            return self.__proxy.device
+            return self._buffers["__proxy"].device  # type: ignore
         elif self.__device_detect_mode == "first_param":
             try:
-                device0 = next(iter(self.devices(params=True, buffers=False)))
+                device0 = next(iter(self.get_devices(params=True, buffers=False)))
                 return device0
             except StopIteration:
                 return None
         else:
             return None
 
-    def devices(
+    def get_devices(
         self,
         *,
         params: bool = True,
@@ -128,9 +129,7 @@ class ConfigModuleMixin(nn.Module):
 
         subconfig = {f"{prefix}{k}": v for k, v in subconfig.items()}
         subconfig = {k: v for k, v in subconfig.items() if self._is_config_value(k, v)}
-        object.__setattr__(
-            self, f"_{ConfigModuleMixin.__name__}__config", self.__config | subconfig
-        )
+        self.__config.update(subconfig)
 
     @classmethod
     def _is_config_value(cls, name: str, value: Any) -> bool:
@@ -141,6 +140,17 @@ class ConfigModuleMixin(nn.Module):
     @property
     def config(self) -> Dict[str, Any]:
         return self.__config
+
+    def get_extra_state(self) -> Any:
+        state = {"config": self.__config}
+        return state
+
+    def set_extra_state(self, state: Any) -> None:
+        in_config = state["config"]
+        if self.config != in_config:
+            pylog.warning(
+                f"Invalid saved config {in_config} with current one {self.config}."
+            )
 
 
 class TypedModuleMixin(Generic[InType, OutType], nn.Module):
@@ -233,9 +243,9 @@ class EModule(
         *,
         device_detect_mode: DeviceDetectMode = "proxy",
     ) -> None:
-        ProxyDeviceModuleMixin.__init__(self, device_detect_mode=device_detect_mode)
-        ConfigModuleMixin.__init__(self)
         TypedModuleMixin.__init__(self)
+        ConfigModuleMixin.__init__(self)
+        ProxyDeviceModuleMixin.__init__(self, device_detect_mode=device_detect_mode)
 
     def count_parameters(
         self,
