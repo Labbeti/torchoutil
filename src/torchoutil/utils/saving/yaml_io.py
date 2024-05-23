@@ -88,3 +88,4 @@ class IgnoreTagLoader(SafeLoader):
 
 
 IgnoreTagLoader.add_multi_constructor("!", IgnoreTagLoader.construct_with_tag)
+IgnoreTagLoader.add_multi_constructor("tag:", IgnoreTagLoader.construct_with_tag)
