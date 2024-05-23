@@ -5,6 +5,8 @@ from argparse import Namespace
 from pathlib import Path
 from typing import Any, Mapping, Union
 
+from yaml import MappingNode, Node, SafeLoader, ScalarNode, SequenceNode
+
 from torchoutil.utils.packaging import _OMEGACONF_AVAILABLE, _YAML_AVAILABLE
 from torchoutil.utils.saving.common import to_builtin
 from torchoutil.utils.type_checks import DataclassInstance, NamedTupleInstance
@@ -62,3 +64,27 @@ def load_yaml(fpath: Union[str, Path]) -> Any:
     with open(fpath, "r") as file:
         data = yaml.safe_load(file)
     return data
+
+
+class IgnoreTagLoader(SafeLoader):
+    """SafeLoader that ignores yaml tags.
+
+    Usage:
+
+    ```python
+    >>> content = yaml.load(stream, Loader=IgnoreTagLoader)
+    ```
+    """
+
+    def construct_with_tag(self, tag: str, node: Node) -> Any:
+        if isinstance(node, MappingNode):
+            return self.construct_mapping(node)
+        elif isinstance(node, ScalarNode):
+            return self.construct_scalar(node)
+        elif isinstance(node, SequenceNode):
+            return self.construct_sequence(node)
+        else:
+            raise NotImplementedError(f"Unsupported node type {type(node)}.")
+
+
+IgnoreTagLoader.add_multi_constructor("!", IgnoreTagLoader.construct_with_tag)
