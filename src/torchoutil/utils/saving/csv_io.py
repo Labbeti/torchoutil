@@ -4,9 +4,9 @@
 import csv
 import io
 from pathlib import Path
-from typing import Any, Dict, List, Mapping, Sequence, Union
+from typing import Any, Dict, List, Literal, Mapping, Sequence, Union, overload
 
-from torchoutil.utils.collections import dict_list_to_list_dict
+from torchoutil.utils.collections import dict_list_to_list_dict, list_dict_to_dict_list
 from torchoutil.utils.saving.common import to_builtin
 
 
@@ -50,8 +50,47 @@ def to_csv(
     return content
 
 
-def load_csv(fpath: Union[str, Path], **csv_reader_kwargs) -> List[Dict[str, Any]]:
+@overload
+def load_csv(
+    fpath: Union[str, Path],
+    /,
+    *,
+    orient: Literal["dict"],
+    **csv_reader_kwargs,
+) -> Dict[str, List[Any]]:
+    ...
+
+
+@overload
+def load_csv(
+    fpath: Union[str, Path],
+    /,
+    *,
+    orient: Literal["list", "dict"] = "list",
+    **csv_reader_kwargs,
+) -> List[Dict[str, Any]]:
+    ...
+
+
+def load_csv(
+    fpath: Union[str, Path],
+    /,
+    *,
+    orient: Literal["list", "dict"] = "list",
+    **csv_reader_kwargs,
+) -> Union[List[Dict[str, Any]], Dict[str, List[Any]]]:
     with open(fpath, "r") as file:
         reader = csv.DictReader(file, **csv_reader_kwargs)
         data = list(reader)
+
+    if orient == "dict":
+        data = list_dict_to_dict_list(data, key_mode="same")
+    elif orient == "list":
+        pass
+    else:
+        ORIENT_VALUES = ("list", "dict")
+        raise ValueError(
+            f"Invalid argument {orient=}. (expected one of {ORIENT_VALUES})"
+        )
+
     return data
