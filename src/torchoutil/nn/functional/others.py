@@ -174,7 +174,7 @@ def shape(x: Any) -> Size:
         raise ValueError(f"Invalid argument {x}. (cannot compute shape)")
 
 
-def to_scalar(x: Any) -> Union[int, float, bool, complex]:
+def item(x: Any) -> Union[int, float, bool, complex]:
     if is_python_scalar(x):
         return x
     elif is_torch_scalar(x) or is_numpy_scalar(x):
