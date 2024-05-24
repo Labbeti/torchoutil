@@ -37,7 +37,12 @@ DeviceDetectMode = Literal["proxy", "first_param", "none"]
 pylog = logging.getLogger(__name__)
 
 
-class ProxyDeviceModuleMixin(nn.Module):
+class SupportsTypedForward(Protocol[InType, OutType]):
+    def forward(self, x: InType) -> OutType:
+        ...
+
+
+class ProxyDeviceModule(nn.Module):
     def __init__(
         self,
         *,
@@ -92,12 +97,12 @@ class ProxyDeviceModuleMixin(nn.Module):
                 devices[param_or_buffer.device] = None
 
 
-class ConfigModuleMixin(nn.Module):
+class ConfigModule(nn.Module):
     _CONFIG_EXCLUDE = tuple(f".*{k}" for k in nn.Module().__dict__.keys()) + ("_.*",)
     _CONFIG_TYPES = (int, str, bool, float)
 
     def __init__(self) -> None:
-        object.__setattr__(self, f"_{ConfigModuleMixin.__name__}__config", {})
+        object.__setattr__(self, f"_{ConfigModule.__name__}__config", {})
         super().__init__()
         self.__config: Dict[str, Any]
 
@@ -118,7 +123,7 @@ class ConfigModuleMixin(nn.Module):
         if self._is_config_value(name, value):
             subconfig = {name: value}
             prefix = ""
-        elif isinstance(value, ConfigModuleMixin):
+        elif isinstance(value, ConfigModule):
             subconfig = value.config
         elif hasattr(value, "_hparams") and is_mapping_str(value):
             subconfig = dict(value._hparams.items())  # type: ignore
@@ -153,7 +158,7 @@ class ConfigModuleMixin(nn.Module):
             )
 
 
-class TypedModuleMixin(Generic[InType, OutType], nn.Module):
+class TypedModule(Generic[InType, OutType], nn.Module):
     """Typed version of torch.nn.Module. Can specify an input and output type."""
 
     def __init__(self) -> None:
@@ -168,21 +173,21 @@ class TypedModuleMixin(Generic[InType, OutType], nn.Module):
     @overload
     def compose(
         self,
-        other: "TypedModuleMixin[Any, OutType2]",
-    ) -> "TypedSequentialMixin[InType, OutType2]":
+        other: "TypedModule[Any, OutType2]",
+    ) -> "TypedSequential[InType, OutType2]":
         ...
 
     @overload
-    def compose(self, other: nn.Module) -> "TypedSequentialMixin[InType, Any]":
+    def compose(self, other: nn.Module) -> "TypedSequential[InType, Any]":
         ...
 
-    def compose(self, other) -> "TypedSequentialMixin[InType, Any]":
-        return TypedSequentialMixin(self, other)
+    def compose(self, other) -> "TypedSequential[InType, Any]":
+        return TypedSequential(self, other)
 
 
-class TypedSequentialMixin(
+class TypedSequential(
     Generic[InType, OutType],
-    TypedModuleMixin[InType, OutType],
+    TypedModule[InType, OutType],
     nn.Sequential,
 ):
     """Typed version of torch.nn.Sequential, designed to work with torchoutil.nn.TModules."""
@@ -193,7 +198,7 @@ class TypedSequentialMixin(
         unpack_tuple: bool = False,
         unpack_dict: bool = False,
     ) -> None:
-        TypedModuleMixin.__init__(self)
+        TypedModule.__init__(self)
         nn.Sequential.__init__(self, *args)
 
         self.__unpack_tuple = unpack_tuple
@@ -229,9 +234,9 @@ class TypedSequentialMixin(
 
 class EModule(
     Generic[InType, OutType],
-    ProxyDeviceModuleMixin,
-    ConfigModuleMixin,
-    TypedModuleMixin[InType, OutType],
+    ProxyDeviceModule,
+    ConfigModule,
+    TypedModule[InType, OutType],
 ):
     """Enriched torch.nn.Module with proxy device, forward typing and automatic configuration detection from attributes.
 
@@ -243,9 +248,9 @@ class EModule(
         *,
         device_detect_mode: DeviceDetectMode = "proxy",
     ) -> None:
-        TypedModuleMixin.__init__(self)
-        ConfigModuleMixin.__init__(self)
-        ProxyDeviceModuleMixin.__init__(self, device_detect_mode=device_detect_mode)
+        TypedModule.__init__(self)
+        ConfigModule.__init__(self)
+        ProxyDeviceModule.__init__(self, device_detect_mode=device_detect_mode)
 
     def count_parameters(
         self,
@@ -263,15 +268,16 @@ class EModule(
         )
 
 
-class SupportsTypedForward(Protocol[InType, OutType]):
-    def forward(self, x: InType) -> OutType:
-        ...
+TypedModuleLike = Union[
+    SupportsTypedForward[InType, OutType],
+    TypedModule[InType, OutType],
+]
 
 
 class ESequential(
     Generic[InType, OutType],
     EModule[InType, OutType],
-    TypedSequentialMixin[InType, OutType],
+    TypedSequential[InType, OutType],
 ):
     """Enriched torch.nn.Sequential with proxy device, forward typing and automatic configuration detection from attributes.
 
@@ -292,7 +298,7 @@ class ESequential(
     @overload
     def __init__(
         self,
-        arg0: SupportsTypedForward[InType, OutType],
+        arg0: TypedModuleLike[InType, OutType],
         /,
         *,
         unpack_tuple: bool = False,
@@ -304,8 +310,8 @@ class ESequential(
     @overload
     def __init__(
         self,
-        arg0: SupportsTypedForward[InType, Any],
-        arg1: SupportsTypedForward[Any, OutType],
+        arg0: TypedModuleLike[InType, Any],
+        arg1: TypedModuleLike[Any, OutType],
         /,
         *,
         unpack_tuple: bool = False,
@@ -317,9 +323,9 @@ class ESequential(
     @overload
     def __init__(
         self,
-        arg0: SupportsTypedForward[InType, Any],
-        arg1: SupportsTypedForward[Any, Any],
-        arg2: SupportsTypedForward[Any, OutType],
+        arg0: TypedModuleLike[InType, Any],
+        arg1: TypedModuleLike[Any, Any],
+        arg2: TypedModuleLike[Any, OutType],
         /,
         *,
         unpack_tuple: bool = False,
@@ -331,10 +337,10 @@ class ESequential(
     @overload
     def __init__(
         self,
-        arg0: SupportsTypedForward[InType, Any],
-        arg1: SupportsTypedForward[Any, Any],
-        arg2: SupportsTypedForward[Any, Any],
-        arg3: SupportsTypedForward[Any, OutType],
+        arg0: TypedModuleLike[InType, Any],
+        arg1: TypedModuleLike[Any, Any],
+        arg2: TypedModuleLike[Any, Any],
+        arg3: TypedModuleLike[Any, OutType],
         /,
         *,
         unpack_tuple: bool = False,
@@ -345,28 +351,11 @@ class ESequential(
     @overload
     def __init__(
         self,
-        arg0: SupportsTypedForward[InType, Any],
-        arg1: SupportsTypedForward[Any, Any],
-        arg2: SupportsTypedForward[Any, Any],
-        arg3: SupportsTypedForward[Any, Any],
-        arg4: SupportsTypedForward[Any, OutType],
-        /,
-        *,
-        unpack_tuple: bool = False,
-        unpack_dict: bool = False,
-        device_detect_mode: DeviceDetectMode = "proxy",
-    ) -> None:
-        ...
-
-    @overload
-    def __init__(
-        self,
-        arg0: SupportsTypedForward[InType, Any],
-        arg1: SupportsTypedForward[Any, Any],
-        arg2: SupportsTypedForward[Any, Any],
-        arg3: SupportsTypedForward[Any, Any],
-        arg4: SupportsTypedForward[Any, Any],
-        arg5: SupportsTypedForward[Any, OutType],
+        arg0: TypedModuleLike[InType, Any],
+        arg1: TypedModuleLike[Any, Any],
+        arg2: TypedModuleLike[Any, Any],
+        arg3: TypedModuleLike[Any, Any],
+        arg4: TypedModuleLike[Any, OutType],
         /,
         *,
         unpack_tuple: bool = False,
@@ -378,13 +367,12 @@ class ESequential(
     @overload
     def __init__(
         self,
-        arg0: SupportsTypedForward[InType, Any],
-        arg1: SupportsTypedForward[Any, Any],
-        arg2: SupportsTypedForward[Any, Any],
-        arg3: SupportsTypedForward[Any, Any],
-        arg4: SupportsTypedForward[Any, Any],
-        arg5: SupportsTypedForward[Any, Any],
-        arg6: SupportsTypedForward[Any, OutType],
+        arg0: TypedModuleLike[InType, Any],
+        arg1: TypedModuleLike[Any, Any],
+        arg2: TypedModuleLike[Any, Any],
+        arg3: TypedModuleLike[Any, Any],
+        arg4: TypedModuleLike[Any, Any],
+        arg5: TypedModuleLike[Any, OutType],
         /,
         *,
         unpack_tuple: bool = False,
@@ -396,7 +384,25 @@ class ESequential(
     @overload
     def __init__(
         self,
-        arg: "OrderedDict[str, SupportsTypedForward[InType, OutType]]",
+        arg0: TypedModuleLike[InType, Any],
+        arg1: TypedModuleLike[Any, Any],
+        arg2: TypedModuleLike[Any, Any],
+        arg3: TypedModuleLike[Any, Any],
+        arg4: TypedModuleLike[Any, Any],
+        arg5: TypedModuleLike[Any, Any],
+        arg6: TypedModuleLike[Any, OutType],
+        /,
+        *,
+        unpack_tuple: bool = False,
+        unpack_dict: bool = False,
+        device_detect_mode: DeviceDetectMode = "proxy",
+    ) -> None:
+        ...
+
+    @overload
+    def __init__(
+        self,
+        arg: "OrderedDict[str, TypedModuleLike[InType, OutType]]",
         /,
         *,
         unpack_tuple: bool = False,
@@ -435,7 +441,7 @@ class ESequential(
         device_detect_mode: DeviceDetectMode = "proxy",
     ) -> None:
         EModule.__init__(self, device_detect_mode=device_detect_mode)
-        TypedSequentialMixin.__init__(
+        TypedSequential.__init__(
             self,
             *args,
             unpack_tuple=unpack_tuple,
@@ -447,15 +453,15 @@ def __test_typing_1() -> None:
     import torch
     from torch import Tensor
 
-    class LayerA(TypedModuleMixin[Tensor, Tensor]):
+    class LayerA(TypedModule[Tensor, Tensor]):
         def forward(self, x: Tensor) -> Tensor:
             return x * x
 
-    class LayerB(TypedModuleMixin[Tensor, int]):
+    class LayerB(TypedModule[Tensor, int]):
         def forward(self, x: Tensor) -> int:
             return int(x.sum().item())
 
-    class LayerC(TypedModuleMixin[int, Tensor]):
+    class LayerC(TypedModule[int, Tensor]):
         def forward(self, x: int) -> Tensor:
             return torch.as_tensor(x)
 
@@ -477,11 +483,11 @@ def __test_typing_1() -> None:
     assert isinstance(xab, int)
     assert isinstance(xc, Tensor)
 
-    class LayerD(TypedModuleMixin[Tensor, int]):
+    class LayerD(nn.Module):
         def forward(self, x: Tensor) -> int:
             return int(x.item())
 
-    class LayerE(TypedModuleMixin[bool, str]):
+    class LayerE(nn.Module):
         def forward(self, x: bool) -> str:
             return str(x)
 
@@ -489,3 +495,10 @@ def __test_typing_1() -> None:
     y = seq(torch.rand())
 
     assert isinstance(y, str)
+
+    class LayerF(TypedModule[bool, str]):
+        def forward(self, x):
+            return str(x)
+
+    seq = ESequential(LayerF())
+    y = seq(True)

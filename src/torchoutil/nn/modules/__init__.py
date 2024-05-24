@@ -7,14 +7,7 @@ from .activation import SoftmaxMultidim
 from .crop import CropDim, CropDims
 from .layer import PositionalEncoding
 from .mask import MaskedMean, MaskedSum
-from .mixins import (
-    ConfigModuleMixin,
-    EModule,
-    ESequential,
-    ProxyDeviceModuleMixin,
-    TypedModuleMixin,
-    TypedSequentialMixin,
-)
+from .mixins import EModule, ESequential
 from .multiclass import (
     IndexToName,
     IndexToOnehot,
