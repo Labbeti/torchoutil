@@ -293,7 +293,9 @@ def flat_dict_of_dict(
                 output[k] = v
 
             else:
-                raise ValueError(f"Ambiguous flatten dict with key '{k}'.")
+                raise ValueError(
+                    f"Ambiguous flatten dict with key '{k}'. (with value '{v}')"
+                )
         return output
 
     return _flat_dict_of_dict_impl(nested_dic)

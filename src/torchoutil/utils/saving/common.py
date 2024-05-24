@@ -11,7 +11,11 @@ from typing import Any, Dict, Iterable, List, Mapping, TypeVar, Union, overload
 from torch import Tensor
 from torch.types import Number as TorchNumber
 
-from torchoutil.utils.packaging import _NUMPY_AVAILABLE, _OMEGACONF_AVAILABLE
+from torchoutil.utils.packaging import (
+    _NUMPY_AVAILABLE,
+    _OMEGACONF_AVAILABLE,
+    _PANDAS_AVAILABLE,
+)
 from torchoutil.utils.type_checks import is_dataclass_instance, is_namedtuple_instance
 
 if _NUMPY_AVAILABLE:
@@ -19,6 +23,9 @@ if _NUMPY_AVAILABLE:
 
 if _OMEGACONF_AVAILABLE:
     from omegaconf import DictConfig, ListConfig, OmegaConf
+
+if _PANDAS_AVAILABLE:
+    from pandas import DataFrame
 
 
 T = TypeVar("T")
@@ -74,6 +81,8 @@ def to_builtin(x: Any) -> Any:
     # Non-terminal cases
     elif _OMEGACONF_AVAILABLE and isinstance(x, (DictConfig, ListConfig)):
         return to_builtin(OmegaConf.to_container(x, resolve=False, enum_to_str=True))
+    elif _PANDAS_AVAILABLE and isinstance(x, DataFrame):
+        return to_builtin(x.to_dict())
     elif isinstance(x, Namespace):
         return to_builtin(x.__dict__)
     elif isinstance(x, Counter):
