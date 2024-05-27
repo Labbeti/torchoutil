@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import logging
+import os
 import sys
 from functools import cache
 from logging import FileHandler, Formatter, Logger, StreamHandler
@@ -9,31 +10,28 @@ from pathlib import Path
 from types import ModuleType
 from typing import IO, List, Literal, Optional, Sequence, Union
 
+from torchoutil.utils.packaging import _COLORLOG_AVAILABLE
+
 pylog = logging.getLogger(__name__)
 
 DEFAULT_FMT = "[%(asctime)s][%(name)s][%(levelname)s] - %(message)s"
+PackageOrLogger = Union[str, ModuleType, None, Logger]
+
+
+if _COLORLOG_AVAILABLE:
+    from colorlog import ColoredFormatter
 
 
 @cache
-def warn_once(msg: str, logger: Union[Logger, ModuleType, None]) -> None:
-    if logger is None:
-        pylog = logging.root
-    elif isinstance(logger, ModuleType):
-        pylog: Logger = logger.root
-    else:
-        pylog = logger
-
+def warn_once(msg: str, logger: PackageOrLogger) -> None:
+    pylog = _get_loggers(logger)[0]
     pylog.warning(msg)
 
 
 def setup_logging_verbose(
     package_or_logger: Union[
-        str,
-        ModuleType,
-        None,
-        Logger,
-        Sequence[Union[str, ModuleType, None]],
-        Sequence[Logger],
+        PackageOrLogger,
+        Sequence[PackageOrLogger],
     ],
     verbose: Optional[int],
     fmt: Union[str, None, Formatter] = DEFAULT_FMT,
@@ -48,12 +46,8 @@ def setup_logging_verbose(
 
 def setup_logging_level(
     package_or_logger: Union[
-        str,
-        ModuleType,
-        None,
-        Logger,
-        Sequence[Union[str, ModuleType, None]],
-        Sequence[Logger],
+        PackageOrLogger,
+        Sequence[PackageOrLogger],
     ],
     level: Optional[int],
     fmt: Union[str, None, Formatter] = DEFAULT_FMT,
@@ -88,12 +82,8 @@ def setup_logging_level(
 
 def _get_loggers(
     package_or_logger: Union[
-        str,
-        ModuleType,
-        None,
-        Logger,
-        Sequence[Union[str, ModuleType, None]],
-        Sequence[Logger],
+        PackageOrLogger,
+        Sequence[PackageOrLogger],
     ],
 ) -> List[Logger]:
     if package_or_logger is None or isinstance(
@@ -165,3 +155,24 @@ def get_ipython_name() -> (
         return get_ipython().__class__.__name__
     except NameError:
         return None
+
+
+def get_colored_formatter() -> Formatter:
+    if not _COLORLOG_AVAILABLE:
+        raise RuntimeError(
+            "Cannot call function get_colored_fmt() without colorlog installed. Please use `pip install torchoutil[extras]` to install it."
+        )
+
+    rank = os.getenv("SLURM_PROCID", 0)
+    fmt = f"[%(purple)sRANK{rank}%(reset)s][%(cyan)s%(asctime)s%(reset)s][%(blue)s%(name)s%(reset)s][%(log_color)s%(levelname)s%(reset)s] - %(message)s"
+    formatter = ColoredFormatter(
+        fmt=fmt,
+        log_colors={
+            "DEBUG": "purple",
+            "INFO": "green",
+            "WARNING": "yellow",
+            "ERROR": "red",
+            "CRITICAL": "bold_red",
+        },
+    )
+    return formatter
