@@ -6,7 +6,7 @@ from collections import Counter, OrderedDict
 from dataclasses import asdict
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Mapping, TypeVar, Union, overload
+from typing import Any, Dict, Iterable, List, Literal, Mapping, TypeVar, Union, overload
 
 from torch import Tensor
 from torch.types import Number as TorchNumber
@@ -32,39 +32,75 @@ T = TypeVar("T")
 K = TypeVar("K")
 V = TypeVar("V")
 
+UnkMode = Literal["identity", "error"]
+UNK_MODES = ("identity", "error")
+
 
 @overload
-def to_builtin(x: Enum) -> str:
+def to_builtin(
+    x: Enum,
+    *,
+    unk_mode: UnkMode = "identity",
+) -> str:
     ...
 
 
 @overload
-def to_builtin(x: Path) -> str:
+def to_builtin(
+    x: Path,
+    *,
+    unk_mode: UnkMode = "identity",
+) -> str:
     ...
 
 
 @overload
-def to_builtin(x: Namespace) -> Dict[str, Any]:
+def to_builtin(
+    x: Namespace,
+    *,
+    unk_mode: UnkMode = "identity",
+) -> Dict[str, Any]:
     ...
 
 
 @overload
-def to_builtin(x: Tensor) -> Union[List, TorchNumber]:
+def to_builtin(
+    x: Tensor,
+    *,
+    unk_mode: UnkMode = "identity",
+) -> Union[List, TorchNumber]:
     ...
 
 
 @overload
-def to_builtin(x: Mapping[K, V]) -> Dict[K, V]:
+def to_builtin(
+    x: Mapping[K, V],
+    *,
+    unk_mode: UnkMode = "identity",
+) -> Dict[K, V]:
     ...
 
 
 @overload
-def to_builtin(x: T) -> T:
+def to_builtin(
+    x: T,
+    *,
+    unk_mode: UnkMode = "identity",
+) -> T:
     ...
 
 
-def to_builtin(x: Any) -> Any:
-    """Helper function to sanitize data before saving to YAML or CSV file."""
+def to_builtin(
+    x: Any,
+    *,
+    unk_mode: UnkMode = "identity",
+) -> Any:
+    """Helper function to sanitize data before saving to YAML or CSV file.
+
+    Args:
+        x: Object to convert to built-in equivalent.
+
+    When an object type is not recognized,"""
     # Terminal cases
     if isinstance(x, (int, float, bool, complex, str, bytes)):
         return x
@@ -95,5 +131,9 @@ def to_builtin(x: Any) -> Any:
         return {to_builtin(k): to_builtin(v) for k, v in x.items()}  # type: ignore
     elif isinstance(x, Iterable):
         return [to_builtin(xi) for xi in x]  # type: ignore
-    else:
+    elif unk_mode == "identity":
         return x
+    elif unk_mode == "error":
+        raise TypeError(f"Unsupported argument type {type(x)}.")
+    else:
+        raise ValueError(f"Invalid argument {unk_mode=}. (expected one of {UNK_MODES})")
