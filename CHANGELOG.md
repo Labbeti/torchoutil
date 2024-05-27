@@ -12,8 +12,8 @@ All notable changes to this project will be documented in this file.
 - Mixin classes to improve module features.
 
 ### Modified
-- Rename fn `from_numpy` to `numpy_to_tensor` to avoid confusion with `torch.from_numpy`.
-- Rename fns `save_to_yaml` to `to_yaml` and `save_to_csv` to `to_csv`.
+- Rename `from_numpy` to `numpy_to_tensor` to avoid confusion with `torch.from_numpy`.
+- Rename `save_to_yaml` to `to_yaml` and `save_to_csv` to `to_csv`.
 - Rename `PickleDataset` to `PackedDataset`.
 - Rename `pack_to_pickle` to `pack_dataset`.
 - Update `EModule` and `ESequential` classes with auto-config and auto-device detection.
@@ -21,6 +21,7 @@ All notable changes to this project will be documented in this file.
 ### Fixed
 - Function `can_be_converted_to_tensor` now accepts numpy arrays and scalars.
 - Wildcard imports, and module imports. (e.g. `from torchoutil import nn`)
+- `can_be_stacked` now returns False with an empty sequence.
 
 
 ## [0.3.1] 2024-04-25

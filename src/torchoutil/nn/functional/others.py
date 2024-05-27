@@ -143,7 +143,7 @@ def can_be_stacked(
     if not is_list_tensor(tensors) and not is_tuple_tensor(tensors):
         return False
     if len(tensors) == 0:
-        return True
+        return False
     shape0 = tensors[0].shape
     result = all(tensor.shape == shape0 for tensor in tensors[1:])
     return result
