@@ -4,11 +4,11 @@ All notable changes to this project will be documented in this file.
 
 ## [0.4.0] UNRELEASED
 ### Added
-- Option `subdir_size` to `pack_to_pickle`.
-- `CosDecayScheduler` and `CosDecayRule` classes.
-- `sorted_dict` to collections.
+- Option `subdir_size` to `pack_dataset`.
+- Classes `CosDecayScheduler` and `CosDecayRule` classes.
+- Function `sorted_dict` to collections.
 - Functions `ndim` and `shape` to search information in tensor-like objects.
-- Function `to_scalar` to convert scalar-like objects to built-in scalar objects.
+- Function `item` to convert scalar-like objects to built-in scalar objects.
 - Mixin classes to improve module features.
 
 ### Modified
@@ -16,6 +16,7 @@ All notable changes to this project will be documented in this file.
 - Rename fns `save_to_yaml` to `to_yaml` and `save_to_csv` to `to_csv`.
 - Rename `PickleDataset` to `PackedDataset`.
 - Rename `pack_to_pickle` to `pack_dataset`.
+- Update `EModule` and `ESequential` classes with auto-config and auto-device detection.
 
 ### Fixed
 - Function `can_be_converted_to_tensor` now accepts numpy arrays and scalars.
