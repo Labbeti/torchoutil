@@ -21,6 +21,8 @@ if _NUMPY_AVAILABLE:
 class TestCanBeConvertedToTensor(TestCase):
     def test_examples(self) -> None:
         examples = [
+            [],
+            (),
             [[1, 0, 0], [2, 3, 4]],
             [[1, 0, 0], [2, 3]],
             [[[True], [False]], [[False], [True]]],
@@ -28,9 +30,13 @@ class TestCanBeConvertedToTensor(TestCase):
             [torch.rand(10), torch.rand(10)],
             [torch.rand(10, 5), torch.rand(10, 3)],
             [torch.rand(10, 5), torch.rand(10, 5)],
+            [torch.rand(10, 5), torch.rand(10, 5, 3)],
             [[torch.rand(10)]],
             torch.rand(10, 5),
             [(), []],
+            [2, []],
+            "",
+            [[[]], []],
         ]
 
         if _NUMPY_AVAILABLE:
@@ -59,15 +65,19 @@ class TestCanBeConvertedToTensor(TestCase):
             except RuntimeError:
                 stackable = False
 
+            # note: can_be_converted_to_tensor(example) => convertible, but not necessary equal
             assert (
-                can_be_converted_to_tensor(example) == convertible
+                not can_be_converted_to_tensor(example) or convertible
             ), f"can_be_converted_to_tensor: {example=}"
+
             assert can_be_stacked(example) == stackable, f"can_be_stacked: {example=}"
 
 
 class TestNDimShape(TestCase):
     def test_examples(self) -> None:
         examples = [
+            [],
+            (),
             [[1, 0, 0], [2, 3, 4]],
             [[1, 0, 0], [2, 3]],
             [[[True], [False]], [[False], [True]]],
@@ -83,6 +93,8 @@ class TestNDimShape(TestCase):
             [[[]], []],
         ]
         expected_ndims = [
+            1,
+            1,
             2,
             2,
             3,
@@ -98,6 +110,8 @@ class TestNDimShape(TestCase):
             ValueError,
         ]
         expected_shapes = [
+            (0,),
+            (0,),
             (2, 3),
             ValueError,
             (2, 2, 1),

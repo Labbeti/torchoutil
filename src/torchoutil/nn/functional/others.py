@@ -150,7 +150,10 @@ def can_be_stacked(
 
 
 def can_be_converted_to_tensor(x: Any) -> bool:
-    """Returns True if inputs can be passed to `torch.as_tensor` function."""
+    """Returns True if inputs can be passed to `torch.as_tensor` function.
+
+    This function returns False for heterogeneous inputs like `[[], 1]`, but this kind of value can be accepted by `torch.as_tensor`.
+    """
     if isinstance(x, Tensor):
         return True
     else:
@@ -225,7 +228,10 @@ def __can_be_converted_to_tensor_list_tuple(x: Union[List, Tuple]) -> bool:
     if not valid_items:
         return False
 
-    if all(not isinstance(xi, Sized) for xi in x):
+    if all(
+        (not isinstance(xi, Sized) or (isinstance(xi, Tensor) and xi.ndim == 0))
+        for xi in x
+    ):
         return True
     elif all(isinstance(xi, Sized) for xi in x):
         len0 = len(x[0])
@@ -236,6 +242,8 @@ def __can_be_converted_to_tensor_list_tuple(x: Union[List, Tuple]) -> bool:
 
 def __can_be_converted_to_tensor_nested(x: Any) -> bool:
     if is_python_scalar(x):
+        return True
+    elif isinstance(x, Tensor) and x.ndim == 0:
         return True
     elif (
         _NUMPY_AVAILABLE

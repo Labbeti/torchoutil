@@ -21,3 +21,9 @@ from . import nn as nn
 from . import optim as optim
 from . import utils as utils
 from .nn.functional import *
+from .utils.type_checks import (
+    is_numpy_scalar,
+    is_python_scalar,
+    is_scalar,
+    is_torch_scalar,
+)

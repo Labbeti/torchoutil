@@ -47,6 +47,9 @@ class NamedTupleInstance(Protocol):
         ...
 
 
+BuiltinScalar = Union[int, float, bool, complex]
+
+
 def is_numpy_scalar(x: Any) -> bool:
     """Returns True if x is an instance of a numpy generic type or a zero-dimensional numpy array.
     If numpy is not installed, this function always returns False.
@@ -57,7 +60,7 @@ def is_numpy_scalar(x: Any) -> bool:
         return False
 
 
-def is_python_scalar(x: Any) -> TypeGuard[Union[int, float, bool, complex]]:
+def is_python_scalar(x: Any) -> TypeGuard[Union[BuiltinScalar]]:
     """Returns True if x is a builtin scalar type (int, float, bool, complex)."""
     return isinstance(x, (int, float, bool, complex))
 
@@ -67,7 +70,7 @@ def is_torch_scalar(x: Any) -> TypeGuard[Tensor]:
     return isinstance(x, Tensor) and x.ndim == 0
 
 
-def is_scalar(x: Any) -> TypeGuard[Union[int, float, bool, complex, Tensor]]:
+def is_scalar(x: Any) -> TypeGuard[Union[BuiltinScalar, Tensor]]:
     """Returns True if input is a scalar.
 
     Accepted scalars list is:
