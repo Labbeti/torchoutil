@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## [0.4.0] UNRELEASED
+## [0.4.0] 2024-05-27
 ### Added
 - Option `subdir_size` to `pack_dataset`.
 - Classes `CosDecayScheduler` and `CosDecayRule` classes.
