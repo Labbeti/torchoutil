@@ -99,8 +99,10 @@ def to_builtin(
 
     Args:
         x: Object to convert to built-in equivalent.
-
-    When an object type is not recognized,"""
+        unk_mode: When an object type is not recognized, unk_mode defines the behaviour.
+            If unk_mode == "identity", the object is returned unchanged.
+            If unk_mode == "error", a TypeError is raised.
+    """
     # Terminal cases
     if isinstance(x, (int, float, bool, complex, str, bytes)):
         return x
