@@ -56,6 +56,7 @@ from .others import (
     can_be_stacked,
     count_parameters,
     find,
+    item,
     move_to_rec,
     ndim,
     shape,

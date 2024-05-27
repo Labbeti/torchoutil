@@ -6,6 +6,7 @@ import logging
 import re
 from typing import (
     Any,
+    ClassVar,
     Dict,
     Generic,
     Iterator,
@@ -98,17 +99,21 @@ class ProxyDeviceModule(nn.Module):
 
 
 class ConfigModule(nn.Module):
-    _CONFIG_EXCLUDE = tuple(f".*{k}" for k in nn.Module().__dict__.keys()) + ("_.*",)
-    _CONFIG_TYPES = (int, str, bool, float)
+    _CONFIG_EXCLUDE: ClassVar[tuple[str, ...]] = tuple(
+        f".*{k}" for k in nn.Module().__dict__.keys()
+    ) + ("_.*",)
+    _CONFIG_TYPES: ClassVar[tuple[type, ...]] = (int, str, bool, float)
 
-    def __init__(self) -> None:
+    def __init__(self, *, strict_load: bool = False) -> None:
         object.__setattr__(self, f"_{ConfigModule.__name__}__config", {})
+        object.__setattr__(self, f"_{ConfigModule.__name__}__strict_load", strict_load)
         super().__init__()
         self.__config: Dict[str, Any]
+        self.__strict_load: bool
 
-    def add_module(self, name: str, module: Union[nn.Module, None]) -> None:
-        self.__update_config(name, module)
-        return super().add_module(name, module)
+    @property
+    def config(self) -> Dict[str, Any]:
+        return self.__config
 
     def __setattr__(self, name: str, value: Any) -> None:
         self.__update_config(name, value)
@@ -117,6 +122,25 @@ class ConfigModule(nn.Module):
     def __delattr__(self, name) -> None:
         self.__config.pop(name, None)
         return super().__delattr__(name)
+
+    def add_module(self, name: str, module: Union[nn.Module, None]) -> None:
+        self.__update_config(name, module)
+        return super().add_module(name, module)
+
+    def get_extra_state(self) -> Any:
+        state = {"config": self.__config}
+        return state
+
+    def set_extra_state(self, state: Any) -> None:
+        in_config = state["config"]
+        if self.config == in_config:
+            return None
+
+        msg = f"Invalid saved config {in_config} with current one {self.config}."
+        if self.__strict_load:
+            raise ValueError(msg)
+        else:
+            pylog.warning(msg)
 
     def __update_config(self, name: str, value: Any) -> None:
         prefix = f"{name}."
@@ -142,27 +166,9 @@ class ConfigModule(nn.Module):
             re.match(exclude_i, name) is None for exclude_i in cls._CONFIG_EXCLUDE
         )
 
-    @property
-    def config(self) -> Dict[str, Any]:
-        return self.__config
-
-    def get_extra_state(self) -> Any:
-        state = {"config": self.__config}
-        return state
-
-    def set_extra_state(self, state: Any) -> None:
-        in_config = state["config"]
-        if self.config != in_config:
-            pylog.warning(
-                f"Invalid saved config {in_config} with current one {self.config}."
-            )
-
 
 class TypedModule(Generic[InType, OutType], nn.Module):
     """Typed version of torch.nn.Module. Can specify an input and output type."""
-
-    def __init__(self) -> None:
-        super().__init__()
 
     def __call__(self, *args: InType, **kwargs: InType) -> OutType:
         return super().__call__(*args, **kwargs)
@@ -190,8 +196,6 @@ class TypedSequential(
     TypedModule[InType, OutType],
     nn.Sequential,
 ):
-    """Typed version of torch.nn.Sequential, designed to work with torchoutil.nn.TModules."""
-
     def __init__(
         self,
         *args,
@@ -234,9 +238,9 @@ class TypedSequential(
 
 class EModule(
     Generic[InType, OutType],
-    ProxyDeviceModule,
     ConfigModule,
     TypedModule[InType, OutType],
+    ProxyDeviceModule,
 ):
     """Enriched torch.nn.Module with proxy device, forward typing and automatic configuration detection from attributes.
 
@@ -246,10 +250,12 @@ class EModule(
     def __init__(
         self,
         *,
+        strict_load: bool = False,
         device_detect_mode: DeviceDetectMode = "proxy",
     ) -> None:
+        # ConfigModule must be first
+        ConfigModule.__init__(self, strict_load=strict_load)
         TypedModule.__init__(self)
-        ConfigModule.__init__(self)
         ProxyDeviceModule.__init__(self, device_detect_mode=device_detect_mode)
 
     def count_parameters(
@@ -281,6 +287,7 @@ class ESequential(
 ):
     """Enriched torch.nn.Sequential with proxy device, forward typing and automatic configuration detection from attributes.
 
+    Designed to work with `torchoutil.nn.EModule` instances.
     The default behaviour is the same than PyTorch Sequential class.
     """
 
@@ -291,6 +298,7 @@ class ESequential(
         *,
         unpack_tuple: bool = False,
         unpack_dict: bool = False,
+        strict_load: bool = False,
         device_detect_mode: DeviceDetectMode = "proxy",
     ) -> None:
         ...
@@ -303,6 +311,7 @@ class ESequential(
         *,
         unpack_tuple: bool = False,
         unpack_dict: bool = False,
+        strict_load: bool = False,
         device_detect_mode: DeviceDetectMode = "proxy",
     ) -> None:
         ...
@@ -316,6 +325,7 @@ class ESequential(
         *,
         unpack_tuple: bool = False,
         unpack_dict: bool = False,
+        strict_load: bool = False,
         device_detect_mode: DeviceDetectMode = "proxy",
     ) -> None:
         ...
@@ -330,6 +340,7 @@ class ESequential(
         *,
         unpack_tuple: bool = False,
         unpack_dict: bool = False,
+        strict_load: bool = False,
         device_detect_mode: DeviceDetectMode = "proxy",
     ) -> None:
         ...
@@ -345,6 +356,8 @@ class ESequential(
         *,
         unpack_tuple: bool = False,
         unpack_dict: bool = False,
+        strict_load: bool = False,
+        device_detect_mode: DeviceDetectMode = "proxy",
     ) -> None:
         ...
 
@@ -360,6 +373,7 @@ class ESequential(
         *,
         unpack_tuple: bool = False,
         unpack_dict: bool = False,
+        strict_load: bool = False,
         device_detect_mode: DeviceDetectMode = "proxy",
     ) -> None:
         ...
@@ -377,6 +391,7 @@ class ESequential(
         *,
         unpack_tuple: bool = False,
         unpack_dict: bool = False,
+        strict_load: bool = False,
         device_detect_mode: DeviceDetectMode = "proxy",
     ) -> None:
         ...
@@ -395,6 +410,7 @@ class ESequential(
         *,
         unpack_tuple: bool = False,
         unpack_dict: bool = False,
+        strict_load: bool = False,
         device_detect_mode: DeviceDetectMode = "proxy",
     ) -> None:
         ...
@@ -407,6 +423,7 @@ class ESequential(
         *,
         unpack_tuple: bool = False,
         unpack_dict: bool = False,
+        strict_load: bool = False,
         device_detect_mode: DeviceDetectMode = "proxy",
     ) -> None:
         ...
@@ -419,6 +436,7 @@ class ESequential(
         *,
         unpack_tuple: bool = False,
         unpack_dict: bool = False,
+        strict_load: bool = False,
         device_detect_mode: DeviceDetectMode = "proxy",
     ) -> None:
         ...
@@ -429,6 +447,7 @@ class ESequential(
         *args: nn.Module,
         unpack_tuple: bool = False,
         unpack_dict: bool = False,
+        strict_load: bool = False,
         device_detect_mode: DeviceDetectMode = "proxy",
     ) -> None:
         ...
@@ -438,9 +457,14 @@ class ESequential(
         *args,
         unpack_tuple: bool = False,
         unpack_dict: bool = False,
+        strict_load: bool = False,
         device_detect_mode: DeviceDetectMode = "proxy",
     ) -> None:
-        EModule.__init__(self, device_detect_mode=device_detect_mode)
+        EModule.__init__(
+            self,
+            strict_load=strict_load,
+            device_detect_mode=device_detect_mode,
+        )
         TypedSequential.__init__(
             self,
             *args,

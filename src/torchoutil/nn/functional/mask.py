@@ -13,6 +13,7 @@ from torchoutil.nn.functional.get import get_device
 def masked_mean(
     x: Tensor,
     non_pad_mask: Tensor,
+    *,
     dim: Union[None, int, Iterable[int]] = None,
 ) -> Tensor:
     """Average a tensor along the specified dim(s).
@@ -38,6 +39,7 @@ def masked_mean(
 def masked_sum(
     x: Tensor,
     non_pad_mask: Tensor,
+    *,
     dim: Union[None, int, Iterable[int]] = None,
 ) -> Tensor:
     """Sum a tensor along the specified dim(s).

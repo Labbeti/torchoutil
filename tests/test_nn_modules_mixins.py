@@ -10,7 +10,7 @@ import torch
 from torchoutil import Tensor, nn
 
 
-class MyModule(nn.EModule):
+class MyModule(nn.EModule[Tensor, Tensor]):
     def __init__(self, in_features: int, out_features: int, p: float) -> None:
         projection = nn.Linear(in_features, out_features)
         dropout = nn.Dropout(p=p)
