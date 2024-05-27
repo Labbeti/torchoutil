@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 from argparse import Namespace
-from collections import Counter
+from collections import Counter, OrderedDict
 from dataclasses import asdict
 from enum import Enum
 from pathlib import Path
@@ -85,7 +85,7 @@ def to_builtin(x: Any) -> Any:
         return to_builtin(x.to_dict())
     elif isinstance(x, Namespace):
         return to_builtin(x.__dict__)
-    elif isinstance(x, Counter):
+    elif isinstance(x, (Counter, OrderedDict)):
         return to_builtin(dict(x))
     elif is_dataclass_instance(x):
         return to_builtin(asdict(x))
