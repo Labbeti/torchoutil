@@ -233,7 +233,7 @@ class RegistryHub(Generic[T]):
 
 
 def get_default_register_root() -> Path:
-    """Default checkpoint path: `~/.cache/torch/hub/checkpoints`."""
+    """Default register root path is `~/.cache/torch/hub/checkpoints`, which is based on `torch.hub.get_dir`."""
     path = torch.hub.get_dir()
     path = Path(path)
     path = path.joinpath("checkpoints")

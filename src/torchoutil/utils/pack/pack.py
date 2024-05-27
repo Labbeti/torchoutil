@@ -15,13 +15,9 @@ from torch.utils.data.dataloader import DataLoader
 
 from torchoutil.utils.data.dataloader import get_auto_num_cpus
 from torchoutil.utils.data.dataset import SizedDatasetLike, TransformWrapper
+from torchoutil.utils.pack.common import ATTRS_FNAME, CONTENT_DNAME, ContentMode
+from torchoutil.utils.pack.dataset import PackedDataset
 from torchoutil.utils.packaging import _TQDM_AVAILABLE
-from torchoutil.utils.pickle_dataset.common import (
-    ATTRS_FNAME,
-    CONTENT_DNAME,
-    ContentMode,
-)
-from torchoutil.utils.pickle_dataset.dataset import PickleDataset
 from torchoutil.utils.saving.common import to_builtin
 
 if _TQDM_AVAILABLE:
@@ -36,7 +32,7 @@ pylog = logging.getLogger(__name__)
 
 
 @torch.inference_mode()
-def pack_to_pickle(
+def pack_dataset(
     dataset: SizedDatasetLike[T],
     root: Union[str, Path],
     pre_transform: Optional[Callable[[T], U]] = None,
@@ -48,7 +44,7 @@ def pack_to_pickle(
     save_fn: Callable[[Union[U, List[U]], Path], None] = torch.save,
     subdir_size: Optional[int] = 100,
     verbose: int = 0,
-) -> PickleDataset[U, U]:
+) -> PackedDataset[U, U]:
     """Pack a dataset to pickle files.
 
     Here is an example how files are stored on disk for a dataset containing 1000 items:
@@ -212,5 +208,5 @@ def pack_to_pickle(
     with open(attrs_fpath, "w") as file:
         json.dump(attributes, file, indent="\t")
 
-    pickle_dataset = PickleDataset(root)
-    return pickle_dataset
+    pack = PackedDataset(root)
+    return pack

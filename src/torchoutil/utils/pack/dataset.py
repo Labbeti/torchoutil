@@ -10,7 +10,7 @@ from typing import Any, Callable, Dict, Generic, List, Optional, TypeVar, Union
 import torch
 from torch.utils.data.dataset import Dataset
 
-from torchoutil.utils.pickle_dataset.common import (
+from torchoutil.utils.pack.common import (
     ATTRS_FNAME,
     ContentMode,
     PickleDatasetAttributes,
@@ -22,13 +22,13 @@ T = TypeVar("T")
 U = TypeVar("U")
 
 
-class PickleDataset(Generic[T, U], Dataset[U]):
+class PackedDataset(Generic[T, U], Dataset[U]):
     def __init__(
         self,
         root: Union[str, Path],
         transform: Optional[Callable[[T], U]] = None,
         *,
-        load_fn: Callable[[Path, ...], Union[T, List[T]]] = torch.load,
+        load_fn: Callable[..., Union[T, List[T]]] = torch.load,
         load_kwds: Optional[Dict[str, Any]] = None,
         use_cache: bool = False,
     ) -> None:
@@ -146,7 +146,7 @@ class PickleDataset(Generic[T, U], Dataset[U]):
     @classmethod
     def is_pickle_root(cls, root: Union[str, Path]) -> bool:
         try:
-            PickleDataset(root)
+            PackedDataset(root)
             return True
         except (FileNotFoundError, RuntimeError):
             return False

@@ -83,16 +83,16 @@ result = masked_mean(x, mask)
 
 ### Pre-compute datasets to pickle or HDF files
 
-Here is an example of pre-computing spectrograms of torchaudio `SPEECHCOMMANDS` dataset, using `pack_to_pickle` function:
+Here is an example of pre-computing spectrograms of torchaudio `SPEECHCOMMANDS` dataset, using `pack_to_custom` function:
 
 ```python
 from torch import nn
 from torchaudio.datasets import SPEECHCOMMANDS
 from torchaudio.transforms import Spectrogram
-from torchoutil.utils.pickle_dataset import pack_to_pickle
+from torchoutil.utils.pack import pack_to_custom
 
 speech_commands_root = "path/to/speech_commands"
-pickle_root = "path/to/pickle_dataset"
+packed_root = "path/to/packed_dataset"
 
 dataset = SPEECHCOMMANDS(speech_commands_root, download=True, subset="validation")
 # dataset[0] is a tuple, contains waveform and other metadata
@@ -107,16 +107,16 @@ class MyTransform(nn.Module):
         spectrogram = self.spectrogram_extractor(waveform)
         return (spectrogram,) + item[1:]
 
-pack_to_pickle(dataset, pickle_root, MyTransform())
+pack_to_custom(dataset, packed_root, MyTransform())
 ```
 
-Then you can load the pre-computed dataset using `PickleDataset`:
+Then you can load the pre-computed dataset using `PackedDataset`:
 ```python
-from torchoutil.utils.pickle_dataset import PickleDataset
+from torchoutil.utils.pack import PackedDataset
 
-pickle_root = "path/to/pickle_dataset"
-pickle_dataset = PickleDataset(pickle_root)
-pickle_dataset[0]  # == first transformed item, i.e. transform(dataset[0])
+packed_root = "path/to/packed_dataset"
+packed_dataset = PackedDataset(packed_root)
+packed_dataset[0]  # == first transformed item, i.e. transform(dataset[0])
 ```
 
 ### Other tensors manipulations!
