@@ -9,7 +9,7 @@ ATTRS_FNAME = "attributes.json"
 ContentMode = Literal["item", "batch"]
 
 
-class PickleDatasetAttributes(TypedDict):
+class PackedDatasetAttributes(TypedDict):
     source_dataset: str
     length: int
     creation_date: str
@@ -18,6 +18,6 @@ class PickleDatasetAttributes(TypedDict):
     content_dname: str
     subdir_size: Optional[int]
     info: Dict[str, Any]
-    source_attrs: "PickleDatasetAttributes"
+    source_attrs: "PackedDatasetAttributes"
     num_files: int
     files: List[str]

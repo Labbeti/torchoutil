@@ -13,7 +13,7 @@ from torch.utils.data.dataset import Dataset
 from torchoutil.utils.pack.common import (
     ATTRS_FNAME,
     ContentMode,
-    PickleDatasetAttributes,
+    PackedDatasetAttributes,
 )
 
 pylog = logging.getLogger(__name__)
@@ -59,7 +59,7 @@ class PackedDataset(Generic[T, U], Dataset[U]):
         self._reload_data()
 
     @property
-    def attrs(self) -> PickleDatasetAttributes:
+    def attrs(self) -> PackedDatasetAttributes:
         return self._attrs  # type: ignore
 
     @property
@@ -126,7 +126,7 @@ class PackedDataset(Generic[T, U], Dataset[U]):
             missing = []
         else:
             missing = list(
-                set(PickleDatasetAttributes.__required_keys__).difference(attrs)
+                set(PackedDatasetAttributes.__required_keys__).difference(attrs)
             )
 
         if len(missing) > 0:
