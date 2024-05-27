@@ -15,6 +15,7 @@ from typing import (
     Optional,
     OrderedDict,
     Protocol,
+    Tuple,
     TypeVar,
     Union,
     overload,
@@ -99,10 +100,10 @@ class ProxyDeviceModule(nn.Module):
 
 
 class ConfigModule(nn.Module):
-    _CONFIG_EXCLUDE: ClassVar[tuple[str, ...]] = tuple(
+    _CONFIG_EXCLUDE: ClassVar[Tuple[str, ...]] = tuple(
         f".*{k}" for k in nn.Module().__dict__.keys()
     ) + ("_.*",)
-    _CONFIG_TYPES: ClassVar[tuple[type, ...]] = (int, str, bool, float)
+    _CONFIG_TYPES: ClassVar[Tuple[type, ...]] = (int, str, bool, float)
 
     def __init__(self, *, strict_load: bool = False) -> None:
         object.__setattr__(self, f"_{ConfigModule.__name__}__config", {})
