@@ -26,7 +26,7 @@ def _dict_to_tuple(x: Dict[str, T]) -> Tuple[T, ...]:
     return tuple(x.values())
 
 
-class HDFAttributes(TypedDict):
+class HDFDatasetAttributes(TypedDict):
     creation_date: str
     source_dataset: str
     length: int

@@ -6,17 +6,17 @@ from unittest import TestCase
 
 import torch
 
-from torchoutil.nn.modules import CropDim, PadDim, ResampleNearest
-from torchoutil.nn.modules.typed import TSequential
+from torchoutil.nn.modules import CropDim, PadDim, ResampleNearestRates
+from torchoutil.nn.modules.mixins import ESequential
 
 
 class TestTransforms(TestCase):
     def test_example_1(self) -> None:
         target_length = 10
-        transform = TSequential(
-            ResampleNearest(0.5),
+        transform = ESequential(
+            ResampleNearestRates(0.5),
             PadDim(target_length),
-            ResampleNearest(2.5),
+            ResampleNearestRates(2.5),
             CropDim(target_length),
         )
 

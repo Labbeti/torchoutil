@@ -7,11 +7,11 @@ from unittest import TestCase
 
 from torchoutil.utils.collections import (
     flat_dict_of_dict,
-    flat_list,
+    flat_list_of_list,
     intersect_lists,
     list_dict_to_dict_list,
     unflat_dict_of_dict,
-    unflat_list,
+    unflat_list_of_list,
 )
 from torchoutil.utils.type_checks import is_list_list_str, is_list_str
 
@@ -108,13 +108,13 @@ class TestFlatList(TestCase):
 
         self.assertTrue(is_list_list_str(lst))
 
-        flatten, sizes = flat_list(lst)
+        flatten, sizes = flat_list_of_list(lst)
 
         self.assertTrue(is_list_str(flatten))
         self.assertEqual(len(lst), len(sizes))
         self.assertEqual(len(flatten), sum(sizes))
 
-        unflat = unflat_list(flatten, sizes)
+        unflat = unflat_list_of_list(flatten, sizes)
 
         self.assertTrue(is_list_list_str(unflat))
         self.assertEqual(len(lst), len(unflat))

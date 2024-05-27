@@ -27,7 +27,6 @@ from h5py import Dataset as HDFRawDataset
 from torch import Tensor, nn
 from torch.utils.data.dataloader import DataLoader
 
-from torchoutil.nn.functional.numpy import is_numpy_scalar
 from torchoutil.utils.collections import all_eq, unzip
 from torchoutil.utils.data.dataloader import get_auto_num_cpus
 from torchoutil.utils.data.dataset import SizedDatasetLike, TransformWrapper
@@ -39,7 +38,7 @@ from torchoutil.utils.hdf.common import (
     _tuple_to_dict,
 )
 from torchoutil.utils.hdf.dataset import HDFDataset
-from torchoutil.utils.type_checks import is_dict_str
+from torchoutil.utils.type_checks import is_dict_str, is_numpy_scalar
 
 pylog = logging.getLogger(__name__)
 

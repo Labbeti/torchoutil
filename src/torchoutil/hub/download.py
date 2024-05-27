@@ -3,7 +3,9 @@
 
 import hashlib
 from pathlib import Path
-from typing import Literal, Union
+from typing import Literal, Optional, Union
+
+from torch.hub import download_url_to_file
 
 DEFAULT_CHUNK_SIZE = 256 * 1024**2  # 256 MiB
 HASH_TYPES = ("sha256", "md5")
@@ -37,3 +39,19 @@ def hash_file(
 
     hash_value = hasher.hexdigest()
     return hash_value
+
+
+def download_file(
+    url: str,
+    fpath: Union[str, Path],
+    hash_prefix: Optional[str] = None,
+    make_intermediate: bool = False,
+    verbose: int = 0,
+) -> Path:
+    fpath = Path(fpath)
+    if make_intermediate:
+        dpath = fpath.parent
+        dpath.mkdir(parents=True, exist_ok=True)
+
+    download_url_to_file(url, fpath, hash_prefix=hash_prefix, progress=verbose > 0)
+    return fpath

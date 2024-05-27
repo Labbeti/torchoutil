@@ -16,10 +16,10 @@ Submodules
    torchoutil.nn.modules.crop
    torchoutil.nn.modules.layer
    torchoutil.nn.modules.mask
+   torchoutil.nn.modules.mixins
    torchoutil.nn.modules.multiclass
    torchoutil.nn.modules.multilabel
    torchoutil.nn.modules.numpy
    torchoutil.nn.modules.pad
    torchoutil.nn.modules.tensor
    torchoutil.nn.modules.transform
-   torchoutil.nn.modules.typed

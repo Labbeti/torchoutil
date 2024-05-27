@@ -4,11 +4,13 @@
 from typing import Callable, Generic, Iterable, TypeVar, Union
 
 import torch
-from torch import Tensor, nn
+from torch import Generator, Tensor, nn
 
 from torchoutil.nn.functional.transform import (
     repeat_interleave_nd,
-    resample_nearest,
+    resample_nearest_freqs,
+    resample_nearest_rates,
+    resample_nearest_steps,
     transform_drop,
 )
 from torchoutil.utils.collections import dump_dict
@@ -16,34 +18,9 @@ from torchoutil.utils.collections import dump_dict
 T = TypeVar("T")
 
 
-class Repeat(nn.Module):
-    def __init__(self, *repeats: int) -> None:
-        super().__init__()
-        self.repeats = repeats
-
-    def forward(self, x: Tensor) -> Tensor:
-        return x.repeat(self.repeats)
-
-    def extra_repr(self) -> str:
-        return dump_dict(dict(repeats=self.repeats))
-
-
-class RepeatInterleave(nn.Module):
-    def __init__(self, repeats: int, dim: int) -> None:
-        super().__init__()
-        self.repeats = repeats
-        self.dim = dim
-
-    def forward(self, x: Tensor) -> Tensor:
-        return x.repeat_interleave(self.repeats, self.dim)
-
-    def extra_repr(self) -> str:
-        return dump_dict(dict(repeats=self.repeats, dim=self.dim))
-
-
 class RepeatInterleaveNd(nn.Module):
     """
-    For more information, see :func:`~torchoutil.nn.functional.transform.resample_nearest`.
+    For more information, see :func:`~torchoutil.nn.functional.transform.repeat_interleave_nd`.
     """
 
     def __init__(self, repeats: int, dim: int) -> None:
@@ -58,9 +35,9 @@ class RepeatInterleaveNd(nn.Module):
         return dump_dict(dict(repeats=self.repeats, dim=self.dim))
 
 
-class ResampleNearest(nn.Module):
+class ResampleNearestRates(nn.Module):
     """
-    For more information, see :func:`~torchoutil.nn.functional.transform.resample_nearest`.
+    For more information, see :func:`~torchoutil.nn.functional.transform.resample_nearest_rates`.
     """
 
     def __init__(
@@ -75,7 +52,7 @@ class ResampleNearest(nn.Module):
         self.round_fn = round_fn
 
     def forward(self, x: Tensor) -> Tensor:
-        return resample_nearest(
+        return resample_nearest_rates(
             x,
             rates=self.rates,
             dims=self.dims,
@@ -84,6 +61,67 @@ class ResampleNearest(nn.Module):
 
     def extra_repr(self) -> str:
         return dump_dict(dict(rates=self.rates, dims=self.dims))
+
+
+class ResampleNearestFreqs(nn.Module):
+    """
+    For more information, see :func:`~torchoutil.nn.functional.transform.resample_nearest_freqs`.
+    """
+
+    def __init__(
+        self,
+        orig_freq: int,
+        new_freq: int,
+        dims: Union[int, Iterable[int]] = -1,
+        round_fn: Callable[[Tensor], Tensor] = torch.floor,
+    ) -> None:
+        super().__init__()
+        self.orig_freq = orig_freq
+        self.new_freq = new_freq
+        self.dims = dims
+        self.round_fn = round_fn
+
+    def forward(self, x: Tensor) -> Tensor:
+        return resample_nearest_freqs(
+            x,
+            orig_freq=self.orig_freq,
+            new_freq=self.new_freq,
+            dims=self.dims,
+            round_fn=self.round_fn,
+        )
+
+    def extra_repr(self) -> str:
+        return dump_dict(
+            dict(orig_freq=self.orig_freq, new_freq=self.new_freq, dims=self.dims)
+        )
+
+
+class ResampleNearestSteps(nn.Module):
+    """
+    For more information, see :func:`~torchoutil.nn.functional.transform.resample_nearest_steps`.
+    """
+
+    def __init__(
+        self,
+        steps: Union[float, Iterable[float]],
+        dims: Union[int, Iterable[int]] = -1,
+        round_fn: Callable[[Tensor], Tensor] = torch.floor,
+    ) -> None:
+        super().__init__()
+        self.steps = steps
+        self.dims = dims
+        self.round_fn = round_fn
+
+    def forward(self, x: Tensor) -> Tensor:
+        return resample_nearest_steps(
+            x,
+            steps=self.steps,
+            dims=self.dims,
+            round_fn=self.round_fn,
+        )
+
+    def extra_repr(self) -> str:
+        return dump_dict(dict(steps=self.steps, dims=self.dims))
 
 
 class TransformDrop(Generic[T], nn.Module):
@@ -95,16 +133,19 @@ class TransformDrop(Generic[T], nn.Module):
         self,
         transform: Callable[[T], T],
         p: float,
+        generator: Union[int, Generator, None] = None,
     ) -> None:
         super().__init__()
         self.transform = transform
         self.p = p
+        self.generator = generator
 
     def forward(self, x: T) -> T:
         return transform_drop(
             transform=self.transform,
             x=x,
             p=self.p,
+            generator=self.generator,
         )
 
     def extra_repr(self) -> str:

@@ -14,7 +14,7 @@ Subpackages
 
    torchoutil.utils.data
    torchoutil.utils.hdf
-   torchoutil.utils.pickle_dataset
+   torchoutil.utils.pack
    torchoutil.utils.saving
 
 Submodules

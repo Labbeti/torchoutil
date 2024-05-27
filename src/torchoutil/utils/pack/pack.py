@@ -6,7 +6,6 @@ import json
 import logging
 import math
 import shutil
-from dataclasses import asdict, is_dataclass
 from pathlib import Path
 from typing import Callable, List, Literal, Optional, TypeVar, Union
 
@@ -16,13 +15,14 @@ from torch.utils.data.dataloader import DataLoader
 
 from torchoutil.utils.data.dataloader import get_auto_num_cpus
 from torchoutil.utils.data.dataset import SizedDatasetLike, TransformWrapper
-from torchoutil.utils.pickle_dataset.common import (
-    ATTRS_FNAME,
-    CONTENT_DNAME,
-    ContentMode,
-)
-from torchoutil.utils.pickle_dataset.dataset import PickleDataset
-from torchoutil.utils.type_checks import is_mapping_str
+from torchoutil.utils.pack.common import ATTRS_FNAME, CONTENT_DNAME, ContentMode
+from torchoutil.utils.pack.dataset import PackedDataset
+from torchoutil.utils.packaging import _TQDM_AVAILABLE
+from torchoutil.utils.saving.common import to_builtin
+
+if _TQDM_AVAILABLE:
+    import tqdm
+
 
 T = TypeVar("T")
 U = TypeVar("U")
@@ -32,7 +32,7 @@ pylog = logging.getLogger(__name__)
 
 
 @torch.inference_mode()
-def pack_to_pickle(
+def pack_dataset(
     dataset: SizedDatasetLike[T],
     root: Union[str, Path],
     pre_transform: Optional[Callable[[T], U]] = None,
@@ -42,8 +42,27 @@ def pack_to_pickle(
     content_mode: ContentMode = "item",
     custom_file_fmt: Union[None, str, Callable[[int], str]] = None,
     save_fn: Callable[[Union[U, List[U]], Path], None] = torch.save,
-) -> PickleDataset[U, U]:
+    subdir_size: Optional[int] = 100,
+    verbose: int = 0,
+) -> PackedDataset[U, U]:
     """Pack a dataset to pickle files.
+
+    Here is an example how files are stored on disk for a dataset containing 1000 items:
+
+    .. code-block:: text
+        :caption:  Dataset folder tree example
+
+        {root}
+        ├── attributes.json
+        └── data
+            ├── 0
+            |   └── 100 pt files
+            ├── 1
+            |   └── 100 pt files
+            ├── ...
+            |   └── ...
+            └── 9
+                └── 100 pt files
 
     Args:
         dataset: Dataset-like to pack.
@@ -59,6 +78,10 @@ def pack_to_pickle(
             If None, defaults to "{{i:0{num_digits}d}}.pt".
             defaults to None.
         save_fn: Custom save function to save an item or a batch. defaults to torch.save.
+        subdir_size: Optional number of files per folder.
+            Using None will disable subdir an put all files in data/ folder.
+            defaults to 100.
+        verbose: Verbose level during packing. Higher value means more messages. defaults to 0.
     """
 
     # Check inputs
@@ -119,22 +142,36 @@ def pack_to_pickle(
 
     fnames = [file_fmt(i) for i in range(num_files)]
 
+    if subdir_size is not None and len(fnames) > subdir_size:
+        num_subdirs = math.ceil(len(fnames) / subdir_size)
+        num_digits = math.ceil(math.log10(num_subdirs))
+        dir_fmt = f"{{:0{num_digits}d}}".format
+        sub_dnames = [dir_fmt(i) for i in range(num_subdirs)]
+        fnames = [
+            str(Path(sub_dnames[i // subdir_size]).joinpath(fname))
+            for i, fname in enumerate(fnames)
+        ]
+
+    fpaths = [content_dpath.joinpath(fname) for fname in fnames]
+
+    if custom_file_fmt is not None or subdir_size is not None:
+        unique_parents = dict.fromkeys(fpath.parent for fpath in fpaths)
+        for parent in unique_parents:
+            parent.mkdir(parents=True, exist_ok=True)
+
+    if _TQDM_AVAILABLE and verbose >= 1:
+        loader = tqdm.tqdm(loader)
+
     i = 0
     for batch_lst in loader:
         if content_mode == "item":
             for item in batch_lst:
-                fname = fnames[i]
-                fpath = content_dpath.joinpath(fname)
-                if custom_file_fmt is not None:
-                    fpath.parent.mkdir(parents=True, exist_ok=True)
+                fpath = fpaths[i]
                 save_fn(item, fpath)
                 i += 1
 
         elif content_mode == "batch":
-            fname = fnames[i]
-            fpath = content_dpath.joinpath(fname)
-            if custom_file_fmt is not None:
-                fpath.parent.mkdir(parents=True, exist_ok=True)
+            fpath = fpaths[i]
             save_fn(batch_lst, fpath)
             i += 1
 
@@ -143,24 +180,13 @@ def pack_to_pickle(
 
     if hasattr(dataset, "info"):
         info = dataset.info  # type: ignore
-        if is_dataclass(info):
-            info = asdict(info)
-        elif is_mapping_str(info):
-            info = dict(info.items())  # type: ignore
-        else:
-            info = {}
+        info = to_builtin(info)
     else:
         info = {}
 
     if hasattr(dataset, "attrs"):
         source_attrs = dataset.attrs  # type: ignore
-        if is_dataclass(source_attrs):
-            info = asdict(source_attrs)
-        elif is_mapping_str(source_attrs):
-            source_attrs = dict(source_attrs.items())  # type: ignore
-        else:
-            pylog.warning(f"Ignore source attributes type {type(source_attrs)}.")
-            source_attrs = {}
+        source_attrs = to_builtin(source_attrs)
     else:
         source_attrs = {}
 
@@ -171,6 +197,7 @@ def pack_to_pickle(
         "batch_size": batch_size,
         "content_mode": content_mode,
         "content_dname": CONTENT_DNAME,
+        "subdir_size": subdir_size,
         "info": info,
         "source_attrs": source_attrs,
         "num_files": len(fnames),
@@ -181,5 +208,5 @@ def pack_to_pickle(
     with open(attrs_fpath, "w") as file:
         json.dump(attributes, file, indent="\t")
 
-    pickle_dataset = PickleDataset(root)
-    return pickle_dataset
+    pack = PackedDataset(root)
+    return pack

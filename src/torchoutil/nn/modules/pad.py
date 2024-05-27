@@ -5,7 +5,7 @@ from typing import Iterable, Union
 
 import torch
 from torch import Generator, Tensor, nn
-from torch.types import Number
+from torch.types import Device, Number
 
 from torchoutil.nn.functional.pad import (
     PadAlign,
@@ -122,7 +122,7 @@ class PadAndStackRec(nn.Module):
         self,
         pad_value: Number,
         *,
-        device: Union[str, torch.device, None] = None,
+        device: Device = None,
         dtype: Union[None, torch.dtype] = None,
     ) -> None:
         super().__init__()

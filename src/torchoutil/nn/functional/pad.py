@@ -6,10 +6,11 @@ from typing import Any, Callable, Dict, Iterable, List, Literal, Sized, Tuple, U
 import torch
 from torch import Generator, Size, Tensor
 from torch.nn import functional as F
-from torch.types import Number
+from torch.types import Device, Number
 
 from torchoutil.nn.functional.get import get_device
-from torchoutil.nn.functional.others import can_be_stacked, is_scalar
+from torchoutil.nn.functional.others import can_be_stacked
+from torchoutil.utils.type_checks import is_scalar
 
 PAD_ALIGNS = ("left", "right", "center", "random")
 PadAlign = Literal["left", "right", "center", "random"]
@@ -73,7 +74,7 @@ def pad_and_stack_rec(
     sequence: Union[Tensor, int, float, tuple, list],
     pad_value: Number,
     *,
-    device: Union[str, torch.device, None] = None,
+    device: Device = None,
     dtype: Union[None, torch.dtype] = None,
 ) -> Tensor:
     """Recursive version of torch.nn.utils.rnn.pad_sequence, with padding of Tensors.
@@ -141,47 +142,6 @@ def pad_and_stack_rec(
         )
 
 
-def __generate_pad_seq(
-    x_shape: Size,
-    target_lengths: List[int],
-    dims: List[int],
-    aligns: List[PadAlign],
-    generator: Union[None, Generator],
-) -> List[int]:
-    pad_seq = [0 for _ in range(len(x_shape) * 2)]
-    for target_length, dim, align in zip(target_lengths, dims, aligns):
-        missing = max(target_length - x_shape[dim], 0)
-
-        if align == "left":
-            missing_left = 0
-            missing_right = missing
-        elif align == "right":
-            missing_left = missing
-            missing_right = 0
-        elif align == "center":
-            missing_left = missing // 2 + missing % 2
-            missing_right = missing // 2
-        elif align == "random":
-            missing_left = int(
-                torch.randint(
-                    low=0, high=missing + 1, size=(), generator=generator
-                ).item()
-            )
-            missing_right = missing - missing_left
-        else:
-            raise ValueError(
-                f"Invalid argument {align=}. (expected one of {PAD_ALIGNS})"
-            )
-
-        # Note: pad_seq : [pad_left_dim_-1, pad_right_dim_-1, pad_left_dim_-2, pad_right_dim_-2, ...)
-        idx = len(x_shape) - (dim % len(x_shape)) - 1
-        assert pad_seq[idx * 2] == 0 and pad_seq[idx * 2 + 1] == 0
-        pad_seq[idx * 2] = missing_left
-        pad_seq[idx * 2 + 1] = missing_right
-
-    return pad_seq
-
-
 def cat_padded_batch(
     x1: Tensor,
     x1_lens: Tensor,
@@ -230,6 +190,47 @@ def cat_padded_batch(
         x12 = x12[slices]
 
     return x12, x12_lens
+
+
+def __generate_pad_seq(
+    x_shape: Size,
+    target_lengths: List[int],
+    dims: List[int],
+    aligns: List[PadAlign],
+    generator: Union[None, Generator],
+) -> List[int]:
+    pad_seq = [0 for _ in range(len(x_shape) * 2)]
+    for target_length, dim, align in zip(target_lengths, dims, aligns):
+        missing = max(target_length - x_shape[dim], 0)
+
+        if align == "left":
+            missing_left = 0
+            missing_right = missing
+        elif align == "right":
+            missing_left = missing
+            missing_right = 0
+        elif align == "center":
+            missing_left = missing // 2 + missing % 2
+            missing_right = missing // 2
+        elif align == "random":
+            missing_left = int(
+                torch.randint(
+                    low=0, high=missing + 1, size=(), generator=generator
+                ).item()
+            )
+            missing_right = missing - missing_left
+        else:
+            raise ValueError(
+                f"Invalid argument {align=}. (expected one of {PAD_ALIGNS})"
+            )
+
+        # Note: pad_seq : [pad_left_dim_-1, pad_right_dim_-1, pad_left_dim_-2, pad_right_dim_-2, ...)
+        idx = len(x_shape) - (dim % len(x_shape)) - 1
+        assert pad_seq[idx * 2] == 0 and pad_seq[idx * 2 + 1] == 0
+        pad_seq[idx * 2] = missing_left
+        pad_seq[idx * 2 + 1] = missing_right
+
+    return pad_seq
 
 
 def _check_cat_padded_batch(

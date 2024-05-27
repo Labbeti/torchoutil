@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 
 import unittest
-
 from unittest import TestCase
 
 import torch
@@ -60,7 +59,7 @@ class TestMultilabel(TestCase):
         self.assertListEqual(result, expected_names)
 
     def test_convert_multihot(self) -> None:
-        num_samples = int(torch.randint(0, 20, ()).item())
+        num_samples = int(torch.randint(1, 20, ()).item())
         num_classes = int(torch.randint(1, 20, ()).item())
         threshold = torch.rand(())
         idx_to_name = dict(zip(range(num_classes), map(str, range(num_classes))))
@@ -75,7 +74,7 @@ class TestMultilabel(TestCase):
         names_2 = multihot_to_names(multihot_2, idx_to_name)
         indices_2 = names_to_indices(names_2, idx_to_name)
 
-        self.assertTrue(torch.equal(multihot_1, multihot_2))
+        assert torch.equal(multihot_1, multihot_2), f"{multihot_1=} ; {multihot_2=}"
         self.assertListEqual(names_1, names_2)
         self.assertListEqual(indices_1, indices_2)
 
@@ -111,6 +110,45 @@ class TestMultilabel(TestCase):
         self.assertListEqual(ints, expected_ints)
         self.assertEqual(multihots.shape, new_multihots.shape)
         self.assertTrue(multihots.eq(new_multihots).all())
+
+    def test_empty_case_1(self) -> None:
+        num_samples = 0
+        num_classes = 5
+
+        multihot = torch.rand(num_samples, num_classes).ge(0.5)
+        with self.assertRaises(ValueError):
+            multihot_to_indices(multihot)
+
+        indices = torch.empty(0, 5)
+        with self.assertRaises(ValueError):
+            indices_to_multihot(indices, num_classes)
+
+    def test_empty_case_2(self) -> None:
+        num_samples = 5
+        num_classes = 0
+        expected = [[], [], [], [], []]
+
+        multihot = torch.rand(num_samples, num_classes).ge(0.5)
+
+        result_1 = multihot_to_indices(multihot)
+        assert result_1 == expected
+
+        result_2 = indices_to_multihot(expected, num_classes)
+        assert torch.equal(result_2, multihot)
+
+    def test_empty_case_3(self) -> None:
+        num_steps = 3
+        num_samples = 0
+        num_classes = 5
+
+        multihot = torch.rand(num_steps, num_samples, num_classes).ge(0.5)
+
+        with self.assertRaises(ValueError):
+            multihot_to_indices(multihot)
+
+        indices = [torch.empty(0, 5) for _ in range(num_steps)]
+        with self.assertRaises(ValueError):
+            indices_to_multihot(indices, num_classes)
 
 
 if __name__ == "__main__":

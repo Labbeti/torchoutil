@@ -2,85 +2,88 @@
 # -*- coding: utf-8 -*-
 
 import logging
+import os
 import sys
 from functools import cache
-from logging import Logger
+from logging import FileHandler, Formatter, Logger, StreamHandler
+from pathlib import Path
 from types import ModuleType
-from typing import List, Optional, Sequence, Union
+from typing import IO, List, Literal, Optional, Sequence, Union
+
+from torchoutil.utils.packaging import _COLORLOG_AVAILABLE
 
 pylog = logging.getLogger(__name__)
 
 DEFAULT_FMT = "[%(asctime)s][%(name)s][%(levelname)s] - %(message)s"
+PackageOrLogger = Union[str, ModuleType, None, Logger]
+
+
+if _COLORLOG_AVAILABLE:
+    from colorlog import ColoredFormatter
 
 
 @cache
-def warn_once(msg: str, logger: Union[Logger, ModuleType, None]) -> None:
-    if logger is None:
-        pylog = logging.root
-    elif isinstance(logger, ModuleType):
-        pylog: Logger = logger.root
-    else:
-        pylog = logger
-
+def warn_once(msg: str, logger: PackageOrLogger) -> None:
+    pylog = _get_loggers(logger)[0]
     pylog.warning(msg)
 
 
 def setup_logging_verbose(
     package_or_logger: Union[
-        str,
-        ModuleType,
-        None,
-        Logger,
-        Sequence[Union[str, ModuleType, None]],
-        Sequence[Logger],
+        PackageOrLogger,
+        Sequence[PackageOrLogger],
     ],
-    verbose: int,
-    fmt: Optional[str] = DEFAULT_FMT,
+    verbose: Optional[int],
+    fmt: Union[str, None, Formatter] = DEFAULT_FMT,
+    stream: Union[IO[str], Literal["auto"]] = "auto",
 ) -> None:
-    level = _verbose_to_logging_level(verbose)
-    return setup_logging_level(package_or_logger, level=level, fmt=fmt)
+    if verbose is None:
+        level = None
+    else:
+        level = _verbose_to_logging_level(verbose)
+    return setup_logging_level(package_or_logger, level=level, fmt=fmt, stream=stream)
 
 
 def setup_logging_level(
     package_or_logger: Union[
-        str,
-        ModuleType,
-        None,
-        Logger,
-        Sequence[Union[str, ModuleType, None]],
-        Sequence[Logger],
+        PackageOrLogger,
+        Sequence[PackageOrLogger],
     ],
-    level: int,
-    fmt: Optional[str] = DEFAULT_FMT,
+    level: Optional[int],
+    fmt: Union[str, None, Formatter] = DEFAULT_FMT,
+    stream: Union[IO[str], Literal["auto"]] = "auto",
 ) -> None:
     logger_lst = _get_loggers(package_or_logger)
-    handler = logging.StreamHandler(sys.stdout)
-    if fmt is not None:
-        handler.setFormatter(logging.Formatter(fmt))
+    if isinstance(fmt, str):
+        fmt = Formatter(fmt)
+    if stream == "auto":
+        if running_on_interpreter():
+            stream = sys.stdout
+        else:
+            stream = sys.stderr
 
     for logger in logger_lst:
         found = False
+
         for handler in logger.handlers:
-            if (
-                isinstance(handler, logging.StreamHandler)
-                and handler.stream is sys.stdout
-            ):
+            if isinstance(handler, StreamHandler) and handler.stream is stream:
+                handler.setFormatter(fmt)
                 found = True
                 break
+
         if not found:
+            handler = StreamHandler(stream)
+            handler.setFormatter(fmt)
             logger.addHandler(handler)
 
-        logger.setLevel(level)
+        if level is not None:
+            logger.setLevel(level)
 
 
 def _get_loggers(
     package_or_logger: Union[
-        str,
-        ModuleType,
-        None,
-        Logger,
-        Sequence[Union[str, ModuleType, None]],
-        Sequence[Logger],
+        PackageOrLogger,
+        Sequence[PackageOrLogger],
     ],
 ) -> List[Logger]:
     if package_or_logger is None or isinstance(
@@ -111,3 +114,65 @@ def _verbose_to_logging_level(verbose: int) -> int:
     else:
         level = logging.DEBUG
     return level
+
+
+class CustomFileHandler(FileHandler):
+    """FileHandler that build intermediate directories.
+
+    Used for export hydra logs to a file contained in a folder that does not exists yet at the start of the program.
+    """
+
+    def __init__(
+        self,
+        filename: Union[str, Path],
+        mode: str = "a",
+        encoding: Optional[str] = None,
+        delay: bool = True,
+        errors: Optional[str] = None,
+    ) -> None:
+        filename = Path(filename)
+        filename.parent.mkdir(parents=True, exist_ok=True)
+
+        super().__init__(filename, mode, encoding, delay, errors)
+
+
+def running_on_interpreter() -> bool:
+    return get_ipython_name() is None
+
+
+def running_on_terminal() -> bool:
+    return get_ipython_name() == "TerminalInteractiveShell"
+
+
+def running_on_notebook() -> bool:
+    return get_ipython_name() == "ZMQInteractiveShell"
+
+
+def get_ipython_name() -> (
+    Optional[Literal["TerminalInteractiveShell", "ZMQInteractiveShell"]]
+):
+    try:
+        return get_ipython().__class__.__name__
+    except NameError:
+        return None
+
+
+def get_colored_formatter() -> Formatter:
+    if not _COLORLOG_AVAILABLE:
+        raise RuntimeError(
+            "Cannot call function get_colored_fmt() without colorlog installed. Please use `pip install torchoutil[extras]` to install it."
+        )
+
+    rank = os.getenv("SLURM_PROCID", 0)
+    fmt = f"[%(purple)sRANK{rank}%(reset)s][%(cyan)s%(asctime)s%(reset)s][%(blue)s%(name)s%(reset)s][%(log_color)s%(levelname)s%(reset)s] - %(message)s"
+    formatter = ColoredFormatter(
+        fmt=fmt,
+        log_colors={
+            "DEBUG": "purple",
+            "INFO": "green",
+            "WARNING": "yellow",
+            "ERROR": "red",
+            "CRITICAL": "bold_red",
+        },
+    )
+    return formatter

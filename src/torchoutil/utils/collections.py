@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import copy
 from typing import (
     Any,
     Callable,
@@ -27,6 +28,16 @@ W = TypeVar("W")
 
 KEY_MODES = ("same", "intersect", "union")
 KeyMode = Literal["intersect", "same", "union"]
+
+
+def sorted_dict(
+    x: Mapping[K, V],
+    /,
+    *,
+    key: Optional[Callable[[K], Any]] = None,
+    reverse: bool = False,
+) -> Dict[K, V]:
+    return {k: x[k] for k in sorted(x.keys(), key=key, reverse=reverse)}
 
 
 @overload
@@ -67,8 +78,11 @@ def list_dict_to_dict_list(
 
     keys = set(lst[0].keys())
     if key_mode == "same":
-        if not all(keys == set(item.keys()) for item in lst[1:]):
-            raise ValueError(f"Invalid keys with {key_mode=}.")
+        invalids = [list(item.keys()) for item in lst[1:] if keys != set(item.keys())]
+        if len(invalids):
+            raise ValueError(
+                f"Invalid keys with {key_mode=}. (with {keys=} and {invalids=})"
+            )
     elif key_mode == "intersect":
         keys = intersect_lists([item.keys() for item in lst])
     elif key_mode == "union":
@@ -160,33 +174,34 @@ def union_lists(lst_of_lst: Iterable[Iterable[T]]) -> List[T]:
 
 
 def dump_dict(
-    dic: Mapping[str, Any],
+    dic: Mapping[str, T],
     /,
     join: str = ", ",
     fmt: str = "{key}={value}",
-    ignore_none: bool = False,
+    ignore_lst: Iterable[T] = (),
 ) -> str:
     """Dump dictionary to string."""
+    ignore_lst = dict.fromkeys(ignore_lst)
     result = join.join(
         fmt.format(key=key, value=value)
         for key, value in dic.items()
-        if not (value is None and ignore_none)
+        if value not in ignore_lst
     )
     return result
 
 
 def pass_filter(
-    name: T,
+    x: T,
     include: Optional[Iterable[T]] = None,
     exclude: Optional[Iterable[T]] = None,
 ) -> bool:
     """Returns True if name in include set and not in exclude set."""
     if include is not None and exclude is not None:
-        return (name in include) and (name not in exclude)
+        return (x in include) and (x not in exclude)
     if include is not None:
-        return name in include
+        return x in include
     elif exclude is not None:
-        return name not in exclude
+        return x not in exclude
     else:
         return True
 
@@ -241,7 +256,7 @@ def flat_dict_of_dict(
     ...         "b": 10,
     ...     },
     ... }
-    >>> flat_dict(dic)
+    >>> flat_dict_of_dict(dic)
     ... {"a": 1, "b.a": 2, "b.b": 10}
     ```
 
@@ -249,7 +264,7 @@ def flat_dict_of_dict(
     ---------
     ```
     >>> dic = {"a": ["hello", "world"], "b": 3}
-    >>> flat_dict(dic, flat_iterables=True)
+    >>> flat_dict_of_dict(dic, flat_iterables=True)
     ... {"a.0": "hello", "a.1": "world", "b": 3}
     ```
 
@@ -278,7 +293,9 @@ def flat_dict_of_dict(
                 output[k] = v
 
             else:
-                raise ValueError(f"Ambiguous flatten dict with key '{k}'.")
+                raise ValueError(
+                    f"Ambiguous flatten dict with key '{k}'. (with value '{v}')"
+                )
         return output
 
     return _flat_dict_of_dict_impl(nested_dic)
@@ -323,14 +340,17 @@ def unflat_dict_of_dict(dic: Mapping[str, Any], sep: str = ".") -> Dict[str, Any
     return output
 
 
-def flat_list(lst: Iterable[Sequence[T]]) -> Tuple[List[T], List[int]]:
+def flat_list_of_list(lst: Iterable[Sequence[T]]) -> Tuple[List[T], List[int]]:
     """Return a flat version of the input list of sublists with each sublist size."""
-    flatten_lst = [element for sublst in lst for element in sublst]
+    flatten_lst = [elt for sublst in lst for elt in sublst]
     sizes = [len(sents) for sents in lst]
     return flatten_lst, sizes
 
 
-def unflat_list(flatten_lst: Sequence[T], sizes: Iterable[int]) -> List[List[T]]:
+def unflat_list_of_list(
+    flatten_lst: Sequence[T],
+    sizes: Iterable[int],
+) -> List[List[T]]:
     """Unflat a list to a list of sublists of given sizes."""
     lst = []
     start = 0
@@ -379,3 +399,10 @@ def unzip(lst):
         ... ([1, 2, 3, 4], [5, 6, 7, 8])
     """
     return tuple(map(list, zip(*lst)))
+
+
+def prod(x: Iterable[T], /, start: T = 1) -> T:
+    result = copy.copy(start)
+    for xi in x:
+        result = result * xi
+    return result

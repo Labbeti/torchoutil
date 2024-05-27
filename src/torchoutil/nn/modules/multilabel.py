@@ -1,10 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from typing import Generic, List, Mapping, TypeVar, Union
+from typing import Generic, List, Mapping, Optional, TypeVar, Union
 
 import torch
 from torch import Tensor, nn
+from torch.types import Device
 
 from torchoutil.nn.functional.multilabel import (
     indices_to_multihot,
@@ -31,11 +32,13 @@ class IndicesToMultihot(nn.Module):
         self,
         num_classes: int,
         *,
-        device: Union[str, torch.device, None] = None,
+        padding_idx: Optional[int] = None,
+        device: Device = None,
         dtype: Union[torch.dtype, None] = torch.bool,
     ) -> None:
         super().__init__()
         self.num_classes = num_classes
+        self.padding_idx = padding_idx
         self.device = device
         self.dtype = dtype
 
@@ -46,6 +49,7 @@ class IndicesToMultihot(nn.Module):
         multihot = indices_to_multihot(
             indices,
             self.num_classes,
+            padding_idx=self.padding_idx,
             device=self.device,
             dtype=self.dtype,
         )
@@ -55,14 +59,15 @@ class IndicesToMultihot(nn.Module):
         return dump_dict(
             dict(
                 num_classes=self.num_classes,
+                padding_idx=self.padding_idx,
                 device=self.device,
                 dtype=self.dtype,
             ),
-            ignore_none=True,
+            ignore_lst=(None,),
         )
 
 
-class IndicesToNames(nn.Module, Generic[T]):
+class IndicesToNames(Generic[T], nn.Module):
     """
     For more information, see :func:`~torchoutil.nn.functional.multilabel.indices_to_names`.
     """
@@ -70,16 +75,31 @@ class IndicesToNames(nn.Module, Generic[T]):
     def __init__(
         self,
         idx_to_name: Mapping[int, T],
+        *,
+        padding_idx: Optional[int] = None,
     ) -> None:
         super().__init__()
         self.idx_to_name = idx_to_name
+        self.padding_idx = padding_idx
 
     def forward(
         self,
         indices: Union[List[List[int]], List[Tensor]],
     ) -> List[List[T]]:
-        names = indices_to_names(indices, self.idx_to_name)
+        names = indices_to_names(
+            indices,
+            self.idx_to_name,
+            padding_idx=self.padding_idx,
+        )
         return names
+
+    def extra_repr(self) -> str:
+        return dump_dict(
+            dict(
+                padding_idx=self.padding_idx,
+            ),
+            ignore_lst=(None,),
+        )
 
 
 class MultihotToIndices(nn.Module):
@@ -87,15 +107,27 @@ class MultihotToIndices(nn.Module):
     For more information, see :func:`~torchoutil.nn.functional.multilabel.multihot_to_indices`.
     """
 
+    def __init__(self, *, padding_idx: Optional[int] = None) -> None:
+        super().__init__()
+        self.padding_idx = padding_idx
+
     def forward(
         self,
         multihot: Tensor,
     ) -> List[List[int]]:
-        names = multihot_to_indices(multihot)
+        names = multihot_to_indices(multihot, padding_idx=self.padding_idx)
         return names
 
+    def extra_repr(self) -> str:
+        return dump_dict(
+            dict(
+                padding_idx=self.padding_idx,
+            ),
+            ignore_lst=(None,),
+        )
 
-class MultihotToNames(nn.Module, Generic[T]):
+
+class MultihotToNames(Generic[T], nn.Module):
     """
     For more information, see :func:`~torchoutil.nn.functional.multilabel.multihot_to_names`.
     """
@@ -115,7 +147,7 @@ class MultihotToNames(nn.Module, Generic[T]):
         return names
 
 
-class NamesToIndices(nn.Module, Generic[T]):
+class NamesToIndices(Generic[T], nn.Module):
     """
     For more information, see :func:`~torchoutil.nn.functional.multilabel.names_to_indices`.
     """
@@ -135,7 +167,7 @@ class NamesToIndices(nn.Module, Generic[T]):
         return indices
 
 
-class NamesToMultihot(nn.Module, Generic[T]):
+class NamesToMultihot(Generic[T], nn.Module):
     """
     For more information, see :func:`~torchoutil.nn.functional.multilabel.names_to_multihot`.
     """
@@ -144,7 +176,7 @@ class NamesToMultihot(nn.Module, Generic[T]):
         self,
         idx_to_name: Mapping[int, T],
         *,
-        device: Union[str, torch.device, None] = None,
+        device: Device = None,
         dtype: Union[torch.dtype, None] = torch.bool,
     ) -> None:
         super().__init__()
@@ -170,7 +202,7 @@ class NamesToMultihot(nn.Module, Generic[T]):
                 device=self.device,
                 dtype=self.dtype,
             ),
-            ignore_none=True,
+            ignore_lst=(None,),
         )
 
 
@@ -182,15 +214,18 @@ class ProbsToIndices(nn.Module):
     def __init__(
         self,
         threshold: Union[float, Tensor],
+        *,
+        padding_idx: Optional[int] = None,
     ) -> None:
         super().__init__()
         self.threshold = threshold
+        self.padding_idx = padding_idx
 
     def forward(
         self,
         probs: Tensor,
     ) -> List[List[int]]:
-        indices = probs_to_indices(probs, self.threshold)
+        indices = probs_to_indices(probs, self.threshold, padding_idx=self.padding_idx)
         return indices
 
 
@@ -203,7 +238,7 @@ class ProbsToMultihot(nn.Module):
         self,
         threshold: Union[float, Tensor],
         *,
-        device: Union[str, torch.device, None] = None,
+        device: Device = None,
         dtype: Union[torch.dtype, None] = torch.bool,
     ) -> None:
         super().__init__()
@@ -229,11 +264,11 @@ class ProbsToMultihot(nn.Module):
                 device=self.device,
                 dtype=self.dtype,
             ),
-            ignore_none=True,
+            ignore_lst=(None,),
         )
 
 
-class ProbsToNames(nn.Module, Generic[T]):
+class ProbsToNames(Generic[T], nn.Module):
     """
     For more information, see :func:`~torchoutil.nn.functional.multilabel.probs_to_names`.
     """

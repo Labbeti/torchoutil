@@ -36,18 +36,28 @@ torchoutil-info
 ```
 
 
-## Usage
+## Examples
 
-### Batch of padded sequences
+### Multilabel conversions
 ```python
 import torch
-from torchoutil import masked_mean
+from torchoutil import probs_to_name
 
-x = torch.as_tensor([1, 2, 3, 4])
-mask = torch.as_tensor([True, True, False, False])
-result = masked_mean(x, mask)
-# result contains the mean of the values marked as True: 1.5
+probs = torch.as_tensor([[0.9, 0.1], [0.4, 0.6]])
+names = probs_to_name(probs, idx_to_name={0: "Cat", 1: "Dog"})
+# ["Cat", "Dog"]
 ```
+
+```python
+import torch
+from torchoutil import multihot_to_indices
+
+multihot = torch.as_tensor([[1, 0, 0], [0, 1, 1], [0, 0, 0]])
+indices = multihot_to_indices(multihot)
+# [[0], [1, 2], []]
+```
+
+### Masked operations
 
 ```python
 import torch
@@ -61,39 +71,31 @@ mask = lengths_to_non_pad_mask(x, max_len=4)
 #         [True, True, False, False]])
 ```
 
-### Multilabel conversions
 ```python
 import torch
-from torchoutil import probs_to_names
+from torchoutil import masked_mean
 
-probs = torch.as_tensor([[0.9, 0.1], [0.6, 0.9]])
-names = probs_to_names(probs, threshold=0.5, idx_to_name={0: "Cat", 1: "Dog"})
-# [["Cat"], ["Cat", "Dog"]]
+x = torch.as_tensor([1, 2, 3, 4])
+mask = torch.as_tensor([True, True, False, False])
+result = masked_mean(x, mask)
+# result contains the mean of the values marked as True: 1.5
 ```
 
-```python
-import torch
-from torchoutil import multihot_to_indices
+### Pre-compute datasets to pickle or HDF files
 
-multihot = torch.as_tensor([[1, 0, 0], [0, 1, 1], [0, 0, 0]])
-indices = multihot_to_indices(multihot)
-# [[0], [1, 2], []]
-```
-
-### Easely pre-compute transforms
-
-Here is an example of pre-computing spectrograms of torchaudio `SPEECHCOMMANDS` dataset, using `pack_to_pickle` function:
+Here is an example of pre-computing spectrograms of torchaudio `SPEECHCOMMANDS` dataset, using `pack_to_custom` function:
 
 ```python
 from torch import nn
 from torchaudio.datasets import SPEECHCOMMANDS
 from torchaudio.transforms import Spectrogram
-from torchoutil.utils.pickle_dataset import pack_to_pickle
+from torchoutil.utils.pack import pack_to_custom
 
 speech_commands_root = "path/to/speech_commands"
-pickle_root = "path/to/pickle_dataset"
+packed_root = "path/to/packed_dataset"
 
 dataset = SPEECHCOMMANDS(speech_commands_root, download=True, subset="validation")
+# dataset[0] is a tuple, contains waveform and other metadata
 
 class MyTransform(nn.Module):
     def __init__(self) -> None:
@@ -105,19 +107,19 @@ class MyTransform(nn.Module):
         spectrogram = self.spectrogram_extractor(waveform)
         return (spectrogram,) + item[1:]
 
-pack_to_pickle(dataset, pickle_root, MyTransform())
+pack_to_custom(dataset, packed_root, MyTransform())
 ```
 
-Then you can load the pre-computed dataset using `PickleDataset`:
+Then you can load the pre-computed dataset using `PackedDataset`:
 ```python
-from torchoutil.utils.pickle_dataset import PickleDataset
+from torchoutil.utils.pack import PackedDataset
 
-pickle_root = "path/to/pickle_dataset"
-pickle_dataset = PickleDataset(pickle_root)
-pickle_dataset[0]  # == first transformed item, i.e. transform(dataset[0])
+packed_root = "path/to/packed_dataset"
+packed_dataset = PackedDataset(packed_root)
+packed_dataset[0]  # == first transformed item, i.e. transform(dataset[0])
 ```
 
-### ...and more tensor manipulations!
+### Other tensors manipulations!
 
 ```python
 import torch
@@ -141,12 +143,12 @@ x3 = x2[inv_perm]
 # inv_perm are indices that allow us to get x3 from x2, i.e. x1 == x3 here
 ```
 
-## Extras
+## Extras requirements
 `torchoutil` also provides additional modules when some specific package are already installed in your environment.
 All extras can be installed with `pip install torchoutil[extras]`
 
 - If `tensorboard` is installed, the function `load_event_file` can be used. It is useful to load manually all data contained in an tensorboard event file.
-- If `numpy` is installed, the classes `FromNumpy` and  `ToNumpy` can be used and their related function. It is meant to be used to compose dynamic transforms into `Sequential` module.
+- If `numpy` is installed, the classes `NumpyToTensor` and  `ToNumpy` can be used and their related function. It is meant to be used to compose dynamic transforms into `Sequential` module.
 - If `h5py` is installed, the function `pack_to_hdf` and class `HDFDataset` can be used. Can be used to pack/read dataset to HDF files, and supports variable-length sequences of data.
 
 

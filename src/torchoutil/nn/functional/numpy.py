@@ -1,42 +1,60 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from typing import Any, Literal, Union
+from typing import Union
 
 import torch
 from torch import Tensor
-from typing_extensions import TypeGuard
+from torch.types import Device
 
 from torchoutil.nn.functional.get import get_device
 from torchoutil.utils.packaging import _NUMPY_AVAILABLE
 
 if not _NUMPY_AVAILABLE:
-
-    def is_numpy_scalar(x: Any) -> Literal[False]:
-        return False
+    ACCEPTED_NUMPY_DTYPES = ()
 
 else:
     import numpy as np
+
+    ACCEPTED_NUMPY_DTYPES = (
+        np.float64,
+        np.float32,
+        np.float16,
+        np.complex64,
+        np.complex128,
+        np.int64,
+        np.int32,
+        np.int16,
+        np.int8,
+        np.uint8,
+        bool,
+    )
 
     def to_numpy(
         x: Union[Tensor, np.ndarray, list],
         *,
         dtype: Union[str, np.dtype, None] = None,
     ) -> np.ndarray:
+        """Convert input to numpy array."""
         if isinstance(x, Tensor):
-            return x.cpu().numpy().astype(dtype=dtype)
+            return tensor_to_numpy(x, dtype=dtype)
         else:
             return np.asarray(x, dtype=dtype)
 
-    def from_numpy(
+    def tensor_to_numpy(
+        x: Tensor,
+        *,
+        dtype: Union[str, np.dtype, None] = None,
+    ) -> np.ndarray:
+        """Convert PyTorch tensor to numpy array."""
+        return x.cpu().numpy().astype(dtype=dtype)
+
+    def numpy_to_tensor(
         x: np.ndarray,
         *,
-        device: Union[str, torch.device, None] = None,
+        device: Device = None,
         dtype: Union[torch.dtype, None] = None,
     ) -> Tensor:
+        """Convert numpy array to PyTorch tensor."""
         device = get_device(device)
         return torch.from_numpy(x).to(dtype=dtype, device=device)
-
-    def is_numpy_scalar(x: Any) -> TypeGuard[Union[np.generic, np.ndarray]]:
-        """Returns True if x is a numpy generic type or a zero-dimensional numpy array."""
-        return isinstance(x, np.generic) or (isinstance(x, np.ndarray) and x.ndim == 0)

@@ -5,6 +5,7 @@ from typing import Iterable, List, Optional, Union
 
 import torch
 from torch import Tensor
+from torch.types import Device
 
 from torchoutil.nn.functional.get import get_device
 
@@ -12,6 +13,7 @@ from torchoutil.nn.functional.get import get_device
 def masked_mean(
     x: Tensor,
     non_pad_mask: Tensor,
+    *,
     dim: Union[None, int, Iterable[int]] = None,
 ) -> Tensor:
     """Average a tensor along the specified dim(s).
@@ -37,6 +39,7 @@ def masked_mean(
 def masked_sum(
     x: Tensor,
     non_pad_mask: Tensor,
+    *,
     dim: Union[None, int, Iterable[int]] = None,
 ) -> Tensor:
     """Sum a tensor along the specified dim(s).
@@ -75,14 +78,14 @@ def masked_equal(
         return False
     mask = mask.bool().logical_not().logical_or(x1.eq(x2))
     equal = mask.all().item()
-    return equal
+    return equal  # type: ignore
 
 
 def generate_square_subsequent_mask(
     size: int,
     diagonal: int = 0,
     *,
-    device: Union[str, torch.device, None] = None,
+    device: Device = None,
     dtype: Optional[torch.dtype] = None,
 ) -> Tensor:
     device = get_device(device)

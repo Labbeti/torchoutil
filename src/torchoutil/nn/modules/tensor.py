@@ -8,7 +8,7 @@ from typing import List, Optional, Union
 import torch
 from torch import Tensor, nn
 from torch.nn import functional as F
-from torch.types import Number
+from torch.types import Device, Number
 
 from torchoutil.nn.functional.get import get_device
 from torchoutil.utils import return_types
@@ -48,7 +48,7 @@ class Mean(nn.Module):
             dict(
                 dim=self.dim,
             ),
-            ignore_none=True,
+            ignore_lst=(None,),
         )
 
 
@@ -295,7 +295,7 @@ class AsTensor(nn.Module):
     def __init__(
         self,
         *,
-        device: Union[str, torch.device, None] = None,
+        device: Device = None,
         dtype: Union[torch.dtype, None] = None,
     ) -> None:
         device = get_device(device)
@@ -312,7 +312,7 @@ class AsTensor(nn.Module):
                 device=self.device,
                 dtype=self.dtype,
             ),
-            ignore_none=True,
+            ignore_lst=(None,),
         )
 
 
@@ -346,3 +346,78 @@ class Imag(nn.Module):
             return torch.zeros_like(x)
         else:
             return x.imag
+
+
+class Pow(nn.Module):
+    def __init__(self, exponent: Union[Number, Tensor]) -> None:
+        super().__init__()
+        self.exponent = exponent
+
+    def forward(self, x: Tensor) -> Tensor:
+        return x.pow(self.exponent)
+
+    def extra_repr(self) -> str:
+        return dump_dict(dict(exponent=self.exponent))
+
+
+class FFT(nn.Module):
+    def forward(self, x: Tensor) -> Tensor:
+        return torch.fft.fft(x)
+
+
+class IFFT(nn.Module):
+    def forward(self, x: Tensor) -> Tensor:
+        return torch.fft.ifft(x)
+
+
+class Log(nn.Module):
+    def forward(self, x: Tensor) -> Tensor:
+        return x.log()
+
+
+class Log10(nn.Module):
+    def forward(self, x: Tensor) -> Tensor:
+        return x.log10()
+
+
+class Log2(nn.Module):
+    def forward(self, x: Tensor) -> Tensor:
+        return x.log2()
+
+
+class Repeat(nn.Module):
+    def __init__(self, *repeats: int) -> None:
+        super().__init__()
+        self.repeats = repeats
+
+    def forward(self, x: Tensor) -> Tensor:
+        return x.repeat(self.repeats)
+
+    def extra_repr(self) -> str:
+        return dump_dict(dict(repeats=self.repeats))
+
+
+class RepeatInterleave(nn.Module):
+    def __init__(
+        self,
+        repeats: Union[int, Tensor],
+        dim: int,
+        output_size: Optional[int] = None,
+    ) -> None:
+        super().__init__()
+        self.repeats = repeats
+        self.dim = dim
+        self.output_size = output_size
+
+    def forward(self, x: Tensor) -> Tensor:
+        return x.repeat_interleave(self.repeats, self.dim, output_size=self.output_size)
+
+    def extra_repr(self) -> str:
+        return dump_dict(
+            dict(
+                repeats=self.repeats,
+                dim=self.dim,
+                output_size=self.output_size,
+            ),
+            ignore_lst=(None,),
+        )

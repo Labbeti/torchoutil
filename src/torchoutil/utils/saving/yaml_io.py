@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import os
 from argparse import Namespace
-from dataclasses import asdict
 from pathlib import Path
 from typing import Any, Mapping, Union
+
+from yaml import MappingNode, Node, SafeLoader, ScalarNode, SequenceNode
 
 from torchoutil.utils.packaging import _OMEGACONF_AVAILABLE, _YAML_AVAILABLE
 from torchoutil.utils.saving.common import to_builtin
@@ -19,11 +19,11 @@ else:
     )
 
 if _OMEGACONF_AVAILABLE:
-    from omegaconf import DictConfig, OmegaConf
+    from omegaconf import OmegaConf
 
 
-def save_to_yaml(
-    data: Mapping[str, Any] | Namespace | DataclassInstance | NamedTupleInstance,
+def to_yaml(
+    data: Union[Mapping[str, Any], Namespace, DataclassInstance, NamedTupleInstance],
     fpath: Union[str, Path, None],
     *,
     overwrite: bool = True,
@@ -31,12 +31,12 @@ def save_to_yaml(
     make_parents: bool = True,
     resolve: bool = False,
     sort_keys: bool = False,
-    indent: int | None = None,
-    **kwargs,
+    indent: Union[int, None] = None,
+    **yaml_dump_kwargs,
 ) -> str:
-    if resolve and not _OMEGACONF_AVAILABLE:
+    if not _OMEGACONF_AVAILABLE and resolve:
         raise ValueError(
-            "Cannot resolve config for yaml without omegaconf package."
+            "Cannot resolve yaml config without omegaconf package."
             "Please use resolve=False or install omegaconf with 'pip install torchoutil[extras]'."
         )
 
@@ -45,28 +45,16 @@ def save_to_yaml(
         if not overwrite and fpath.exists():
             raise FileExistsError(f"File {fpath} already exists.")
         elif make_parents:
-            os.makedirs(fpath.parent, exist_ok=True)
+            fpath.parent.mkdir(parents=True, exist_ok=True)
 
-    if isinstance(data, Namespace):
-        data = data.__dict__
-
-    elif isinstance(data, DataclassInstance):
-        data = asdict(data)
-
-    elif isinstance(data, NamedTupleInstance):
-        data = data._asdict()
-
-    elif _OMEGACONF_AVAILABLE and isinstance(data, DictConfig):
-        data = OmegaConf.to_container(data, resolve=False)  # type: ignore
+    if resolve:
+        data = OmegaConf.create(data)  # type: ignore
+        data = OmegaConf.to_container(data, resolve=True)  # type: ignore
 
     if to_builtins:
         data = to_builtin(data)
 
-    if _OMEGACONF_AVAILABLE and resolve:
-        data_cfg = OmegaConf.create(data)  # type: ignore
-        data = OmegaConf.to_container(data_cfg, resolve=True)  # type: ignore
-
-    content = yaml.dump(data, sort_keys=sort_keys, indent=indent, **kwargs)
+    content = yaml.dump(data, sort_keys=sort_keys, indent=indent, **yaml_dump_kwargs)
     if fpath is not None:
         fpath.write_text(content, encoding="utf-8")
     return content
@@ -76,3 +64,28 @@ def load_yaml(fpath: Union[str, Path]) -> Any:
     with open(fpath, "r") as file:
         data = yaml.safe_load(file)
     return data
+
+
+class IgnoreTagLoader(SafeLoader):
+    """SafeLoader that ignores yaml tags.
+
+    Usage:
+
+    ```python
+    >>> content = yaml.load(stream, Loader=IgnoreTagLoader)
+    ```
+    """
+
+    def construct_with_tag(self, tag: str, node: Node) -> Any:
+        if isinstance(node, MappingNode):
+            return self.construct_mapping(node)
+        elif isinstance(node, ScalarNode):
+            return self.construct_scalar(node)
+        elif isinstance(node, SequenceNode):
+            return self.construct_sequence(node)
+        else:
+            raise NotImplementedError(f"Unsupported node type {type(node)}.")
+
+
+IgnoreTagLoader.add_multi_constructor("!", IgnoreTagLoader.construct_with_tag)
+IgnoreTagLoader.add_multi_constructor("tag:", IgnoreTagLoader.construct_with_tag)

@@ -6,16 +6,31 @@ import logging
 import os
 import os.path as osp
 from pathlib import Path
-from typing import Callable, Dict, List, Mapping, Optional, Tuple, TypedDict, Union
+from typing import (
+    Callable,
+    Dict,
+    Generic,
+    List,
+    Mapping,
+    Optional,
+    Tuple,
+    TypedDict,
+    TypeVar,
+    Union,
+)
 
 import torch
 from torch import Tensor
+from torch.types import Device
 from typing_extensions import NotRequired
 
 from torchoutil.hub.download import HashType, hash_file
 from torchoutil.nn.functional.get import get_device
 
 pylog = logging.getLogger(__name__)
+
+
+T = TypeVar("T")
 
 
 class RegistryEntry(TypedDict):
@@ -27,10 +42,10 @@ class RegistryEntry(TypedDict):
     architecture: NotRequired[str]
 
 
-class RegistryHub:
+class RegistryHub(Generic[T]):
     def __init__(
         self,
-        infos: Mapping[str, RegistryEntry],
+        infos: Mapping[T, RegistryEntry],
         register_root: Union[str, Path, None] = None,
     ) -> None:
         """
@@ -49,7 +64,7 @@ class RegistryHub:
         self._ckpt_parent_path = register_root
 
     @property
-    def infos(self) -> Dict[str, RegistryEntry]:
+    def infos(self) -> Dict[T, RegistryEntry]:
         return self._infos
 
     @property
@@ -57,14 +72,14 @@ class RegistryHub:
         return self._ckpt_parent_path.resolve()
 
     @property
-    def names(self) -> List[str]:
+    def names(self) -> List[T]:
         return list(self._infos.keys())
 
     @property
     def paths(self) -> List[Path]:
         return [self.get_path(model_name) for model_name in self.names]
 
-    def get_path(self, name: str) -> Path:
+    def get_path(self, name: T) -> Path:
         if name not in self.names:
             raise ValueError(
                 f"Invalid argument {name=}. (expected one of {self.names})"
@@ -76,9 +91,9 @@ class RegistryHub:
 
     def load_state_dict(
         self,
-        name_or_path: Union[str, Path],
+        name_or_path: Union[T, str, Path],
         *,
-        device: Union[str, torch.device, None] = None,
+        device: Device = None,
         offline: bool = False,
         load_fn: Callable = torch.load,
         verbose: int = 0,
@@ -96,7 +111,6 @@ class RegistryHub:
             Loaded file content.
         """
         device = get_device(device)
-        name_or_path = str(name_or_path)
 
         if osp.isfile(name_or_path):
             path = name_or_path
@@ -140,7 +154,7 @@ class RegistryHub:
 
     def download_file(
         self,
-        name: str,
+        name: T,
         force: bool = False,
         check_hash: bool = True,
         verbose: int = 0,
@@ -172,7 +186,7 @@ class RegistryHub:
 
     def is_valid_hash(
         self,
-        name: str,
+        name: T,
     ) -> bool:
         info = self.infos[name]
         if "hash_type" not in info or "hash_value" not in info:
@@ -205,21 +219,21 @@ class RegistryHub:
             args = json.load(file)
         return RegistryHub(**args)
 
-    def _get_name(self, path: Union[str, Path]) -> Optional[str]:
+    def _get_name(self, path: Union[str, Path]) -> Optional[T]:
         path_to_name = {
             path_i.resolve().expanduser(): name_i
             for path_i, name_i in zip(self.paths, self.names)
         }
         path = Path(path).resolve().expanduser()
         if path in path_to_name:
-            model_name = path_to_name[path]
+            name = path_to_name[path]
         else:
-            model_name = None
-        return model_name
+            name = None
+        return name
 
 
 def get_default_register_root() -> Path:
-    """Default checkpoint path: `~/.cache/torch/hub/checkpoints`."""
+    """Default register root path is `~/.cache/torch/hub/checkpoints`, which is based on `torch.hub.get_dir`."""
     path = torch.hub.get_dir()
     path = Path(path)
     path = path.joinpath("checkpoints")

@@ -3,16 +3,17 @@
 
 import json
 import logging
+import sys
 from pathlib import Path
 from typing import Any, Callable, Dict, Generic, List, Optional, TypeVar, Union
 
 import torch
 from torch.utils.data.dataset import Dataset
 
-from torchoutil.utils.pickle_dataset.common import (
+from torchoutil.utils.pack.common import (
     ATTRS_FNAME,
     ContentMode,
-    PickleAttributes,
+    PackedDatasetAttributes,
 )
 
 pylog = logging.getLogger(__name__)
@@ -21,7 +22,7 @@ T = TypeVar("T")
 U = TypeVar("U")
 
 
-class PickleDataset(Generic[T, U], Dataset[U]):
+class PackedDataset(Generic[T, U], Dataset[U]):
     def __init__(
         self,
         root: Union[str, Path],
@@ -58,7 +59,7 @@ class PickleDataset(Generic[T, U], Dataset[U]):
         self._reload_data()
 
     @property
-    def attrs(self) -> PickleAttributes:
+    def attrs(self) -> PackedDatasetAttributes:
         return self._attrs  # type: ignore
 
     @property
@@ -112,11 +113,26 @@ class PickleDataset(Generic[T, U], Dataset[U]):
     def _reload_data(self) -> None:
         attrs_fpath = self._root.joinpath(ATTRS_FNAME)
 
-        if attrs_fpath.is_file():
-            with open(attrs_fpath, "r") as file:
-                attrs = json.load(file)
-        else:
+        if not attrs_fpath.is_file():
             raise FileNotFoundError(f"Cannot find attribute file '{str(attrs_fpath)}'.")
+
+        with open(attrs_fpath, "r") as file:
+            attrs = json.load(file)
+
+        # Disable check for python <= 3.8 because __required_keys__ does not exists in this version
+        if sys.version_info.major < 3 or (
+            sys.version_info.major == 3 and sys.version_info.minor <= 8
+        ):
+            missing = []
+        else:
+            missing = list(
+                set(PackedDatasetAttributes.__required_keys__).difference(attrs)
+            )
+
+        if len(missing) > 0:
+            raise RuntimeError(
+                f"Missing {len(missing)} keys in attribute file. (with {missing=})"
+            )
 
         content_dname = attrs["content_dname"]
         content_dpath = self._root.joinpath(content_dname)
@@ -126,3 +142,11 @@ class PickleDataset(Generic[T, U], Dataset[U]):
 
         self._attrs = attrs
         self._fpaths = fpaths
+
+    @classmethod
+    def is_pickle_root(cls, root: Union[str, Path]) -> bool:
+        try:
+            PackedDataset(root)
+            return True
+        except (FileNotFoundError, RuntimeError):
+            return False
