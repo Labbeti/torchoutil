@@ -2,6 +2,9 @@
 # -*- coding: utf-8 -*-
 
 import copy
+import re
+from functools import cache
+from re import Pattern
 from typing import (
     Any,
     Callable,
@@ -28,6 +31,7 @@ W = TypeVar("W")
 
 KEY_MODES = ("same", "intersect", "union")
 KeyMode = Literal["intersect", "same", "union"]
+PatternLike = Union[str, Pattern[str]]
 
 
 def sorted_dict(
@@ -38,6 +42,36 @@ def sorted_dict(
     reverse: bool = False,
 ) -> Dict[K, V]:
     return {k: x[k] for k in sorted(x.keys(), key=key, reverse=reverse)}
+
+
+def get_key_fn(
+    patterns: Union[PatternLike, Iterable[PatternLike]],
+    *,
+    match_fn: Callable[[Pattern[str], str], bool] = re.match,
+) -> Callable[[str], int]:
+    """
+    Usage:
+    ```
+    >>> lst = ["a", "abc", "aa", "abcd"]
+    >>> patterns = ["^ab.*"]  # sort list with elements starting with 'ab' first
+    >>> list(sorted(lst, key=get_key_fn(patterns)))
+    ... ["abc", "abcd", "a", "aa"]
+    ```
+    """
+    if isinstance(patterns, (str, Pattern)):
+        patterns = [patterns]
+    else:
+        patterns = list(patterns)
+    patterns = [re.compile(pattern) for pattern in patterns]
+
+    @cache
+    def key_fn(key: str) -> int:
+        for i, pattern in enumerate(patterns):
+            if match_fn(pattern, key):
+                return i
+        return len(patterns)
+
+    return key_fn
 
 
 @overload

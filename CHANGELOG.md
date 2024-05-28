@@ -3,6 +3,9 @@
 All notable changes to this project will be documented in this file.
 
 ## [0.4.1] UNRELEASED
+### Added
+- Function `get_key_fn` to customize sorting using patterns.
+
 ### Changed
 - Rename `is_pickle_root` to `is_packed_root` (old name was kept fpr backward compatibility).
 

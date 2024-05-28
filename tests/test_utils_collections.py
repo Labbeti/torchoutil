@@ -8,6 +8,7 @@ from unittest import TestCase
 from torchoutil.utils.collections import (
     flat_dict_of_dict,
     flat_list_of_list,
+    get_key_fn,
     intersect_lists,
     list_dict_to_dict_list,
     unflat_dict_of_dict,
@@ -119,6 +120,15 @@ class TestFlatList(TestCase):
         self.assertTrue(is_list_list_str(unflat))
         self.assertEqual(len(lst), len(unflat))
         self.assertListEqual(lst, unflat)
+
+
+class TestGetKeyFn(TestCase):
+    def test_example_1(self) -> None:
+        lst = ["a", "abc", "aa", "abcd"]
+        patterns = ["^ab.*"]  # sort list with elements starting with 'ab' first
+        result = list(sorted(lst, key=get_key_fn(patterns)))
+        expected = ["abc", "abcd", "a", "aa"]
+        assert result == expected
 
 
 if __name__ == "__main__":
