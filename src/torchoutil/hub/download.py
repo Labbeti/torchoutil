@@ -2,14 +2,25 @@
 # -*- coding: utf-8 -*-
 
 import hashlib
+import logging
+import os
+import os.path as osp
 from pathlib import Path
-from typing import Literal, Optional, Union
+from typing import List, Literal, Optional, Union
 
 from torch.hub import download_url_to_file
+
+from torchoutil.utils.packaging import _TQDM_AVAILABLE
+
+if _TQDM_AVAILABLE:
+    import tqdm
+
 
 DEFAULT_CHUNK_SIZE = 256 * 1024**2  # 256 MiB
 HASH_TYPES = ("sha256", "md5")
 HashType = Literal["sha256", "md5"]
+
+pylog = logging.getLogger(__name__)
 
 
 def hash_file(
@@ -55,3 +66,47 @@ def download_file(
 
     download_url_to_file(url, fpath, hash_prefix=hash_prefix, progress=verbose > 0)
     return fpath
+
+
+def safe_rmdir(
+    root: Union[str, Path],
+    *,
+    rm_root: bool = True,
+    error_on_non_empty_dir: bool = True,
+    followlinks: bool = False,
+    verbose: int = 0,
+) -> List[str]:
+    """Remove all empty sub-directories.
+
+    Args:
+        root: Root directory path.
+        rm_root: If True, remove the root directory too if it is empty at the end. defaults to True.
+        error_on_non_empty_dir: If True, raises a RuntimeError if a subdirectory contains at least 1 file. Otherwise it will ignore non-empty directories. defaults to True.
+        followlinks: Indicates whether or not symbolic links shound be followed. defaults to False.
+        verbose: Verbose level. defaults to 0.
+
+    Returns:
+        The list of directories paths deleted.
+    """
+    to_delete = set()
+
+    walker = os.walk(root, topdown=False, followlinks=followlinks)
+    if _TQDM_AVAILABLE:
+        walker = tqdm.tqdm(walker, disable=verbose < 2)
+
+    for dpath, dnames, fnames in walker:
+        if not rm_root and dpath == root:
+            continue
+        elif len(fnames) == 0 and (
+            all(osp.join(dpath, dname) in to_delete for dname in dnames)
+        ):
+            to_delete.add(dpath)
+        elif error_on_non_empty_dir:
+            raise RuntimeError(f"Cannot remove non-empty directory '{dpath}'.")
+        elif verbose >= 2:
+            pylog.debug(f"Ignoring non-empty directory '{dpath}'...")
+
+    for dpath in to_delete:
+        os.rmdir(dpath)
+
+    return list(to_delete)
