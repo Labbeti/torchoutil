@@ -255,3 +255,7 @@ def __can_be_converted_to_tensor_nested(x: Any) -> bool:
         return __can_be_converted_to_tensor_list_tuple(x)
     else:
         return False
+
+
+def identity(x: T) -> T:
+    return x
