@@ -7,7 +7,7 @@ from typing import Callable, Iterable, List, TypeVar, Union
 import torch
 from torch import Generator, Tensor
 
-from torchoutil.utils.type_checks import is_scalar
+from torchoutil.utils.type_guards import is_scalar
 
 T = TypeVar("T")
 U = TypeVar("U")

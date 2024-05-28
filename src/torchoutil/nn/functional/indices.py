@@ -8,7 +8,7 @@ from torch import Tensor
 from torch.types import Device, Number
 
 from torchoutil.nn.functional.get import _DEVICE_CUDA_IF_AVAILABLE, get_device
-from torchoutil.utils.type_checks import Tensor0D, Tensor1D
+from torchoutil.utils.types import Tensor0D, Tensor1D
 
 
 def get_inverse_perm(indices: Tensor, dim: int = -1) -> Tensor:

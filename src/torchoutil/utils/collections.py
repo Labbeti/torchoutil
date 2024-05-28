@@ -21,7 +21,7 @@ from typing import (
     overload,
 )
 
-from torchoutil.utils.type_checks import is_mapping_str
+from torchoutil.utils.type_guards import is_mapping_str
 
 K = TypeVar("K")
 T = TypeVar("T")

@@ -26,10 +26,10 @@ from torchoutil.nn.functional.get import get_device
 from torchoutil.nn.functional.numpy import ACCEPTED_NUMPY_DTYPES
 from torchoutil.utils.collections import all_eq
 from torchoutil.utils.packaging import _NUMPY_AVAILABLE
-from torchoutil.utils.type_checks import (
+from torchoutil.utils.type_guards import (
+    is_builtin_scalar,
     is_list_tensor,
     is_numpy_scalar,
-    is_python_scalar,
     is_scalar,
     is_torch_scalar,
     is_tuple_tensor,
@@ -178,7 +178,7 @@ def shape(x: Any) -> Size:
 
 
 def item(x: Any) -> Union[int, float, bool, complex]:
-    if is_python_scalar(x):
+    if is_builtin_scalar(x):
         return x
     elif is_torch_scalar(x) or is_numpy_scalar(x):
         return x.item()
@@ -241,7 +241,7 @@ def __can_be_converted_to_tensor_list_tuple(x: Union[List, Tuple]) -> bool:
 
 
 def __can_be_converted_to_tensor_nested(x: Any) -> bool:
-    if is_python_scalar(x):
+    if is_builtin_scalar(x):
         return True
     elif isinstance(x, Tensor) and x.ndim == 0:
         return True

@@ -10,7 +10,8 @@ from torch.torch_version import TorchVersion
 
 if __version__ < TorchVersion("2.0.0"):
     namedtuple_values_indices = NamedTuple(
-        "namedtuple_values_indices", [("values", Tensor), ("indices", Tensor)]
+        "namedtuple_values_indices",
+        [("values", Tensor), ("indices", Tensor)],
     )
     min = namedtuple_values_indices
     max = namedtuple_values_indices

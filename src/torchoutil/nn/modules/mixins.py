@@ -26,7 +26,7 @@ from torch import Tensor, nn
 from torch.nn.parameter import Parameter
 
 from torchoutil.nn.functional.others import count_parameters
-from torchoutil.utils.type_checks import is_dict_str, is_mapping_str
+from torchoutil.utils.type_guards import is_dict_str, is_mapping_str
 
 InType = TypeVar("InType", covariant=False, contravariant=True)
 OutType = TypeVar("OutType", covariant=True, contravariant=False)

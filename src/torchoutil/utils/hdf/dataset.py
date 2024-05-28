@@ -39,7 +39,7 @@ from torchoutil.utils.hdf.common import (
     HDFDatasetAttributes,
     _dict_to_tuple,
 )
-from torchoutil.utils.type_checks import (
+from torchoutil.utils.type_guards import (
     is_iterable_bytes_list,
     is_iterable_int,
     is_iterable_str,

@@ -11,12 +11,12 @@ import numpy as np
 import torch
 
 from torchoutil.nn.functional.numpy import _NUMPY_AVAILABLE
-from torchoutil.utils.type_checks import (
+from torchoutil.utils.type_guards import (
+    is_builtin_scalar,
     is_dataclass_instance,
     is_iterable_str,
     is_namedtuple_instance,
     is_numpy_scalar,
-    is_python_scalar,
     is_scalar,
     is_torch_scalar,
 )
@@ -102,7 +102,7 @@ class TestIsScalar(TestCase):
 
         for x, expected in tests:
             result = is_scalar(x)
-            msg = f"{x=} ({is_python_scalar(x)}, {is_torch_scalar(x)}, {is_numpy_scalar(x)})"
+            msg = f"{x=} ({is_builtin_scalar(x)}, {is_torch_scalar(x)}, {is_numpy_scalar(x)})"
             assert result == expected, msg
 
 

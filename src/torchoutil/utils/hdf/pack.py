@@ -38,7 +38,7 @@ from torchoutil.utils.hdf.common import (
     _tuple_to_dict,
 )
 from torchoutil.utils.hdf.dataset import HDFDataset
-from torchoutil.utils.type_checks import is_dict_str, is_numpy_scalar
+from torchoutil.utils.type_guards import is_dict_str, is_numpy_scalar
 
 pylog = logging.getLogger(__name__)
 
