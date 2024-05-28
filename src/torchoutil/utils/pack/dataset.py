@@ -145,6 +145,13 @@ class PackedDataset(Generic[T, U], Dataset[U]):
 
     @classmethod
     def is_pickle_root(cls, root: Union[str, Path]) -> bool:
+        pylog.warning(
+            "Call classmethod `is_pickle_root` is deprecated. Please use `is_packed_root` instead."
+        )
+        return cls.is_packed_root(root)
+
+    @classmethod
+    def is_packed_root(cls, root: Union[str, Path]) -> bool:
         try:
             PackedDataset(root)
             return True

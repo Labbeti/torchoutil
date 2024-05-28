@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.4.1] UNRELEASED
+### Changed
+- Rename `is_pickle_root` to `is_packed_root` (old name was kept fpr backward compatibility).
+
+
 ## [0.4.0] 2024-05-27
 ### Added
 - Option `subdir_size` to `pack_dataset`.
