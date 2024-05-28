@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 
 from typing import (
-    Annotated,
     Any,
     ClassVar,
     Dict,
@@ -18,7 +17,7 @@ from typing import (
 
 import torch
 from torch import Tensor
-from typing_extensions import NewType, TypeGuard
+from typing_extensions import Annotated, NewType, TypeGuard
 
 from torchoutil.utils.packaging import _NUMPY_AVAILABLE
 

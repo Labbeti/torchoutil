@@ -4,7 +4,7 @@
 import logging
 import os
 import sys
-from functools import cache
+from functools import lru_cache
 from logging import FileHandler, Formatter, Logger, StreamHandler
 from pathlib import Path
 from types import ModuleType
@@ -22,7 +22,7 @@ if _COLORLOG_AVAILABLE:
     from colorlog import ColoredFormatter
 
 
-@cache
+@lru_cache(maxsize=None)
 def warn_once(msg: str, logger: PackageOrLogger) -> None:
     pylog = _get_loggers(logger)[0]
     pylog.warning(msg)

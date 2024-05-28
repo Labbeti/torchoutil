@@ -3,7 +3,7 @@
 
 import copy
 import re
-from functools import cache
+from functools import lru_cache
 from re import Pattern
 from typing import (
     Any,
@@ -31,7 +31,7 @@ W = TypeVar("W")
 
 KEY_MODES = ("same", "intersect", "union")
 KeyMode = Literal["intersect", "same", "union"]
-PatternLike = Union[str, Pattern[str]]
+PatternLike = Union[str, Pattern]
 
 
 def sorted_dict(
@@ -47,7 +47,7 @@ def sorted_dict(
 def get_key_fn(
     patterns: Union[PatternLike, Iterable[PatternLike]],
     *,
-    match_fn: Callable[[Pattern[str], str], bool] = re.match,
+    match_fn: Callable[[Pattern, str], bool] = re.match,
 ) -> Callable[[str], int]:
     """
     Usage:
@@ -64,7 +64,7 @@ def get_key_fn(
         patterns = list(patterns)
     patterns = [re.compile(pattern) for pattern in patterns]
 
-    @cache
+    @lru_cache(maxsize=None)
     def key_fn(key: str) -> int:
         for i, pattern in enumerate(patterns):
             if match_fn(pattern, key):
