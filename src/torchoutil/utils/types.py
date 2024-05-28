@@ -2,7 +2,16 @@
 # -*- coding: utf-8 -*-
 
 from types import NoneType
-from typing import Any, ClassVar, Dict, Protocol, Tuple, Union, runtime_checkable
+from typing import (
+    Any,
+    ClassVar,
+    Dict,
+    NewType,
+    Protocol,
+    Tuple,
+    Union,
+    runtime_checkable,
+)
 
 from torch import Tensor
 from typing_extensions import Annotated
@@ -43,8 +52,8 @@ Tensor5D = Annotated[Tensor, "5D"]
 if not _NUMPY_AVAILABLE:
 
     class _Placeholder:
-        generic = NoneType
-        ndarray = NoneType
+        generic = NewType("generic", float)
+        ndarray = NewType("ndarray", float)
         dtype = NoneType
 
     np = _Placeholder()
