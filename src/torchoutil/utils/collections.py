@@ -245,7 +245,7 @@ def filter_iterable(
     include: Optional[Iterable[T]] = None,
     exclude: Optional[Iterable[T]] = None,
 ) -> List[T]:
-    return [item for item in it if pass_filter(item, include, exclude)]
+    return type(it)(item for item in it if pass_filter(item, include, exclude))
 
 
 def all_eq(it: Iterable[T], eq_fn: Optional[Callable[[T, T], bool]] = None) -> bool:
@@ -303,7 +303,7 @@ def flat_dict_of_dict(
     ```
 
     Args:
-        nested_dict: Nested mapping containing sub-mappings or iterables.
+        nested_dic: Nested mapping containing sub-mappings or iterables.
         sep: Separators between keys.
         flat_iterables: If True, flat iterable and use index as key.
         overwrite: If True, overwrite duplicated keys in output. Otherwise duplicated keys will raises a ValueError.
