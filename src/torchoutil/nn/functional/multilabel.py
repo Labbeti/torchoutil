@@ -53,7 +53,10 @@ def indices_to_multihot(
                 target_num_classes = num_classes
 
             multihot = torch.full(
-                (target_num_classes,), False, dtype=dtype, device=device
+                (target_num_classes,),
+                False,
+                dtype=dtype,
+                device=device,
             )
             multihot.scatter_(0, x, True)
 

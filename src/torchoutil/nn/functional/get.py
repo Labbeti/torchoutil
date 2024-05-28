@@ -4,6 +4,7 @@
 from typing import Literal, Optional, Union
 
 import torch
+from torch import Generator
 from torch.types import Device
 
 _DEVICE_CUDA_IF_AVAILABLE = "cuda_if_available"
@@ -17,3 +18,11 @@ def get_device(
     if isinstance(device, str):
         device = torch.device(device)
     return device
+
+
+def get_generator(
+    generator: Union[int, Generator, None] = None,
+) -> Optional[Generator]:
+    if isinstance(generator, int):
+        generator = Generator().manual_seed(generator)
+    return generator

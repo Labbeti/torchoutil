@@ -6,11 +6,27 @@ from unittest import TestCase
 
 import torch
 
-from torchoutil.nn.modules import CropDim, PadDim, ResampleNearestRates
+from torchoutil.nn.modules import (
+    Abs,
+    Angle,
+    AsTensor,
+    CropDim,
+    CropDims,
+    Mean,
+    PadAndStackRec,
+    PadDim,
+    PadDims,
+    Permute,
+    RepeatInterleaveNd,
+    ResampleNearestRates,
+    ToList,
+    Transpose,
+    Unsqueeze,
+)
 from torchoutil.nn.modules.mixins import ESequential
 
 
-class TestTransforms(TestCase):
+class TestSequential(TestCase):
     def test_example_1(self) -> None:
         target_length = 10
         transform = ESequential(
@@ -23,6 +39,26 @@ class TestTransforms(TestCase):
         x = torch.rand(10, 20, target_length)
         result = transform(x)
 
+        assert x.shape == result.shape
+
+    def test_example_2(self) -> None:
+        transform = ESequential(
+            ToList(),
+            AsTensor(),
+            Abs(),
+            Angle(),
+            PadAndStackRec(0.0),
+            PadDims([10]),
+            CropDims([10]),
+            Mean(dim=1),
+            Unsqueeze(dim=1),
+            Permute(1, 0),
+            RepeatInterleaveNd(10, 0),
+            Transpose(0, 1),
+        )
+
+        x = torch.rand(16, 10)
+        result = transform(x)
         assert x.shape == result.shape
 
 

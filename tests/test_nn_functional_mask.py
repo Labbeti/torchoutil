@@ -21,9 +21,8 @@ from torchoutil.nn.functional.mask import (
 class TestTensorToPadMask(TestCase):
     def test_tensor_to_non_pad_mask_example_1(self) -> None:
         inp = torch.as_tensor([1, 10, 20, 2, 0, 0])
-        out = tensor_to_non_pad_mask(
-            inp, end_value=2
-        )  # default include_end value is False
+        # default include_end value is False
+        out = tensor_to_non_pad_mask(inp, end_value=2)
         out_expected = torch.as_tensor([True, True, True, False, False, False])
 
         self.assertEqual(out.shape, out_expected.shape)

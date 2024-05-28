@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 from typing import (
+    Annotated,
     Any,
     ClassVar,
     Dict,
@@ -17,7 +18,7 @@ from typing import (
 
 import torch
 from torch import Tensor
-from typing_extensions import TypeGuard
+from typing_extensions import NewType, TypeGuard
 
 from torchoutil.utils.packaging import _NUMPY_AVAILABLE
 
@@ -47,10 +48,24 @@ class NamedTupleInstance(Protocol):
         ...
 
 
+Tensor0D = Annotated[Tensor, "0D"]
+Tensor1D = Annotated[Tensor, "1D"]
+Tensor2D = Annotated[Tensor, "2D"]
+Tensor3D = Annotated[Tensor, "3D"]
+Tensor4D = Annotated[Tensor, "4D"]
+
 BuiltinScalar = Union[int, float, bool, complex]
+TorchScalar = Tensor0D
+
+if not _NUMPY_AVAILABLE:
+    NumpyScalar = NewType("NumpyScalar", None)
+    Scalar = Union[BuiltinScalar, TorchScalar]
+else:
+    NumpyScalar = Union[np.generic, np.ndarray]
+    Scalar = Union[BuiltinScalar, NumpyScalar, TorchScalar]
 
 
-def is_numpy_scalar(x: Any) -> bool:
+def is_numpy_scalar(x: Any) -> TypeGuard[NumpyScalar]:
     """Returns True if x is an instance of a numpy generic type or a zero-dimensional numpy array.
     If numpy is not installed, this function always returns False.
     """
@@ -60,20 +75,20 @@ def is_numpy_scalar(x: Any) -> bool:
         return False
 
 
-def is_python_scalar(x: Any) -> TypeGuard[Union[BuiltinScalar]]:
+def is_python_scalar(x: Any) -> TypeGuard[BuiltinScalar]:
     """Returns True if x is a builtin scalar type (int, float, bool, complex)."""
     return isinstance(x, (int, float, bool, complex))
 
 
-def is_torch_scalar(x: Any) -> TypeGuard[Tensor]:
+def is_torch_scalar(x: Any) -> TypeGuard[TorchScalar]:
     """Returns True if x is a zero-dimensional torch Tensor."""
     return isinstance(x, Tensor) and x.ndim == 0
 
 
-def is_scalar(x: Any) -> TypeGuard[Union[BuiltinScalar, Tensor]]:
-    """Returns True if input is a scalar.
+def is_scalar(x: Any) -> TypeGuard[Scalar]:
+    """Returns True if input is a scalar number.
 
-    Accepted scalars list is:
+    Accepted scalars are:
     - Python numbers (int, float, bool, complex)
     - PyTorch zero-dimensional tensors
     - Numpy zero-dimensional arrays

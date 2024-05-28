@@ -6,7 +6,6 @@ from typing import Iterable, Literal, Union
 import torch
 from torch import Generator, Tensor
 
-
 CROP_ALIGNS = ("left", "right", "center", "random")
 CropAlign = Literal["left", "right", "center", "random"]
 
@@ -14,17 +13,25 @@ CropAlign = Literal["left", "right", "center", "random"]
 def crop_dim(
     x: Tensor,
     target_length: int,
+    *,
     align: CropAlign = "left",
     dim: int = -1,
     generator: Union[int, Generator, None] = None,
 ) -> Tensor:
     """Generic function to crop a single dimension."""
-    return crop_dims(x, [target_length], [align], [dim], generator)
+    return crop_dims(
+        x,
+        [target_length],
+        aligns=[align],
+        dims=[dim],
+        generator=generator,
+    )
 
 
 def crop_dims(
     x: Tensor,
     target_lengths: Iterable[int],
+    *,
     aligns: Union[  # type: ignore
         CropAlign,
         Iterable[CropAlign],

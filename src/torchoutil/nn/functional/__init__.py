@@ -5,7 +5,7 @@ from torch.nn.functional import *
 
 from .activation import softmax_multidim
 from .crop import crop_dim, crop_dims
-from .get import get_device
+from .get import get_device, get_generator
 from .indices import (
     get_inverse_perm,
     get_perm_indices,

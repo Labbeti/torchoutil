@@ -8,6 +8,7 @@ from torch import Tensor
 from torch.types import Device, Number
 
 from torchoutil.nn.functional.get import _DEVICE_CUDA_IF_AVAILABLE, get_device
+from torchoutil.utils.type_checks import Tensor0D, Tensor1D
 
 
 def get_inverse_perm(indices: Tensor, dim: int = -1) -> Tensor:
@@ -33,7 +34,7 @@ def randperm_diff(
     size: int,
     generator: Union[None, int, torch.Generator] = None,
     device: Device = _DEVICE_CUDA_IF_AVAILABLE,
-) -> Tensor:
+) -> Tensor1D:
     """This function ensure that every value i cannot be the element at index i.
     The output will be a tensor of shape (size,).
 
@@ -65,25 +66,25 @@ def randperm_diff(
     return perm
 
 
-def get_perm_indices(t1: Tensor, t2: Tensor) -> Tensor:
+def get_perm_indices(x1: Tensor1D, x2: Tensor1D) -> Tensor1D:
     """Find permutation between two vectors t1 and t2 which contains values from 0 to N-1.
 
     Example 1::
     -----------
-        >>> t1 = torch.as_tensor([0, 1, 2, 4, 3, 6, 5, 7])
-        >>> t2 = torch.as_tensor([0, 2, 1, 4, 3, 5, 6, 7])
-        >>> indices = get_perm_indices(t1, t2)
-        >>> (t1[indices] == t2).all().item()
+        >>> x1 = torch.as_tensor([0, 1, 2, 4, 3, 6, 5, 7])
+        >>> x2 = torch.as_tensor([0, 2, 1, 4, 3, 5, 6, 7])
+        >>> indices = get_perm_indices(x1, x2)
+        >>> torch.equal(x1, x2[indices])
         True
     """
-    i1 = (t1[..., None, :] == t2[..., :, None]).int().argmax(dim=-2)
-    return i1
+    indices = (x1[..., None, :] == x2[..., :, None]).int().argmax(dim=-2)
+    return indices
 
 
 def insert_at_indices(
     x: Tensor,
-    indices: Union[Tensor, List, Number],
-    values: Union[Number, Tensor],
+    indices: Union[Tensor1D, List, Number],
+    values: Union[Number, Tensor0D, Tensor1D],
 ) -> Tensor:
     """Insert value(s) in vector at specified indices.
 
@@ -119,7 +120,7 @@ def insert_at_indices(
 
 def remove_at_indices(
     x: Tensor,
-    indices: Union[Tensor, List, Number],
+    indices: Union[Tensor1D, Tensor0D, List, Number],
 ) -> Tensor:
     """Remove value(s) in vector at specified indices."""
     if x.ndim != 1:

@@ -20,6 +20,7 @@ PadValue = Union[Number, Callable[[Tensor], Number]]
 def pad_dim(
     x: Tensor,
     target_length: int,
+    *,
     align: PadAlign = "left",
     pad_value: PadValue = 0.0,
     dim: int = -1,
@@ -27,12 +28,21 @@ def pad_dim(
     generator: Union[int, Generator, None] = None,
 ) -> Tensor:
     """Generic function for pad a single dimension."""
-    return pad_dims(x, [target_length], [align], pad_value, [dim], mode, generator)
+    return pad_dims(
+        x,
+        [target_length],
+        aligns=[align],
+        pad_value=pad_value,
+        dims=[dim],
+        mode=mode,
+        generator=generator,
+    )
 
 
 def pad_dims(
     x: Tensor,
     target_lengths: Iterable[int],
+    *,
     aligns: Iterable[PadAlign] = ("left",),
     pad_value: PadValue = 0.0,
     dims: Iterable[int] = (-1,),
@@ -72,7 +82,7 @@ def pad_dims(
 
 def pad_and_stack_rec(
     sequence: Union[Tensor, int, float, tuple, list],
-    pad_value: Number,
+    pad_value: Number = 0,
     *,
     device: Device = None,
     dtype: Union[None, torch.dtype] = None,

@@ -4,7 +4,7 @@
 from typing import Iterable, List, Optional, Union
 
 import torch
-from torch import Tensor
+from torch import LongTensor, Tensor
 from torch.types import Device
 
 from torchoutil.nn.functional.get import get_device
@@ -100,6 +100,7 @@ def lengths_to_non_pad_mask(
     lengths: Tensor,
     max_len: Optional[int] = None,
     include_end: bool = False,
+    *,
     dtype: Optional[torch.dtype] = None,
 ) -> Tensor:
     """Convert lengths to binary mask of non-padded values.
@@ -141,6 +142,7 @@ def lengths_to_pad_mask(
     lengths: Tensor,
     max_len: Optional[int] = None,
     include_end: bool = True,
+    *,
     dtype: Optional[torch.dtype] = None,
 ) -> Tensor:
     """Convert lengths to binary mask of padded values.
@@ -172,20 +174,21 @@ def lengths_to_pad_mask(
     return pad_mask
 
 
-def non_pad_mask_to_lengths(mask: Tensor, dim: int = -1) -> Tensor:
+def non_pad_mask_to_lengths(mask: Tensor, *, dim: int = -1) -> LongTensor:
     return mask.sum(dim=dim)
 
 
-def pad_mask_to_lengths(mask: Tensor, dim: int = -1) -> Tensor:
-    return mask.shape[dim] - non_pad_mask_to_lengths(mask, dim)
+def pad_mask_to_lengths(mask: Tensor, *, dim: int = -1) -> LongTensor:
+    return mask.shape[dim] - non_pad_mask_to_lengths(mask, dim=dim)
 
 
 def tensor_to_lengths(
     tensor: Tensor,
+    *,
     pad_value: Optional[float] = None,
     end_value: Optional[float] = None,
     dim: int = -1,
-) -> Tensor:
+) -> LongTensor:
     """Get the lengths of the non-padded elements of a tensor.
 
     You must provide a value for one of `pad_value` or `end_value`.
@@ -240,6 +243,7 @@ def tensor_to_lengths(
 
 def tensor_to_non_pad_mask(
     tensor: Tensor,
+    *,
     pad_value: Optional[float] = None,
     end_value: Optional[float] = None,
     include_end: bool = False,
@@ -292,6 +296,7 @@ def tensor_to_non_pad_mask(
 
 def tensor_to_pad_mask(
     tensor: Tensor,
+    *,
     pad_value: Optional[float] = None,
     end_value: Optional[float] = None,
     include_end: bool = True,
@@ -316,7 +321,11 @@ def tensor_to_pad_mask(
         tensor([False, False, False, True, True, True])
     """
     non_pad_mask = tensor_to_non_pad_mask(
-        tensor, pad_value, end_value, not include_end, dtype=torch.bool
+        tensor,
+        pad_value=pad_value,
+        end_value=end_value,
+        include_end=not include_end,
+        dtype=torch.bool,
     )
     pad_mask = non_pad_mask.logical_not()
     pad_mask = pad_mask.to(dtype=dtype)
@@ -325,6 +334,7 @@ def tensor_to_pad_mask(
 
 def tensor_to_tensors_list(
     tensor: Tensor,
+    *,
     pad_value: Optional[float] = None,
     end_value: Optional[float] = None,
     non_pad_mask: Optional[Tensor] = None,
@@ -370,7 +380,7 @@ def tensor_to_tensors_list(
     return tensors
 
 
-def tensors_list_to_lengths(tensors: List[Tensor], dim: int = -1) -> Tensor:
+def tensors_list_to_lengths(tensors: List[Tensor], dim: int = -1) -> LongTensor:
     """Return the size of the tensor at a specific dim.
 
     The output will be a tensor of size N.

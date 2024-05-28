@@ -115,13 +115,13 @@ def move_to_rec(
     if "device" in kwargs:
         kwargs["device"] = get_device(kwargs["device"])
 
-    if isinstance(x, (Tensor, nn.Module)):
+    if isinstance(x, (str, float, int, bool, complex)):
+        return x
+    elif isinstance(x, (Tensor, nn.Module)):
         if predicate is None or predicate(x):
             return x.to(**kwargs)
         else:
             return x
-    elif isinstance(x, (str, float, int, bool, complex)):
-        return x
     elif isinstance(x, Mapping):
         return {k: move_to_rec(v, predicate=predicate, **kwargs) for k, v in x.items()}
     elif isinstance(x, Iterable):

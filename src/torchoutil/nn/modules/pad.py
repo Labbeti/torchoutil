@@ -120,7 +120,7 @@ class PadAndStackRec(nn.Module):
 
     def __init__(
         self,
-        pad_value: Number,
+        pad_value: Number = 0,
         *,
         device: Device = None,
         dtype: Union[None, torch.dtype] = None,
@@ -137,15 +137,15 @@ class PadAndStackRec(nn.Module):
         return pad_and_stack_rec(
             sequence,
             self.pad_value,
-            dtype=self.dtype,
             device=self.device,
+            dtype=self.dtype,
         )
 
     def extra_repr(self) -> str:
         return dump_dict(
             dict(
                 pad_value=self.pad_value,
-                dtype=self.dtype,
                 device=self.device,
+                dtype=self.dtype,
             )
         )

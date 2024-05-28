@@ -27,16 +27,13 @@ class CropDim(nn.Module):
         self.dim = dim
         self.generator = generator
 
-    def forward(
-        self,
-        x: Tensor,
-    ) -> Tensor:
+    def forward(self, x: Tensor) -> Tensor:
         return crop_dim(
             x,
             self.target_length,
-            self.align,
-            self.dim,
-            self.generator,
+            align=self.align,
+            dim=self.dim,
+            generator=self.generator,
         )
 
     def extra_repr(self) -> str:
@@ -67,11 +64,14 @@ class CropDims(nn.Module):
         self.dims = dims
         self.generator = generator
 
-    def forward(
-        self,
-        x: Tensor,
-    ) -> Tensor:
-        return crop_dims(x, self.target_lengths, self.aligns, self.dims, self.generator)
+    def forward(self, x: Tensor) -> Tensor:
+        return crop_dims(
+            x,
+            self.target_lengths,
+            aligns=self.aligns,
+            dims=self.dims,
+            generator=self.generator,
+        )
 
     def extra_repr(self) -> str:
         return dump_dict(
