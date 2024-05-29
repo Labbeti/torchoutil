@@ -12,7 +12,7 @@ from torch.nn import functional as F
 from torch.types import Device
 
 from torchoutil.nn.functional.get import get_device
-from torchoutil.utils.type_guards import is_scalar
+from torchoutil.utils.types import is_scalar
 
 T = TypeVar("T")
 

@@ -26,7 +26,8 @@ from torch import Tensor, nn
 from torch.nn.parameter import Parameter
 
 from torchoutil.nn.functional.others import count_parameters
-from torchoutil.utils.type_guards import is_dict_str, is_mapping_str
+from torchoutil.utils.collections import dump_dict
+from torchoutil.utils.types import is_dict_str, is_mapping_str
 
 InType = TypeVar("InType", covariant=False, contravariant=True)
 OutType = TypeVar("OutType", covariant=True, contravariant=False)
@@ -105,12 +106,24 @@ class ConfigModule(nn.Module):
     ) + ("_.*",)
     _CONFIG_TYPES: ClassVar[Tuple[type, ...]] = (int, str, bool, float)
 
-    def __init__(self, *, strict_load: bool = False) -> None:
-        object.__setattr__(self, f"_{ConfigModule.__name__}__config", {})
-        object.__setattr__(self, f"_{ConfigModule.__name__}__strict_load", strict_load)
+    def __init__(
+        self,
+        *,
+        strict_load: bool = False,
+        config_to_extra_repr: bool = False,
+    ) -> None:
+        attrs = {
+            "config": {},
+            "strict_load": strict_load,
+            "config_to_extra_repr": config_to_extra_repr,
+        }
+        for name, value in attrs.items():
+            object.__setattr__(self, f"_{ConfigModule.__name__}__{name}", value)
+
         super().__init__()
         self.__config: Dict[str, Any]
         self.__strict_load: bool
+        self.__config_to_extra_repr: bool
 
     @property
     def config(self) -> Dict[str, Any]:
@@ -123,6 +136,12 @@ class ConfigModule(nn.Module):
     def __delattr__(self, name) -> None:
         self.__config.pop(name, None)
         return super().__delattr__(name)
+
+    def extra_repr(self) -> str:
+        if not self.__config_to_extra_repr:
+            return super().extra_repr()
+        else:
+            return dump_dict(self.config)
 
     def add_module(self, name: str, module: Union[nn.Module, None]) -> None:
         self.__update_config(name, module)
@@ -252,12 +271,20 @@ class EModule(
         self,
         *,
         strict_load: bool = False,
+        config_to_extra_repr: bool = False,
         device_detect_mode: DeviceDetectMode = "proxy",
     ) -> None:
         # ConfigModule must be first
-        ConfigModule.__init__(self, strict_load=strict_load)
+        ConfigModule.__init__(
+            self,
+            strict_load=strict_load,
+            config_to_extra_repr=config_to_extra_repr,
+        )
         TypedModule.__init__(self)
-        ProxyDeviceModule.__init__(self, device_detect_mode=device_detect_mode)
+        ProxyDeviceModule.__init__(
+            self,
+            device_detect_mode=device_detect_mode,
+        )
 
     def count_parameters(
         self,
@@ -300,6 +327,7 @@ class ESequential(
         unpack_tuple: bool = False,
         unpack_dict: bool = False,
         strict_load: bool = False,
+        config_to_extra_repr: bool = False,
         device_detect_mode: DeviceDetectMode = "proxy",
     ) -> None:
         ...
@@ -311,9 +339,10 @@ class ESequential(
         /,
         *,
         unpack_tuple: bool = False,
-        unpack_dict: bool = False,
         strict_load: bool = False,
+        config_to_extra_repr: bool = False,
         device_detect_mode: DeviceDetectMode = "proxy",
+        unpack_dict: bool = False,
     ) -> None:
         ...
 
@@ -327,6 +356,7 @@ class ESequential(
         unpack_tuple: bool = False,
         unpack_dict: bool = False,
         strict_load: bool = False,
+        config_to_extra_repr: bool = False,
         device_detect_mode: DeviceDetectMode = "proxy",
     ) -> None:
         ...
@@ -342,6 +372,7 @@ class ESequential(
         unpack_tuple: bool = False,
         unpack_dict: bool = False,
         strict_load: bool = False,
+        config_to_extra_repr: bool = False,
         device_detect_mode: DeviceDetectMode = "proxy",
     ) -> None:
         ...
@@ -358,6 +389,7 @@ class ESequential(
         unpack_tuple: bool = False,
         unpack_dict: bool = False,
         strict_load: bool = False,
+        config_to_extra_repr: bool = False,
         device_detect_mode: DeviceDetectMode = "proxy",
     ) -> None:
         ...
@@ -375,6 +407,7 @@ class ESequential(
         unpack_tuple: bool = False,
         unpack_dict: bool = False,
         strict_load: bool = False,
+        config_to_extra_repr: bool = False,
         device_detect_mode: DeviceDetectMode = "proxy",
     ) -> None:
         ...
@@ -393,6 +426,7 @@ class ESequential(
         unpack_tuple: bool = False,
         unpack_dict: bool = False,
         strict_load: bool = False,
+        config_to_extra_repr: bool = False,
         device_detect_mode: DeviceDetectMode = "proxy",
     ) -> None:
         ...
@@ -412,6 +446,7 @@ class ESequential(
         unpack_tuple: bool = False,
         unpack_dict: bool = False,
         strict_load: bool = False,
+        config_to_extra_repr: bool = False,
         device_detect_mode: DeviceDetectMode = "proxy",
     ) -> None:
         ...
@@ -425,6 +460,7 @@ class ESequential(
         unpack_tuple: bool = False,
         unpack_dict: bool = False,
         strict_load: bool = False,
+        config_to_extra_repr: bool = False,
         device_detect_mode: DeviceDetectMode = "proxy",
     ) -> None:
         ...
@@ -438,6 +474,7 @@ class ESequential(
         unpack_tuple: bool = False,
         unpack_dict: bool = False,
         strict_load: bool = False,
+        config_to_extra_repr: bool = False,
         device_detect_mode: DeviceDetectMode = "proxy",
     ) -> None:
         ...
@@ -449,6 +486,7 @@ class ESequential(
         unpack_tuple: bool = False,
         unpack_dict: bool = False,
         strict_load: bool = False,
+        config_to_extra_repr: bool = False,
         device_detect_mode: DeviceDetectMode = "proxy",
     ) -> None:
         ...
@@ -459,11 +497,13 @@ class ESequential(
         unpack_tuple: bool = False,
         unpack_dict: bool = False,
         strict_load: bool = False,
+        config_to_extra_repr: bool = False,
         device_detect_mode: DeviceDetectMode = "proxy",
     ) -> None:
         EModule.__init__(
             self,
             strict_load=strict_load,
+            config_to_extra_repr=config_to_extra_repr,
             device_detect_mode=device_detect_mode,
         )
         TypedSequential.__init__(

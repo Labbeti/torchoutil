@@ -54,13 +54,13 @@ class CropDims(nn.Module):
     def __init__(
         self,
         target_lengths: Iterable[int],
-        aligns: Iterable[CropAlign] = ("left",),
+        aligns: Union[CropAlign, Iterable[CropAlign]] = "left",
         dims: Iterable[int] = (-1,),
         generator: Union[int, Generator, None] = None,
     ) -> None:
         super().__init__()
         self.target_lengths = target_lengths
-        self.aligns = aligns
+        self.aligns: Union[CropAlign, Iterable[CropAlign]] = aligns
         self.dims = dims
         self.generator = generator
 

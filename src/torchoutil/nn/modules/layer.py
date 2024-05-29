@@ -2,12 +2,14 @@
 # -*- coding: utf-8 -*-
 
 import math
+from typing import Optional
 
 import torch
 from torch import Tensor, nn
 from torch.types import Device
 
 from torchoutil.nn.functional.get import get_device
+from torchoutil.utils.types import Tensor2D
 
 
 class PositionalEncoding(nn.Module):
@@ -39,16 +41,18 @@ def init_pos_emb(
     emb_size: int,
     maxlen: int = 5000,
     device: Device = None,
-) -> Tensor:
+    dtype: Optional[torch.dtype] = None,
+) -> Tensor2D:
     """Returns positional embedding tensor of shape (1, maxlen, emb_size)."""
     device = get_device(device)
 
     den = torch.exp(
         -torch.arange(0, emb_size, 2, device=device) * math.log(10000) / emb_size
     )
-    pos = torch.arange(0, maxlen, device=device).reshape(maxlen, 1)
+    pos = torch.arange(0, maxlen, device=device)
+    pos = pos.reshape(maxlen, 1)
 
-    pos_embedding = torch.zeros((maxlen, emb_size))
+    pos_embedding: Tensor2D = torch.zeros((maxlen, emb_size), dtype=dtype, device=device)  # type: ignore
     pos_embedding[:, 0::2] = torch.sin(pos * den)
     pos_embedding[:, 1::2] = torch.cos(pos * den)
     pos_embedding = pos_embedding.unsqueeze(-2)

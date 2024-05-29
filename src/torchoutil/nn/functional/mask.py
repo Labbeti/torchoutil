@@ -175,11 +175,11 @@ def lengths_to_pad_mask(
 
 
 def non_pad_mask_to_lengths(mask: Tensor, *, dim: int = -1) -> LongTensor:
-    return mask.sum(dim=dim)
+    return mask.sum(dim=dim)  # type: ignore
 
 
 def pad_mask_to_lengths(mask: Tensor, *, dim: int = -1) -> LongTensor:
-    return mask.shape[dim] - non_pad_mask_to_lengths(mask, dim=dim)
+    return mask.shape[dim] - non_pad_mask_to_lengths(mask, dim=dim)  # type: ignore
 
 
 def tensor_to_lengths(
@@ -238,7 +238,7 @@ def tensor_to_lengths(
             "Invalid arguments. Please provide only one of the arguments : end_value, pad_value."
         )
 
-    return lengths
+    return lengths  # type: ignore
 
 
 def tensor_to_non_pad_mask(
@@ -392,4 +392,4 @@ def tensors_list_to_lengths(tensors: List[Tensor], dim: int = -1) -> LongTensor:
     device = None if len(tensors) == 0 else tensors[0].device
     lst = [tensor.shape[dim] for tensor in tensors]
     output = torch.as_tensor(lst, dtype=torch.long, device=device)
-    return output
+    return output  # type: ignore

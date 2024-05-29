@@ -23,21 +23,17 @@ from torch import Size, Tensor, nn
 from typing_extensions import TypeGuard
 
 from torchoutil.nn.functional.get import get_device
-from torchoutil.nn.functional.numpy import ACCEPTED_NUMPY_DTYPES
 from torchoutil.utils.collections import all_eq
-from torchoutil.utils.packaging import _NUMPY_AVAILABLE
-from torchoutil.utils.type_guards import (
+from torchoutil.utils.types import (
+    ACCEPTED_NUMPY_DTYPES,
     is_builtin_scalar,
     is_list_tensor,
     is_numpy_scalar,
     is_scalar,
     is_torch_scalar,
     is_tuple_tensor,
+    np,
 )
-
-if _NUMPY_AVAILABLE:
-    import numpy as np
-
 
 T = TypeVar("T")
 U = TypeVar("U")
@@ -189,7 +185,7 @@ def item(x: Any) -> Union[int, float, bool, complex]:
 def _search_ndim(x: Any) -> Tuple[bool, int]:
     if is_scalar(x) or isinstance(x, str):
         return True, 0
-    elif isinstance(x, Tensor) or (_NUMPY_AVAILABLE and isinstance(x, np.ndarray)):
+    elif isinstance(x, Tensor) or isinstance(x, np.ndarray):
         return True, x.ndim
     elif isinstance(x, Iterable):
         ndims = [_search_ndim(xi)[1] for xi in x]
@@ -206,7 +202,7 @@ def _search_ndim(x: Any) -> Tuple[bool, int]:
 def _search_shape(x: Any) -> Tuple[bool, Tuple[int, ...]]:
     if is_scalar(x) or isinstance(x, str):
         return True, ()
-    elif isinstance(x, Tensor) or (_NUMPY_AVAILABLE and isinstance(x, np.ndarray)):
+    elif isinstance(x, Tensor) or isinstance(x, np.ndarray):
         return True, tuple(x.shape)
     elif isinstance(x, Iterable):
         shapes = [_search_shape(xi)[1] for xi in x]
@@ -245,11 +241,7 @@ def __can_be_converted_to_tensor_nested(x: Any) -> bool:
         return True
     elif isinstance(x, Tensor) and x.ndim == 0:
         return True
-    elif (
-        _NUMPY_AVAILABLE
-        and isinstance(x, (np.ndarray, np.generic))
-        and x.dtype in ACCEPTED_NUMPY_DTYPES
-    ):
+    elif isinstance(x, (np.ndarray, np.generic)) and x.dtype in ACCEPTED_NUMPY_DTYPES:
         return True
     elif isinstance(x, (List, Tuple)):
         return __can_be_converted_to_tensor_list_tuple(x)

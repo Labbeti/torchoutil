@@ -1,23 +1,14 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from typing import Any, Union
+from typing import Union
 
 import torch
 from torch import Tensor, nn
 from torch.types import Device
 
 from torchoutil.nn.functional.numpy import numpy_to_tensor, tensor_to_numpy, to_numpy
-from torchoutil.utils.packaging import _NUMPY_AVAILABLE
-
-if not _NUMPY_AVAILABLE:
-
-    class np:
-        dtype = Any
-        ndarray = Any
-
-else:
-    import numpy as np
+from torchoutil.utils.types import np
 
 
 class ToNumpy(nn.Module):
@@ -42,7 +33,7 @@ class TensorToNumpy(nn.Module):
         super().__init__()
         self.dtype = dtype
 
-    def forward(self, x: Union[Tensor, np.ndarray, list]) -> np.ndarray:
+    def forward(self, x: Tensor) -> np.ndarray:
         return tensor_to_numpy(x, dtype=self.dtype)
 
 

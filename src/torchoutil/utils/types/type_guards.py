@@ -6,18 +6,15 @@ from typing import Any, Dict, Iterable, List, Mapping, Sequence, Tuple, Union
 from torch import Tensor
 from typing_extensions import TypeGuard
 
-from torchoutil.utils.packaging import _NUMPY_AVAILABLE
-from torchoutil.utils.types import (
+from torchoutil.utils.types.typing import (
     BuiltinScalar,
     DataclassInstance,
     NamedTupleInstance,
     NumpyScalar,
     Scalar,
-    TorchScalar,
+    Tensor0D,
+    np,
 )
-
-if _NUMPY_AVAILABLE:
-    import numpy as np
 
 
 def is_builtin_scalar(x: Any) -> TypeGuard[BuiltinScalar]:
@@ -29,12 +26,10 @@ def is_numpy_scalar(x: Any) -> TypeGuard[NumpyScalar]:
     """Returns True if x is an instance of a numpy generic type or a zero-dimensional numpy array.
     If numpy is not installed, this function always returns False.
     """
-    return _NUMPY_AVAILABLE and (
-        isinstance(x, np.generic) or (isinstance(x, np.ndarray) and x.ndim == 0)
-    )
+    return isinstance(x, np.generic) or (isinstance(x, np.ndarray) and x.ndim == 0)
 
 
-def is_torch_scalar(x: Any) -> TypeGuard[TorchScalar]:
+def is_torch_scalar(x: Any) -> TypeGuard[Tensor0D]:
     """Returns True if x is a zero-dimensional torch Tensor."""
     return isinstance(x, Tensor) and x.ndim == 0
 
@@ -48,7 +43,7 @@ def is_scalar(x: Any) -> TypeGuard[Scalar]:
     - Numpy zero-dimensional arrays
     - Numpy generic scalars
     """
-    return is_builtin_scalar(x) or is_torch_scalar(x) or is_numpy_scalar(x)
+    return is_builtin_scalar(x) or is_numpy_scalar(x) or is_torch_scalar(x)
 
 
 def is_dataclass_instance(x: Any) -> TypeGuard[DataclassInstance]:

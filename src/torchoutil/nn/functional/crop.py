@@ -32,10 +32,7 @@ def crop_dims(
     x: Tensor,
     target_lengths: Iterable[int],
     *,
-    aligns: Union[  # type: ignore
-        CropAlign,
-        Iterable[CropAlign],
-    ] = "left",
+    aligns: Union[CropAlign, Iterable[CropAlign]] = "left",
     dims: Union[Iterable[int], Literal["auto"]] = "auto",
     generator: Union[int, Generator, None] = None,
 ) -> Tensor:
@@ -43,10 +40,12 @@ def crop_dims(
 
     target_lengths = list(target_lengths)
 
+    aligns_lst: list[CropAlign]
     if isinstance(aligns, str):
-        aligns = [aligns] * len(target_lengths)
+        aligns_lst = [aligns] * len(target_lengths)
     else:
-        aligns = list(aligns)
+        aligns_lst = list(aligns)
+    del aligns
 
     if dims == "auto":
         dims = list(range(-len(target_lengths), 0))
@@ -61,14 +60,14 @@ def crop_dims(
             f"Invalid number of targets lengths ({len(target_lengths)}) with the number of dimensions ({len(dims)})."
         )
 
-    if len(aligns) != len(dims):
+    if len(aligns_lst) != len(dims):
         raise ValueError(
-            f"Invalid number of aligns ({len(aligns)}) with the number of dimensions ({len(dims)})."
+            f"Invalid number of aligns ({len(aligns_lst)}) with the number of dimensions ({len(dims)})."
         )
 
     slices = [slice(None)] * len(x.shape)
 
-    for target_length, dim, align in zip(target_lengths, dims, aligns):
+    for target_length, dim, align in zip(target_lengths, dims, aligns_lst):
         if x.shape[dim] <= target_length:
             continue
 

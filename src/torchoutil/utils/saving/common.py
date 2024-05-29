@@ -16,7 +16,7 @@ from torchoutil.utils.packaging import (
     _OMEGACONF_AVAILABLE,
     _PANDAS_AVAILABLE,
 )
-from torchoutil.utils.type_guards import is_dataclass_instance, is_namedtuple_instance
+from torchoutil.utils.types import is_dataclass_instance, is_namedtuple_instance
 
 if _NUMPY_AVAILABLE:
     import numpy as np

@@ -10,8 +10,8 @@ from unittest import TestCase
 import numpy as np
 import torch
 
-from torchoutil.nn.functional.numpy import _NUMPY_AVAILABLE
-from torchoutil.utils.type_guards import (
+from torchoutil.utils.packaging import _NUMPY_AVAILABLE
+from torchoutil.utils.types import (
     is_builtin_scalar,
     is_dataclass_instance,
     is_iterable_str,

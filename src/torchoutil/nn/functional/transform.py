@@ -7,8 +7,6 @@ from typing import Callable, Iterable, List, TypeVar, Union
 import torch
 from torch import Generator, Tensor
 
-from torchoutil.utils.type_guards import is_scalar
-
 T = TypeVar("T")
 U = TypeVar("U")
 
@@ -65,7 +63,7 @@ def resample_nearest_rates(
     else:
         dims = list(dims)
 
-    if is_scalar(rates):
+    if isinstance(rates, (int, float)):
         steps = [1.0 / rates] * len(dims)
     else:
         steps = [1.0 / rate for rate in rates]
@@ -106,7 +104,7 @@ def resample_nearest_steps(
     else:
         dims = list(dims)
 
-    if is_scalar(steps):
+    if isinstance(steps, (int, float)):
         steps = [steps] * len(dims)
     else:
         steps = list(steps)  # type: ignore

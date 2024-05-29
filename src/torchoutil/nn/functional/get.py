@@ -20,9 +20,19 @@ def get_device(
     return device
 
 
+def get_dtype(
+    dtype: Union[torch.dtype, None, Literal["default"]] = None,
+) -> Optional[torch.dtype]:
+    if dtype == "default":
+        dtype = torch.get_default_dtype()
+    return dtype
+
+
 def get_generator(
-    generator: Union[int, Generator, None] = None,
+    generator: Union[int, Generator, None, Literal["default"]] = None,
 ) -> Optional[Generator]:
     if isinstance(generator, int):
         generator = Generator().manual_seed(generator)
+    elif generator == "default":
+        generator = torch.default_generator
     return generator

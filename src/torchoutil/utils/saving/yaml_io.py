@@ -9,7 +9,7 @@ from yaml import MappingNode, Node, SafeLoader, ScalarNode, SequenceNode
 
 from torchoutil.utils.packaging import _OMEGACONF_AVAILABLE, _YAML_AVAILABLE
 from torchoutil.utils.saving.common import to_builtin
-from torchoutil.utils.type_guards import DataclassInstance, NamedTupleInstance
+from torchoutil.utils.types import DataclassInstance, NamedTupleInstance
 
 if _YAML_AVAILABLE:
     import yaml
