@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from typing import Any, ClassVar, Dict, Protocol, Tuple, Union, runtime_checkable
+from typing import Any, ClassVar, Dict, Final, Protocol, Tuple, Union, runtime_checkable
 
 import torch
 from torch import Tensor
@@ -69,7 +69,7 @@ NumpyScalar = Union[np.ndarray, np.number]
 Scalar = Union[BuiltinScalar, NumpyScalar, Tensor0D]
 
 
-TORCH_DTYPES = {
+TORCH_DTYPES: Final[Dict[str, torch.dtype]] = {
     "float32": torch.float32,
     "float": torch.float,
     "float64": torch.float64,

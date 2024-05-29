@@ -54,6 +54,10 @@ class TestInheritEModule(TestCase):
         module2 = MyModule(in_features, out_features, p=0.25)
         module2.load_state_dict(state_dict)
 
+    def test_example_2(self) -> None:
+        module = MyModule(10, 16, p=0.0)
+        assert module.device_detect_mode == "proxy"
+
 
 if __name__ == "__main__":
     unittest.main()

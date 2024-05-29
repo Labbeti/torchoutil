@@ -40,7 +40,6 @@ from .typing import (
     Tensor3D,
     Tensor4D,
     Tensor5D,
-    TorchScalar,
     np,
     numpy,
 )
