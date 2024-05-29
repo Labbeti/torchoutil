@@ -16,6 +16,7 @@ Subpackages
    torchoutil.utils.hdf
    torchoutil.utils.pack
    torchoutil.utils.saving
+   torchoutil.utils.types
 
 Submodules
 ----------
@@ -28,4 +29,3 @@ Submodules
    torchoutil.utils.packaging
    torchoutil.utils.return_types
    torchoutil.utils.tensorboard
-   torchoutil.utils.type_checks

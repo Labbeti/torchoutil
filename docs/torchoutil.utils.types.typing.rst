@@ -1,7 +1,7 @@
-torchoutil.utils.type\_checks module
+torchoutil.utils.types.typing module
 ====================================
 
-.. automodule:: torchoutil.utils.type_checks
+.. automodule:: torchoutil.utils.types.typing
    :members:
    :undoc-members:
    :show-inheritance:
