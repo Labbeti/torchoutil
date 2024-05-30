@@ -21,9 +21,4 @@ from . import nn as nn
 from . import optim as optim
 from . import utils as utils
 from .nn.functional import *
-from .utils.types.type_guards import (
-    is_builtin_scalar,
-    is_numpy_scalar,
-    is_scalar,
-    is_torch_scalar,
-)
+from .utils.types import is_builtin_scalar, is_numpy_scalar, is_scalar, is_torch_scalar

@@ -13,8 +13,7 @@ ndarray = NewType("ndarray", Tensor)
 dtype = NewType("dtype", Type[None])
 
 
-@staticmethod
-def asarray(x: Any, dtype: Any = None) -> Never:
+def asarray(x: Any, *args, **kwargs) -> Never:
     raise NotImplementedError(
         "Cannot call function 'asarray'. Please install numpy first."
     )

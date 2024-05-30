@@ -42,6 +42,7 @@ else:
     import numpy  # noqa: F401
     import numpy as np
 
+    # Numpy dtypes that can be converted to tensor
     ACCEPTED_NUMPY_DTYPES = (
         np.float64,
         np.float32,
