@@ -3,7 +3,7 @@
 
 """Module versions of tensor functions that do not already exists in PyTorch."""
 
-from typing import List, Optional, Union
+from typing import List, Optional, Tuple, Union
 
 import torch
 from torch import Tensor, nn
@@ -420,4 +420,34 @@ class RepeatInterleave(nn.Module):
                 output_size=self.output_size,
             ),
             ignore_lst=(None,),
+        )
+
+
+class Interpolate(nn.Module):
+    def __init__(
+        self,
+        size: Union[int, Tuple[int, ...], None] = None,
+        scale_factor: Union[float, Tuple[float, ...], None] = None,
+        mode: str = "nearest",
+        align_corners: Optional[bool] = None,
+        recompute_scale_factor: Optional[bool] = None,
+        antialias: bool = False,
+    ) -> None:
+        super().__init__()
+        self.size = size
+        self.scale_factor = scale_factor
+        self.mode = mode
+        self.align_corners = align_corners
+        self.recompute_scale_factor = recompute_scale_factor
+        self.antialias = antialias
+
+    def forward(self, x: Tensor) -> Tensor:
+        return F.interpolate(
+            x,
+            size=self.size,
+            scale_factor=self.scale_factor,
+            mode=self.mode,
+            align_corners=self.align_corners,
+            recompute_scale_factor=self.recompute_scale_factor,
+            antialias=self.antialias,
         )
