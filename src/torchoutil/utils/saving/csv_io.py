@@ -9,6 +9,8 @@ from typing import Any, Dict, List, Literal, Mapping, Sequence, Union, overload
 from torchoutil.utils.collections import dict_list_to_list_dict, list_dict_to_dict_list
 from torchoutil.utils.saving.common import to_builtin
 
+ORIENT_VALUES = ("list", "dict")
+
 
 def to_csv(
     data: Union[Sequence[Mapping[str, Any]], Mapping[str, Sequence[Any]]],
@@ -17,6 +19,7 @@ def to_csv(
     overwrite: bool = True,
     to_builtins: bool = False,
     make_parents: bool = True,
+    header: bool = True,
     **csv_writer_kwargs,
 ) -> str:
     if isinstance(data, Mapping):
@@ -37,10 +40,16 @@ def to_csv(
     if to_builtins:
         data = to_builtin(data)
 
+    if header:
+        writer_cls = csv.DictWriter
+    else:
+        writer_cls = csv.writer
+
     fieldnames = list(data[0].keys())  # type: ignore
     file = io.StringIO()
-    writer = csv.DictWriter(file, fieldnames, **csv_writer_kwargs)
-    writer.writeheader()
+    writer = writer_cls(file, fieldnames, **csv_writer_kwargs)
+    if header:
+        writer.writeheader()
     writer.writerows(data)  # type: ignore
     content = file.getvalue()
     file.close()
@@ -56,6 +65,7 @@ def load_csv(
     /,
     *,
     orient: Literal["dict"],
+    header: bool = True,
     **csv_reader_kwargs,
 ) -> Dict[str, List[Any]]:
     ...
@@ -67,6 +77,7 @@ def load_csv(
     /,
     *,
     orient: Literal["list", "dict"] = "list",
+    header: bool = True,
     **csv_reader_kwargs,
 ) -> List[Dict[str, Any]]:
     ...
@@ -77,18 +88,28 @@ def load_csv(
     /,
     *,
     orient: Literal["list", "dict"] = "list",
+    header: bool = True,
     **csv_reader_kwargs,
 ) -> Union[List[Dict[str, Any]], Dict[str, List[Any]]]:
+    if header:
+        reader_cls = csv.DictReader
+    else:
+        reader_cls = csv.reader
+
     with open(fpath, "r") as file:
-        reader = csv.DictReader(file, **csv_reader_kwargs)
+        reader = reader_cls(file, **csv_reader_kwargs)
         data = list(reader)
+
+    if not header:
+        data = [
+            {f"{j}": data_ij for j, data_ij in enumerate(data_i)} for data_i in data
+        ]
 
     if orient == "dict":
         data = list_dict_to_dict_list(data, key_mode="same")
     elif orient == "list":
         pass
     else:
-        ORIENT_VALUES = ("list", "dict")
         raise ValueError(
             f"Invalid argument {orient=}. (expected one of {ORIENT_VALUES})"
         )
