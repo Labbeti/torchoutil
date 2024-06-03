@@ -168,7 +168,9 @@ def dict_list_to_list_dict(
     lengths = [len(seq) for seq in dic.values()]
     if key_mode == "same":
         if not all_eq(lengths):
-            raise ValueError("Invalid sequences for batch.")
+            raise ValueError(
+                f"Invalid sequences for batch. (found different lengths in sub-lists: {set(lengths)})"
+            )
         length = lengths[0]
     elif key_mode == "intersect":
         length = min(lengths)

@@ -4,7 +4,7 @@
 import csv
 import io
 from pathlib import Path
-from typing import Any, Dict, List, Literal, Mapping, Sequence, Union, overload
+from typing import Any, Dict, Iterable, List, Literal, Mapping, Union, overload
 
 from torchoutil.utils.collections import dict_list_to_list_dict, list_dict_to_dict_list
 from torchoutil.utils.saving.common import to_builtin
@@ -13,8 +13,8 @@ ORIENT_VALUES = ("list", "dict")
 
 
 def to_csv(
-    data: Union[Sequence[Mapping[str, Any]], Mapping[str, Sequence[Any]]],
-    fpath: Union[str, Path, None],
+    data: Union[Iterable[Mapping[str, Any]], Mapping[str, Iterable[Any]]],
+    fpath: Union[str, Path, None] = None,
     *,
     overwrite: bool = True,
     to_builtins: bool = False,
@@ -22,14 +22,6 @@ def to_csv(
     header: bool = True,
     **csv_writer_kwargs,
 ) -> str:
-    if isinstance(data, Mapping):
-        data = dict_list_to_list_dict(data)
-    else:
-        data = [dict(data_i.items()) for data_i in data]
-
-    if len(data) <= 0:
-        raise ValueError(f"Invalid argument {data=}. (found empty iterable)")
-
     if fpath is not None:
         fpath = Path(fpath).resolve().expanduser()
         if not overwrite and fpath.exists():
@@ -39,6 +31,12 @@ def to_csv(
 
     if to_builtins:
         data = to_builtin(data)
+
+    if isinstance(data, Mapping):
+        data = dict_list_to_list_dict(data)
+
+    if len(data) <= 0:
+        raise ValueError(f"Invalid argument {data=}. (found empty iterable)")
 
     if header:
         writer_cls = csv.DictWriter
