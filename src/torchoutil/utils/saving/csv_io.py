@@ -22,6 +22,7 @@ def to_csv(
     header: bool = True,
     **csv_writer_kwargs,
 ) -> str:
+    """Save CSV to file."""
     if fpath is not None:
         fpath = Path(fpath).resolve().expanduser()
         if not overwrite and fpath.exists():
@@ -89,6 +90,7 @@ def load_csv(
     header: bool = True,
     **csv_reader_kwargs,
 ) -> Union[List[Dict[str, Any]], Dict[str, List[Any]]]:
+    """Load CSV file from path."""
     if header:
         reader_cls = csv.DictReader
     else:
