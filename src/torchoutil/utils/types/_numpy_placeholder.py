@@ -3,14 +3,22 @@
 
 """Module used when numpy is not installed."""
 
-from typing import Any, NewType, Type
+from typing import Any, Type
 
 from torch import Tensor
 from typing_extensions import Never
 
-number = NewType("number", Tensor)
-ndarray = NewType("ndarray", Tensor)
-dtype = NewType("dtype", Type[None])
+
+class number(Tensor):
+    ...
+
+
+class ndarray(Tensor):
+    ...
+
+
+class dtype(Type[None]):
+    ...
 
 
 def asarray(x: Any, *args, **kwargs) -> Never:

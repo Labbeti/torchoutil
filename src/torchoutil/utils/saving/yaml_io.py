@@ -5,7 +5,7 @@ from argparse import Namespace
 from pathlib import Path
 from typing import Any, Mapping, Union
 
-from yaml import MappingNode, Node, SafeLoader, ScalarNode, SequenceNode
+from yaml import Loader, MappingNode, Node, SafeLoader, ScalarNode, SequenceNode
 
 from torchoutil.utils.packaging import _OMEGACONF_AVAILABLE, _YAML_AVAILABLE
 from torchoutil.utils.saving.common import to_builtin
@@ -15,7 +15,7 @@ if _YAML_AVAILABLE:
     import yaml
 else:
     raise ImportError(
-        "Cannot use to_yaml python module since pyyaml package is not installed."
+        f"Cannot use python module {__file__} since pyyaml package is not installed."
     )
 
 if _OMEGACONF_AVAILABLE:
@@ -34,6 +34,7 @@ def to_yaml(
     indent: Union[int, None] = None,
     **yaml_dump_kwargs,
 ) -> str:
+    """Dump content to yaml format."""
     if not _OMEGACONF_AVAILABLE and resolve:
         raise ValueError(
             "Cannot resolve yaml config without omegaconf package."
@@ -60,9 +61,14 @@ def to_yaml(
     return content
 
 
-def load_yaml(fpath: Union[str, Path]) -> Any:
+def load_yaml(
+    fpath: Union[str, Path],
+    *,
+    Loader: type[Loader] = yaml.SafeLoader,
+) -> Any:
+    """Load content from yaml filepath."""
     with open(fpath, "r") as file:
-        data = yaml.safe_load(file)
+        data = yaml.load(file, Loader=Loader)
     return data
 
 

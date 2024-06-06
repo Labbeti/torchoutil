@@ -22,7 +22,7 @@ def to_csv(
     header: bool = True,
     **csv_writer_kwargs,
 ) -> str:
-    """Save CSV to file."""
+    """Dump content to csv format."""
     if fpath is not None:
         fpath = Path(fpath).resolve().expanduser()
         if not overwrite and fpath.exists():
@@ -44,7 +44,7 @@ def to_csv(
     else:
         writer_cls = csv.writer
 
-    fieldnames = list(data[0].keys())  # type: ignore
+    fieldnames = [str(k) for k in data[0].keys()]
     file = io.StringIO()
     writer = writer_cls(file, fieldnames, **csv_writer_kwargs)
     if header:
@@ -90,7 +90,7 @@ def load_csv(
     header: bool = True,
     **csv_reader_kwargs,
 ) -> Union[List[Dict[str, Any]], Dict[str, List[Any]]]:
-    """Load CSV file from path."""
+    """Load content from csv filepath."""
     if header:
         reader_cls = csv.DictReader
     else:
@@ -102,7 +102,7 @@ def load_csv(
 
     if not header:
         data = [
-            {f"{j}": data_ij for j, data_ij in enumerate(data_i)} for data_i in data
+            {str(j): data_ij for j, data_ij in enumerate(data_i)} for data_i in data
         ]
 
     if orient == "dict":
