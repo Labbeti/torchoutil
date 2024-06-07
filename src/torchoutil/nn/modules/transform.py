@@ -13,7 +13,7 @@ from torchoutil.nn.functional.transform import (
     resample_nearest_steps,
     transform_drop,
 )
-from torchoutil.utils.collections import dump_dict
+from torchoutil.utils.stdlib.collections import dump_dict
 
 T = TypeVar("T")
 

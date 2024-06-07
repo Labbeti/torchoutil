@@ -3,47 +3,14 @@
 
 from typing import Any, Dict, Iterable, List, Mapping, Sequence, Tuple, Union
 
-from torch import Tensor
 from typing_extensions import TypeGuard
 
-from torchoutil.utils.types.typing import (
-    BuiltinScalar,
-    DataclassInstance,
-    NamedTupleInstance,
-    NumpyScalar,
-    Scalar,
-    Tensor0D,
-    np,
-)
+from .classes import BuiltinScalar, DataclassInstance, NamedTupleInstance
 
 
 def is_builtin_scalar(x: Any) -> TypeGuard[BuiltinScalar]:
     """Returns True if x is a builtin scalar type (int, float, bool, complex)."""
     return isinstance(x, (int, float, bool, complex))
-
-
-def is_numpy_scalar(x: Any) -> TypeGuard[NumpyScalar]:
-    """Returns True if x is an instance of a numpy generic type or a zero-dimensional numpy array.
-    If numpy is not installed, this function always returns False.
-    """
-    return isinstance(x, np.generic) or (isinstance(x, np.ndarray) and x.ndim == 0)
-
-
-def is_torch_scalar(x: Any) -> TypeGuard[Tensor0D]:
-    """Returns True if x is a zero-dimensional torch Tensor."""
-    return isinstance(x, Tensor) and x.ndim == 0
-
-
-def is_scalar(x: Any) -> TypeGuard[Scalar]:
-    """Returns True if input is a scalar number.
-
-    Accepted scalars are:
-    - Python numbers (int, float, bool, complex)
-    - PyTorch zero-dimensional tensors
-    - Numpy zero-dimensional arrays
-    - Numpy generic scalars
-    """
-    return is_builtin_scalar(x) or is_numpy_scalar(x) or is_torch_scalar(x)
 
 
 def is_dataclass_instance(x: Any) -> TypeGuard[DataclassInstance]:
@@ -110,10 +77,6 @@ def is_sequence_str(
     )
 
 
-def is_iterable_tensor(x: Any) -> TypeGuard[Iterable[Tensor]]:
-    return isinstance(x, Iterable) and all(isinstance(xi, Tensor) for xi in x)
-
-
 def is_list_list_str(x: Any) -> TypeGuard[List[List[str]]]:
     return (
         isinstance(x, list)
@@ -134,17 +97,9 @@ def is_list_str(x: Any) -> TypeGuard[List[str]]:
     return isinstance(x, list) and all(isinstance(xi, str) for xi in x)
 
 
-def is_list_tensor(x: Any) -> TypeGuard[List[Tensor]]:
-    return isinstance(x, list) and all(isinstance(xi, Tensor) for xi in x)
-
-
 def is_mapping_str(x: Any) -> TypeGuard[Mapping[str, Any]]:
     return isinstance(x, Mapping) and all(isinstance(key, str) for key in x.keys())
 
 
 def is_tuple_str(x: Any) -> TypeGuard[Tuple[str, ...]]:
     return isinstance(x, tuple) and all(isinstance(xi, str) for xi in x)
-
-
-def is_tuple_tensor(x: Any) -> TypeGuard[Tuple[Tensor, ...]]:
-    return isinstance(x, tuple) and all(isinstance(xi, Tensor) for xi in x)

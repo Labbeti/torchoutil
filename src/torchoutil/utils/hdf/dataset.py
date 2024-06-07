@@ -30,7 +30,7 @@ from torch.utils.data.dataset import Dataset
 from typing_extensions import TypeGuard
 
 from torchoutil.nn.functional.indices import get_inverse_perm
-from torchoutil.utils.collections import all_eq
+from torchoutil.types import is_iterable_bytes_list, is_iterable_int, is_iterable_str
 from torchoutil.utils.hdf.common import (
     HDF_ENCODING,
     HDF_STRING_DTYPE,
@@ -39,11 +39,7 @@ from torchoutil.utils.hdf.common import (
     HDFDatasetAttributes,
     _dict_to_tuple,
 )
-from torchoutil.utils.types import (
-    is_iterable_bytes_list,
-    is_iterable_int,
-    is_iterable_str,
-)
+from torchoutil.utils.stdlib.collections import all_eq
 
 pylog = logging.getLogger(__name__)
 

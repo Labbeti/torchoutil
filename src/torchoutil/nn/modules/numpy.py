@@ -8,7 +8,7 @@ from torch import Tensor, nn
 from torch.types import Device
 
 from torchoutil.nn.functional.numpy import numpy_to_tensor, tensor_to_numpy, to_numpy
-from torchoutil.utils.types import np
+from torchoutil.types import np
 
 
 class ToNumpy(nn.Module):

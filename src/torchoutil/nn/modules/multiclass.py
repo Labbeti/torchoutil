@@ -18,7 +18,7 @@ from torchoutil.nn.functional.multiclass import (
     probs_to_name,
     probs_to_onehot,
 )
-from torchoutil.utils.collections import dump_dict
+from torchoutil.utils.stdlib.collections import dump_dict
 
 T = TypeVar("T")
 

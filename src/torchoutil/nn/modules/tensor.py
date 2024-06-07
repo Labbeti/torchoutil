@@ -12,7 +12,7 @@ from torch.types import Device, Number
 
 from torchoutil.nn.functional.get import get_device
 from torchoutil.utils import return_types
-from torchoutil.utils.collections import dump_dict
+from torchoutil.utils.stdlib.collections import dump_dict
 
 
 class Reshape(nn.Module):

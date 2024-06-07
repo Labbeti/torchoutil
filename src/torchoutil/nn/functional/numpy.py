@@ -8,7 +8,7 @@ from torch import Tensor
 from torch.types import Device
 
 from torchoutil.nn.functional.get import get_device
-from torchoutil.utils.types import np
+from torchoutil.types import np
 
 
 def to_numpy(

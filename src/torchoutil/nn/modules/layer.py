@@ -9,7 +9,7 @@ from torch import Tensor, nn
 from torch.types import Device
 
 from torchoutil.nn.functional.get import get_device
-from torchoutil.utils.types import Tensor2D
+from torchoutil.types import Tensor2D
 
 
 class PositionalEncoding(nn.Module):
@@ -52,7 +52,11 @@ def init_pos_emb(
     pos = torch.arange(0, maxlen, device=device)
     pos = pos.reshape(maxlen, 1)
 
-    pos_embedding: Tensor2D = torch.zeros((maxlen, emb_size), dtype=dtype, device=device)  # type: ignore
+    pos_embedding: Tensor2D = torch.zeros(
+        (maxlen, emb_size),
+        dtype=dtype,
+        device=device,
+    )
     pos_embedding[:, 0::2] = torch.sin(pos * den)
     pos_embedding[:, 1::2] = torch.cos(pos * den)
     pos_embedding = pos_embedding.unsqueeze(-2)

@@ -7,9 +7,9 @@ from typing import Any, Mapping, Type, Union
 
 from yaml import Loader, MappingNode, Node, SafeLoader, ScalarNode, SequenceNode
 
+from torchoutil.types import DataclassInstance, NamedTupleInstance
 from torchoutil.utils.packaging import _OMEGACONF_AVAILABLE, _YAML_AVAILABLE
 from torchoutil.utils.saving.common import to_builtin
-from torchoutil.utils.types import DataclassInstance, NamedTupleInstance
 
 if _YAML_AVAILABLE:
     import yaml

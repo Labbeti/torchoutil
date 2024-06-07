@@ -11,12 +11,12 @@ from typing import Any, Dict, Iterable, List, Literal, Mapping, TypeVar, Union, 
 from torch import Tensor
 from torch.types import Number as TorchNumber
 
+from torchoutil.types import is_dataclass_instance, is_namedtuple_instance
 from torchoutil.utils.packaging import (
     _NUMPY_AVAILABLE,
     _OMEGACONF_AVAILABLE,
     _PANDAS_AVAILABLE,
 )
-from torchoutil.utils.types import is_dataclass_instance, is_namedtuple_instance
 
 if _NUMPY_AVAILABLE:
     import numpy as np

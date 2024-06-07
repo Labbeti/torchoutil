@@ -7,7 +7,7 @@ from typing import Callable, Iterable, List, Optional, Union
 import torch
 from torch import Generator, Tensor
 
-from torchoutil.utils.collections import flat_list_of_list
+from torchoutil.utils.stdlib.collections import flat_list_of_list
 
 
 def random_split(

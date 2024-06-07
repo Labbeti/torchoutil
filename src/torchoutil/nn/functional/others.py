@@ -23,8 +23,7 @@ from torch import Size, Tensor, nn
 from typing_extensions import TypeGuard
 
 from torchoutil.nn.functional.get import get_device
-from torchoutil.utils.collections import all_eq
-from torchoutil.utils.types import (
+from torchoutil.types import (
     ACCEPTED_NUMPY_DTYPES,
     is_builtin_scalar,
     is_list_tensor,
@@ -34,6 +33,7 @@ from torchoutil.utils.types import (
     is_tuple_tensor,
     np,
 )
+from torchoutil.utils.stdlib.collections import all_eq
 
 T = TypeVar("T")
 U = TypeVar("U")

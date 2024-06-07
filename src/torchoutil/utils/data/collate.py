@@ -7,7 +7,7 @@ import torch
 
 from torchoutil.nn.functional.others import can_be_converted_to_tensor, can_be_stacked
 from torchoutil.nn.functional.pad import pad_and_stack_rec
-from torchoutil.utils.collections import (
+from torchoutil.utils.stdlib.collections import (
     KeyMode,
     filter_iterable,
     list_dict_to_dict_list,

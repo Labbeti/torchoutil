@@ -12,7 +12,7 @@ from torch.types import Device
 
 from torchoutil.nn.functional.get import get_device
 from torchoutil.nn.functional.pad import pad_and_stack_rec
-from torchoutil.utils.types import is_scalar, is_sequence_bool, is_sequence_int
+from torchoutil.types import is_scalar, is_sequence_bool, is_sequence_int
 
 T = TypeVar("T")
 

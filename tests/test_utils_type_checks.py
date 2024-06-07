@@ -10,8 +10,7 @@ from unittest import TestCase
 import numpy as np
 import torch
 
-from torchoutil.utils.packaging import _NUMPY_AVAILABLE
-from torchoutil.utils.types import (
+from torchoutil.types import (
     is_builtin_scalar,
     is_dataclass_instance,
     is_iterable_str,
@@ -20,6 +19,7 @@ from torchoutil.utils.types import (
     is_scalar,
     is_torch_scalar,
 )
+from torchoutil.utils.packaging import _NUMPY_AVAILABLE
 
 
 class TestTypeChecks(TestCase):

@@ -1,40 +1,18 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from typing import Any, ClassVar, Dict, Final, Protocol, Tuple, Union, runtime_checkable
+from typing import Dict, Final, Union
 
 import torch
 from torch import Tensor
 from typing_extensions import Annotated
 
 from torchoutil.utils.packaging import _NUMPY_AVAILABLE
-
-
-@runtime_checkable
-class DataclassInstance(Protocol):
-    # Class meant for typing purpose only
-    __dataclass_fields__: ClassVar[Dict[str, Any]]
-
-
-@runtime_checkable
-class NamedTupleInstance(Protocol):
-    # Class meant for typing purpose only
-    _fields: Tuple[str, ...]
-    _field_defaults: Dict[str, Any]
-
-    def _asdict(self) -> Dict[str, Any]:
-        ...
-
-    def __getitem__(self, idx):
-        ...
-
-    def __len__(self) -> int:
-        ...
-
+from torchoutil.utils.stdlib.typing import BuiltinScalar
 
 if not _NUMPY_AVAILABLE:
-    from torchoutil.utils.types import _numpy_placeholder as np  # noqa: F401
-    from torchoutil.utils.types import _numpy_placeholder as numpy
+    from torchoutil.types import _numpy_placeholder as np  # noqa: F401
+    from torchoutil.types import _numpy_placeholder as numpy
 
     ACCEPTED_NUMPY_DTYPES = ()
 
@@ -65,7 +43,6 @@ Tensor3D = Annotated[Tensor, "3D"]
 Tensor4D = Annotated[Tensor, "4D"]
 Tensor5D = Annotated[Tensor, "5D"]
 
-BuiltinScalar = Union[int, float, bool, complex]
 NumpyScalar = Union[np.ndarray, np.number]
 Scalar = Union[BuiltinScalar, NumpyScalar, Tensor0D]
 
