@@ -3,7 +3,7 @@
 
 from argparse import Namespace
 from pathlib import Path
-from typing import Any, Mapping, Union
+from typing import Any, Mapping, Type, Union
 
 from yaml import Loader, MappingNode, Node, SafeLoader, ScalarNode, SequenceNode
 
@@ -64,7 +64,7 @@ def to_yaml(
 def load_yaml(
     fpath: Union[str, Path],
     *,
-    Loader: type[Loader] = yaml.SafeLoader,
+    Loader: Type[Loader] = yaml.SafeLoader,
 ) -> Any:
     """Load content from yaml filepath."""
     with open(fpath, "r") as file:
