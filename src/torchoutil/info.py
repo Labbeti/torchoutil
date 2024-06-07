@@ -4,11 +4,12 @@
 import platform
 import sys
 from pathlib import Path
-from typing import Dict
+from typing import Any, Dict
 
 import torch
 
 import torchoutil
+from torchoutil.utils.packaging import _EXTRA_AVAILABLE
 from torchoutil.utils.stdlib.collections import dump_dict
 
 
@@ -17,7 +18,7 @@ def get_package_repository_path() -> str:
     return str(Path(__file__).parent.parent.parent)
 
 
-def get_install_info() -> Dict[str, str]:
+def get_install_info() -> Dict[str, Any]:
     return {
         "torchoutil": torchoutil.__version__,
         "python": f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}",
@@ -25,7 +26,7 @@ def get_install_info() -> Dict[str, str]:
         "architecture": platform.architecture()[0],
         "torch": str(torch.__version__),
         "package_path": get_package_repository_path(),
-    }
+    } | {f"{k}_available": str(v) for k, v in _EXTRA_AVAILABLE.items()}
 
 
 def print_install_info() -> None:
