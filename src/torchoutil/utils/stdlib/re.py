@@ -3,14 +3,14 @@
 
 import re
 from re import Pattern
-from typing import Callable, Iterable, Union
+from typing import Callable, Iterable, List, Union
 
 PatternLike = Union[str, Pattern]
 
 
 def compile_patterns(
     patterns: Union[PatternLike, Iterable[PatternLike]]
-) -> list[Pattern]:
+) -> List[Pattern]:
     if isinstance(patterns, (str, Pattern)):
         patterns = [patterns]
     patterns = [re.compile(pattern) for pattern in patterns]
@@ -19,7 +19,7 @@ def compile_patterns(
 
 def find_pattern(
     x: str,
-    patterns: list[Pattern],
+    patterns: List[Pattern],
     *,
     match_fn: Callable[[Pattern, str], bool] = re.search,  # type: ignore
     default: int = -1,
@@ -32,7 +32,7 @@ def find_pattern(
 
 def pass_patterns(
     x: str,
-    patterns: list[Pattern],
+    patterns: List[Pattern],
     *,
     match_fn: Callable[[Pattern, str], bool] = re.search,  # type: ignore
 ) -> bool:

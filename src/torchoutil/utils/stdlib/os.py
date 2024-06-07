@@ -3,7 +3,7 @@
 
 from pathlib import Path
 from re import Pattern
-from typing import Any, Generator, Iterable, Union
+from typing import Any, Generator, Iterable, List, Union
 
 from torchoutil.utils.stdlib.re import PatternLike, compile_patterns, pass_patterns
 
@@ -42,7 +42,7 @@ def tree_iter(
 
 def _tree_impl(
     dpath: Path,
-    ignore: list[Pattern],
+    ignore: List[Pattern],
     recurse: bool,
     prefix: str,
     space: str,

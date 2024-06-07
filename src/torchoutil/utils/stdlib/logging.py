@@ -161,7 +161,7 @@ def get_ipython_name() -> (
 def get_colored_formatter() -> Formatter:
     if not _COLORLOG_AVAILABLE:
         raise RuntimeError(
-            "Cannot call function get_colored_fmt() without colorlog installed. Please use `pip install torchoutil[extras]` to install it."
+            "Cannot call function get_colored_formatter() without colorlog installed. Please use `pip install colorlog` to install it."
         )
 
     rank = os.getenv("SLURM_PROCID", 0)

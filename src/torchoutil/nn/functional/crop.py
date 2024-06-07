@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from typing import Iterable, Literal, Union
+from typing import Iterable, List, Literal, Union
 
 import torch
 from torch import Generator, Tensor
@@ -40,7 +40,7 @@ def crop_dims(
 
     target_lengths = list(target_lengths)
 
-    aligns_lst: list[CropAlign]
+    aligns_lst: List[CropAlign]
     if isinstance(aligns, str):
         aligns_lst = [aligns] * len(target_lengths)
     else:
