@@ -19,14 +19,16 @@ def get_package_repository_path() -> str:
 
 
 def get_install_info() -> Dict[str, Any]:
-    return {
+    install_info = {
         "torchoutil": torchoutil.__version__,
         "python": f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}",
         "os": platform.system(),
         "architecture": platform.architecture()[0],
         "torch": str(torch.__version__),
         "package_path": get_package_repository_path(),
-    } | {f"{k}_available": str(v) for k, v in _EXTRA_AVAILABLE.items()}
+    }
+    install_info.update({f"{k}_available": str(v) for k, v in _EXTRA_AVAILABLE.items()})
+    return install_info
 
 
 def print_install_info() -> None:
