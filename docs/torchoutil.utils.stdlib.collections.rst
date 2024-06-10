@@ -1,7 +1,7 @@
-torchoutil.utils.types.type\_guards module
+torchoutil.utils.stdlib.collections module
 ==========================================
 
-.. automodule:: torchoutil.utils.types.type_guards
+.. automodule:: torchoutil.utils.stdlib.collections
    :members:
    :undoc-members:
    :show-inheritance:
