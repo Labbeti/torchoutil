@@ -177,7 +177,16 @@ def dump_dict(
     fmt: str = "{key}={value}",
     ignore_lst: Iterable[T] = (),
 ) -> str:
-    """Dump dictionary to string."""
+    """Custom dictionary of scalars to string function to customize representation.
+
+    Example 1:
+    ----------
+    ```
+    >>> d = {"a": 1, "b": 2}
+    >>> dump_dict(d)
+    ... 'a=1, b=2'
+    ```
+    """
     ignore_lst = dict.fromkeys(ignore_lst)
     result = join.join(
         fmt.format(key=key, value=value)
