@@ -48,22 +48,8 @@ T = TypeVar("T")
 U = TypeVar("U")
 
 
-IndexType = Union[int, Iterable[int], Tensor, slice, None]
-ColumnType = Union[str, Iterable[str], None]
-
-
-def _is_index(index: Any) -> TypeGuard[IndexType]:
-    return (
-        isinstance(index, int)
-        or is_iterable_int(index)
-        or isinstance(index, slice)
-        or index is None
-        or (isinstance(index, Tensor) and not index.is_floating_point())
-    )
-
-
-def _is_column(column: Any) -> TypeGuard[ColumnType]:
-    return is_iterable_str(column, accept_str=True) or column is None
+IndexLike = Union[int, Iterable[int], Tensor, slice, None]
+ColumnLike = Union[str, Iterable[str], None]
 
 
 class HDFDataset(Generic[T, U], Dataset[U]):
@@ -102,6 +88,7 @@ class HDFDataset(Generic[T, U], Dataset[U]):
             raise FileNotFoundError(
                 f"Cannot find HDF file in path {hdf_fpath=}. Possible HDF files are:\n - {names_str}"
             )
+
         keep_padding = list(keep_padding)
         if file_kwargs is None:
             file_kwargs = {}
@@ -209,8 +196,8 @@ class HDFDataset(Generic[T, U], Dataset[U]):
 
     def at(
         self,
-        index: IndexType = None,
-        column: ColumnType = None,
+        index: IndexLike = None,
+        column: ColumnLike = None,
         raw: bool = False,
     ) -> Any:
         if self.is_closed():
@@ -371,7 +358,7 @@ class HDFDataset(Generic[T, U], Dataset[U]):
 
     def __getitem__(
         self,
-        index: Union[IndexType, Tuple[IndexType, ColumnType]],
+        index: Union[IndexLike, Tuple[IndexLike, ColumnLike]],
     ) -> Any:
         if (
             isinstance(index, tuple)
@@ -510,3 +497,17 @@ def _decode_rec(value: Union[bytes, Iterable], encoding: str) -> Union[str, list
         raise TypeError(
             f"Invalid argument type {type(value)}. (expected bytes or Iterable)"
         )
+
+
+def _is_index(index: Any) -> TypeGuard[IndexLike]:
+    return (
+        isinstance(index, int)
+        or is_iterable_int(index)
+        or isinstance(index, slice)
+        or index is None
+        or (isinstance(index, Tensor) and not index.is_floating_point())
+    )
+
+
+def _is_column(column: Any) -> TypeGuard[ColumnLike]:
+    return is_iterable_str(column, accept_str=True) or column is None
