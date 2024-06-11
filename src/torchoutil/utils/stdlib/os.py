@@ -50,14 +50,13 @@ def _tree_impl(
     tee: str,
     last: str,
 ) -> Generator[str, Any, None]:
-    paths = list(dpath.iterdir())
+    paths = dpath.iterdir()
+    paths = [path for path in paths if not pass_patterns(str(path), ignore)]
+
     # contents each get pointers that are ├── with a final └── :
     pointers = [tee] * (len(paths) - 1) + [last]
 
     for pointer, path in zip(pointers, paths):
-        if pass_patterns(str(path), ignore):
-            continue
-
         yield prefix + pointer + path.name
 
         if recurse and path.is_dir():
