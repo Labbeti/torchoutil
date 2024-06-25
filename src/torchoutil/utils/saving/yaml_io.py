@@ -3,9 +3,11 @@
 
 from argparse import Namespace
 from pathlib import Path
-from typing import Any, Mapping, Type, Union
+from typing import Any, Literal, Mapping, Type, Union
 
 from yaml import Loader, MappingNode, Node, SafeLoader, ScalarNode, SequenceNode
+from yaml.parser import ParserError
+from yaml.scanner import ScannerError
 
 from torchoutil.utils.packaging import _OMEGACONF_AVAILABLE, _YAML_AVAILABLE
 from torchoutil.utils.saving.common import to_builtin
@@ -65,10 +67,17 @@ def load_yaml(
     fpath: Union[str, Path],
     *,
     Loader: Type[Loader] = yaml.SafeLoader,
+    on_error: Literal["raise", "ignore"] = "raise",
 ) -> Any:
     """Load content from yaml filepath."""
-    with open(fpath, "r") as file:
-        data = yaml.load(file, Loader=Loader)
+    try:
+        with open(fpath, "r") as file:
+            data = yaml.load(file, Loader=Loader)
+    except (ScannerError, ParserError) as err:
+        if on_error == "ignore":
+            return None
+        else:
+            raise err
     return data
 
 
