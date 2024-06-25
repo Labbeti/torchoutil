@@ -9,7 +9,7 @@ from torchoutil.utils.stdlib.re import PatternLike, compile_patterns, pass_patte
 
 
 def tree_iter(
-    dpath: Union[str, Path],
+    root: Union[str, Path],
     *,
     ignore: Union[PatternLike, Iterable[PatternLike]] = (),
     recurse: bool = True,
@@ -22,14 +22,14 @@ def tree_iter(
 
     BASED ON https://stackoverflow.com/questions/9727673/list-directory-tree-structure-in-python
     """
-    dpath = Path(dpath)
+    root = Path(root)
     ignore = compile_patterns(ignore)
-    if pass_patterns(str(dpath), ignore):
+    if pass_patterns(str(root), ignore):
         yield from ()
 
-    yield dpath.name
+    yield root.name
     yield from _tree_impl(
-        dpath,
+        root,
         ignore=ignore,
         recurse=recurse,
         prefix="",
@@ -41,7 +41,7 @@ def tree_iter(
 
 
 def _tree_impl(
-    dpath: Path,
+    root: Path,
     ignore: List[Pattern],
     recurse: bool,
     prefix: str,
@@ -50,7 +50,7 @@ def _tree_impl(
     tee: str,
     last: str,
 ) -> Generator[str, Any, None]:
-    paths = dpath.iterdir()
+    paths = root.iterdir()
     paths = [path for path in paths if not pass_patterns(str(path), ignore)]
 
     # contents each get pointers that are ├── with a final └── :

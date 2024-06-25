@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+from .argparse import str_to_bool, str_to_optional_int, str_to_optional_str
 from .collections import (
     KeyMode,
     all_eq,

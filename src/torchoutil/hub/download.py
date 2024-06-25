@@ -88,6 +88,12 @@ def safe_rmdir(
     Returns:
         The list of directories paths deleted.
     """
+    root = str(root)
+    if not osp.isdir(root):
+        raise FileNotFoundError(
+            f"Target root directory does not exists. (with {root=})"
+        )
+
     to_delete = set()
 
     walker = os.walk(root, topdown=False, followlinks=followlinks)

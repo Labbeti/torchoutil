@@ -35,7 +35,8 @@ Tracker = "https://github.com/Labbeti/torchoutil/issues"
 
 [project.scripts]
 torchoutil-info = "torchoutil.info:print_install_info"
-torchoutil-tree = "torchoutil.tree:main"
+to-tree = "torchoutil.entries:main_tree"
+to-safe-rmdir = "torchoutil.entries:main_safe_rmdir"
 
 [tool.setuptools.packages.find]
 where = ["src"]  # list of folders that contain the packages (["."] by default)
