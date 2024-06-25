@@ -5,7 +5,22 @@ from argparse import Namespace
 from pathlib import Path
 from typing import Any, Literal, Mapping, Type, Union
 
-from yaml import Loader, MappingNode, Node, SafeLoader, ScalarNode, SequenceNode
+from yaml import (
+    BaseLoader,
+    CBaseLoader,
+    CFullLoader,
+    CLoader,
+    CSafeLoader,
+    CUnsafeLoader,
+    FullLoader,
+    Loader,
+    MappingNode,
+    Node,
+    SafeLoader,
+    ScalarNode,
+    SequenceNode,
+    UnsafeLoader,
+)
 from yaml.parser import ParserError
 from yaml.scanner import ScannerError
 
@@ -22,6 +37,20 @@ else:
 
 if _OMEGACONF_AVAILABLE:
     from omegaconf import OmegaConf
+
+
+Loaders = (
+    Type[Loader]
+    | Type[BaseLoader]
+    | Type[FullLoader]
+    | Type[SafeLoader]
+    | Type[UnsafeLoader]
+    | Type[CLoader]
+    | Type[CBaseLoader]
+    | Type[CFullLoader]
+    | Type[CSafeLoader]
+    | Type[CUnsafeLoader]
+)
 
 
 def to_yaml(
@@ -66,7 +95,7 @@ def to_yaml(
 def load_yaml(
     fpath: Union[str, Path],
     *,
-    Loader: Type[Loader] = yaml.SafeLoader,
+    Loader: Loaders = SafeLoader,
     on_error: Literal["raise", "ignore"] = "raise",
 ) -> Any:
     """Load content from yaml filepath."""

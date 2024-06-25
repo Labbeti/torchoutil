@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from .classes import BuiltinScalar, DataclassInstance, NamedTupleInstance
+from .classes import BuiltinScalar, DataclassInstance, NamedTupleInstance, SizedIterable
 from .guards import (
     is_builtin_scalar,
     is_dataclass_instance,

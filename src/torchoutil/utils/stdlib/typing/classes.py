@@ -1,8 +1,19 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from typing import Any, ClassVar, Dict, Protocol, Tuple, Union, runtime_checkable
+from typing import (
+    Any,
+    ClassVar,
+    Dict,
+    Generic,
+    Protocol,
+    Tuple,
+    TypeVar,
+    Union,
+    runtime_checkable,
+)
 
+T = TypeVar("T")
 BuiltinScalar = Union[int, float, bool, complex]
 
 
@@ -22,6 +33,15 @@ class NamedTupleInstance(Protocol):
         ...
 
     def __getitem__(self, idx):
+        ...
+
+    def __len__(self) -> int:
+        ...
+
+
+@runtime_checkable
+class SizedIterable(Generic[T], Protocol):
+    def __iter__(self) -> int:
         ...
 
     def __len__(self) -> int:

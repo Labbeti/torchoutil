@@ -74,9 +74,9 @@ def list_dict_to_dict_list(
     keys = set(lst[0].keys())
     if key_mode == "same":
         invalids = [list(item.keys()) for item in lst[1:] if keys != set(item.keys())]
-        if len(invalids):
+        if len(invalids) > 0:
             raise ValueError(
-                f"Invalid keys with {key_mode=}. (with {keys=} and {invalids=})"
+                f"Invalid dict keys for conversion from list[dict] to dict[list]. (with {key_mode=}, {keys=} and {invalids=})"
             )
     elif key_mode == "intersect":
         keys = intersect_lists([item.keys() for item in lst])
@@ -92,7 +92,7 @@ def list_dict_to_dict_list(
 
 @overload
 def dict_list_to_list_dict(
-    dic: Mapping[T, Sequence[U]],
+    dic: Mapping[T, Iterable[U]],
     key_mode: Literal["same", "intersect"],
     default_val: Any = None,
 ) -> List[Dict[T, U]]:
@@ -101,7 +101,7 @@ def dict_list_to_list_dict(
 
 @overload
 def dict_list_to_list_dict(
-    dic: Mapping[T, Sequence[U]],
+    dic: Mapping[T, Iterable[U]],
     key_mode: Literal["union"] = "union",
     default_val: W = None,
 ) -> List[Dict[T, Union[U, W]]]:
@@ -109,7 +109,7 @@ def dict_list_to_list_dict(
 
 
 def dict_list_to_list_dict(
-    dic: Mapping[T, Sequence[U]],
+    dic: Mapping[T, Iterable[U]],
     key_mode: KeyMode = "union",
     default_val: W = None,
 ) -> List[Dict[T, Union[U, W]]]:
@@ -126,7 +126,9 @@ def dict_list_to_list_dict(
     if len(dic) == 0:
         return []
 
+    dic = {k: list(v) if not isinstance(v, Sequence) else v for k, v in dic.items()}
     lengths = [len(seq) for seq in dic.values()]
+
     if key_mode == "same":
         if not all_eq(lengths):
             raise ValueError(
