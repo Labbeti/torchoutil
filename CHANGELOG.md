@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file.
 ## [0.4.1] UNRELEASED
 ### Added
 - Function `get_key_fn` to customize sorting using patterns.
+- Option `on_error` to `load_yaml` to ignore yaml scanner and parser exceptions.
 
 ### Changed
 - Rename `is_pickle_root` to `is_packed_root` (old name was kept fpr backward compatibility).
