@@ -39,18 +39,18 @@ if _OMEGACONF_AVAILABLE:
     from omegaconf import OmegaConf
 
 
-Loaders = (
-    Type[Loader]
-    | Type[BaseLoader]
-    | Type[FullLoader]
-    | Type[SafeLoader]
-    | Type[UnsafeLoader]
-    | Type[CLoader]
-    | Type[CBaseLoader]
-    | Type[CFullLoader]
-    | Type[CSafeLoader]
-    | Type[CUnsafeLoader]
-)
+Loaders = Union[
+    Type[Loader],
+    Type[BaseLoader],
+    Type[FullLoader],
+    Type[SafeLoader],
+    Type[UnsafeLoader],
+    Type[CLoader],
+    Type[CBaseLoader],
+    Type[CFullLoader],
+    Type[CSafeLoader],
+    Type[CUnsafeLoader],
+]
 
 
 def to_yaml(
