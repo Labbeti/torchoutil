@@ -42,12 +42,12 @@ def to_csv(
     else:
         data = list(data)
 
-    if len(data) <= 0:
-        raise ValueError(f"Invalid argument {data=}. (found empty iterable)")
-
     if header:
         writer_cls = DictWriter
-        fieldnames = [str(k) for k in data[0].keys()]
+        if len(data) == 0:
+            fieldnames = []
+        else:
+            fieldnames = [str(k) for k in data[0].keys()]
         csv_writer_kwargs["fieldnames"] = fieldnames
     else:
         writer_cls = csv.writer
@@ -82,7 +82,7 @@ def load_csv(
     fpath: Union[str, Path],
     /,
     *,
-    orient: Literal["list", "dict"] = "list",
+    orient: Literal["list"] = "list",
     header: bool = True,
     **csv_reader_kwargs,
 ) -> List[Dict[str, Any]]:
