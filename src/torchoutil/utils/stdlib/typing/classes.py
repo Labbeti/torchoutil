@@ -41,7 +41,7 @@ class NamedTupleInstance(Protocol):
 
 @runtime_checkable
 class SizedIterable(Generic[T], Protocol):
-    def __iter__(self) -> int:
+    def __iter__(self) -> T:
         ...
 
     def __len__(self) -> int:
