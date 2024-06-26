@@ -3,7 +3,7 @@
 
 from argparse import Namespace
 from pathlib import Path
-from typing import Any, Literal, Mapping, Type, Union
+from typing import Any, Iterable, Literal, Mapping, Type, Union
 
 from yaml import (
     BaseLoader,
@@ -54,7 +54,13 @@ Loaders = Union[
 
 
 def to_yaml(
-    data: Union[Mapping[str, Any], Namespace, DataclassInstance, NamedTupleInstance],
+    data: Union[
+        Iterable[Any],
+        Mapping[str, Any],
+        Namespace,
+        DataclassInstance,
+        NamedTupleInstance,
+    ],
     fpath: Union[str, Path, None] = None,
     *,
     overwrite: bool = True,

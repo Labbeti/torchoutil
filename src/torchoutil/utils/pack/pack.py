@@ -41,7 +41,7 @@ def pack_dataset(
     overwrite: bool = False,
     content_mode: ContentMode = "item",
     custom_file_fmt: Union[None, str, Callable[[int], str]] = None,
-    save_fn: Callable[[Union[U, List[U]], Path, ...], None] = torch.save,
+    save_fn: Callable[[Union[U, List[U]], Path], None] = torch.save,  # type: ignore
     subdir_size: Optional[int] = 100,
     verbose: int = 0,
 ) -> PackedDataset[U, U]:
