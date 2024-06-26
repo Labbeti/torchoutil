@@ -3,6 +3,8 @@
 
 import os
 
+import torch
+
 
 def get_auto_num_cpus() -> int:
     """Returns the number of CPUs available for the process on Linux-based platforms.
@@ -17,3 +19,8 @@ def get_auto_num_cpus() -> int:
         if num_cpus is None:
             num_cpus = 0
     return num_cpus
+
+
+def get_auto_num_gpus() -> int:
+    """Returns the number of GPUs available to the current process."""
+    return torch.cuda.device_count()
