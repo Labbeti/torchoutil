@@ -60,6 +60,7 @@ from .others import (
     item,
     move_to_rec,
     ndim,
+    ranks,
     shape,
 )
 from .pad import cat_padded_batch, pad_and_stack_rec, pad_dim, pad_dims

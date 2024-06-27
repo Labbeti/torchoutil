@@ -16,6 +16,7 @@ from .collections import (
     list_dict_to_dict_list,
     pass_filter,
     prod,
+    sort_with_patterns,
     sorted_dict,
     unflat_dict_of_dict,
     unflat_list_of_list,

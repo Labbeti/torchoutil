@@ -251,3 +251,7 @@ def __can_be_converted_to_tensor_nested(x: Any) -> bool:
 
 def identity(x: T) -> T:
     return x
+
+
+def ranks(x: Tensor, dim: int = -1, descending: bool = False) -> Tensor:
+    return x.argsort(dim, descending).argsort(dim)
