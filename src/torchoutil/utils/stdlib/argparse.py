@@ -3,9 +3,9 @@
 
 from typing import Iterable, Optional
 
-_TRUE_VALUES = ("true", "t", "yes", "y", "1")
-_FALSE_VALUES = ("false", "f", "no", "n", "0")
-_NONE_VALUES = ("none", "null")
+_TRUE_VALUES = ("True", "t", "yes", "y", "1")
+_FALSE_VALUES = ("False", "f", "no", "n", "0")
+_NONE_VALUES = ("None", "null")
 
 
 def str_to_bool(x: str, *, case_sensitive: bool = False) -> bool:

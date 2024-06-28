@@ -456,4 +456,6 @@ def sort_with_patterns(
     match_fn: Callable[[Pattern, str], bool] = re.search,  # type: ignore
     reverse: bool = False,
 ) -> List[T]:
-    return sorted(x, key=get_key_fn(patterns, match_fn=match_fn), reverse=reverse)
+    key_fn = get_key_fn(patterns, match_fn=match_fn)
+    x = sorted(x, key=key_fn, reverse=reverse)
+    return x
