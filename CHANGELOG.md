@@ -10,7 +10,7 @@ All notable changes to this project will be documented in this file.
 - Function `sort_with_patterns` to sort values using string-based patterns.
 
 ### Changed
-- Rename `is_pickle_root` to `is_packed_root` (old name was kept fpr backward compatibility).
+- Rename `is_pickle_root` to `is_packed_root` (old name was kept for backward compatibility).
 
 
 ## [0.4.0] 2024-05-27

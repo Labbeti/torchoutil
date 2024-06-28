@@ -135,7 +135,17 @@ def move_to_rec(
 def can_be_stacked(
     tensors: Union[List[Any], Tuple[Any, ...]],
 ) -> TypeGuard[Union[List[Tensor], Tuple[Tensor, ...]]]:
-    """Returns True if inputs can be passed to `torch.stack` function."""
+    """Returns True if inputs can be passed to `torch.stack` function, i.e. contanis a list or tuple of tensors with the same shape.
+
+    Alias of :func:`~torchoutil.nn.functional.others.is_stackable`.
+    """
+    return is_stackable(tensors)
+
+
+def is_stackable(
+    tensors: Union[List[Any], Tuple[Any, ...]],
+) -> TypeGuard[Union[List[Tensor], Tuple[Tensor, ...]]]:
+    """Returns True if inputs can be passed to `torch.stack` function, i.e. contanis a list or tuple of tensors with the same shape."""
     if not is_list_tensor(tensors) and not is_tuple_tensor(tensors):
         return False
     if len(tensors) == 0:
@@ -146,6 +156,16 @@ def can_be_stacked(
 
 
 def can_be_converted_to_tensor(x: Any) -> bool:
+    """Returns True if inputs can be passed to `torch.as_tensor` function.
+
+    Alias of :func:`~torchoutil.nn.functional.others.is_convertible_to_tensor`.
+
+    This function returns False for heterogeneous inputs like `[[], 1]`, but this kind of value can be accepted by `torch.as_tensor`.
+    """
+    return is_convertible_to_tensor(x)
+
+
+def is_convertible_to_tensor(x: Any) -> bool:
     """Returns True if inputs can be passed to `torch.as_tensor` function.
 
     This function returns False for heterogeneous inputs like `[[], 1]`, but this kind of value can be accepted by `torch.as_tensor`.

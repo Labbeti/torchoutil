@@ -20,6 +20,7 @@ Submodules
 .. toctree::
    :maxdepth: 4
 
+   torchoutil.utils.stdlib.argparse
    torchoutil.utils.stdlib.collections
    torchoutil.utils.stdlib.logging
    torchoutil.utils.stdlib.os
