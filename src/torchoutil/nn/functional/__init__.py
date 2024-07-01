@@ -65,6 +65,7 @@ from .others import (
 )
 from .pad import cat_padded_batch, pad_and_stack_rec, pad_dim, pad_dims
 from .transform import (
+    pad_and_crop_dim,
     repeat_interleave_nd,
     resample_nearest_freqs,
     resample_nearest_rates,

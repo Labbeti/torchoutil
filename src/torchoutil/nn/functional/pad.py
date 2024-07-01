@@ -15,6 +15,7 @@ from torchoutil.types import is_scalar
 PAD_ALIGNS = ("left", "right", "center", "random")
 PadAlign = Literal["left", "right", "center", "random"]
 PadValue = Union[Number, Callable[[Tensor], Number]]
+PadMode = Literal["constant", "reflect", "replicate", "circular"]
 
 
 def pad_dim(
@@ -24,7 +25,7 @@ def pad_dim(
     align: PadAlign = "left",
     pad_value: PadValue = 0.0,
     dim: int = -1,
-    mode: str = "constant",
+    mode: PadMode = "constant",
     generator: Union[int, Generator, None] = None,
 ) -> Tensor:
     """Generic function for pad a single dimension."""
@@ -46,7 +47,7 @@ def pad_dims(
     aligns: Iterable[PadAlign] = ("left",),
     pad_value: PadValue = 0.0,
     dims: Iterable[int] = (-1,),
-    mode: str = "constant",
+    mode: PadMode = "constant",
     generator: Union[int, Generator, None] = None,
 ) -> Tensor:
     """Generic function to pad multiple dimensions."""

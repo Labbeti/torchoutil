@@ -7,6 +7,10 @@ import torch
 from torch import Generator, Tensor, nn
 
 from torchoutil.nn.functional.transform import (
+    PadCropAlign,
+    PadMode,
+    PadValue,
+    pad_and_crop_dim,
     repeat_interleave_nd,
     resample_nearest_freqs,
     resample_nearest_rates,
@@ -150,3 +154,37 @@ class TransformDrop(Generic[T], nn.Module):
 
     def extra_repr(self) -> str:
         return dump_dict(dict(p=self.p))
+
+
+class PadAndCropDim(nn.Module):
+    """
+    For more information, see :func:`~torchoutil.nn.functional.transform.pad_and_crop_dim`.
+    """
+
+    def __init__(
+        self,
+        target_length: int,
+        align: PadCropAlign = "left",
+        pad_value: PadValue = 0.0,
+        dim: int = -1,
+        mode: PadMode = "constant",
+        generator: Union[int, Generator, None] = None,
+    ) -> None:
+        super().__init__()
+        self.target_length = target_length
+        self.align: PadCropAlign = align
+        self.pad_value = pad_value
+        self.dim = dim
+        self.mode: PadMode = mode
+        self.generator = generator
+
+    def forward(self, x: Tensor) -> Tensor:
+        return pad_and_crop_dim(
+            x,
+            self.target_length,
+            align=self.align,
+            pad_value=self.pad_value,
+            dim=self.dim,
+            mode=self.mode,
+            generator=self.generator,
+        )

@@ -2,10 +2,15 @@
 # -*- coding: utf-8 -*-
 
 import math
-from typing import Callable, Iterable, List, TypeVar, Union
+from typing import Callable, Iterable, List, Literal, TypeVar, Union
 
 import torch
 from torch import Generator, Tensor
+
+from torchoutil.nn.functional.crop import crop_dim
+from torchoutil.nn.functional.pad import PadMode, PadValue, pad_dim
+
+PadCropAlign = Literal["left", "right", "center", "random"]
 
 T = TypeVar("T")
 U = TypeVar("U")
@@ -150,4 +155,34 @@ def transform_drop(
     if sampled + p_floor < p:
         x = transform(x)
 
+    return x
+
+
+def pad_and_crop_dim(
+    x: Tensor,
+    target_length: int,
+    *,
+    align: PadCropAlign = "left",
+    pad_value: PadValue = 0.0,
+    dim: int = -1,
+    mode: PadMode = "constant",
+    generator: Union[int, Generator, None] = None,
+) -> Tensor:
+    """Pad and crop along the specified dimension."""
+    x = pad_dim(
+        x,
+        target_length,
+        align=align,
+        pad_value=pad_value,
+        dim=dim,
+        mode=mode,
+        generator=generator,
+    )
+    x = crop_dim(
+        x,
+        target_length,
+        align=align,
+        dim=dim,
+        generator=generator,
+    )
     return x

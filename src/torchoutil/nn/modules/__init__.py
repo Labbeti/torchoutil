@@ -60,6 +60,7 @@ from .tensor import (
     Unsqueeze,
 )
 from .transform import (
+    PadAndCropDim,
     RepeatInterleaveNd,
     ResampleNearestFreqs,
     ResampleNearestRates,
