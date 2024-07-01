@@ -181,7 +181,9 @@ def ndim(x: Any) -> int:
     if valid:
         return ndim
     else:
-        raise ValueError(f"Invalid argument {x}. (cannot compute ndim)")
+        raise ValueError(
+            f"Invalid argument {x}. (cannot compute ndim for heterogeneous data)"
+        )
 
 
 def shape(x: Any) -> Size:
@@ -190,7 +192,9 @@ def shape(x: Any) -> Size:
         shape = Size(shape)
         return shape
     else:
-        raise ValueError(f"Invalid argument {x}. (cannot compute shape)")
+        raise ValueError(
+            f"Invalid argument {x}. (cannot compute shape for heterogeneous data)"
+        )
 
 
 def item(x: Any) -> Union[int, float, bool, complex]:
@@ -270,8 +274,10 @@ def __can_be_converted_to_tensor_nested(x: Any) -> bool:
 
 
 def identity(x: T) -> T:
+    """Identity function placeholder."""
     return x
 
 
 def ranks(x: Tensor, dim: int = -1, descending: bool = False) -> Tensor:
+    """Get the ranks of each value in range [0, x.shape[dim][."""
     return x.argsort(dim, descending).argsort(dim)

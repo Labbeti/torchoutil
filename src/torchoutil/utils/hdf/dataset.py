@@ -30,7 +30,7 @@ from torch.utils.data.dataset import Dataset
 from typing_extensions import TypeGuard
 
 from torchoutil.nn.functional.indices import get_inverse_perm
-from torchoutil.types import is_iterable_bytes_list, is_iterable_int, is_iterable_str
+from torchoutil.types import is_iterable_bytes_or_list, is_iterable_int, is_iterable_str
 from torchoutil.utils.hdf.common import (
     HDF_ENCODING,
     HDF_STRING_DTYPE,
@@ -491,7 +491,7 @@ def _decode_rec(value: Union[bytes, Iterable], encoding: str) -> Union[str, list
     """Decode bytes to str with the specified encoding. Works recursively on list of bytes, list of list of bytes, etc."""
     if isinstance(value, bytes):
         return value.decode(encoding=encoding)
-    elif is_iterable_bytes_list(value):
+    elif is_iterable_bytes_or_list(value):
         return [_decode_rec(elt, encoding) for elt in value]
     else:
         raise TypeError(
