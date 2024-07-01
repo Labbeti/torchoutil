@@ -44,7 +44,7 @@ from .typing import (
     is_dataclass_instance,
     is_dict_str,
     is_iterable_bool,
-    is_iterable_bytes_list,
+    is_iterable_bytes_or_list,
     is_iterable_int,
     is_iterable_iterable_int,
     is_iterable_str,

@@ -25,7 +25,7 @@ def is_iterable_bool(x: Any) -> TypeGuard[Iterable[bool]]:
     return isinstance(x, Iterable) and (all(isinstance(xi, bool) for xi in x))
 
 
-def is_iterable_bytes_list(x: Any) -> TypeGuard[Iterable[Union[bytes, list]]]:
+def is_iterable_bytes_or_list(x: Any) -> TypeGuard[Iterable[Union[bytes, list]]]:
     return isinstance(x, Iterable) and all(isinstance(xi, (bytes, list)) for xi in x)
 
 
