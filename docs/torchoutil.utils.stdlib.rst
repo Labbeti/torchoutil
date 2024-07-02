@@ -22,6 +22,7 @@ Submodules
 
    torchoutil.utils.stdlib.argparse
    torchoutil.utils.stdlib.collections
+   torchoutil.utils.stdlib.importlib
    torchoutil.utils.stdlib.logging
    torchoutil.utils.stdlib.os
    torchoutil.utils.stdlib.re
