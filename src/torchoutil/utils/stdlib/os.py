@@ -20,7 +20,7 @@ def tree_iter(
 ) -> Generator[str, Any, None]:
     """A recursive generator, given a directory Path object will yield a visual tree structure line by line with each line prefixed by the same characters
 
-    BASED ON https://stackoverflow.com/questions/9727673/list-directory-tree-structure-in-python
+    Based on: https://stackoverflow.com/questions/9727673/list-directory-tree-structure-in-python
     """
     root = Path(root)
     ignore = compile_patterns(ignore)

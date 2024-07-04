@@ -166,14 +166,12 @@ def get_colored_formatter() -> Formatter:
 
     rank = os.getenv("SLURM_PROCID", 0)
     fmt = f"[%(purple)sRANK{rank}%(reset)s][%(cyan)s%(asctime)s%(reset)s][%(blue)s%(name)s%(reset)s][%(log_color)s%(levelname)s%(reset)s] - %(message)s"
-    formatter = ColoredFormatter(
-        fmt=fmt,
-        log_colors={
-            "DEBUG": "purple",
-            "INFO": "green",
-            "WARNING": "yellow",
-            "ERROR": "red",
-            "CRITICAL": "bold_red",
-        },
-    )
+    log_colors = {
+        "DEBUG": "purple",
+        "INFO": "green",
+        "WARNING": "yellow",
+        "ERROR": "red",
+        "CRITICAL": "bold_red",
+    }
+    formatter = ColoredFormatter(fmt=fmt, log_colors=log_colors)
     return formatter

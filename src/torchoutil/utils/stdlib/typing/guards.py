@@ -33,6 +33,14 @@ def is_iterable_int(x: Any) -> TypeGuard[Iterable[int]]:
     return isinstance(x, Iterable) and (all(isinstance(xi, int) for xi in x))
 
 
+def is_iterable_iterable_int(x: Any) -> TypeGuard[Iterable[Iterable[int]]]:
+    return (
+        isinstance(x, Iterable)
+        and all(isinstance(xi, Iterable) for xi in x)
+        and all(isinstance(xij, int) for xi in x for xij in xi)
+    )
+
+
 def is_iterable_str(
     x: Any,
     *,
@@ -45,36 +53,8 @@ def is_iterable_str(
     )
 
 
-def is_namedtuple_instance(x: Any) -> TypeGuard[NamedTupleInstance]:
-    return not isinstance(x, type) and isinstance(x, NamedTupleInstance)
-
-
-def is_sequence_bool(x: Any) -> TypeGuard[Sequence[bool]]:
-    return isinstance(x, Sequence) and (all(isinstance(xi, bool) for xi in x))
-
-
-def is_sequence_int(x: Any) -> TypeGuard[Sequence[int]]:
-    return isinstance(x, Sequence) and (all(isinstance(xi, int) for xi in x))
-
-
-def is_iterable_iterable_int(x: Any) -> TypeGuard[Iterable[Iterable[int]]]:
-    return (
-        isinstance(x, Iterable)
-        and all(isinstance(xi, Iterable) for xi in x)
-        and all(isinstance(xij, int) for xi in x for xij in xi)
-    )
-
-
-def is_sequence_str(
-    x: Any,
-    *,
-    accept_str: bool = True,
-) -> TypeGuard[Sequence[str]]:
-    return (accept_str and isinstance(x, str)) or (
-        not isinstance(x, str)
-        and isinstance(x, Sequence)
-        and all(isinstance(xi, str) for xi in x)
-    )
+def is_mapping_str(x: Any) -> TypeGuard[Mapping[str, Any]]:
+    return isinstance(x, Mapping) and all(isinstance(key, str) for key in x.keys())
 
 
 def is_list_list_str(x: Any) -> TypeGuard[List[List[str]]]:
@@ -97,8 +77,28 @@ def is_list_str(x: Any) -> TypeGuard[List[str]]:
     return isinstance(x, list) and all(isinstance(xi, str) for xi in x)
 
 
-def is_mapping_str(x: Any) -> TypeGuard[Mapping[str, Any]]:
-    return isinstance(x, Mapping) and all(isinstance(key, str) for key in x.keys())
+def is_namedtuple_instance(x: Any) -> TypeGuard[NamedTupleInstance]:
+    return not isinstance(x, type) and isinstance(x, NamedTupleInstance)
+
+
+def is_sequence_bool(x: Any) -> TypeGuard[Sequence[bool]]:
+    return isinstance(x, Sequence) and (all(isinstance(xi, bool) for xi in x))
+
+
+def is_sequence_int(x: Any) -> TypeGuard[Sequence[int]]:
+    return isinstance(x, Sequence) and (all(isinstance(xi, int) for xi in x))
+
+
+def is_sequence_str(
+    x: Any,
+    *,
+    accept_str: bool = True,
+) -> TypeGuard[Sequence[str]]:
+    return (accept_str and isinstance(x, str)) or (
+        not isinstance(x, str)
+        and isinstance(x, Sequence)
+        and all(isinstance(xi, str) for xi in x)
+    )
 
 
 def is_tuple_str(x: Any) -> TypeGuard[Tuple[str, ...]]:

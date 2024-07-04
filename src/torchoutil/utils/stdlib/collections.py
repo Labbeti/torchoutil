@@ -453,6 +453,7 @@ def get_key_fn(
 def sort_with_patterns(
     x: Iterable[T],
     patterns: Union[PatternLike, Iterable[PatternLike]],
+    *,
     match_fn: Callable[[Pattern, str], bool] = re.search,  # type: ignore
     reverse: bool = False,
 ) -> List[T]:
