@@ -4,35 +4,50 @@
 import importlib
 import inspect
 from types import ModuleType
+from typing import Iterable
+
+DEFAULT_SKIPPED = (
+    "reimport_all",
+    "get_ipython",
+    "exit",
+    "quit",
+    "__name__",
+    "__doc__",
+    "__package__",
+    "__loader__",
+    "__spec__",
+    "__builtin__",
+    "__builtins__",
+)
 
 
-def reimport_modules() -> None:
+def reimport_modules(
+    skipped: Iterable[str] = DEFAULT_SKIPPED,
+    verbose: int = 0,
+) -> None:
     """Re-import modules and functions in the caller context. This function does not work with builtins constants values."""
-    importlib.invalidate_caches()
+    skipped = dict.fromkeys(skipped)
 
+    importlib.invalidate_caches()
     caller_globals = dict(inspect.getmembers(inspect.stack()[1][0]))["f_globals"]
-    print(f"{caller_globals.keys()=}")
+    if verbose >= 1:
+        print(f"{caller_globals.keys()=}")
 
     for k, v in caller_globals.items():
-        if k in (
-            "reimport_all",
-            "__builtin__",
-            "__builtins__",
-            "get_ipython",
-            "exit",
-        ):
-            ...
+        if k in skipped:
+            continue
 
-        elif isinstance(v, ModuleType):
+        if isinstance(v, ModuleType):
             importlib.reload(v)
+            continue
 
-        else:
-            v = inspect.getmodule(v)
-            if v is None or v.__name__ == "__main__":
-                continue
+        v = inspect.getmodule(v)
+        if v is None or v.__name__ == "__main__":
+            continue
 
-            importlib.reload(v)  # type: ignore
-            try:
-                caller_globals[k] = getattr(v, k)
-            except AttributeError:
-                pass
+        importlib.reload(v)  # type: ignore
+        try:
+            caller_globals[k] = getattr(v, k)
+        except AttributeError:
+            if verbose >= 1:
+                print(f"Cannot set parent global value '{k}'.")
