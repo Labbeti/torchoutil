@@ -5,7 +5,6 @@ from typing import (
     Any,
     ClassVar,
     Dict,
-    Generic,
     Protocol,
     Tuple,
     TypeVar,
@@ -40,7 +39,7 @@ class NamedTupleInstance(Protocol):
 
 
 @runtime_checkable
-class SizedIterable(Generic[T], Protocol):
+class SizedIterable(Protocol[T]):
     def __iter__(self) -> T:
         ...
 

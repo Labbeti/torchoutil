@@ -12,7 +12,7 @@ def str_to_bool(x: str, *, case_sensitive: bool = False) -> bool:
     """Convert string values to bool. Intended for argparse boolean arguments.
 
     - True values: 'True', 'T', 'yes', 'y', '1'.
-    - False values: 'False', 'F', 'no', 'n', '0'
+    - False values: 'False', 'F', 'no', 'n', '0'.
     - Other raises ValueError.
     """
     if _str_in(x, _TRUE_VALUES, case_sensitive):

@@ -309,7 +309,7 @@ def flat_dict_of_dict(
     return _flat_dict_of_dict_impl(nested_dic)
 
 
-def unflat_dict_of_dict(dic: Mapping[str, Any], sep: str = ".") -> Dict[str, Any]:
+def unflat_dict_of_dict(dic: Mapping[str, Any], *, sep: str = ".") -> Dict[str, Any]:
     """Unflat a dictionary.
 
     Example 1
@@ -368,6 +368,11 @@ def unflat_list_of_list(
         lst.append(flatten_lst[start:stop])
         start = stop
     return lst
+
+
+@overload
+def unzip(lst: Iterable[Tuple[()]]) -> Tuple[()]:
+    ...
 
 
 @overload
