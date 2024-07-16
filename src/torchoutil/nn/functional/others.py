@@ -286,7 +286,13 @@ def ranks(x: Tensor, dim: int = -1, descending: bool = False) -> Tensor:
 
 def checksum_module(m: nn.Module, *, only_trainable: bool = False) -> int:
     return checksum_tensor(
-        torch.as_tensor([checksum_tensor(p) for p in m.parameters()])
+        torch.as_tensor(
+            [
+                checksum_tensor(p)
+                for p in m.parameters()
+                if not only_trainable or p.requires_grad
+            ]
+        )
     )
 
 
