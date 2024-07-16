@@ -54,6 +54,7 @@ from .numpy import numpy_to_tensor, tensor_to_numpy, to_numpy
 from .others import (
     can_be_converted_to_tensor,
     can_be_stacked,
+    checksum_module,
     count_parameters,
     find,
     identity,

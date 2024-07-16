@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import itertools
+import struct
 from typing import (
     Any,
     Callable,
@@ -281,3 +282,56 @@ def identity(x: T) -> T:
 def ranks(x: Tensor, dim: int = -1, descending: bool = False) -> Tensor:
     """Get the ranks of each value in range [0, x.shape[dim][."""
     return x.argsort(dim, descending).argsort(dim)
+
+
+def checksum_module(m: nn.Module) -> int:
+    return checksum_tensor(
+        torch.as_tensor([checksum_tensor(p) for p in m.parameters()])
+    )
+
+
+def checksum_tensor(x: Tensor) -> int:
+    if x.is_complex():
+        x = torch.view_as_real(x)
+
+    if x.ndim > 0:
+        x = x.detach().flatten().cpu()
+        dtype = x.dtype if x.dtype != torch.bool else torch.int
+        x = x * torch.arange(1, len(x) + 1, device=x.device, dtype=dtype)
+        x = x.nansum()
+
+    xitem = x.item()
+    return checksum_number(xitem)
+
+
+def checksum_number(x: Union[int, bool, complex, float]) -> int:
+    if isinstance(x, bool):
+        return checksum_bool(x)
+    elif isinstance(x, int):
+        return checksum_int(x)
+    elif isinstance(x, complex):
+        return checksum_complex(x)
+    elif isinstance(x, float):
+        return checksum_float(x)
+    else:
+        raise TypeError(
+            f"Invalid argument type {type(x)}. (expected int, bool, complex or float)"
+        )
+
+
+def checksum_int(x: int) -> int:
+    return x
+
+
+def checksum_bool(x: bool) -> int:
+    return int(x)
+
+
+def checksum_complex(x: complex) -> int:
+    return checksum_tensor(torch.as_tensor([x.real, x.imag]))
+
+
+def checksum_float(x: float) -> int:
+    x = struct.pack("!f", x)
+    x = struct.unpack("!i", x)[0]
+    return x
