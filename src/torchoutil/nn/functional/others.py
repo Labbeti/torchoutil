@@ -284,16 +284,13 @@ def ranks(x: Tensor, dim: int = -1, descending: bool = False) -> Tensor:
     return x.argsort(dim, descending).argsort(dim)
 
 
-def checksum_module(m: nn.Module) -> int:
+def checksum_module(m: nn.Module, *, only_trainable: bool = False) -> int:
     return checksum_tensor(
         torch.as_tensor([checksum_tensor(p) for p in m.parameters()])
     )
 
 
 def checksum_tensor(x: Tensor) -> int:
-    if x.is_complex():
-        x = torch.view_as_real(x)
-
     if x.ndim > 0:
         x = x.detach().flatten().cpu()
         dtype = x.dtype if x.dtype != torch.bool else torch.int
