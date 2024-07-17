@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import sys
 from pathlib import Path
 from re import Pattern
 from typing import Any, Generator, Iterable, List, Union
@@ -17,17 +18,21 @@ def tree_iter(
     branch: str = "│   ",
     tee: str = "├── ",
     last: str = "└── ",
+    max_depth: int = sys.maxsize,
 ) -> Generator[str, Any, None]:
     """A recursive generator, given a directory Path object will yield a visual tree structure line by line with each line prefixed by the same characters
 
     Based on: https://stackoverflow.com/questions/9727673/list-directory-tree-structure-in-python
     """
     root = Path(root)
+    if not root.is_dir():
+        raise ValueError(f"Invalid argument path '{root}'. (not a directory)")
+
     ignore = compile_patterns(ignore)
     if pass_patterns(str(root), ignore):
         yield from ()
 
-    yield root.name
+    yield root.resolve().name
     yield from _tree_impl(
         root,
         ignore=ignore,
@@ -37,6 +42,8 @@ def tree_iter(
         branch=branch,
         tee=tee,
         last=last,
+        depth=1,
+        max_depth=max_depth,
     )
 
 
@@ -49,6 +56,8 @@ def _tree_impl(
     branch: str,
     tee: str,
     last: str,
+    depth: int,
+    max_depth: int,
 ) -> Generator[str, Any, None]:
     paths = root.iterdir()
     paths = [path for path in paths if not pass_patterns(str(path), ignore)]
@@ -59,7 +68,7 @@ def _tree_impl(
     for pointer, path in zip(pointers, paths):
         yield prefix + pointer + path.name
 
-        if recurse and path.is_dir():
+        if recurse and path.is_dir() and depth <= max_depth:
             extension = branch if pointer == tee else space
             # i.e. space because last, └── , above so no more |
             yield from _tree_impl(
@@ -71,4 +80,6 @@ def _tree_impl(
                 branch=branch,
                 tee=tee,
                 last=last,
+                depth=depth + 1,
+                max_depth=max_depth,
             )

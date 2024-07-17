@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import logging
+import sys
 from argparse import ArgumentParser
 from pathlib import Path
 from typing import Iterable, Union
@@ -13,8 +14,8 @@ from torchoutil.utils.stdlib.os import tree_iter
 pylog = logging.getLogger(__name__)
 
 
-def print_tree(root: Union[str, Path], ignore: Iterable[str]) -> None:
-    for line in tree_iter(root, ignore=ignore):
+def print_tree(root: Union[str, Path], ignore: Iterable[str], max_depth: int) -> None:
+    for line in tree_iter(root, ignore=ignore, max_depth=max_depth):
         print(f"{line}")
 
 
@@ -32,8 +33,14 @@ def main_tree() -> None:
         nargs="*",
         help="Ignored patterns files.",
     )
+    parser.add_argument(
+        "--max_depth",
+        type=int,
+        default=sys.maxsize,
+        help="Max directory tree depth.",
+    )
     args = parser.parse_args()
-    print_tree(root=args.root, ignore=args.ignore)
+    print_tree(root=args.root, ignore=args.ignore, max_depth=args.max_depth)
 
 
 def print_safe_rmdir(

@@ -69,6 +69,7 @@ def to_yaml(
     resolve: bool = False,
     sort_keys: bool = False,
     indent: Union[int, None] = None,
+    width: Union[int, None] = 1000,
     **yaml_dump_kwargs,
 ) -> str:
     """Dump content to yaml format."""
@@ -92,7 +93,13 @@ def to_yaml(
     if to_builtins:
         data = to_builtin(data)
 
-    content = yaml.dump(data, sort_keys=sort_keys, indent=indent, **yaml_dump_kwargs)
+    content = yaml.dump(
+        data,
+        sort_keys=sort_keys,
+        indent=indent,
+        width=width,
+        **yaml_dump_kwargs,
+    )
     if fpath is not None:
         fpath.write_text(content, encoding="utf-8")
     return content
