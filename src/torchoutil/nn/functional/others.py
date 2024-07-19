@@ -301,7 +301,14 @@ def checksum_tensor(x: Tensor) -> int:
     """Compute a simple checksum of a tensor. Order of values matter for the checksum."""
     if x.ndim > 0:
         x = x.detach().flatten().cpu()
-        dtype = x.dtype if x.dtype != torch.bool else torch.int
+
+        if x.dtype == torch.bool:
+            dtype = torch.int
+        elif x.is_complex():
+            dtype = x.real.dtype
+        else:
+            dtype = x.dtype
+
         x = x * torch.arange(1, len(x) + 1, device=x.device, dtype=dtype)
         x = x.nansum()
 
