@@ -39,7 +39,7 @@ if _OMEGACONF_AVAILABLE:
     from omegaconf import OmegaConf
 
 
-Loaders = Union[
+YamlLoaders = Union[
     Type[Loader],
     Type[BaseLoader],
     Type[FullLoader],
@@ -101,14 +101,14 @@ def to_yaml(
         **yaml_dump_kwargs,
     )
     if fpath is not None:
-        fpath.write_text(content, encoding="utf-8")
+        fpath.write_text(content)
     return content
 
 
 def load_yaml(
     fpath: Union[str, Path],
     *,
-    Loader: Loaders = SafeLoader,
+    Loader: YamlLoaders = SafeLoader,
     on_error: Literal["raise", "ignore"] = "raise",
 ) -> Any:
     """Load content from yaml filepath."""

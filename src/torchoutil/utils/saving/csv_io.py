@@ -62,6 +62,7 @@ def to_csv(
 
     if fpath is not None:
         fpath.write_text(content)
+
     return content
 
 
