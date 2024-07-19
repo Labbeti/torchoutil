@@ -14,6 +14,7 @@ from .guards import (
     is_list_bool,
     is_list_int,
     is_list_list_str,
+    is_list_number,
     is_list_str,
     is_mapping_str,
     is_namedtuple_instance,

@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+from numbers import Number
 from typing import Any, Dict, Iterable, List, Mapping, Sequence, Tuple, Union
 
 from typing_extensions import TypeGuard
@@ -71,6 +72,10 @@ def is_list_bool(x: Any) -> TypeGuard[List[bool]]:
 
 def is_list_int(x: Any) -> TypeGuard[List[int]]:
     return isinstance(x, list) and all(isinstance(xi, int) for xi in x)
+
+
+def is_list_number(x: Any) -> TypeGuard[List[Number]]:
+    return isinstance(x, list) and all(isinstance(xi, Number) for xi in x)
 
 
 def is_list_str(x: Any) -> TypeGuard[List[str]]:

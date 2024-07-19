@@ -38,7 +38,7 @@ def pack_dataset(
     pre_transform: Optional[Callable[[T], U]] = None,
     batch_size: int = 32,
     num_workers: Union[int, Literal["auto"]] = "auto",
-    overwrite: bool = False,
+    exists: Literal["overwrite", "skip", "error"] = "error",
     content_mode: ContentMode = "item",
     custom_file_fmt: Union[None, str, Callable[[int], str]] = None,
     save_fn: Callable[[Union[U, List[U]], Path], None] = torch.save,  # type: ignore
@@ -101,12 +101,21 @@ def pack_dataset(
 
     content_dpath = root.joinpath(CONTENT_DNAME)
 
-    if content_dpath.is_dir():
-        if not overwrite:
-            raise ValueError(
-                f"Cannot overwrite root data {str(content_dpath)}. Please remove it or use overwrite=True option."
-            )
+    if not content_dpath.is_dir():
+        pass
+    elif exists == "error":
+        raise ValueError(
+            f"Cannot overwrite root data {str(content_dpath)}. Please remove it or use overwrite=True option."
+        )
+    elif exists == "skip":
+        return PackedDataset(root)
+    elif exists == "overwrite":
         shutil.rmtree(content_dpath)
+    else:
+        EXISTS_VALUES = ("overwrite", "skip", "error")
+        raise ValueError(
+            f"Invalid argument {exists=}. (expected one of {EXISTS_VALUES})"
+        )
 
     content_dpath.mkdir(parents=True, exist_ok=True)
 
