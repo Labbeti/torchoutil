@@ -13,7 +13,6 @@ def tree_iter(
     root: Union[str, Path],
     *,
     ignore: Union[PatternLike, Iterable[PatternLike]] = (),
-    recurse: bool = True,
     space: str = "    ",
     branch: str = "│   ",
     tee: str = "├── ",
@@ -32,11 +31,14 @@ def tree_iter(
     if pass_patterns(str(root), ignore):
         yield from ()
 
-    yield root.resolve().name
+    yield root.resolve().name + "/"
+
+    if max_depth <= 0:
+        return
+
     yield from _tree_impl(
         root,
         ignore=ignore,
-        recurse=recurse,
         prefix="",
         space=space,
         branch=branch,
@@ -50,7 +52,6 @@ def tree_iter(
 def _tree_impl(
     root: Path,
     ignore: List[Pattern],
-    recurse: bool,
     prefix: str,
     space: str,
     branch: str,
@@ -68,13 +69,12 @@ def _tree_impl(
     for pointer, path in zip(pointers, paths):
         yield prefix + pointer + path.name
 
-        if recurse and path.is_dir() and depth <= max_depth:
+        if path.is_dir() and depth <= max_depth:
             extension = branch if pointer == tee else space
             # i.e. space because last, └── , above so no more |
             yield from _tree_impl(
                 path,
                 ignore=ignore,
-                recurse=recurse,
                 prefix=prefix + extension,
                 space=space,
                 branch=branch,
