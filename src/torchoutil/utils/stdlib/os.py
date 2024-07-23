@@ -67,9 +67,11 @@ def _tree_impl(
     pointers = [tee] * (len(paths) - 1) + [last]
 
     for pointer, path in zip(pointers, paths):
-        yield prefix + pointer + path.name
+        is_dir = path.is_dir()
+        suffix = "/" if is_dir else ""
+        yield prefix + pointer + path.name + suffix
 
-        if path.is_dir() and depth <= max_depth:
+        if is_dir and depth <= max_depth:
             extension = branch if pointer == tee else space
             # i.e. space because last, └── , above so no more |
             yield from _tree_impl(
