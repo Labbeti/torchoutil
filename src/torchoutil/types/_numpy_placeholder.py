@@ -8,6 +8,11 @@ from typing import Any
 from typing_extensions import Never
 
 
+class generic:
+    def __getattribute__(self, name: str) -> Any:
+        return None
+
+
 class number:
     def __getattribute__(self, name: str) -> Any:
         return None

@@ -26,7 +26,10 @@ class TestRegistryHub(TestCase):
 
         model_name = "cnext_bl_70"
         register.download_file(model_name, force=False)
-        state_dict = register.load_state_dict(model_name, offline=True, device="cpu")
+        state_dict = register.load_state_dict(
+            model_name,
+            offline=True,
+        )
 
         assert isinstance(state_dict, dict)
         assert all(isinstance(k, str) for k in state_dict.keys())

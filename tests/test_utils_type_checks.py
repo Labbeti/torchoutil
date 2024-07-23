@@ -7,7 +7,6 @@ from dataclasses import dataclass
 from typing import NamedTuple
 from unittest import TestCase
 
-import numpy as np
 import torch
 
 from torchoutil.types import (
@@ -18,6 +17,7 @@ from torchoutil.types import (
     is_numpy_scalar,
     is_scalar,
     is_torch_scalar,
+    np,
 )
 from torchoutil.utils.packaging import _NUMPY_AVAILABLE
 

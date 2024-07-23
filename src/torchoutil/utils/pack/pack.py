@@ -7,7 +7,7 @@ import logging
 import math
 import shutil
 from pathlib import Path
-from typing import Callable, List, Literal, Optional, TypeVar, Union
+from typing import Callable, Literal, Optional, TypeVar, Union
 
 import torch
 from torch import nn
@@ -41,7 +41,7 @@ def pack_dataset(
     exists: Literal["overwrite", "skip", "error"] = "error",
     content_mode: ContentMode = "item",
     custom_file_fmt: Union[None, str, Callable[[int], str]] = None,
-    save_fn: Callable[[Union[U, List[U]], Path], None] = torch.save,  # type: ignore
+    save_fn: Callable[..., None] = torch.save,  # type: ignore
     subdir_size: Optional[int] = 100,
     verbose: int = 0,
 ) -> PackedDataset[U, U]:

@@ -7,6 +7,7 @@ import os
 import os.path as osp
 from pathlib import Path
 from typing import (
+    Any,
     Callable,
     Dict,
     Generic,
@@ -96,21 +97,32 @@ class RegistryHub(Generic[T]):
         device: Device = None,
         offline: bool = False,
         load_fn: Callable = torch.load,
+        load_kwds: Optional[Dict[str, Any]] = None,
         verbose: int = 0,
     ) -> Dict[str, Tensor]:
         """Load state_dict weights.
 
         Args:
             model_name_or_path: Model name (case sensitive) or path to checkpoint file.
-            device: Device of checkpoint weights.
+            device: Device of checkpoint weights. (deprecated)
             offline: If False, the checkpoint from a model name will be automatically downloaded.
             load_fn: Load function backend. defaults to torch.load.
+            load_kwds: Optional keywords arguments passed to load_fn. defaults to None.
             verbose: Verbose level. defaults to 0.
 
         Returns:
             Loaded file content.
         """
-        device = get_device(device)
+        if load_kwds is None:
+            load_kwds = {}
+
+        if device is not None:
+            pylog.warning(
+                f"Deprecated argument {device=}. Use `load_kwds=dict(map_location={device})` instead."
+            )
+            device = get_device(device)
+            if device is not None:
+                load_kwds["map_location"] = device
 
         if osp.isfile(name_or_path):
             path = name_or_path
@@ -134,7 +146,7 @@ class RegistryHub(Generic[T]):
 
         del name_or_path
 
-        data = load_fn(path, map_location=device)
+        data = load_fn(path, **load_kwds)
 
         info = self._infos.get(name, {})  # type: ignore
         state_dict_key = info.get("state_dict_key", None)

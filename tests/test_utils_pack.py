@@ -6,13 +6,13 @@ import time
 import unittest
 from unittest import TestCase
 
-import numpy as np
 import torch
 from torch import Generator
 from torch.utils.data.dataset import Subset
 from torchvision.datasets import CIFAR10
 
 from torchoutil.nn import ESequential, IndexToOnehot, ToList, ToNumpy
+from torchoutil.types import np
 from torchoutil.utils.pack import pack_dataset
 
 
@@ -39,7 +39,11 @@ class TestPackCIFAR10(TestCase):
         )
 
         path = "/tmp/test_cifar10"
-        pkl_dataset = pack_dataset(dataset, path, overwrite=True)
+        pkl_dataset = pack_dataset(
+            dataset,
+            path,
+            exists="overwrite",
+        )
 
         assert len(dataset) == len(pkl_dataset)
 
@@ -76,7 +80,7 @@ class TestPackCIFAR10(TestCase):
         pkl_dataset = pack_dataset(
             dataset,
             path,
-            overwrite=True,
+            exists="overwrite",
             content_mode="batch",
         )
 
@@ -115,7 +119,7 @@ class TestPackCIFAR10(TestCase):
         pkl_dataset = pack_dataset(
             dataset,
             path,
-            overwrite=True,
+            exists="overwrite",
             content_mode="item",
             subdir_size=100,
         )
@@ -164,7 +168,13 @@ class TestPackSpeechCommands(TestCase):
                 return (spectrogram,) + item[1:]
 
         transform = MyTransform()
-        pack_dataset(dataset, packed_root, transform, overwrite=True, num_workers=0)
+        pack_dataset(
+            dataset,
+            packed_root,
+            transform,
+            exists="overwrite",
+            num_workers=0,
+        )
 
         # Read from pickle
         from torchoutil.utils.pack import PackedDataset

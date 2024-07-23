@@ -148,5 +148,7 @@ TORCH_DTYPES: Final[Dict[str, torch.dtype]] = {
     "qint32": torch.qint32,
     "bool": torch.bool,
     "quint4x2": torch.quint4x2,
-    "quint2x4": torch.quint2x4,
 }
+
+if hasattr(torch, "quint2x4"):
+    TORCH_DTYPES["quint2x4"] = torch.quint2x4
