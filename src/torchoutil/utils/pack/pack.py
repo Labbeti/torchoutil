@@ -169,7 +169,7 @@ def pack_dataset(
             parent.mkdir(parents=True, exist_ok=True)
 
     if _TQDM_AVAILABLE and verbose >= 1:
-        loader = tqdm.tqdm(loader)
+        loader = tqdm.tqdm(loader, desc=f"Packing {len(fnames)} items...")
 
     i = 0
     for batch_lst in loader:

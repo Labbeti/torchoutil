@@ -2,8 +2,9 @@
 # -*- coding: utf-8 -*-
 
 from argparse import Namespace
+from io import TextIOWrapper
 from pathlib import Path
-from typing import Any, Iterable, Literal, Mapping, Type, Union
+from typing import Any, Iterable, Literal, Mapping, Optional, Type, Union
 
 from yaml import (
     BaseLoader,
@@ -70,6 +71,7 @@ def to_yaml(
     sort_keys: bool = False,
     indent: Union[int, None] = None,
     width: Union[int, None] = 1000,
+    encoding: Optional[str] = "utf-8",
     **yaml_dump_kwargs,
 ) -> str:
     """Dump content to yaml format."""
@@ -101,20 +103,23 @@ def to_yaml(
         **yaml_dump_kwargs,
     )
     if fpath is not None:
-        fpath.write_text(content)
+        fpath.write_text(content, encoding=encoding)
     return content
 
 
 def load_yaml(
-    fpath: Union[str, Path],
+    fpath: Union[str, Path, TextIOWrapper],
     *,
     Loader: YamlLoaders = SafeLoader,
     on_error: Literal["raise", "ignore"] = "raise",
 ) -> Any:
     """Load content from yaml filepath."""
-    try:
+    if isinstance(fpath, (str, Path)):
         with open(fpath, "r") as file:
-            data = yaml.load(file, Loader=Loader)
+            return load_yaml(file, Loader=Loader, on_error=on_error)
+
+    try:
+        data = yaml.load(fpath, Loader=Loader)
     except (ScannerError, ParserError) as err:
         if on_error == "ignore":
             return None
