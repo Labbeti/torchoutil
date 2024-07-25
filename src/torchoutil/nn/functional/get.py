@@ -8,7 +8,6 @@ from torch import Generator
 from torch.types import Device
 
 CUDA_IF_AVAILABLE = "cuda_if_available"
-
 _DEVICE_CUDA_IF_AVAILABLE = CUDA_IF_AVAILABLE  # for backward compatibility only
 
 

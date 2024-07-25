@@ -8,7 +8,7 @@ from torch import Generator, Size, Tensor
 from torch.nn import functional as F
 from torch.types import Device, Number
 
-from torchoutil.nn.functional.get import get_device
+from torchoutil.nn.functional.get import get_device, get_generator
 from torchoutil.nn.functional.others import can_be_stacked
 from torchoutil.types import is_scalar
 
@@ -51,8 +51,7 @@ def pad_dims(
     generator: Union[int, Generator, None] = None,
 ) -> Tensor:
     """Generic function to pad multiple dimensions."""
-    if isinstance(generator, int):
-        generator = Generator().manual_seed(generator)
+    generator = get_generator(generator)
 
     target_lengths = list(target_lengths)
     aligns = list(aligns)

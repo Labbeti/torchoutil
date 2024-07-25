@@ -6,6 +6,8 @@ from typing import Iterable, List, Literal, Union
 import torch
 from torch import Generator, Tensor
 
+from torchoutil.nn.functional.get import get_generator
+
 CROP_ALIGNS = ("left", "right", "center", "random")
 CropAlign = Literal["left", "right", "center", "random"]
 
@@ -52,8 +54,7 @@ def crop_dims(
     else:
         dims = list(dims)
 
-    if isinstance(generator, int):
-        generator = Generator().manual_seed(generator)
+    generator = get_generator(generator)
 
     if len(target_lengths) != len(dims):
         raise ValueError(

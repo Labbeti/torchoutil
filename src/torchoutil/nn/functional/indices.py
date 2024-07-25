@@ -7,7 +7,7 @@ import torch
 from torch import Tensor
 from torch.types import Device, Number
 
-from torchoutil.nn.functional.get import CUDA_IF_AVAILABLE, get_device
+from torchoutil.nn.functional.get import CUDA_IF_AVAILABLE, get_device, get_generator
 from torchoutil.types import LongTensor1D, Tensor0D, Tensor1D
 
 
@@ -54,8 +54,7 @@ def randperm_diff(
         raise ValueError(f"Invalid argument {size=} < 2 for randperm_diff.")
 
     device = get_device(device)
-    if isinstance(generator, int):
-        generator = torch.Generator().manual_seed(generator)
+    generator = get_generator(generator)
 
     perm_kws: Dict[str, Any] = dict(generator=generator, device=device)
     arange = torch.arange(size, device=device)

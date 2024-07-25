@@ -8,6 +8,7 @@ import torch
 from torch import Generator, Tensor
 
 from torchoutil.nn.functional.crop import crop_dim
+from torchoutil.nn.functional.get import get_generator
 from torchoutil.nn.functional.pad import PadMode, PadValue, pad_dim
 
 PadCropAlign = Literal["left", "right", "center", "random"]
@@ -144,8 +145,7 @@ def transform_drop(
     """
     if p < 0.0:
         raise ValueError(f"Invalid argument {p=} < 0")
-    if isinstance(generator, int):
-        generator = Generator().manual_seed(generator)
+    generator = get_generator(generator)
 
     p_floor = math.floor(p)
     for _ in range(p_floor):
