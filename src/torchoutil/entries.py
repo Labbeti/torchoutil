@@ -10,11 +10,17 @@ from typing import Iterable, Union
 from torchoutil.hub.download import safe_rmdir
 from torchoutil.utils.stdlib.argparse import str_to_bool
 from torchoutil.utils.stdlib.os import tree_iter
+from torchoutil.utils.stdlib.re import PatternLike
 
 pylog = logging.getLogger(__name__)
 
 
-def print_tree(root: Union[str, Path], ignore: Iterable[str], max_depth: int) -> None:
+def print_tree(
+    root: Union[str, Path],
+    *,
+    ignore: Union[PatternLike, Iterable[PatternLike]] = (),
+    max_depth: int = sys.maxsize,
+) -> None:
     for line in tree_iter(root, ignore=ignore, max_depth=max_depth):
         print(f"{line}")
 
