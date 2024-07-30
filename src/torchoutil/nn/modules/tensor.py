@@ -16,6 +16,10 @@ from torchoutil.utils.stdlib.collections import dump_dict
 
 
 class Reshape(nn.Module):
+    """
+    Module version of :func:`~torch.reshape`.
+    """
+
     def __init__(self, *shape: int) -> None:
         super().__init__()
         self.shape = shape
@@ -32,6 +36,10 @@ class Reshape(nn.Module):
 
 
 class Mean(nn.Module):
+    """
+    Module version of :func:`~torch.mean`.
+    """
+
     def __init__(self, dim: Union[int, None], keepdim: bool = False) -> None:
         super().__init__()
         self.dim = dim
@@ -53,6 +61,10 @@ class Mean(nn.Module):
 
 
 class Max(nn.Module):
+    """
+    Module version of :func:`~torch.max`.
+    """
+
     def __init__(
         self,
         dim: Optional[int],
@@ -107,6 +119,10 @@ class Max(nn.Module):
 
 
 class Min(nn.Module):
+    """
+    Module version of :func:`~torch.min`.
+    """
+
     def __init__(
         self,
         dim: Optional[int],
@@ -161,6 +177,10 @@ class Min(nn.Module):
 
 
 class Normalize(nn.Module):
+    """
+    Module version of :func:`~torch.nn.functional.normalize`.
+    """
+
     def __init__(
         self,
         p: float = 2.0,
@@ -186,13 +206,21 @@ class Normalize(nn.Module):
 
 
 class Transpose(nn.Module):
-    def __init__(self, dim0: int, dim1: int) -> None:
+    """
+    Module version of :func:`~torch.transpose`.
+    """
+
+    def __init__(self, dim0: int, dim1: int, copy: bool = False) -> None:
         super().__init__()
         self.dim0 = dim0
         self.dim1 = dim1
+        self.copy = copy
 
     def forward(self, x: Tensor) -> Tensor:
-        return x.transpose(self.dim0, self.dim1)
+        if self.copy:
+            return torch.transpose_copy(x, self.dim0, self.dim1)
+        else:
+            return torch.transpose(x, self.dim0, self.dim1)
 
     def extra_repr(self) -> str:
         return dump_dict(
@@ -205,6 +233,10 @@ class Transpose(nn.Module):
 
 
 class Squeeze(nn.Module):
+    """
+    Module version of :func:`~torch.squeeze`.
+    """
+
     def __init__(self, dim: Optional[int] = None, inplace: bool = True) -> None:
         super().__init__()
         self.dim = dim
@@ -232,6 +264,10 @@ class Squeeze(nn.Module):
 
 
 class Unsqueeze(nn.Module):
+    """
+    Module version of :func:`~torch.unsqueeze`.
+    """
+
     def __init__(self, dim: int, inplace: bool = True) -> None:
         super().__init__()
         self.dim = dim
@@ -253,6 +289,10 @@ class Unsqueeze(nn.Module):
 
 
 class TensorTo(nn.Module):
+    """
+    Module version of :func:`~torch.Tensor.to`.
+    """
+
     def __init__(self, **kwargs) -> None:
         super().__init__()
         self.kwargs = kwargs
@@ -265,6 +305,10 @@ class TensorTo(nn.Module):
 
 
 class Permute(nn.Module):
+    """
+    Module version of :func:`~torch.permute`.
+    """
+
     def __init__(self, *args: int) -> None:
         super().__init__()
         self.dims = tuple(args)
@@ -282,16 +326,28 @@ class Permute(nn.Module):
 
 
 class ToList(nn.Module):
+    """
+    Module version of :func:`~torch.Tensor.tolist`.
+    """
+
     def forward(self, x: Tensor) -> List:
         return x.tolist()
 
 
 class ToItem(nn.Module):
+    """
+    Module version of :func:`~torch.Tensor.item`.
+    """
+
     def forward(self, x: Tensor) -> Number:
         return x.item()
 
 
 class AsTensor(nn.Module):
+    """
+    Module version of :func:`~torch.as_tensor`.
+    """
+
     def __init__(
         self,
         *,
@@ -317,21 +373,37 @@ class AsTensor(nn.Module):
 
 
 class Abs(nn.Module):
+    """
+    Module version of :func:`~torch.abs`.
+    """
+
     def forward(self, x: Tensor) -> Tensor:
         return x.abs()
 
 
 class Angle(nn.Module):
+    """
+    Module version of :func:`~torch.angle`.
+    """
+
     def forward(self, x: Tensor) -> Tensor:
         return x.angle()
 
 
 class Real(nn.Module):
+    """
+    Module version of :func:`~torch.Tensor.real`.
+    """
+
     def forward(self, x: Tensor) -> Tensor:
         return x.real
 
 
 class Imag(nn.Module):
+    """
+    Module version of :func:`~torch.Tensor.imag`.
+    """
+
     def __init__(self, return_zeros: bool = False) -> None:
         """Return the imaginary part of a complex tensor.
 
@@ -349,6 +421,10 @@ class Imag(nn.Module):
 
 
 class Pow(nn.Module):
+    """
+    Module version of :func:`~torch.Tensor.pow`.
+    """
+
     def __init__(self, exponent: Union[Number, Tensor]) -> None:
         super().__init__()
         self.exponent = exponent
@@ -361,31 +437,55 @@ class Pow(nn.Module):
 
 
 class FFT(nn.Module):
+    """
+    Module version of :func:`~torch.fft.fft`.
+    """
+
     def forward(self, x: Tensor) -> Tensor:
         return torch.fft.fft(x)
 
 
 class IFFT(nn.Module):
+    """
+    Module version of :func:`~torch.fft.ifft`.
+    """
+
     def forward(self, x: Tensor) -> Tensor:
         return torch.fft.ifft(x)
 
 
 class Log(nn.Module):
+    """
+    Module version of :func:`~torch.log`.
+    """
+
     def forward(self, x: Tensor) -> Tensor:
         return x.log()
 
 
 class Log10(nn.Module):
+    """
+    Module version of :func:`~torch.log10`.
+    """
+
     def forward(self, x: Tensor) -> Tensor:
         return x.log10()
 
 
 class Log2(nn.Module):
+    """
+    Module version of :func:`~torch.log2`.
+    """
+
     def forward(self, x: Tensor) -> Tensor:
         return x.log2()
 
 
 class Repeat(nn.Module):
+    """
+    Module version of :func:`~torch.repeat`.
+    """
+
     def __init__(self, *repeats: int) -> None:
         super().__init__()
         self.repeats = repeats
@@ -398,6 +498,10 @@ class Repeat(nn.Module):
 
 
 class RepeatInterleave(nn.Module):
+    """
+    Module version of :func:`~torch.repeat_interleave`.
+    """
+
     def __init__(
         self,
         repeats: Union[int, Tensor],
@@ -424,6 +528,10 @@ class RepeatInterleave(nn.Module):
 
 
 class Interpolate(nn.Module):
+    """
+    Module version of :func:`~torch.nn.functional.interpolate`.
+    """
+
     def __init__(
         self,
         size: Union[int, Tuple[int, ...], None] = None,
