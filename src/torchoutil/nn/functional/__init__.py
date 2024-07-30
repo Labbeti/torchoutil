@@ -5,7 +5,7 @@ from torch.nn.functional import *
 
 from .activation import softmax_multidim
 from .crop import crop_dim, crop_dims
-from .get import get_device, get_dtype, get_generator
+from .get import CUDA_IF_AVAILABLE, get_device, get_dtype, get_generator
 from .indices import (
     get_inverse_perm,
     get_perm_indices,
