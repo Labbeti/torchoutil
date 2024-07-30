@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+from torch.types import *
+
 from torchoutil.utils.stdlib.typing import (
     BuiltinScalar,
     is_builtin_scalar,
