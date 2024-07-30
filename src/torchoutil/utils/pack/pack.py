@@ -36,6 +36,7 @@ def pack_dataset(
     dataset: SizedDatasetLike[T],
     root: Union[str, Path],
     pre_transform: Optional[Callable[[T], U]] = None,
+    *,
     batch_size: int = 32,
     num_workers: Union[int, Literal["auto"]] = "auto",
     exists: Literal["overwrite", "skip", "error"] = "error",
@@ -43,6 +44,7 @@ def pack_dataset(
     custom_file_fmt: Union[None, str, Callable[[int], str]] = None,
     save_fn: Callable[..., None] = torch.save,  # type: ignore
     subdir_size: Optional[int] = 100,
+    transform_in_worker: bool = True,
     verbose: int = 0,
 ) -> PackedDataset[U, U]:
     """Pack a dataset to pickle files.
@@ -81,9 +83,9 @@ def pack_dataset(
         subdir_size: Optional number of files per folder.
             Using None will disable subdir an put all files in data/ folder.
             defaults to 100.
+        transform_in_worker: If True, appoly transform in parallel with workers' Dataloader.
         verbose: Verbose level during packing. Higher value means more messages. defaults to 0.
     """
-
     # Check inputs
     if not isinstance(dataset, SizedDatasetLike):
         raise TypeError(
@@ -122,7 +124,7 @@ def pack_dataset(
     now = datetime.datetime.now()
     creation_date = now.strftime("%Y-%m-%d_%H-%M-%S")
 
-    wrapped = TransformWrapper(dataset, pre_transform)
+    wrapped = TransformWrapper(dataset, pre_transform if transform_in_worker else None)
 
     loader = DataLoader(
         wrapped,  # type: ignore
@@ -173,6 +175,9 @@ def pack_dataset(
 
     i = 0
     for batch_lst in loader:
+        if not transform_in_worker:
+            batch_lst = [pre_transform(item) for item in batch_lst]
+
         if content_mode == "item":
             for item in batch_lst:
                 fpath = fpaths[i]
