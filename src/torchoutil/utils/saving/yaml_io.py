@@ -72,6 +72,7 @@ def to_yaml(
     indent: Union[int, None] = None,
     width: Union[int, None] = 1000,
     encoding: Optional[str] = "utf-8",
+    allow_unicode: bool = True,
     **yaml_dump_kwargs,
 ) -> str:
     """Dump content to yaml format."""
@@ -100,6 +101,7 @@ def to_yaml(
         sort_keys=sort_keys,
         indent=indent,
         width=width,
+        allow_unicode=allow_unicode,
         **yaml_dump_kwargs,
     )
     if fpath is not None:
