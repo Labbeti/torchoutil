@@ -178,6 +178,7 @@ def is_convertible_to_tensor(x: Any) -> bool:
 
 
 def ndim(x: Any) -> int:
+    """Scan first argument to return its number of dimension(s). Works with Tensors, numpy arrays and builtins types instances."""
     valid, ndim = _search_ndim(x)
     if valid:
         return ndim
@@ -187,10 +188,11 @@ def ndim(x: Any) -> int:
         )
 
 
-def shape(x: Any) -> Size:
+def shape(x: Any, *, output_type: Callable[[Tuple[int, ...]], T] = Size) -> T:
+    """Scan first argument to return its shape. Works with Tensors, numpy arrays and builtins types instances."""
     valid, shape = _search_shape(x)
     if valid:
-        shape = Size(shape)
+        shape = output_type(shape)
         return shape
     else:
         raise ValueError(
@@ -225,7 +227,7 @@ def _search_ndim(x: Any) -> Tuple[bool, int]:
 
 
 def _search_shape(x: Any) -> Tuple[bool, Tuple[int, ...]]:
-    if is_scalar(x) or isinstance(x, str):
+    if is_scalar(x) or isinstance(x, str) or x is None:
         return True, ()
     elif isinstance(x, Tensor) or isinstance(x, np.ndarray):
         return True, tuple(x.shape)
