@@ -31,6 +31,12 @@ class ndarray:
         return None
 
 
+def array(x: Any, *args, **kwargs) -> Never:
+    raise NotImplementedError(
+        "Cannot call function 'array'. Please install numpy first."
+    )
+
+
 def asarray(x: Any, *args, **kwargs) -> Never:
     raise NotImplementedError(
         "Cannot call function 'asarray'. Please install numpy first."
