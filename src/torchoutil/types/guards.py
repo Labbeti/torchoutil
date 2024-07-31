@@ -14,7 +14,9 @@ def is_numpy_scalar(x: Any) -> TypeGuard[NumpyScalar]:
     """Returns True if x is an instance of a numpy number type or a zero-dimensional numpy array.
     If numpy is not installed, this function always returns False.
     """
-    return isinstance(x, np.number) or (isinstance(x, np.ndarray) and x.ndim == 0)
+    return isinstance(x, (np.number, np.bool_)) or (
+        isinstance(x, np.ndarray) and x.ndim == 0
+    )
 
 
 def is_torch_scalar(x: Any) -> TypeGuard[Tensor0D]:

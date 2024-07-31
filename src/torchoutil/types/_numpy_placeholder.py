@@ -13,9 +13,12 @@ class generic:
         return None
 
 
-class number:
-    def __getattribute__(self, name: str) -> Any:
-        return None
+class number(generic):
+    ...
+
+
+class bool_(generic):
+    ...
 
 
 class dtype:
