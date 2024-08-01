@@ -25,6 +25,10 @@ from .collections import (
 )
 from .importlib import reimport_modules
 from .logging import (
+    VERBOSE_DEBUG,
+    VERBOSE_ERROR,
+    VERBOSE_INFO,
+    VERBOSE_WARNING,
     CustomFileHandler,
     get_colored_formatter,
     get_ipython_name,

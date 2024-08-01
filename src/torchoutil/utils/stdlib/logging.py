@@ -15,6 +15,10 @@ from torchoutil.utils.packaging import _COLORLOG_AVAILABLE
 pylog = logging.getLogger(__name__)
 
 DEFAULT_FMT = "[%(asctime)s][%(name)s][%(levelname)s] - %(message)s"
+VERBOSE_DEBUG = 2
+VERBOSE_INFO = 1
+VERBOSE_WARNING = 0
+VERBOSE_ERROR = -1
 PackageOrLogger = Union[str, ModuleType, None, Logger]
 
 
@@ -32,8 +36,9 @@ def setup_logging_verbose(
     package_or_logger: Union[
         PackageOrLogger,
         Sequence[PackageOrLogger],
-    ],
-    verbose: Optional[int],
+    ] = None,
+    verbose: Optional[int] = VERBOSE_INFO,
+    *,
     fmt: Union[str, None, Formatter] = DEFAULT_FMT,
     stream: Union[IO[str], Literal["auto"]] = "auto",
 ) -> None:
@@ -48,8 +53,9 @@ def setup_logging_level(
     package_or_logger: Union[
         PackageOrLogger,
         Sequence[PackageOrLogger],
-    ],
-    level: Optional[int],
+    ] = None,
+    level: Optional[int] = logging.INFO,
+    *,
     fmt: Union[str, None, Formatter] = DEFAULT_FMT,
     stream: Union[IO[str], Literal["auto"]] = "auto",
 ) -> None:
@@ -106,11 +112,11 @@ def _get_loggers(
 
 
 def _verbose_to_logging_level(verbose: int) -> int:
-    if verbose < 0:
+    if verbose <= VERBOSE_ERROR:
         level = logging.ERROR
-    elif verbose == 0:
+    elif verbose == VERBOSE_WARNING:
         level = logging.WARNING
-    elif verbose == 1:
+    elif verbose == VERBOSE_INFO:
         level = logging.INFO
     else:
         level = logging.DEBUG
