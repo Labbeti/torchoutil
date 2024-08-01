@@ -5,6 +5,9 @@ from torch.types import *
 
 from torchoutil.utils.stdlib.typing import (
     BuiltinScalar,
+    DataclassInstance,
+    NamedTupleInstance,
+    SizedIterable,
     is_builtin_scalar,
     is_dataclass_instance,
     is_dict_str,
@@ -95,6 +98,9 @@ from .classes import (
     numpy,
 )
 from .guards import (
+    is_bool_tensor,
+    is_integer_dtype,
+    is_integer_tensor,
     is_iterable_tensor,
     is_list_tensor,
     is_numpy_scalar,

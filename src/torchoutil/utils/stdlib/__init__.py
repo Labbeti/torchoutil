@@ -23,6 +23,7 @@ from .collections import (
     union_lists,
     unzip,
 )
+from .datetime import now_iso
 from .importlib import reimport_modules
 from .logging import (
     VERBOSE_DEBUG,
@@ -45,6 +46,7 @@ from .typing import (
     BuiltinScalar,
     DataclassInstance,
     NamedTupleInstance,
+    SizedIterable,
     is_builtin_scalar,
     is_dataclass_instance,
     is_dict_str,
@@ -56,6 +58,7 @@ from .typing import (
     is_list_bool,
     is_list_int,
     is_list_list_str,
+    is_list_number,
     is_list_str,
     is_mapping_str,
     is_namedtuple_instance,
