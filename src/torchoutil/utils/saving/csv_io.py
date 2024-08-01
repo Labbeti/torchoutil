@@ -5,7 +5,17 @@ import csv
 import io
 from csv import DictReader, DictWriter
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Literal, Mapping, Union, overload
+from typing import (
+    Any,
+    Dict,
+    Iterable,
+    List,
+    Literal,
+    Mapping,
+    Optional,
+    Union,
+    overload,
+)
 
 from torchoutil.utils.saving.common import to_builtin
 from torchoutil.utils.stdlib.collections import (
@@ -73,6 +83,7 @@ def load_csv(
     *,
     orient: Literal["dict"],
     header: bool = True,
+    comment_line: Optional[str] = None,
     **csv_reader_kwargs,
 ) -> Dict[str, List[Any]]:
     ...
@@ -85,6 +96,7 @@ def load_csv(
     *,
     orient: Literal["list"] = "list",
     header: bool = True,
+    comment_line: Optional[str] = None,
     **csv_reader_kwargs,
 ) -> List[Dict[str, Any]]:
     ...
@@ -96,6 +108,7 @@ def load_csv(
     *,
     orient: Literal["list", "dict"] = "list",
     header: bool = True,
+    comment_line: Optional[str] = None,
     **csv_reader_kwargs,
 ) -> Union[List[Dict[str, Any]], Dict[str, List[Any]]]:
     """Load content from csv filepath."""
@@ -107,6 +120,17 @@ def load_csv(
     with open(fpath, "r") as file:
         reader = reader_cls(file, **csv_reader_kwargs)
         data = list(reader)
+
+        if comment_line is None:
+            pass
+        elif header:
+            data = [
+                line
+                for line in data
+                if not next(iter(line.values())).startswith(comment_line)
+            ]
+        else:
+            data = [line for line in data if not line[0].startswith(comment_line)]
 
     if not header:
         data = [
