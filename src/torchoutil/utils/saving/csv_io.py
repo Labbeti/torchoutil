@@ -83,7 +83,7 @@ def load_csv(
     *,
     orient: Literal["dict"],
     header: bool = True,
-    comment_line: Optional[str] = None,
+    comment_start: Optional[str] = None,
     **csv_reader_kwargs,
 ) -> Dict[str, List[Any]]:
     ...
@@ -96,7 +96,7 @@ def load_csv(
     *,
     orient: Literal["list"] = "list",
     header: bool = True,
-    comment_line: Optional[str] = None,
+    comment_start: Optional[str] = None,
     **csv_reader_kwargs,
 ) -> List[Dict[str, Any]]:
     ...
@@ -108,7 +108,7 @@ def load_csv(
     *,
     orient: Literal["list", "dict"] = "list",
     header: bool = True,
-    comment_line: Optional[str] = None,
+    comment_start: Optional[str] = None,
     **csv_reader_kwargs,
 ) -> Union[List[Dict[str, Any]], Dict[str, List[Any]]]:
     """Load content from csv filepath."""
@@ -121,16 +121,16 @@ def load_csv(
         reader = reader_cls(file, **csv_reader_kwargs)
         data = list(reader)
 
-        if comment_line is None:
+        if comment_start is None:
             pass
         elif header:
             data = [
                 line
                 for line in data
-                if not next(iter(line.values())).startswith(comment_line)
+                if not next(iter(line.values())).startswith(comment_start)
             ]
         else:
-            data = [line for line in data if not line[0].startswith(comment_line)]
+            data = [line for line in data if not line[0].startswith(comment_start)]
 
     if not header:
         data = [
