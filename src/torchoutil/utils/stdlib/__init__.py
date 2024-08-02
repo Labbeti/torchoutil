@@ -40,6 +40,7 @@ from .logging import (
     setup_logging_verbose,
     warn_once,
 )
+from .math import clip, clamp
 from .os import tree_iter
 from .re import compile_patterns, find_pattern, pass_patterns
 from .typing import (
@@ -52,10 +53,12 @@ from .typing import (
     is_dict_str,
     is_iterable_bool,
     is_iterable_bytes_or_list,
+    is_iterable_float,
     is_iterable_int,
     is_iterable_iterable_int,
     is_iterable_str,
     is_list_bool,
+    is_list_float,
     is_list_int,
     is_list_list_str,
     is_list_number,

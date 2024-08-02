@@ -26,6 +26,10 @@ def is_iterable_bool(x: Any) -> TypeGuard[Iterable[bool]]:
     return isinstance(x, Iterable) and (all(isinstance(xi, bool) for xi in x))
 
 
+def is_iterable_float(x: Any) -> TypeGuard[Iterable[float]]:
+    return isinstance(x, Iterable) and (all(isinstance(xi, float) for xi in x))
+
+
 def is_iterable_bytes_or_list(x: Any) -> TypeGuard[Iterable[Union[bytes, list]]]:
     return isinstance(x, Iterable) and all(isinstance(xi, (bytes, list)) for xi in x)
 
@@ -68,6 +72,10 @@ def is_list_list_str(x: Any) -> TypeGuard[List[List[str]]]:
 
 def is_list_bool(x: Any) -> TypeGuard[List[bool]]:
     return isinstance(x, list) and all(isinstance(xi, bool) for xi in x)
+
+
+def is_list_float(x: Any) -> TypeGuard[List[float]]:
+    return isinstance(x, list) and (all(isinstance(xi, float) for xi in x))
 
 
 def is_list_int(x: Any) -> TypeGuard[List[int]]:
