@@ -37,9 +37,13 @@ def find_pattern(
 
 def pass_patterns(
     x: str,
-    patterns: Union[PatternLike, Iterable[PatternLike]],
+    include: Union[PatternLike, Iterable[PatternLike]],
     *,
+    exclude: Union[PatternLike, Iterable[PatternLike]] = (),
     match_fn: Callable[[Pattern, str], bool] = re.search,  # type: ignore
 ) -> bool:
     """Returns True if at least 1 pattern match the first argument."""
-    return find_pattern(x, patterns, match_fn=match_fn, default=-1) != -1
+    return (
+        find_pattern(x, include, match_fn=match_fn, default=-1) != -1
+        and find_pattern(x, exclude, match_fn=match_fn, default=-1) == -1
+    )
