@@ -22,12 +22,13 @@ def compile_patterns(
 
 def find_pattern(
     x: str,
-    patterns: List[Pattern],
+    patterns: Union[PatternLike, Iterable[PatternLike]],
     *,
     match_fn: Callable[[Pattern, str], bool] = re.search,  # type: ignore
     default: T = -1,
 ) -> Union[int, T]:
     """Find index of a pattern that match the first argument. If no pattern matches, returns the default value (-1)."""
+    patterns = compile_patterns(patterns)
     for i, pattern in enumerate(patterns):
         if match_fn(pattern, x):
             return i
@@ -36,7 +37,7 @@ def find_pattern(
 
 def pass_patterns(
     x: str,
-    patterns: List[Pattern],
+    patterns: Union[PatternLike, Iterable[PatternLike]],
     *,
     match_fn: Callable[[Pattern, str], bool] = re.search,  # type: ignore
 ) -> bool:
