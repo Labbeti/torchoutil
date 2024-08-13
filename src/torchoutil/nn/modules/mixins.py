@@ -25,7 +25,7 @@ import torch
 from torch import Tensor, nn
 from torch.nn.parameter import Parameter
 
-from torchoutil.nn.functional.others import count_parameters
+from torchoutil.nn.functional.others import count_parameters, checksum_module
 from torchoutil.types import is_dict_str, is_mapping_str
 from torchoutil.utils.stdlib.collections import dump_dict
 
@@ -41,8 +41,7 @@ pylog = logging.getLogger(__name__)
 
 
 class SupportsTypedForward(Protocol[InType, OutType]):
-    def forward(self, x: InType) -> OutType:
-        ...
+    def forward(self, x: InType) -> OutType: ...
 
 
 class ProxyDeviceModule(nn.Module):
@@ -101,10 +100,10 @@ class ProxyDeviceModule(nn.Module):
 
 
 class ConfigModule(nn.Module):
-    _CONFIG_EXCLUDE: ClassVar[Tuple[str, ...]] = tuple(
-        f".*{k}" for k in nn.Module().__dict__.keys()
-    ) + ("_.*",)
     _CONFIG_TYPES: ClassVar[Tuple[type, ...]] = (int, str, bool, float)
+    _CONFIG_EXCLUDE: ClassVar[Tuple[str, ...]] = ("^_.*",) + tuple(
+        f".*{k}$" for k in nn.Module().__dict__.keys()
+    )
 
     def __init__(
         self,
@@ -169,7 +168,7 @@ class ConfigModule(nn.Module):
             prefix = ""
         elif isinstance(value, ConfigModule):
             subconfig = value.config
-        elif hasattr(value, "_hparams") and is_mapping_str(value):
+        elif hasattr(value, "_hparams") and is_mapping_str(value._hparams):
             subconfig = dict(value._hparams.items())  # type: ignore
         elif hasattr(value, "__dict__"):
             subconfig = value.__dict__
@@ -200,12 +199,10 @@ class TypedModule(Generic[InType, OutType], nn.Module):
     def compose(
         self,
         other: "TypedModule[Any, OutType2]",
-    ) -> "TypedSequential[InType, OutType2]":
-        ...
+    ) -> "TypedSequential[InType, OutType2]": ...
 
     @overload
-    def compose(self, other: nn.Module) -> "TypedSequential[InType, Any]":
-        ...
+    def compose(self, other: nn.Module) -> "TypedSequential[InType, Any]": ...
 
     def compose(self, other) -> "TypedSequential[InType, Any]":
         return TypedSequential(self, other)
@@ -301,6 +298,13 @@ class EModule(
             buffers=buffers,
         )
 
+    def checksum(
+        self,
+        *,
+        only_trainable: bool = False,
+    ) -> int:
+        return checksum_module(self, only_trainable=only_trainable)
+
 
 TypedModuleLike = Union[
     SupportsTypedForward[InType, OutType],
@@ -329,8 +333,7 @@ class ESequential(
         strict_load: bool = False,
         config_to_extra_repr: bool = False,
         device_detect_mode: DeviceDetectMode = "proxy",
-    ) -> None:
-        ...
+    ) -> None: ...
 
     @overload
     def __init__(
@@ -343,8 +346,7 @@ class ESequential(
         config_to_extra_repr: bool = False,
         device_detect_mode: DeviceDetectMode = "proxy",
         unpack_dict: bool = False,
-    ) -> None:
-        ...
+    ) -> None: ...
 
     @overload
     def __init__(
@@ -358,8 +360,7 @@ class ESequential(
         strict_load: bool = False,
         config_to_extra_repr: bool = False,
         device_detect_mode: DeviceDetectMode = "proxy",
-    ) -> None:
-        ...
+    ) -> None: ...
 
     @overload
     def __init__(
@@ -374,8 +375,7 @@ class ESequential(
         strict_load: bool = False,
         config_to_extra_repr: bool = False,
         device_detect_mode: DeviceDetectMode = "proxy",
-    ) -> None:
-        ...
+    ) -> None: ...
 
     @overload
     def __init__(
@@ -391,8 +391,7 @@ class ESequential(
         strict_load: bool = False,
         config_to_extra_repr: bool = False,
         device_detect_mode: DeviceDetectMode = "proxy",
-    ) -> None:
-        ...
+    ) -> None: ...
 
     @overload
     def __init__(
@@ -409,8 +408,7 @@ class ESequential(
         strict_load: bool = False,
         config_to_extra_repr: bool = False,
         device_detect_mode: DeviceDetectMode = "proxy",
-    ) -> None:
-        ...
+    ) -> None: ...
 
     @overload
     def __init__(
@@ -428,8 +426,7 @@ class ESequential(
         strict_load: bool = False,
         config_to_extra_repr: bool = False,
         device_detect_mode: DeviceDetectMode = "proxy",
-    ) -> None:
-        ...
+    ) -> None: ...
 
     @overload
     def __init__(
@@ -448,8 +445,7 @@ class ESequential(
         strict_load: bool = False,
         config_to_extra_repr: bool = False,
         device_detect_mode: DeviceDetectMode = "proxy",
-    ) -> None:
-        ...
+    ) -> None: ...
 
     @overload
     def __init__(
@@ -462,8 +458,7 @@ class ESequential(
         strict_load: bool = False,
         config_to_extra_repr: bool = False,
         device_detect_mode: DeviceDetectMode = "proxy",
-    ) -> None:
-        ...
+    ) -> None: ...
 
     @overload
     def __init__(
@@ -476,8 +471,7 @@ class ESequential(
         strict_load: bool = False,
         config_to_extra_repr: bool = False,
         device_detect_mode: DeviceDetectMode = "proxy",
-    ) -> None:
-        ...
+    ) -> None: ...
 
     @overload
     def __init__(
@@ -488,8 +482,7 @@ class ESequential(
         strict_load: bool = False,
         config_to_extra_repr: bool = False,
         device_detect_mode: DeviceDetectMode = "proxy",
-    ) -> None:
-        ...
+    ) -> None: ...
 
     def __init__(
         self,
