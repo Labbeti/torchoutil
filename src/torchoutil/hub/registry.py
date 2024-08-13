@@ -124,13 +124,13 @@ class RegistryHub(Generic[T]):
             if device is not None:
                 load_kwds["map_location"] = device
 
-        if osp.isfile(name_or_path):
+        if isinstance(name_or_path, (str, Path)) and osp.isfile(name_or_path):
             path = name_or_path
             name = self._get_name(path)
         else:
             name = name_or_path
             try:
-                path = self.get_path(name_or_path)
+                path = self.get_path(name_or_path)  # type: ignore
             except ValueError:
                 raise ValueError(
                     f"Invalid argument {name_or_path=}. (expected a path to a checkpoint file or a model name in {self.names})"
@@ -142,7 +142,7 @@ class RegistryHub(Generic[T]):
                         f"Cannot find checkpoint model file in '{path}' for model '{name_or_path}' with mode {offline=}."
                     )
                 else:
-                    self.download_file(name_or_path, verbose=verbose)
+                    self.download_file(name_or_path, verbose=verbose)  # type: ignore
 
         del name_or_path
 

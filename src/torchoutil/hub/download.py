@@ -64,7 +64,12 @@ def download_file(
         dpath = fpath.parent
         dpath.mkdir(parents=True, exist_ok=True)
 
-    download_url_to_file(url, fpath, hash_prefix=hash_prefix, progress=verbose > 0)
+    download_url_to_file(
+        url,
+        fpath,  # type: ignore
+        hash_prefix=hash_prefix,
+        progress=verbose > 0,
+    )
     return fpath
 
 

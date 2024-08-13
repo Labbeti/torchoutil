@@ -10,6 +10,7 @@ from torch.types import Device, Number
 from torchoutil.nn.functional.pad import (
     PadAlign,
     PadValue,
+    PadMode,
     pad_and_stack_rec,
     pad_dim,
     pad_dims,
@@ -28,7 +29,7 @@ class PadDim(nn.Module):
         align: PadAlign = "left",
         pad_value: PadValue = 0.0,
         dim: int = -1,
-        mode: str = "constant",
+        mode: PadMode = "constant",
         generator: Union[int, Generator, None] = None,
     ) -> None:
         super().__init__()
@@ -36,7 +37,7 @@ class PadDim(nn.Module):
         self.align: PadAlign = align
         self.pad_value = pad_value
         self.dim = dim
-        self.mode = mode
+        self.mode: PadMode = mode
         self.generator = generator
 
     def forward(
@@ -76,7 +77,7 @@ class PadDims(nn.Module):
         aligns: Iterable[PadAlign] = ("left",),
         pad_value: PadValue = 0.0,
         dims: Iterable[int] = (-1,),
-        mode: str = "constant",
+        mode: PadMode = "constant",
         generator: Union[int, Generator, None] = None,
     ) -> None:
         super().__init__()
@@ -84,7 +85,7 @@ class PadDims(nn.Module):
         self.aligns = aligns
         self.pad_value = pad_value
         self.dims = dims
-        self.mode = mode
+        self.mode: PadMode = mode
         self.generator = generator
 
     def forward(
