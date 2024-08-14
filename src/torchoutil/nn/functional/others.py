@@ -33,7 +33,7 @@ from torchoutil.types import (
     is_tuple_tensor,
     np,
 )
-from torchoutil.utils.stdlib.collections import all_eq
+from torchoutil.utils.stdlib.collections import all_eq, prod
 
 T = TypeVar("T")
 U = TypeVar("U")
@@ -301,3 +301,8 @@ def identity(x: T) -> T:
 def ranks(x: Tensor, dim: int = -1, descending: bool = False) -> Tensor:
     """Get the ranks of each value in range [0, x.shape[dim][."""
     return x.argsort(dim, descending).argsort(dim)
+
+
+def nelement(x: Any) -> int:
+    """Returns the number of elements in Tensor-like object."""
+    return prod(shape(x, output_type=tuple))

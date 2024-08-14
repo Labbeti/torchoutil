@@ -75,6 +75,7 @@ from .others import (
     item,
     move_to_rec,
     ndim,
+    nelement,
     ranks,
     shape,
 )
