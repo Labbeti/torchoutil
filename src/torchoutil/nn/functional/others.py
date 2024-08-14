@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 
 import itertools
-import struct
 from typing import (
     Any,
     Callable,
@@ -178,7 +177,15 @@ def is_convertible_to_tensor(x: Any) -> bool:
 
 
 def ndim(x: Any) -> int:
-    """Scan first argument to return its number of dimension(s). Works with Tensors, numpy arrays and builtins types instances."""
+    """Scan first argument to return its number of dimension(s). Works recursively with Tensors, numpy arrays and builtins types instances.
+
+    Args:
+        x: Input value to scan.
+
+    Raises:
+        ValueError if input has an heterogeneous number of dimensions.
+        TypeError if input has an unsupported type.
+    """
     valid, ndim = _search_ndim(x)
     if valid:
         return ndim
@@ -189,7 +196,16 @@ def ndim(x: Any) -> int:
 
 
 def shape(x: Any, *, output_type: Callable[[Tuple[int, ...]], T] = Size) -> T:
-    """Scan first argument to return its shape. Works with Tensors, numpy arrays and builtins types instances."""
+    """Scan first argument to return its shape. Works recursively with Tensors, numpy arrays and builtins types instances.
+
+    Args:
+        x: Input value to scan.
+        output_type: Output shape type. defaults to torch.Size.
+
+    Raises:
+        ValueError if input has an heterogeneous shape.
+        TypeError if input has an unsupported type.
+    """
     valid, shape = _search_shape(x)
     if valid:
         shape = output_type(shape)
@@ -201,6 +217,7 @@ def shape(x: Any, *, output_type: Callable[[Tuple[int, ...]], T] = Size) -> T:
 
 
 def item(x: Any) -> Union[int, float, bool, complex]:
+    """Convert scalar value to built-in type."""
     if is_builtin_scalar(x):
         return x
     elif is_torch_scalar(x) or is_numpy_scalar(x):
@@ -284,70 +301,3 @@ def identity(x: T) -> T:
 def ranks(x: Tensor, dim: int = -1, descending: bool = False) -> Tensor:
     """Get the ranks of each value in range [0, x.shape[dim][."""
     return x.argsort(dim, descending).argsort(dim)
-
-
-def checksum_module(m: nn.Module, *, only_trainable: bool = False) -> int:
-    """Compute a simple checksum over module parameters."""
-    return checksum_tensor(
-        torch.as_tensor(
-            [
-                checksum_tensor(p)
-                for p in m.parameters()
-                if not only_trainable or p.requires_grad
-            ]
-        )
-    )
-
-
-def checksum_tensor(x: Tensor) -> int:
-    """Compute a simple checksum of a tensor. Order of values matter for the checksum."""
-    if x.ndim > 0:
-        x = x.detach().flatten().cpu()
-
-        if x.dtype == torch.bool:
-            dtype = torch.int
-        elif x.is_complex():
-            dtype = x.real.dtype
-        else:
-            dtype = x.dtype
-
-        x = x * torch.arange(1, len(x) + 1, device=x.device, dtype=dtype)
-        x = x.nansum()
-
-    x = x.item()
-    x = _checksum_number(x)
-    return x
-
-
-def _checksum_number(x: Union[int, bool, complex, float]) -> int:
-    """Compute a simple checksum of a builtin scalar number."""
-    if isinstance(x, bool):
-        return _checksum_bool(x)
-    elif isinstance(x, int):
-        return _checksum_int(x)
-    elif isinstance(x, complex):
-        return _checksum_complex(x)
-    elif isinstance(x, float):
-        return _checksum_float(x)
-    else:
-        raise TypeError(
-            f"Invalid argument type {type(x)}. (expected int, bool, complex or float)"
-        )
-
-
-def _checksum_int(x: int) -> int:
-    return x
-
-
-def _checksum_bool(x: bool) -> int:
-    return int(x)
-
-
-def _checksum_complex(x: complex) -> int:
-    return checksum_tensor(torch.as_tensor([x.real, x.imag]))
-
-
-def _checksum_float(x: float) -> int:
-    x = struct.pack("!f", x)
-    x = struct.unpack("!i", x)[0]
-    return x

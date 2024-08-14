@@ -4,6 +4,21 @@
 from torch.nn.functional import *
 
 from .activation import softmax_multidim
+from .checksum import (
+    checksum_any,
+    checksum_bool,
+    checksum_bytes,
+    checksum_complex,
+    checksum_float,
+    checksum_int,
+    checksum_iterable,
+    checksum_mapping,
+    checksum_module,
+    checksum_none,
+    checksum_number,
+    checksum_str,
+    checksum_tensor,
+)
 from .crop import crop_dim, crop_dims
 from .get import CUDA_IF_AVAILABLE, get_device, get_dtype, get_generator
 from .indices import (
@@ -54,7 +69,6 @@ from .numpy import numpy_to_tensor, tensor_to_numpy, to_numpy
 from .others import (
     can_be_converted_to_tensor,
     can_be_stacked,
-    checksum_module,
     count_parameters,
     find,
     identity,
