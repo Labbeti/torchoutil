@@ -12,6 +12,7 @@ All notable changes to this project will be documented in this file.
 - Function `reimport_modules` to re-import modules and functions in a notebook.
 - Function `checksum_module` to compare module weights.
 - Function `nelement` to get number of elements in Tensor-like object.
+- Function `flatten` to get flat of elements in Tensors, numpy array, builtins scalars and lists.
 
 ### Changed
 - Rename `is_pickle_root` to `is_packed_root` (old name was kept for backward compatibility).

@@ -71,6 +71,7 @@ from .others import (
     can_be_stacked,
     count_parameters,
     find,
+    flatten,
     identity,
     item,
     move_to_rec,
