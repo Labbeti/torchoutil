@@ -22,7 +22,7 @@ from typing import (
 )
 
 from pyoutil.re import PatternLike, compile_patterns, find_pattern
-from pyoutil.typing import BuiltinNumber, is_builtin_number, is_mapping_str
+from pyoutil.typing import BuiltinNumber, is_builtin_scalar, is_mapping_str
 
 K = TypeVar("K")
 T = TypeVar("T")
@@ -491,6 +491,7 @@ def flatten(
     x: Any,
     start_dim: int = 0,
     end_dim: int = 1000,
+    is_scalar_fn: Callable[[Any], bool] = is_builtin_scalar,
 ) -> List[Any]:
     ...
 
@@ -499,6 +500,7 @@ def flatten(
     x,
     start_dim: int = 0,
     end_dim: int = 1000,
+    is_scalar_fn: Callable[[Any], bool] = is_builtin_scalar,
 ):
     if start_dim < 0:
         raise ValueError(f"Invalid argument {start_dim=}. (expected positive integer)")
@@ -509,17 +511,21 @@ def flatten(
             f"Invalid arguments {start_dim=} and {end_dim=}. (expected start_dim <= end_dim)"
         )
 
-    def flatten_impl(x, deep: int):
-        if is_builtin_number(x) or isinstance(x, (str, bytes)) or x is None:
+    def flatten_impl(x, start_dim: int, end_dim: int):
+        if is_scalar_fn(x):
             return [x]
         elif isinstance(x, Iterable):
-            if deep < start_dim:
-                return [flatten_impl(xi, deep + 1) for xi in x]
-            elif deep < end_dim:
-                return [xij for xi in x for xij in flatten_impl(xi, deep + 1)]
+            if start_dim > 0:
+                return [flatten_impl(xi, start_dim - 1, end_dim - 1) for xi in x]
+            elif end_dim > 0:
+                return [
+                    xij
+                    for xi in x
+                    for xij in flatten_impl(xi, start_dim - 1, end_dim - 1)
+                ]
             else:
                 return x
         else:
             raise TypeError(f"Invalid argument type {type(x)=}.")
 
-    return flatten_impl(x, 0)
+    return flatten_impl(x, start_dim, end_dim)

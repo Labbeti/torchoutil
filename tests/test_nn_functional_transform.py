@@ -7,9 +7,12 @@ from unittest import TestCase
 import torch
 
 from torchoutil.nn.functional.transform import (
+    flatten,
     repeat_interleave_nd,
     resample_nearest_rates,
 )
+from torchoutil.types import np
+from torchoutil.utils.packaging import _NUMPY_AVAILABLE
 
 
 class TestRepeat(TestCase):
@@ -63,6 +66,28 @@ class TestResampleNearest(TestCase):
         result = resample_nearest_rates(x, 0.5)
         expected = torch.as_tensor([[10, 12, 14, 16, 18], [20, 22, 24, 26, 28]])
         assert torch.equal(result, expected)
+
+
+class TestFlatten(TestCase):
+    def test_example_1(self) -> None:
+        if not _NUMPY_AVAILABLE:
+            return None
+
+        x = [
+            [
+                [[np.float32(64), 3.0, 0, 1], ["a", None, "", 2], torch.zeros(4)],
+                torch.ones(3, 4),
+            ],
+        ]
+        expected = [
+            [np.float32(64), 3.0, 0, 1, "a", None, "", 2]
+            + list(torch.zeros(4))
+            + list(torch.ones(12))
+        ]
+
+        for xi, expected_i in zip(x, expected, strict=True):
+            result_i = flatten(xi)
+            assert result_i == expected_i
 
 
 if __name__ == "__main__":

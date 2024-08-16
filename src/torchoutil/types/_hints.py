@@ -17,7 +17,7 @@ from torch import (
 )
 from typing_extensions import Annotated
 
-from pyoutil.typing import BuiltinNumber
+from pyoutil.typing import BuiltinNumber, BuiltinScalar
 from torchoutil.types.classes import np
 
 Tensor0D = Annotated[Tensor, "0D"]
@@ -92,4 +92,7 @@ ShortTensor5D = Annotated[ShortTensor, "5D"]
 
 
 NumpyNumberLike = Union[np.ndarray, np.number]
+NumpyScalarLike = Union[np.ndarray, np.generic]
+
 NumberLike = Union[BuiltinNumber, NumpyNumberLike, Tensor0D]
+ScalarLike = Union[BuiltinScalar, NumpyScalarLike, Tensor0D]

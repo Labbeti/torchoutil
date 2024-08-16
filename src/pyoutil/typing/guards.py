@@ -6,12 +6,17 @@ from typing import Any, Dict, Iterable, List, Mapping, Sequence, Tuple, Union
 
 from typing_extensions import TypeGuard
 
-from .classes import BuiltinNumber, DataclassInstance, NamedTupleInstance
+from .classes import BuiltinNumber, BuiltinScalar, DataclassInstance, NamedTupleInstance
 
 
 def is_builtin_number(x: Any) -> TypeGuard[BuiltinNumber]:
     """Returns True if x is a builtin scalar type (int, float, bool, complex)."""
-    return isinstance(x, (int, float, bool, complex))
+    return isinstance(x, BuiltinNumber)
+
+
+def is_builtin_scalar(x: Any) -> TypeGuard[BuiltinScalar]:
+    """Returns True if x is a builtin scalar type (int, float, bool, complex)."""
+    return isinstance(x, BuiltinScalar)
 
 
 def is_dataclass_instance(x: Any) -> TypeGuard[DataclassInstance]:

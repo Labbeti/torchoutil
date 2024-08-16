@@ -12,7 +12,7 @@ from torch.nn import functional as F
 from torch.types import Device
 
 from torchoutil.nn.functional.get import get_device
-from torchoutil.types import is_scalar
+from torchoutil.types import is_number_like
 
 T = TypeVar("T")
 
@@ -64,7 +64,7 @@ def index_to_name(
     """
 
     def index_to_name_impl(x) -> Union[T, list]:
-        if is_scalar(x):
+        if is_number_like(x):
             return idx_to_name[x]  # type: ignore
         elif isinstance(x, Iterable):
             return [index_to_name_impl(xi) for xi in x]

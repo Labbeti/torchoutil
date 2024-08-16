@@ -27,8 +27,8 @@ from torchoutil.types import (
     ACCEPTED_NUMPY_DTYPES,
     is_builtin_number,
     is_list_tensor,
+    is_number_like,
     is_numpy_number_like,
-    is_scalar,
     is_tensor0d,
     is_tuple_tensor,
     np,
@@ -226,7 +226,7 @@ def item(x: Any) -> Union[int, float, bool, complex]:
 
 
 def _search_ndim(x: Any) -> Tuple[bool, int]:
-    if is_scalar(x) or isinstance(x, (str, bytes)) or x is None:
+    if is_number_like(x) or isinstance(x, (str, bytes)) or x is None:
         return True, 0
     elif isinstance(x, Tensor) or isinstance(x, np.ndarray):
         return True, x.ndim
@@ -243,7 +243,7 @@ def _search_ndim(x: Any) -> Tuple[bool, int]:
 
 
 def _search_shape(x: Any) -> Tuple[bool, Tuple[int, ...]]:
-    if is_scalar(x) or isinstance(x, (str, bytes)) or x is None:
+    if is_number_like(x) or isinstance(x, (str, bytes)) or x is None:
         return True, ()
     elif isinstance(x, Tensor) or isinstance(x, np.ndarray):
         return True, tuple(x.shape)

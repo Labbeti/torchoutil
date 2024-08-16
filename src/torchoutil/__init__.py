@@ -21,4 +21,3 @@ from . import nn as nn
 from . import optim as optim
 from . import utils as utils
 from .nn.functional import *
-from .types import is_builtin_number, is_numpy_number_like, is_scalar, is_tensor0d

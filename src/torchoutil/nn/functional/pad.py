@@ -10,7 +10,7 @@ from torch.types import Device, Number
 
 from torchoutil.nn.functional.get import get_device, get_generator
 from torchoutil.nn.functional.others import can_be_stacked
-from torchoutil.types import is_scalar
+from torchoutil.types import is_number_like
 
 PAD_ALIGNS = ("left", "right", "center", "random")
 PadAlign = Literal["left", "right", "center", "random"]
@@ -113,7 +113,9 @@ def pad_and_stack_rec(
     if isinstance(sequence, Tensor):
         return sequence.to(dtype=dtype, device=device)
 
-    elif is_scalar(sequence) or (isinstance(sequence, Sized) and len(sequence) == 0):
+    elif is_number_like(sequence) or (
+        isinstance(sequence, Sized) and len(sequence) == 0
+    ):
         return torch.as_tensor(sequence, dtype=dtype, device=device)  # type: ignore
 
     elif isinstance(sequence, (list, tuple)):

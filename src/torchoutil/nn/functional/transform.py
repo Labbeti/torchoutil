@@ -12,7 +12,7 @@ from pyoutil.collections import flatten as builtin_flatten
 from torchoutil.nn.functional.crop import crop_dim
 from torchoutil.nn.functional.get import get_generator
 from torchoutil.nn.functional.pad import PadMode, PadValue, pad_dim
-from torchoutil.types import np
+from torchoutil.types import is_scalar_like, np
 
 T = TypeVar("T")
 U = TypeVar("U")
@@ -264,4 +264,4 @@ def flatten(
     if isinstance(x, (Tensor, np.ndarray, np.generic)):
         return x.flatten(start_dim, end_dim)
     else:
-        return builtin_flatten(x, start_dim, end_dim)
+        return builtin_flatten(x, start_dim, end_dim, is_scalar_fn=is_scalar_like)

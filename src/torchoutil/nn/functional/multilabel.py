@@ -12,7 +12,7 @@ from torch.types import Device
 
 from torchoutil.nn.functional.get import get_device
 from torchoutil.nn.functional.pad import pad_and_stack_rec
-from torchoutil.types import is_scalar, is_sequence_bool, is_sequence_int
+from torchoutil.types import is_number_like, is_sequence_bool, is_sequence_int
 
 T = TypeVar("T")
 
@@ -91,13 +91,13 @@ def indices_to_names(
     """
 
     def _indices_to_names_impl(x) -> Union[int, list]:
-        if is_scalar(x):
+        if is_number_like(x):
             return idx_to_name[x]  # type: ignore
         elif isinstance(x, Iterable):
             return [
                 _indices_to_names_impl(xi)
                 for xi in x
-                if padding_idx is None or not is_scalar(xi) or xi != padding_idx
+                if padding_idx is None or not is_number_like(xi) or xi != padding_idx
             ]
         else:
             raise ValueError(
@@ -121,7 +121,7 @@ def multihot_to_indices(
     Args:
         multihot: Multihot labels encoded as 2D matrix.
     """
-    if is_scalar(multihot) or (
+    if is_number_like(multihot) or (
         isinstance(multihot, Tensor) and not _is_valid_indices(multihot)
     ):
         raise ValueError(

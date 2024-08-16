@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+from types import NoneType
 from typing import (
     Any,
     ClassVar,
@@ -14,8 +15,9 @@ from typing import (
 
 T = TypeVar("T", covariant=True)
 
-BuiltinNumber = Union[int, float, bool, complex]
 BuiltinCollection = Union[list, tuple, dict, set]
+BuiltinNumber = Union[int, float, bool, complex]
+BuiltinScalar = Union[int, float, bool, complex, str, bytes, NoneType]
 
 
 @runtime_checkable
