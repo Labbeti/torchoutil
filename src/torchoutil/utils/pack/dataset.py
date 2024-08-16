@@ -16,10 +16,10 @@ from torchoutil.utils.pack.common import (
     PackedDatasetAttributes,
 )
 
-pylog = logging.getLogger(__name__)
-
 T = TypeVar("T")
 U = TypeVar("U")
+
+pylog = logging.getLogger(__name__)
 
 
 class PackedDataset(Generic[T, U], Dataset[U]):

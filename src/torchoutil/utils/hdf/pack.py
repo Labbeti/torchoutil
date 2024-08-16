@@ -40,8 +40,6 @@ from torchoutil.utils.hdf.common import (
 )
 from torchoutil.utils.hdf.dataset import HDFDataset
 
-pylog = logging.getLogger(__name__)
-
 T = TypeVar("T")
 U = TypeVar("U", bound=Union[int, float, str, Tensor, list])
 
@@ -54,6 +52,8 @@ _HDF_SUPPORTED_DTYPES = (
     HDF_VOID_DTYPE,
 )
 _HDFDType = Union[Literal["b", "i", "u", "f"], Any]
+
+pylog = logging.getLogger(__name__)
 
 
 @torch.inference_mode()

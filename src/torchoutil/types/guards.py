@@ -8,7 +8,13 @@ from torch import BoolTensor, Tensor
 from typing_extensions import TypeGuard
 
 from pyoutil.typing import is_builtin_number
-from torchoutil.types._hints import NumberLike, NumpyNumberLike, Tensor0D
+from torchoutil.types._hints import (
+    BoolTensor1D,
+    NumberLike,
+    NumpyNumberLike,
+    Tensor0D,
+    Tensor1D,
+)
 from torchoutil.types.classes import np
 
 
@@ -58,5 +64,21 @@ def is_integer_tensor(x: Tensor) -> TypeGuard[Tensor]:
     return isinstance(x, Tensor) and is_integer_dtype(x.dtype)
 
 
+def is_integer_tensor1d(x: Tensor) -> TypeGuard[Tensor1D]:
+    return is_integer_tensor(x) and x.ndim == 1
+
+
+def is_complex_tensor(x: Tensor) -> TypeGuard[Tensor]:
+    return isinstance(x, Tensor) and x.is_complex()
+
+
+def is_floating_tensor(x: Tensor) -> TypeGuard[Tensor]:
+    return isinstance(x, Tensor) and x.is_floating_point()
+
+
 def is_bool_tensor(x: Tensor) -> TypeGuard[BoolTensor]:
     return isinstance(x, BoolTensor)
+
+
+def is_bool_tensor1d(x: Tensor) -> TypeGuard[BoolTensor1D]:
+    return is_bool_tensor(x) and x.ndim == 1

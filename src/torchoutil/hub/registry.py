@@ -28,10 +28,9 @@ from typing_extensions import NotRequired
 from torchoutil.hub.download import HashType, hash_file
 from torchoutil.nn.functional.get import get_device
 
-pylog = logging.getLogger(__name__)
-
-
 T = TypeVar("T")
+
+pylog = logging.getLogger(__name__)
 
 
 class RegistryEntry(TypedDict):

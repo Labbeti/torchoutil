@@ -34,8 +34,10 @@ from pyoutil.typing import (
 from .classes import ACCEPTED_NUMPY_DTYPES, TORCH_DTYPES, np, numpy
 from .guards import (
     is_bool_tensor,
+    is_bool_tensor1d,
     is_integer_dtype,
     is_integer_tensor,
+    is_integer_tensor1d,
     is_iterable_tensor,
     is_list_tensor,
     is_numpy_number_like,

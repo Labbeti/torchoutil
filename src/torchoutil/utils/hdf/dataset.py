@@ -41,15 +41,14 @@ from torchoutil.utils.hdf.common import (
     _dict_to_tuple,
 )
 
-pylog = logging.getLogger(__name__)
-
-
 T = TypeVar("T")
 U = TypeVar("U")
 
 
 IndexLike = Union[int, Iterable[int], Tensor, slice, None]
 ColumnLike = Union[str, Iterable[str], None]
+
+pylog = logging.getLogger(__name__)
 
 
 class HDFDataset(Generic[T, U], Dataset[U]):
