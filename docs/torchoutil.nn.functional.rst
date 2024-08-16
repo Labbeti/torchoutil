@@ -13,6 +13,7 @@ Submodules
    :maxdepth: 4
 
    torchoutil.nn.functional.activation
+   torchoutil.nn.functional.checksum
    torchoutil.nn.functional.crop
    torchoutil.nn.functional.get
    torchoutil.nn.functional.indices

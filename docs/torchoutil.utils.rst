@@ -25,6 +25,7 @@ Submodules
    :maxdepth: 4
 
    torchoutil.utils.collections
+   torchoutil.utils.colorlog
    torchoutil.utils.log_utils
    torchoutil.utils.packaging
    torchoutil.utils.return_types

@@ -1,7 +1,7 @@
-torchoutil.utils.stdlib.importlib module
+torchoutil.nn.functional.checksum module
 ========================================
 
-.. automodule:: torchoutil.utils.stdlib.importlib
+.. automodule:: torchoutil.nn.functional.checksum
    :members:
    :undoc-members:
    :show-inheritance:
