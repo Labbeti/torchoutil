@@ -48,10 +48,13 @@ from .re import compile_patterns, find_pattern, pass_patterns
 from .typing import (
     BuiltinCollection,
     BuiltinNumber,
+    BuiltinScalar,
     DataclassInstance,
     NamedTupleInstance,
+    NoneType,
     SizedIterable,
     is_builtin_number,
+    is_builtin_scalar,
     is_dataclass_instance,
     is_dict_str,
     is_iterable_bool,

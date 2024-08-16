@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from types import NoneType
 from typing import (
     Any,
     ClassVar,
@@ -15,6 +14,7 @@ from typing import (
 
 T = TypeVar("T", covariant=True)
 
+NoneType = type(None)
 BuiltinCollection = Union[list, tuple, dict, set]
 BuiltinNumber = Union[int, float, bool, complex]
 BuiltinScalar = Union[int, float, bool, complex, str, bytes, NoneType]

@@ -7,6 +7,7 @@ from .classes import (
     BuiltinScalar,
     DataclassInstance,
     NamedTupleInstance,
+    NoneType,
     SizedIterable,
 )
 from .guards import (
