@@ -321,12 +321,12 @@ def flatten(x: Union[np.ndarray, np.generic]) -> np.ndarray:
 
 
 @overload
-def flatten(x: TBuiltin0D) -> list[TBuiltin0D]:
+def flatten(x: TBuiltin0D) -> List[TBuiltin0D]:
     ...
 
 
 @overload
-def flatten(x: Iterable[TBuiltin0D]) -> list[TBuiltin0D]:
+def flatten(x: Iterable[TBuiltin0D]) -> List[TBuiltin0D]:
     ...
 
 
