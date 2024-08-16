@@ -85,7 +85,8 @@ class TestFlatten(TestCase):
             + list(torch.ones(12))
         ]
 
-        for xi, expected_i in zip(x, expected, strict=True):
+        assert len(x) == len(expected)
+        for xi, expected_i in zip(x, expected):
             result_i = flatten(xi)
             assert result_i == expected_i
 
