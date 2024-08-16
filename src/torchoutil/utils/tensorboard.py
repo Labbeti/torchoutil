@@ -13,7 +13,7 @@ from torchoutil.utils.packaging import _TENSORBOARD_AVAILABLE
 
 if not _TENSORBOARD_AVAILABLE:
     raise ImportError(
-        "Optional dependancy 'tensorboard' is not installed. Please install it using 'pip install torchoutil[extras]'"
+        "Cannot import tensorboard objects because optional dependancy 'tensorboard' is not installed. Please install it using 'pip install torchoutil[extras]'"
     )
 
 from tensorboard.backend.event_processing.event_file_loader import (  # type: ignore

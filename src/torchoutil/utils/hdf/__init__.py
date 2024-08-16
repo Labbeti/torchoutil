@@ -6,14 +6,14 @@ from torchoutil.utils.packaging import _H5PY_AVAILABLE, _NUMPY_AVAILABLE
 
 if not _H5PY_AVAILABLE:
     raise ImportError(
-        "Optional dependancy 'h5py' is not installed. Please install it using 'pip install torchoutil[extras]'"
+        "Cannot import hdf objects because optional dependancy 'h5py' is not installed. Please install it using 'pip install torchoutil[extras]'"
     )
 if not _NUMPY_AVAILABLE:
     raise ImportError(
-        "Optional dependancy 'numpy' is not installed. Please install it using 'pip install torchoutil[extras]'"
+        "Cannot import hdf objects because optional dependancy 'numpy' is not installed. Please install it using 'pip install torchoutil[extras]'"
     )
 
-del _H5PY_AVAILABLE
+del _H5PY_AVAILABLE, _NUMPY_AVAILABLE
 
 
 from torchoutil.utils.hdf.dataset import HDFDataset

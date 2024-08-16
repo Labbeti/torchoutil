@@ -22,10 +22,10 @@ DEFAULT_SKIPPED = (
 )
 
 
-def package_is_available(package_name: str) -> bool:
+def package_is_available(package: str) -> bool:
     """Returns True if package is installed in the current python environment."""
     try:
-        return find_spec(package_name) is not None
+        return find_spec(package) is not None
     except AttributeError:
         # Old support for Python <= 3.6
         return False
