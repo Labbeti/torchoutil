@@ -60,10 +60,12 @@ from .tensor import (
     Unsqueeze,
 )
 from .transform import (
+    Flatten,
     PadAndCropDim,
     RepeatInterleaveNd,
     ResampleNearestFreqs,
     ResampleNearestRates,
     ResampleNearestSteps,
+    Shuffled,
     TransformDrop,
 )

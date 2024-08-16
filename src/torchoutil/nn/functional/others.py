@@ -2,11 +2,9 @@
 # -*- coding: utf-8 -*-
 
 import itertools
+from typing import Any, Callable, Dict
+from typing import Generator as PythonGenerator
 from typing import (
-    Any,
-    Callable,
-    Dict,
-    Generator,
     Iterable,
     List,
     Mapping,
@@ -25,7 +23,6 @@ from typing_extensions import TypeGuard
 from torchoutil.nn.functional.get import get_device
 from torchoutil.types import (
     ACCEPTED_NUMPY_DTYPES,
-    BuiltinScalar,
     is_builtin_scalar,
     is_list_tensor,
     is_numpy_scalar,
@@ -38,7 +35,6 @@ from torchoutil.utils.stdlib.collections import all_eq, prod
 
 T = TypeVar("T")
 U = TypeVar("U")
-TBuiltin0D = TypeVar("TBuiltin0D", bound=Union[BuiltinScalar, str, bytes, None])
 
 
 def count_parameters(
@@ -124,7 +120,7 @@ def move_to_rec(
         return {k: move_to_rec(v, predicate=predicate, **kwargs) for k, v in x.items()}
     elif isinstance(x, Iterable):
         generator = (move_to_rec(xi, predicate=predicate, **kwargs) for xi in x)
-        if isinstance(x, Generator):
+        if isinstance(x, PythonGenerator):
             return generator
         elif isinstance(x, tuple):
             return tuple(generator)
@@ -308,39 +304,3 @@ def ranks(x: Tensor, dim: int = -1, descending: bool = False) -> Tensor:
 def nelement(x: Any) -> int:
     """Returns the number of elements in Tensor-like object."""
     return prod(shape(x, output_type=tuple))
-
-
-@overload
-def flatten(x: Tensor) -> Tensor:
-    ...
-
-
-@overload
-def flatten(x: Union[np.ndarray, np.generic]) -> np.ndarray:
-    ...
-
-
-@overload
-def flatten(x: TBuiltin0D) -> List[TBuiltin0D]:
-    ...
-
-
-@overload
-def flatten(x: Iterable[TBuiltin0D]) -> List[TBuiltin0D]:
-    ...
-
-
-@overload
-def flatten(x: Any) -> List[Any]:
-    ...
-
-
-def flatten(x):
-    if isinstance(x, (Tensor, np.ndarray, np.generic)):
-        return x.flatten()
-    elif is_builtin_scalar(x) or isinstance(x, (str, bytes)) or x is None:
-        return [x]
-    elif isinstance(x, Iterable):
-        return [xij for xi in x for xij in flatten(xi)]
-    else:
-        raise TypeError(f"Invalid argument type {type(x)=}.")

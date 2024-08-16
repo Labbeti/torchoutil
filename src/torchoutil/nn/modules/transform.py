@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from typing import Callable, Generic, Iterable, TypeVar, Union
+from typing import Any, Callable, Generic, Iterable, List, TypeVar, Union, overload
 
 import torch
 from torch import Generator, Tensor, nn
@@ -10,13 +10,17 @@ from torchoutil.nn.functional.transform import (
     PadCropAlign,
     PadMode,
     PadValue,
+    TBuiltin0D,
+    flatten,
     pad_and_crop_dim,
     repeat_interleave_nd,
     resample_nearest_freqs,
     resample_nearest_rates,
     resample_nearest_steps,
+    shuffled,
     transform_drop,
 )
+from torchoutil.types import np
 from torchoutil.utils.stdlib.collections import dump_dict
 
 T = TypeVar("T")
@@ -188,3 +192,42 @@ class PadAndCropDim(nn.Module):
             mode=self.mode,
             generator=self.generator,
         )
+
+
+class Shuffled(nn.Module):
+    def __init__(
+        self,
+        dims: Union[int, Iterable[int]],
+        generator: Union[int, Generator, None],
+    ) -> None:
+        super().__init__()
+        self.dims = dims
+        self.generator = generator
+
+    def forward(self, x: Tensor) -> Tensor:
+        return shuffled(x, dims=self.dims, generator=self.generator)
+
+
+class Flatten(nn.Module):
+    @overload
+    def forward(self, x: Tensor) -> Tensor:
+        ...
+
+    @overload
+    def forward(self, x: Union[np.ndarray, np.generic]) -> np.ndarray:
+        ...
+
+    @overload
+    def forward(self, x: TBuiltin0D) -> List[TBuiltin0D]:
+        ...
+
+    @overload
+    def forward(self, x: Iterable[TBuiltin0D]) -> List[TBuiltin0D]:
+        ...
+
+    @overload
+    def forward(self, x: Any) -> List[Any]:
+        ...
+
+    def forward(self, x):
+        return flatten(x)

@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import math
-from typing import Callable, Iterable, List, Literal, TypeVar, Union
+from typing import Any, Callable, Iterable, List, Literal, TypeVar, Union, overload
 
 import torch
 from torch import Generator, Tensor
@@ -10,11 +10,13 @@ from torch import Generator, Tensor
 from torchoutil.nn.functional.crop import crop_dim
 from torchoutil.nn.functional.get import get_generator
 from torchoutil.nn.functional.pad import PadMode, PadValue, pad_dim
+from torchoutil.types import BuiltinScalar, is_builtin_scalar, np
 
 PadCropAlign = Literal["left", "right", "center", "random"]
 
 T = TypeVar("T")
 U = TypeVar("U")
+TBuiltin0D = TypeVar("TBuiltin0D", bound=Union[BuiltinScalar, str, bytes, None])
 
 
 def repeat_interleave_nd(x: Tensor, repeats: int, dim: int = 0) -> Tensor:
@@ -186,3 +188,59 @@ def pad_and_crop_dim(
         generator=generator,
     )
     return x
+
+
+def shuffled(
+    x: Tensor,
+    dims: Union[int, Iterable[int]] = -1,
+    generator: Union[int, Generator, None] = None,
+) -> Tensor:
+    """Returns a shuffled version of the input tensor along specific dimension(s)."""
+    if isinstance(dims, int):
+        dims = [dims]
+    else:
+        dims = list(dims)
+
+    generator = get_generator(generator)
+    slices = [slice(None) for _ in range(x.ndim)]
+    for dim in dims:
+        indices = torch.randperm(x.shape[dim], generator=generator)
+        slices[dim] = indices
+    x = x[slices]
+    return x
+
+
+@overload
+def flatten(x: Tensor) -> Tensor:
+    ...
+
+
+@overload
+def flatten(x: Union[np.ndarray, np.generic]) -> np.ndarray:
+    ...
+
+
+@overload
+def flatten(x: TBuiltin0D) -> List[TBuiltin0D]:
+    ...
+
+
+@overload
+def flatten(x: Iterable[TBuiltin0D]) -> List[TBuiltin0D]:
+    ...
+
+
+@overload
+def flatten(x: Any) -> List[Any]:
+    ...
+
+
+def flatten(x):
+    if isinstance(x, (Tensor, np.ndarray, np.generic)):
+        return x.flatten()
+    elif is_builtin_scalar(x) or isinstance(x, (str, bytes)) or x is None:
+        return [x]
+    elif isinstance(x, Iterable):
+        return [xij for xi in x for xij in flatten(xi)]
+    else:
+        raise TypeError(f"Invalid argument type {type(x)=}.")

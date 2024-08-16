@@ -71,7 +71,6 @@ from .others import (
     can_be_stacked,
     count_parameters,
     find,
-    flatten,
     identity,
     item,
     move_to_rec,
@@ -82,10 +81,12 @@ from .others import (
 )
 from .pad import cat_padded_batch, pad_and_stack_rec, pad_dim, pad_dims
 from .transform import (
+    flatten,
     pad_and_crop_dim,
     repeat_interleave_nd,
     resample_nearest_freqs,
     resample_nearest_rates,
     resample_nearest_steps,
+    shuffled,
     transform_drop,
 )
