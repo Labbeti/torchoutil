@@ -17,11 +17,8 @@ from typing import (
     overload,
 )
 
+from pyoutil.collections import dict_list_to_list_dict, list_dict_to_dict_list
 from torchoutil.utils.saving.common import to_builtin
-from torchoutil.utils.stdlib.collections import (
-    dict_list_to_list_dict,
-    list_dict_to_dict_list,
-)
 
 ORIENT_VALUES = ("list", "dict")
 

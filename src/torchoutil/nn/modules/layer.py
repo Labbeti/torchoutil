@@ -9,7 +9,7 @@ from torch import Tensor, nn
 from torch.types import Device
 
 from torchoutil.nn.functional.get import get_device
-from torchoutil.types import Tensor2D
+from torchoutil.types._hints import Tensor2D
 
 
 class PositionalEncoding(nn.Module):

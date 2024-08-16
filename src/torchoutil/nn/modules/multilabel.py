@@ -7,6 +7,7 @@ import torch
 from torch import Tensor, nn
 from torch.types import Device
 
+from pyoutil.collections import dump_dict
 from torchoutil.nn.functional.multilabel import (
     indices_to_multihot,
     indices_to_names,
@@ -18,7 +19,6 @@ from torchoutil.nn.functional.multilabel import (
     probs_to_multihot,
     probs_to_names,
 )
-from torchoutil.utils.stdlib.collections import dump_dict
 
 T = TypeVar("T")
 

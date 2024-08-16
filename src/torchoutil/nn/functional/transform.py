@@ -7,16 +7,17 @@ from typing import Any, Callable, Iterable, List, Literal, TypeVar, Union, overl
 import torch
 from torch import Generator, Tensor
 
+from pyoutil.collections import TBuiltin0D
+from pyoutil.collections import flatten as builtin_flatten
 from torchoutil.nn.functional.crop import crop_dim
 from torchoutil.nn.functional.get import get_generator
 from torchoutil.nn.functional.pad import PadMode, PadValue, pad_dim
-from torchoutil.types import BuiltinScalar, is_builtin_scalar, np
-
-PadCropAlign = Literal["left", "right", "center", "random"]
+from torchoutil.types import np
 
 T = TypeVar("T")
 U = TypeVar("U")
-TBuiltin0D = TypeVar("TBuiltin0D", bound=Union[BuiltinScalar, str, bytes, None])
+
+PadCropAlign = Literal["left", "right", "center", "random"]
 
 
 def repeat_interleave_nd(x: Tensor, repeats: int, dim: int = 0) -> Tensor:
@@ -211,36 +212,56 @@ def shuffled(
 
 
 @overload
-def flatten(x: Tensor) -> Tensor:
+def flatten(
+    x: Tensor,
+    start_dim: int = 0,
+    end_dim: int = 1000,
+) -> Tensor:
     ...
 
 
 @overload
-def flatten(x: Union[np.ndarray, np.generic]) -> np.ndarray:
+def flatten(
+    x: Union[np.ndarray, np.generic],
+    start_dim: int = 0,
+    end_dim: int = 1000,
+) -> np.ndarray:
     ...
 
 
 @overload
-def flatten(x: TBuiltin0D) -> List[TBuiltin0D]:
+def flatten(
+    x: TBuiltin0D,
+    start_dim: int = 0,
+    end_dim: int = 1000,
+) -> List[TBuiltin0D]:
     ...
 
 
 @overload
-def flatten(x: Iterable[TBuiltin0D]) -> List[TBuiltin0D]:
+def flatten(
+    x: Iterable[TBuiltin0D],
+    start_dim: int = 0,
+    end_dim: int = 1000,
+) -> List[TBuiltin0D]:
     ...
 
 
 @overload
-def flatten(x: Any) -> List[Any]:
+def flatten(
+    x: Any,
+    start_dim: int = 0,
+    end_dim: int = 1000,
+) -> List[Any]:
     ...
 
 
-def flatten(x):
+def flatten(
+    x,
+    start_dim: int = 0,
+    end_dim: int = 1000,
+):
     if isinstance(x, (Tensor, np.ndarray, np.generic)):
-        return x.flatten()
-    elif is_builtin_scalar(x) or isinstance(x, (str, bytes)) or x is None:
-        return [x]
-    elif isinstance(x, Iterable):
-        return [xij for xi in x for xij in flatten(xi)]
+        return x.flatten(start_dim, end_dim)
     else:
-        raise TypeError(f"Invalid argument type {type(x)=}.")
+        return builtin_flatten(x, start_dim, end_dim)

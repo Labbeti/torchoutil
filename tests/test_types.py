@@ -10,13 +10,13 @@ from unittest import TestCase
 import torch
 
 from torchoutil.types import (
-    is_builtin_scalar,
+    is_builtin_number,
     is_dataclass_instance,
     is_iterable_str,
     is_namedtuple_instance,
-    is_numpy_scalar,
+    is_numpy_number_like,
     is_scalar,
-    is_torch_scalar,
+    is_tensor0d,
     np,
 )
 from torchoutil.utils.packaging import _NUMPY_AVAILABLE
@@ -102,7 +102,7 @@ class TestIsScalar(TestCase):
 
         for x, expected in tests:
             result = is_scalar(x)
-            msg = f"{x=} ({is_builtin_scalar(x)}, {is_torch_scalar(x)}, {is_numpy_scalar(x)})"
+            msg = f"{x=} ({is_builtin_number(x)}, {is_tensor0d(x)}, {is_numpy_number_like(x)})"
             assert result == expected, msg
 
 

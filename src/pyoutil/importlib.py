@@ -3,6 +3,7 @@
 
 import importlib
 import inspect
+from importlib.util import find_spec
 from types import ModuleType
 from typing import Iterable
 
@@ -19,6 +20,18 @@ DEFAULT_SKIPPED = (
     "__builtin__",
     "__builtins__",
 )
+
+
+def package_is_available(package_name: str) -> bool:
+    """Returns True if package is installed in the current python environment."""
+    try:
+        return find_spec(package_name) is not None
+    except AttributeError:
+        # Old support for Python <= 3.6
+        return False
+    except (ImportError, ModuleNotFoundError):
+        # Python >= 3.7
+        return False
 
 
 def reimport_modules(

@@ -5,8 +5,8 @@ from typing import Iterable, Union
 
 from torch import Generator, Tensor, nn
 
+from pyoutil.collections import dump_dict
 from torchoutil.nn.functional.crop import CropAlign, crop_dim, crop_dims
-from torchoutil.utils.stdlib.collections import dump_dict
 
 
 class CropDim(nn.Module):

@@ -5,13 +5,9 @@ from typing import Any, Dict, Iterable, List, Optional, TypeVar
 
 import torch
 
+from pyoutil.collections import KeyMode, filter_iterable, list_dict_to_dict_list
 from torchoutil.nn.functional.others import can_be_converted_to_tensor, can_be_stacked
 from torchoutil.nn.functional.pad import pad_and_stack_rec
-from torchoutil.utils.stdlib.collections import (
-    KeyMode,
-    filter_iterable,
-    list_dict_to_dict_list,
-)
 
 K = TypeVar("K")
 V = TypeVar("V")

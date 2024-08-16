@@ -6,6 +6,7 @@ from typing import Any, Callable, Generic, Iterable, List, TypeVar, Union, overl
 import torch
 from torch import Generator, Tensor, nn
 
+from pyoutil.collections import dump_dict
 from torchoutil.nn.functional.transform import (
     PadCropAlign,
     PadMode,
@@ -21,7 +22,6 @@ from torchoutil.nn.functional.transform import (
     transform_drop,
 )
 from torchoutil.types import np
-from torchoutil.utils.stdlib.collections import dump_dict
 
 T = TypeVar("T")
 

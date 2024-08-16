@@ -7,10 +7,10 @@ from argparse import ArgumentParser
 from pathlib import Path
 from typing import Iterable, Union
 
+from pyoutil.argparse import str_to_bool
+from pyoutil.os import tree_iter
+from pyoutil.re import PatternLike
 from torchoutil.hub.download import safe_rmdir
-from torchoutil.utils.stdlib.argparse import str_to_bool
-from torchoutil.utils.stdlib.os import tree_iter
-from torchoutil.utils.stdlib.re import PatternLike
 
 pylog = logging.getLogger(__name__)
 

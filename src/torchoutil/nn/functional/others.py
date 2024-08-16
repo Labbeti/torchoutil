@@ -20,18 +20,19 @@ import torch
 from torch import Size, Tensor, nn
 from typing_extensions import TypeGuard
 
+from pyoutil.collections import all_eq, prod
+from pyoutil.functools import identity  # noqa: F401
 from torchoutil.nn.functional.get import get_device
 from torchoutil.types import (
     ACCEPTED_NUMPY_DTYPES,
-    is_builtin_scalar,
+    is_builtin_number,
     is_list_tensor,
-    is_numpy_scalar,
+    is_numpy_number_like,
     is_scalar,
-    is_torch_scalar,
+    is_tensor0d,
     is_tuple_tensor,
     np,
 )
-from torchoutil.utils.stdlib.collections import all_eq, prod
 
 T = TypeVar("T")
 U = TypeVar("U")
@@ -216,9 +217,9 @@ def shape(x: Any, *, output_type: Callable[[Tuple[int, ...]], T] = Size) -> T:
 
 def item(x: Any) -> Union[int, float, bool, complex]:
     """Convert scalar value to built-in type."""
-    if is_builtin_scalar(x):
+    if is_builtin_number(x):
         return x
-    elif is_torch_scalar(x) or is_numpy_scalar(x):
+    elif is_tensor0d(x) or is_numpy_number_like(x):
         return x.item()
     else:
         raise ValueError(f"Invalid argument {x=}. (expected scalar number object)")
@@ -279,7 +280,7 @@ def __can_be_converted_to_tensor_list_tuple(x: Union[List, Tuple]) -> bool:
 
 
 def __can_be_converted_to_tensor_nested(x: Any) -> bool:
-    if is_builtin_scalar(x):
+    if is_builtin_number(x):
         return True
     elif isinstance(x, Tensor) and x.ndim == 0:
         return True
@@ -289,11 +290,6 @@ def __can_be_converted_to_tensor_nested(x: Any) -> bool:
         return __can_be_converted_to_tensor_list_tuple(x)
     else:
         return False
-
-
-def identity(x: T) -> T:
-    """Identity function placeholder."""
-    return x
 
 
 def ranks(x: Tensor, dim: int = -1, descending: bool = False) -> Tensor:

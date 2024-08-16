@@ -2,15 +2,12 @@
 # -*- coding: utf-8 -*-
 
 import logging
-import os
 import sys
 from functools import lru_cache
 from logging import FileHandler, Formatter, Logger, StreamHandler
 from pathlib import Path
 from types import ModuleType
 from typing import IO, List, Literal, Optional, Sequence, Union
-
-from torchoutil.utils.packaging import _COLORLOG_AVAILABLE
 
 pylog = logging.getLogger(__name__)
 
@@ -20,10 +17,6 @@ VERBOSE_INFO = 1
 VERBOSE_WARNING = 0
 VERBOSE_ERROR = -1
 PackageOrLogger = Union[str, ModuleType, None, Logger]
-
-
-if _COLORLOG_AVAILABLE:
-    from colorlog import ColoredFormatter
 
 
 @lru_cache(maxsize=None)
@@ -162,22 +155,3 @@ def get_ipython_name() -> (
         return get_ipython().__class__.__name__  # type: ignore
     except NameError:
         return None
-
-
-def get_colored_formatter() -> Formatter:
-    if not _COLORLOG_AVAILABLE:
-        raise RuntimeError(
-            "Cannot call function get_colored_formatter() without colorlog installed. Please use `pip install colorlog` to install it."
-        )
-
-    rank = os.getenv("SLURM_PROCID", 0)
-    fmt = f"[%(purple)sRANK{rank}%(reset)s][%(cyan)s%(asctime)s%(reset)s][%(blue)s%(name)s%(reset)s][%(log_color)s%(levelname)s%(reset)s] - %(message)s"
-    log_colors = {
-        "DEBUG": "purple",
-        "INFO": "green",
-        "WARNING": "yellow",
-        "ERROR": "red",
-        "CRITICAL": "bold_red",
-    }
-    formatter = ColoredFormatter(fmt=fmt, log_colors=log_colors)
-    return formatter

@@ -7,15 +7,15 @@ import torch
 from torch import Generator, Tensor, nn
 from torch.types import Device, Number
 
+from pyoutil.collections import dump_dict
 from torchoutil.nn.functional.pad import (
     PadAlign,
-    PadValue,
     PadMode,
+    PadValue,
     pad_and_stack_rec,
     pad_dim,
     pad_dims,
 )
-from torchoutil.utils.stdlib.collections import dump_dict
 
 
 class PadDim(nn.Module):

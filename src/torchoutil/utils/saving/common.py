@@ -9,14 +9,13 @@ from pathlib import Path
 from typing import Any, Dict, Iterable, List, Literal, Mapping, TypeVar, Union, overload
 
 from torch import Tensor
-from torch.types import Number as TorchNumber
 
+from pyoutil.typing import BuiltinNumber, is_dataclass_instance, is_namedtuple_instance
 from torchoutil.utils.packaging import (
     _NUMPY_AVAILABLE,
     _OMEGACONF_AVAILABLE,
     _PANDAS_AVAILABLE,
 )
-from torchoutil.utils.stdlib.typing import is_dataclass_instance, is_namedtuple_instance
 
 if _NUMPY_AVAILABLE:
     import numpy as np
@@ -68,7 +67,7 @@ def to_builtin(
     x: Tensor,
     *,
     unk_mode: UnkMode = "identity",
-) -> Union[List, TorchNumber]:
+) -> Union[List, BuiltinNumber]:
     ...
 
 
@@ -104,7 +103,7 @@ def to_builtin(
             If unk_mode == "error", a TypeError is raised.
     """
     # Terminal cases
-    if isinstance(x, (int, float, bool, complex, str, bytes)):
+    if isinstance(x, (int, float, bool, complex, str, bytes)) or x is None:
         return x
     elif isinstance(x, Enum):
         return x.name

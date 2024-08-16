@@ -5,8 +5,7 @@ import random
 import unittest
 from unittest import TestCase
 
-from torchoutil.types import is_list_list_str, is_list_str
-from torchoutil.utils.stdlib.collections import (
+from pyoutil.collections import (
     flat_dict_of_dict,
     flat_list_of_list,
     get_key_fn,
@@ -15,6 +14,7 @@ from torchoutil.utils.stdlib.collections import (
     unflat_dict_of_dict,
     unflat_list_of_list,
 )
+from pyoutil.typing import is_list_list_str, is_list_str
 
 
 class TestFlatDict(TestCase):

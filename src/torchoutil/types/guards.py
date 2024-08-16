@@ -4,14 +4,15 @@
 from typing import Any, Iterable, List, Tuple
 
 import torch
-from torch import Tensor
+from torch import BoolTensor, Tensor
 from typing_extensions import TypeGuard
 
-from torchoutil.types.classes import BoolTensor, NumpyScalar, Scalar, Tensor0D, np
-from torchoutil.utils.stdlib.typing import is_builtin_scalar
+from pyoutil.typing import is_builtin_number
+from torchoutil.types._hints import NumberLike, NumpyNumberLike, Tensor0D
+from torchoutil.types.classes import np
 
 
-def is_numpy_scalar(x: Any) -> TypeGuard[NumpyScalar]:
+def is_numpy_number_like(x: Any) -> TypeGuard[NumpyNumberLike]:
     """Returns True if x is an instance of a numpy number type or a zero-dimensional numpy array.
     If numpy is not installed, this function always returns False.
     """
@@ -20,12 +21,12 @@ def is_numpy_scalar(x: Any) -> TypeGuard[NumpyScalar]:
     )
 
 
-def is_torch_scalar(x: Any) -> TypeGuard[Tensor0D]:
+def is_tensor0d(x: Any) -> TypeGuard[Tensor0D]:
     """Returns True if x is a zero-dimensional torch Tensor."""
     return isinstance(x, Tensor) and x.ndim == 0
 
 
-def is_scalar(x: Any) -> TypeGuard[Scalar]:
+def is_scalar(x: Any) -> TypeGuard[NumberLike]:
     """Returns True if input is a scalar number.
 
     Accepted scalars are:
@@ -34,7 +35,7 @@ def is_scalar(x: Any) -> TypeGuard[Scalar]:
     - Numpy zero-dimensional arrays
     - Numpy number scalars
     """
-    return is_builtin_scalar(x) or is_numpy_scalar(x) or is_torch_scalar(x)
+    return is_builtin_number(x) or is_numpy_number_like(x) or is_tensor0d(x)
 
 
 def is_iterable_tensor(x: Any) -> TypeGuard[Iterable[Tensor]]:

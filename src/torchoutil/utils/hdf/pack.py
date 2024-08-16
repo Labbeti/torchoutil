@@ -27,7 +27,8 @@ from h5py import Dataset as HDFRawDataset
 from torch import Tensor, nn
 from torch.utils.data.dataloader import DataLoader
 
-from torchoutil.types import is_dict_str, is_numpy_scalar
+from pyoutil.collections import all_eq, unzip
+from torchoutil.types import is_dict_str, is_numpy_number_like
 from torchoutil.utils.data.dataloader import get_auto_num_cpus
 from torchoutil.utils.data.dataset import SizedDatasetLike, TransformWrapper
 from torchoutil.utils.hdf.common import (
@@ -38,7 +39,6 @@ from torchoutil.utils.hdf.common import (
     _tuple_to_dict,
 )
 from torchoutil.utils.hdf.dataset import HDFDataset
-from torchoutil.utils.stdlib.collections import all_eq, unzip
 
 pylog = logging.getLogger(__name__)
 
@@ -428,7 +428,7 @@ def _get_shape_and_dtype(
             hdf_dtype = "i"
         src_dtype = str(x.dtype)
 
-    elif isinstance(x, np.ndarray) or is_numpy_scalar(x):
+    elif isinstance(x, np.ndarray) or is_numpy_number_like(x):
         shape = tuple(x.shape)
         dtype_kind = x.dtype.kind
         if dtype_kind == "u":

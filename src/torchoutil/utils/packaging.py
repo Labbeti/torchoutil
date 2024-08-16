@@ -1,21 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from importlib.util import find_spec
 from typing import Final
 
-
-def _package_is_available(package_name: str) -> bool:
-    """Returns True if package is installed in the current python environment."""
-    try:
-        return find_spec(package_name) is not None
-    except AttributeError:
-        # Old support for Python <= 3.6
-        return False
-    except (ImportError, ModuleNotFoundError):
-        # Python >= 3.7
-        return False
-
+from pyoutil.importlib import package_is_available
 
 _EXTRAS_PACKAGES = (
     "numpy",
@@ -27,7 +15,7 @@ _EXTRAS_PACKAGES = (
     "pandas",
     "colorlog",
 )
-_EXTRA_AVAILABLE = {name: _package_is_available(name) for name in _EXTRAS_PACKAGES}
+_EXTRA_AVAILABLE = {name: package_is_available(name) for name in _EXTRAS_PACKAGES}
 
 
 _NUMPY_AVAILABLE: Final[bool] = _EXTRA_AVAILABLE["numpy"]

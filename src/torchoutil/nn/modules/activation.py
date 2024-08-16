@@ -5,8 +5,8 @@ from typing import Iterable, Union
 
 from torch import Tensor, nn
 
+from pyoutil.collections import dump_dict
 from torchoutil.nn.functional.activation import softmax_multidim
-from torchoutil.utils.stdlib.collections import dump_dict
 
 
 class SoftmaxMultidim(nn.Module):
@@ -18,9 +18,6 @@ class SoftmaxMultidim(nn.Module):
         self,
         dims: Union[Iterable[int], None] = (-1,),
     ) -> None:
-        if dims is not None:
-            dims = tuple(dims)
-
         super().__init__()
         self.dims = dims
 

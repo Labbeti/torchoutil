@@ -25,9 +25,9 @@ from yaml import (
 from yaml.parser import ParserError
 from yaml.scanner import ScannerError
 
+from pyoutil.typing import DataclassInstance, NamedTupleInstance
 from torchoutil.utils.packaging import _OMEGACONF_AVAILABLE, _YAML_AVAILABLE
 from torchoutil.utils.saving.common import to_builtin
-from torchoutil.utils.stdlib.typing import DataclassInstance, NamedTupleInstance
 
 if _YAML_AVAILABLE:
     import yaml

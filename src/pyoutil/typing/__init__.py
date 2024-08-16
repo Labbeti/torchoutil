@@ -1,9 +1,15 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from .classes import BuiltinScalar, DataclassInstance, NamedTupleInstance, SizedIterable
+from .classes import (
+    BuiltinCollection,
+    BuiltinNumber,
+    DataclassInstance,
+    NamedTupleInstance,
+    SizedIterable,
+)
 from .guards import (
-    is_builtin_scalar,
+    is_builtin_number,
     is_dataclass_instance,
     is_dict_str,
     is_iterable_bool,

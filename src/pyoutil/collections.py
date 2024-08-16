@@ -21,14 +21,15 @@ from typing import (
     overload,
 )
 
-from torchoutil.utils.stdlib.re import PatternLike, compile_patterns, find_pattern
-from torchoutil.utils.stdlib.typing import is_mapping_str
+from pyoutil.re import PatternLike, compile_patterns, find_pattern
+from pyoutil.typing import BuiltinNumber, is_builtin_number, is_mapping_str
 
 K = TypeVar("K")
 T = TypeVar("T")
 U = TypeVar("U")
 V = TypeVar("V")
 W = TypeVar("W")
+TBuiltin0D = TypeVar("TBuiltin0D", bound=Union[BuiltinNumber, str, bytes, None])
 
 
 KEY_MODES = ("same", "intersect", "union")
@@ -465,3 +466,60 @@ def sort_with_patterns(
     key_fn = get_key_fn(patterns, match_fn=match_fn)
     x = sorted(x, key=key_fn, reverse=reverse)
     return x
+
+
+@overload
+def flatten(
+    x: TBuiltin0D,
+    start_dim: int = 0,
+    end_dim: int = 1000,
+) -> List[TBuiltin0D]:
+    ...
+
+
+@overload
+def flatten(
+    x: Iterable[TBuiltin0D],
+    start_dim: int = 0,
+    end_dim: int = 1000,
+) -> List[TBuiltin0D]:
+    ...
+
+
+@overload
+def flatten(
+    x: Any,
+    start_dim: int = 0,
+    end_dim: int = 1000,
+) -> List[Any]:
+    ...
+
+
+def flatten(
+    x,
+    start_dim: int = 0,
+    end_dim: int = 1000,
+):
+    if start_dim < 0:
+        raise ValueError(f"Invalid argument {start_dim=}. (expected positive integer)")
+    if end_dim < 0:
+        raise ValueError(f"Invalid argument {end_dim=}. (expected positive integer)")
+    if start_dim > end_dim:
+        raise ValueError(
+            f"Invalid arguments {start_dim=} and {end_dim=}. (expected start_dim <= end_dim)"
+        )
+
+    def flatten_impl(x, deep: int):
+        if is_builtin_number(x) or isinstance(x, (str, bytes)) or x is None:
+            return [x]
+        elif isinstance(x, Iterable):
+            if deep < start_dim:
+                return [flatten_impl(xi, deep + 1) for xi in x]
+            elif deep < end_dim:
+                return [xij for xi in x for xij in flatten_impl(xi, deep + 1)]
+            else:
+                return x
+        else:
+            raise TypeError(f"Invalid argument type {type(x)=}.")
+
+    return flatten_impl(x, 0)

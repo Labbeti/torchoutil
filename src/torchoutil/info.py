@@ -9,9 +9,9 @@ from typing import Any, Dict
 import torch
 
 import torchoutil
+from pyoutil.collections import dump_dict
 from torchoutil.utils.data.dataloader import get_auto_num_cpus, get_auto_num_gpus
 from torchoutil.utils.packaging import _EXTRA_AVAILABLE
-from torchoutil.utils.stdlib.collections import dump_dict
 
 
 def get_package_repository_path() -> str:

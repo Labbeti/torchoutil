@@ -10,9 +10,9 @@ from torch import Tensor, nn
 from torch.nn import functional as F
 from torch.types import Device, Number
 
+from pyoutil.collections import dump_dict
 from torchoutil.nn.functional.get import get_device
 from torchoutil.utils import return_types
-from torchoutil.utils.stdlib.collections import dump_dict
 
 
 class Reshape(nn.Module):

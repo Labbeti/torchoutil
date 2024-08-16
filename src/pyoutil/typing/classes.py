@@ -13,7 +13,9 @@ from typing import (
 )
 
 T = TypeVar("T", covariant=True)
-BuiltinScalar = Union[int, float, bool, complex]
+
+BuiltinNumber = Union[int, float, bool, complex]
+BuiltinCollection = Union[list, tuple, dict, set]
 
 
 @runtime_checkable
