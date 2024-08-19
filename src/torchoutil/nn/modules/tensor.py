@@ -481,6 +481,24 @@ class Log2(nn.Module):
         return x.log2()
 
 
+class Exp(nn.Module):
+    """
+    Module version of :func:`~torch.exp`.
+    """
+
+    def forward(self, x: Tensor) -> Tensor:
+        return x.exp()
+
+
+class Exp2(nn.Module):
+    """
+    Module version of :func:`~torch.exp2`.
+    """
+
+    def forward(self, x: Tensor) -> Tensor:
+        return x.exp2()
+
+
 class Repeat(nn.Module):
     """
     Module version of :func:`~torch.repeat`.

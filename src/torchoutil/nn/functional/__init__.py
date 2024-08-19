@@ -3,7 +3,7 @@
 
 from torch.nn.functional import *
 
-from .activation import softmax_multidim
+from .activation import log_softmax_multidim, softmax_multidim
 from .checksum import (
     checksum_any,
     checksum_bool,

@@ -11,6 +11,7 @@ from typing import (
     Callable,
     Dict,
     Generic,
+    Hashable,
     List,
     Mapping,
     Optional,
@@ -25,10 +26,10 @@ from torch import Tensor
 from torch.types import Device
 from typing_extensions import NotRequired
 
-from torchoutil.hub.download import HashType, hash_file
+from pyoutil.hashlib import HashType, hash_file
 from torchoutil.nn.functional.get import get_device
 
-T = TypeVar("T")
+T = TypeVar("T", bound=Hashable)
 
 pylog = logging.getLogger(__name__)
 

@@ -38,9 +38,12 @@ def checksum_any(x: Any, **kwargs) -> int:
 
 def checksum_iterable(x: Iterable[Any], **kwargs) -> int:
     accumulator = kwargs.pop("accumulator", 0)
-    return sum(
-        checksum_any(xi, accumulator=accumulator + (i + 1), **kwargs) * (i + 1)
-        for i, xi in enumerate(x)
+    return (
+        sum(
+            checksum_any(xi, accumulator=accumulator + (i + 1), **kwargs) * (i + 1)
+            for i, xi in enumerate(x)
+        )
+        + accumulator
     )
 
 
@@ -52,7 +55,8 @@ def checksum_module(x: nn.Module, *, only_trainable: bool = False, **kwargs) -> 
     """Compute a simple checksum over module parameters."""
     kwargs["only_trainable"] = only_trainable
     return checksum_iterable(
-        p for p in x.parameters() if not only_trainable or p.requires_grad
+        (p for p in x.parameters() if not only_trainable or p.requires_grad),
+        **kwargs,
     )
 
 
@@ -105,7 +109,7 @@ def checksum_str(x: str, **kwargs) -> int:
 
 
 def checksum_complex(x: complex, **kwargs) -> int:
-    return checksum_tensor(torch.as_tensor([x.real, x.imag]))
+    return checksum_tensor(torch.as_tensor([x.real, x.imag]), **kwargs)
 
 
 # Terminate functions

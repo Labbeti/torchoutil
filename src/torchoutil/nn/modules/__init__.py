@@ -3,7 +3,7 @@
 
 from torch.nn.modules import *
 
-from .activation import SoftmaxMultidim
+from .activation import LogSoftmaxMultidim, SoftmaxMultidim
 from .crop import CropDim, CropDims
 from .layer import PositionalEncoding
 from .mask import MaskedMean, MaskedSum
@@ -38,6 +38,8 @@ from .tensor import (
     Abs,
     Angle,
     AsTensor,
+    Exp,
+    Exp2,
     Imag,
     Log,
     Log2,
