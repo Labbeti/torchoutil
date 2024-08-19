@@ -1,7 +1,12 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from .argparse import str_to_bool, str_to_optional_int, str_to_optional_str
+from .argparse import (
+    str_to_bool,
+    str_to_optional_bool,
+    str_to_optional_int,
+    str_to_optional_str,
+)
 from .collections import (
     KeyMode,
     all_eq,
@@ -27,6 +32,7 @@ from .collections import (
 from .dataclasses import get_defaults_values
 from .datetime import now_iso
 from .functools import identity
+from .hashlib import hash_file
 from .importlib import reimport_modules
 from .logging import (
     VERBOSE_DEBUG,
@@ -43,6 +49,6 @@ from .logging import (
     warn_once,
 )
 from .math import clamp, clip
-from .os import tree_iter
+from .os import safe_rmdir, tree_iter
 from .re import compile_patterns, find_pattern, pass_patterns
 from .typing import *

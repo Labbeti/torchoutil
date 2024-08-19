@@ -497,11 +497,11 @@ def flatten(
 
 
 def flatten(
-    x,
+    x: Any,
     start_dim: int = 0,
     end_dim: int = 1000,
     is_scalar_fn: Callable[[Any], bool] = is_builtin_scalar,
-):
+) -> List[Any]:
     if start_dim < 0:
         raise ValueError(f"Invalid argument {start_dim=}. (expected positive integer)")
     if end_dim < 0:
@@ -511,7 +511,7 @@ def flatten(
             f"Invalid arguments {start_dim=} and {end_dim=}. (expected start_dim <= end_dim)"
         )
 
-    def flatten_impl(x, start_dim: int, end_dim: int):
+    def flatten_impl(x: Any, start_dim: int, end_dim: int) -> List[Any]:
         if is_scalar_fn(x):
             return [x]
         elif isinstance(x, Iterable):

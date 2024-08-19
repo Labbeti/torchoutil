@@ -8,6 +8,7 @@ from unittest import TestCase
 from pyoutil.collections import (
     flat_dict_of_dict,
     flat_list_of_list,
+    flatten,
     get_key_fn,
     intersect_lists,
     list_dict_to_dict_list,
@@ -128,6 +129,29 @@ class TestGetKeyFn(TestCase):
         patterns = ["^ab.*"]  # sort list with elements starting with 'ab' first
         result = list(sorted(lst, key=get_key_fn(patterns)))
         expected = ["abc", "abcd", "a", "aa"]
+        assert result == expected
+
+
+class TestFlatten(TestCase):
+    def test_example_1(self) -> None:
+        xlst = [[[3.0, 0, 1], ["a", None, 2], range(3)]]
+        expected = [3.0, 0, 1, "a", None, 2, 0, 1, 2]
+        result = flatten(xlst)
+        assert result == expected
+
+    def test_example_2(self) -> None:
+        xlst = [[range(0, 3), range(3, 6)], [range(6, 9), range(9, 12)]]
+
+        expected = list(range(0, 12))
+        result = flatten(xlst)
+        assert result == expected
+
+        expected = [list(range(0, 6)), list(range(6, 12))]
+        result = flatten(xlst, 1, 2)
+        assert result == expected
+
+        expected = [range(0, 3), range(3, 6), range(6, 9), range(9, 12)]
+        result = flatten(xlst, 0, 1)
         assert result == expected
 
 
