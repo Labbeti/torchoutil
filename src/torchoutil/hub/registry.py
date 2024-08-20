@@ -26,7 +26,7 @@ from torch import Tensor
 from torch.types import Device
 from typing_extensions import NotRequired
 
-from pyoutil.hashlib import HashType, hash_file
+from pyoutil.hashlib import HashName, hash_file
 from torchoutil.nn.functional.get import get_device
 
 T = TypeVar("T", bound=Hashable)
@@ -38,7 +38,7 @@ class RegistryEntry(TypedDict):
     url: str
     fname: str
     hash_value: NotRequired[str]
-    hash_type: NotRequired[HashType]
+    hash_type: NotRequired[HashName]
     state_dict_key: NotRequired[str]
     architecture: NotRequired[str]
 
