@@ -71,7 +71,11 @@ jobs:
 
     - name: Test with pytest
       run: |
-        python -m pytest -v
+        coverage run -m pytest -v
+
+    - name: Show coverage results
+      run: |
+        coverage report -m
 
   build-minimal:
     runs-on: ${{ matrix.os }}
