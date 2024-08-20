@@ -3,14 +3,17 @@
 
 import random
 import unittest
+from typing import Sized
 from unittest import TestCase
 
 import torch
 
+from pyoutil.typing import is_builtin_number, is_builtin_scalar
+from torchoutil.nn import functional as F
 from torchoutil.types import (
-    is_builtin_number,
     is_number_like,
     is_numpy_number_like,
+    is_scalar_like,
     is_tensor0d,
     np,
 )
@@ -31,6 +34,16 @@ class TestIsNumber(TestCase):
             ([[]], False),
             ((), False),
             ("test", False),
+            (None, False),
+            ("", False),
+            (b"abc", False),
+            ([1, [2]], False),
+            ({}, False),
+            ({"a": [1, 2], "b": [3, 4]}, False),
+            (set(), False),
+            ((1, 2, 3), False),
+            ([1.0], False),
+            ([object(), []], False),
         ]
 
         if _NUMPY_AVAILABLE:
@@ -46,6 +59,22 @@ class TestIsNumber(TestCase):
             result = is_number_like(x)
             msg = f"{x=} ({is_builtin_number(x)}, {is_tensor0d(x)}, {is_numpy_number_like(x)})"
             assert result == expected, msg
+
+            x_is_scalar = is_scalar_like(x)
+            assert isinstance(x, Sized) or x_is_scalar
+
+            try:
+                ndim = F.ndim(x)
+                assert x_is_scalar == (ndim == 0)
+
+                shape = F.shape(x)
+                assert x_is_scalar == (len(shape) == 0)
+                assert len(shape) == ndim
+
+                xitem = F.item(x)
+                assert is_builtin_scalar(xitem)
+            except (ValueError, RuntimeError, TypeError):
+                assert not x_is_scalar
 
 
 if __name__ == "__main__":
