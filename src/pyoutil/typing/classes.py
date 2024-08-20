@@ -15,7 +15,7 @@ from typing import (
 T = TypeVar("T", covariant=True)
 
 NoneType = type(None)
-BuiltinCollection = Union[list, tuple, dict, set]
+BuiltinCollection = Union[list, tuple, dict, set, frozenset]
 BuiltinNumber = Union[int, float, bool, complex]
 BuiltinScalar = Union[int, float, bool, complex, str, bytes, NoneType]
 

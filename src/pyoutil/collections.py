@@ -21,6 +21,8 @@ from typing import (
     overload,
 )
 
+from typing_extensions import TypeGuard
+
 from pyoutil.re import PatternLike, compile_patterns, find_pattern
 from pyoutil.typing import BuiltinNumber, is_builtin_scalar, is_mapping_str
 
@@ -479,19 +481,21 @@ def sort_with_patterns(
 
 @overload
 def flatten(
-    x: TBuiltinScalar,
+    x: T,
     start_dim: int = 0,
     end_dim: int = 1000,
-) -> List[TBuiltinScalar]:
+    is_scalar_fn: Callable[[Any], TypeGuard[T]] = is_builtin_scalar,
+) -> List[T]:
     ...
 
 
 @overload
 def flatten(
-    x: Iterable[TBuiltinScalar],
+    x: Iterable[T],
     start_dim: int = 0,
     end_dim: int = 1000,
-) -> List[TBuiltinScalar]:
+    is_scalar_fn: Callable[[Any], TypeGuard[T]] = is_builtin_scalar,
+) -> List[T]:
     ...
 
 
@@ -500,7 +504,7 @@ def flatten(
     x: Any,
     start_dim: int = 0,
     end_dim: int = 1000,
-    is_scalar_fn: Callable[[Any], bool] = is_builtin_scalar,
+    is_scalar_fn: Callable[[Any], TypeGuard[T]] = is_builtin_scalar,
 ) -> List[Any]:
     ...
 
@@ -509,7 +513,7 @@ def flatten(
     x: Any,
     start_dim: int = 0,
     end_dim: int = 1000,
-    is_scalar_fn: Callable[[Any], bool] = is_builtin_scalar,
+    is_scalar_fn: Callable[[Any], TypeGuard[T]] = is_builtin_scalar,
 ) -> List[Any]:
     if start_dim < 0:
         raise ValueError(f"Invalid argument {start_dim=}. (expected positive integer)")
