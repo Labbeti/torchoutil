@@ -29,11 +29,12 @@ from .collections import (
     union_lists,
     unzip,
 )
+from .csv import load_csv, to_csv
 from .dataclasses import get_defaults_values
 from .datetime import now_iso
 from .functools import identity
 from .hashlib import hash_file
-from .importlib import reimport_modules
+from .importlib import package_is_available, reimport_modules
 from .logging import (
     VERBOSE_DEBUG,
     VERBOSE_ERROR,
