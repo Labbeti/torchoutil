@@ -1,7 +1,17 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from typing import Callable, Generic, Optional, Sequence, Sized, TypeVar, Union
+from typing import (
+    Callable,
+    Generic,
+    Optional,
+    Protocol,
+    Sequence,
+    Sized,
+    TypeVar,
+    Union,
+    runtime_checkable,
+)
 
 from torch.utils.data.dataset import Dataset
 
@@ -9,7 +19,12 @@ T = TypeVar("T", covariant=False)
 U = TypeVar("U", covariant=False)
 
 
-SizedDatasetLike = Sequence
+@runtime_checkable
+class SizedDatasetLike(Protocol[T]):
+    __getitem__: Callable[..., T]
+
+    def __len__(self) -> int:
+        ...
 
 
 class EmptyDataset(Dataset[None]):

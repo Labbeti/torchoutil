@@ -30,8 +30,8 @@ from torch.utils.data.dataset import Dataset
 from typing_extensions import TypeGuard
 
 from pyoutil.collections import all_eq
+from pyoutil.typing import is_iterable_bytes_or_list, is_iterable_int, is_iterable_str
 from torchoutil.nn.functional.indices import get_inverse_perm
-from torchoutil.types import is_iterable_bytes_or_list, is_iterable_int, is_iterable_str
 from torchoutil.utils.hdf.common import (
     HDF_ENCODING,
     HDF_STRING_DTYPE,
@@ -43,7 +43,6 @@ from torchoutil.utils.hdf.common import (
 
 T = TypeVar("T")
 U = TypeVar("U")
-
 
 IndexLike = Union[int, Iterable[int], Tensor, slice, None]
 ColumnLike = Union[str, Iterable[str], None]
