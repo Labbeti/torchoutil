@@ -7,7 +7,7 @@ from typing import Any, Callable, Iterable, List, Literal, TypeVar, Union, overl
 import torch
 from torch import Generator, Tensor
 
-from pyoutil.collections import TBuiltin0D
+from pyoutil.collections import TBuiltinScalar
 from pyoutil.collections import flatten as builtin_flatten
 from torchoutil.nn.functional.crop import crop_dim
 from torchoutil.nn.functional.get import get_generator
@@ -231,19 +231,19 @@ def flatten(
 
 @overload
 def flatten(
-    x: TBuiltin0D,
+    x: TBuiltinScalar,
     start_dim: int = 0,
     end_dim: int = 1000,
-) -> List[TBuiltin0D]:
+) -> List[TBuiltinScalar]:
     ...
 
 
 @overload
 def flatten(
-    x: Iterable[TBuiltin0D],
+    x: Iterable[TBuiltinScalar],
     start_dim: int = 0,
     end_dim: int = 1000,
-) -> List[TBuiltin0D]:
+) -> List[TBuiltinScalar]:
     ...
 
 

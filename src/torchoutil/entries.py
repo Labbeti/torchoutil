@@ -8,9 +8,8 @@ from pathlib import Path
 from typing import Iterable, Union
 
 from pyoutil.argparse import str_to_bool
-from pyoutil.os import tree_iter
+from pyoutil.os import safe_rmdir, tree_iter
 from pyoutil.re import PatternLike
-from torchoutil.hub.download import safe_rmdir
 
 pylog = logging.getLogger(__name__)
 
@@ -18,10 +17,16 @@ pylog = logging.getLogger(__name__)
 def print_tree(
     root: Union[str, Path],
     *,
-    ignore: Union[PatternLike, Iterable[PatternLike]] = (),
+    exclude: Union[PatternLike, Iterable[PatternLike]] = (),
     max_depth: int = sys.maxsize,
+    followlinks: bool = True,
 ) -> None:
-    for line in tree_iter(root, ignore=ignore, max_depth=max_depth):
+    for line in tree_iter(
+        root=root,
+        exclude=exclude,
+        max_depth=max_depth,
+        followlinks=followlinks,
+    ):
         print(f"{line}")
 
 
@@ -33,11 +38,11 @@ def main_tree() -> None:
         help="Root directory path.",
     )
     parser.add_argument(
-        "--ignore",
+        "--exclude",
         type=str,
         default=(),
         nargs="*",
-        help="Ignored patterns files.",
+        help="Exclude file patterns.",
     )
     parser.add_argument(
         "--max_depth",
@@ -45,8 +50,19 @@ def main_tree() -> None:
         default=sys.maxsize,
         help="Max directory tree depth.",
     )
+    parser.add_argument(
+        "--followlinks",
+        type=str_to_bool,
+        default=True,
+        help="Indicates whether or not symbolic links shound be followed. defaults to True.",
+    )
     args = parser.parse_args()
-    print_tree(root=args.root, ignore=args.ignore, max_depth=args.max_depth)
+    print_tree(
+        root=args.root,
+        exclude=args.exclude,
+        max_depth=args.max_depth,
+        followlinks=args.followlinks,
+    )
 
 
 def print_safe_rmdir(
@@ -55,6 +71,7 @@ def print_safe_rmdir(
     rm_root: bool = True,
     error_on_non_empty_dir: bool = True,
     followlinks: bool = False,
+    dry_run: bool = False,
     verbose: int = 0,
 ) -> None:
     deleted = safe_rmdir(
@@ -62,9 +79,15 @@ def print_safe_rmdir(
         rm_root=rm_root,
         error_on_non_empty_dir=error_on_non_empty_dir,
         followlinks=followlinks,
+        dry_run=dry_run,
         verbose=verbose,
     )
-    if verbose >= 1:
+    if dry_run:
+        print(f"List of directories to delete ({len(deleted)}):")
+        for path in deleted:
+            print(f" - {path}")
+
+    elif verbose >= 1:
         print(f"{len(deleted)} directories has been deleted.")
 
 
@@ -94,6 +117,12 @@ def main_safe_rmdir() -> None:
         help="Indicates whether or not symbolic links shound be followed. defaults to False.",
     )
     parser.add_argument(
+        "--dry_run",
+        type=str_to_bool,
+        default=False,
+        help="If True, does not remove any directory and just output the list of directories which could be deleted. defaults to False.",
+    )
+    parser.add_argument(
         "--verbose",
         type=int,
         default=0,
@@ -105,5 +134,6 @@ def main_safe_rmdir() -> None:
         rm_root=args.rm_root,
         error_on_non_empty_dir=args.error_on_non_empty_dir,
         followlinks=args.followlinks,
+        dry_run=args.dry_run,
         verbose=args.verbose,
     )
