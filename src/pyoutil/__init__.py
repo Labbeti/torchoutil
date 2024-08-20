@@ -51,5 +51,5 @@ from .logging import (
 )
 from .math import clamp, clip
 from .os import safe_rmdir, tree_iter
-from .re import compile_patterns, find_pattern, pass_patterns
+from .re import PatternLike, compile_patterns, find_pattern, pass_patterns
 from .typing import *
