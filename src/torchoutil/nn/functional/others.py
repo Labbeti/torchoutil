@@ -231,6 +231,8 @@ def _search_ndim(x: Any) -> Tuple[bool, int]:
     elif isinstance(x, Tensor) or isinstance(x, np.ndarray):
         return True, x.ndim
     elif isinstance(x, Iterable):
+        if isinstance(x, Mapping):
+            x = x.values()
         ndims = [_search_ndim(xi)[1] for xi in x]
         if len(ndims) == 0:
             return True, 1
@@ -248,6 +250,8 @@ def _search_shape(x: Any) -> Tuple[bool, Tuple[int, ...]]:
     elif isinstance(x, Tensor) or isinstance(x, np.ndarray):
         return True, tuple(x.shape)
     elif isinstance(x, Iterable):
+        if isinstance(x, Mapping):
+            x = x.values()
         shapes = [_search_shape(xi)[1] for xi in x]
         if len(shapes) == 0:
             return True, (0,)
