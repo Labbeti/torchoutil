@@ -29,7 +29,9 @@ T = TypeVar("T")
 U = TypeVar("U")
 V = TypeVar("V")
 W = TypeVar("W")
-TBuiltin0D = TypeVar("TBuiltin0D", bound=Union[BuiltinNumber, str, bytes, None])
+X = TypeVar("X")
+
+TBuiltinScalar = TypeVar("TBuiltinScalar", bound=Union[BuiltinNumber, str, bytes, None])
 
 
 KEY_MODES = ("same", "intersect", "union")
@@ -398,6 +400,13 @@ def unzip(
     ...
 
 
+@overload
+def unzip(
+    lst: Iterable[Tuple[T, U, V, W, X]]
+) -> Tuple[List[T], List[U], List[V], List[W], List[X]]:
+    ...
+
+
 def unzip(lst):
     """Invert zip() function.
 
@@ -470,19 +479,19 @@ def sort_with_patterns(
 
 @overload
 def flatten(
-    x: TBuiltin0D,
+    x: TBuiltinScalar,
     start_dim: int = 0,
     end_dim: int = 1000,
-) -> List[TBuiltin0D]:
+) -> List[TBuiltinScalar]:
     ...
 
 
 @overload
 def flatten(
-    x: Iterable[TBuiltin0D],
+    x: Iterable[TBuiltinScalar],
     start_dim: int = 0,
     end_dim: int = 1000,
-) -> List[TBuiltin0D]:
+) -> List[TBuiltinScalar]:
     ...
 
 
