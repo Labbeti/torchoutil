@@ -20,6 +20,7 @@ def safe_rmdir(
     rm_root: bool = True,
     error_on_non_empty_dir: bool = True,
     followlinks: bool = False,
+    dry_run: bool = False,
     verbose: int = 0,
 ) -> List[str]:
     """Remove all empty sub-directories.
@@ -29,6 +30,7 @@ def safe_rmdir(
         rm_root: If True, remove the root directory too if it is empty at the end. defaults to True.
         error_on_non_empty_dir: If True, raises a RuntimeError if a subdirectory contains at least 1 file. Otherwise it will ignore non-empty directories. defaults to True.
         followlinks: Indicates whether or not symbolic links shound be followed. defaults to False.
+        dry_run: If True, does not remove any directory and just output the list of directories which could be deleted. defaults to False.
         verbose: Verbose level. defaults to 0.
 
     Returns:
@@ -55,8 +57,9 @@ def safe_rmdir(
         elif verbose >= 2:
             pylog.debug(f"Ignoring non-empty directory '{dpath}'...")
 
-    for dpath in to_delete:
-        os.rmdir(dpath)
+    if not dry_run:
+        for dpath in to_delete:
+            os.rmdir(dpath)
 
     return list(to_delete)
 
@@ -64,12 +67,13 @@ def safe_rmdir(
 def tree_iter(
     root: Union[str, Path],
     *,
-    ignore: Union[PatternLike, Iterable[PatternLike]] = (),
+    exclude: Union[PatternLike, Iterable[PatternLike]] = (),
     space: str = "    ",
     branch: str = "│   ",
     tee: str = "├── ",
     last: str = "└── ",
     max_depth: int = sys.maxsize,
+    followlinks: bool = True,
 ) -> Generator[str, Any, None]:
     """A recursive generator, given a directory Path object will yield a visual tree structure line by line with each line prefixed by the same characters
 
@@ -79,9 +83,14 @@ def tree_iter(
     if not root.is_dir():
         raise ValueError(f"Invalid argument path '{root}'. (not a directory)")
 
-    ignore = compile_patterns(ignore)
-    if pass_patterns(str(root), ignore):
+    if not followlinks and root.is_symlink():
         yield from ()
+        return
+
+    exclude = compile_patterns(exclude)
+    if pass_patterns(str(root), exclude):
+        yield from ()
+        return
 
     yield root.resolve().name + "/"
 
@@ -90,7 +99,7 @@ def tree_iter(
 
     yield from _tree_impl(
         root,
-        ignore=ignore,
+        exclude=exclude,
         prefix="",
         space=space,
         branch=branch,
@@ -98,12 +107,13 @@ def tree_iter(
         last=last,
         depth=1,
         max_depth=max_depth,
+        followlinks=followlinks,
     )
 
 
 def _tree_impl(
     root: Path,
-    ignore: List[Pattern],
+    exclude: List[Pattern],
     prefix: str,
     space: str,
     branch: str,
@@ -111,9 +121,15 @@ def _tree_impl(
     last: str,
     depth: int,
     max_depth: int,
+    followlinks: bool,
 ) -> Generator[str, Any, None]:
     paths = root.iterdir()
-    paths = [path for path in paths if not pass_patterns(str(path), ignore)]
+    paths = [
+        path
+        for path in paths
+        if (followlinks or not path.is_symlink())
+        and not pass_patterns(str(path), exclude)
+    ]
 
     # contents each get pointers that are ├── with a final └── :
     pointers = [tee] * (len(paths) - 1) + [last]
@@ -128,7 +144,7 @@ def _tree_impl(
             # i.e. space because last, └── , above so no more |
             yield from _tree_impl(
                 path,
-                ignore=ignore,
+                exclude=exclude,
                 prefix=prefix + extension,
                 space=space,
                 branch=branch,
@@ -136,4 +152,5 @@ def _tree_impl(
                 last=last,
                 depth=depth + 1,
                 max_depth=max_depth,
+                followlinks=followlinks,
             )
