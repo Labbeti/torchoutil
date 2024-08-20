@@ -43,7 +43,7 @@ class TestIsNumber(TestCase):
             (set(), False),
             ((1, 2, 3), False),
             ([1.0], False),
-            ([object(), []], False),
+            ([object(), [], "abc"], False),
         ]
 
         if _NUMPY_AVAILABLE:
@@ -70,6 +70,9 @@ class TestIsNumber(TestCase):
                 shape = F.shape(x)
                 assert x_is_scalar == (len(shape) == 0)
                 assert len(shape) == ndim
+
+                nelements = F.nelement(x)
+                assert not x_is_scalar or (nelements == 1)
 
                 xitem = F.item(x)
                 assert is_builtin_scalar(xitem)
