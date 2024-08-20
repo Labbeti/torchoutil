@@ -1,21 +1,15 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from typing import (
-    Callable,
-    Generic,
-    Optional,
-    Protocol,
-    Sized,
-    TypeVar,
-    Union,
-    runtime_checkable,
-)
+from typing import Callable, Generic, Optional, Sequence, Sized, TypeVar, Union
 
 from torch.utils.data.dataset import Dataset
 
 T = TypeVar("T", covariant=False)
 U = TypeVar("U", covariant=False)
+
+
+SizedDatasetLike = Sequence
 
 
 class EmptyDataset(Dataset[None]):
@@ -28,18 +22,10 @@ class EmptyDataset(Dataset[None]):
         return 0
 
 
-@runtime_checkable
-class SizedDatasetLike(Generic[T], Protocol):
-    __getitem__: Callable[..., T]
-
-    def __len__(self) -> int:
-        ...
-
-
 class TransformWrapper(Generic[T, U], Dataset[U]):
     def __init__(
         self,
-        dataset: SizedDatasetLike[T],
+        dataset: Sequence[T],
         transform: Optional[Callable[[T], U]],
     ) -> None:
         super().__init__()
@@ -58,7 +44,7 @@ class TransformWrapper(Generic[T, U], Dataset[U]):
         else:
             raise TypeError("Wrapped dataset is not Sized.")
 
-    def unwrap(self) -> SizedDatasetLike[T]:
+    def unwrap(self) -> Sequence[T]:
         return self._dataset
 
     @property

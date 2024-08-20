@@ -22,17 +22,23 @@ from typing_extensions import TypeGuard
 
 from pyoutil.collections import all_eq, prod
 from pyoutil.functools import identity  # noqa: F401
+from pyoutil.typing import (
+    BuiltinScalar,
+    SizedIterable,
+    is_builtin_number,
+    is_builtin_scalar,
+)
 from torchoutil.nn.functional.get import get_device
 from torchoutil.types import (
     ACCEPTED_NUMPY_DTYPES,
-    is_builtin_number,
     is_list_tensor,
-    is_number_like,
     is_numpy_number_like,
+    is_scalar_like,
     is_tensor0d,
     is_tuple_tensor,
     np,
 )
+from torchoutil.types._hints import ScalarLike
 
 T = TypeVar("T")
 U = TypeVar("U")
@@ -175,7 +181,7 @@ def is_convertible_to_tensor(x: Any) -> bool:
         return __can_be_converted_to_tensor_nested(x)
 
 
-def ndim(x: Any) -> int:
+def ndim(x: Union[ScalarLike, Tensor, np.ndarray, Iterable]) -> int:
     """Scan first argument to return its number of dimension(s). Works recursively with Tensors, numpy arrays and builtins types instances.
 
     Args:
@@ -194,7 +200,11 @@ def ndim(x: Any) -> int:
         )
 
 
-def shape(x: Any, *, output_type: Callable[[Tuple[int, ...]], T] = Size) -> T:
+def shape(
+    x: Union[ScalarLike, Tensor, np.ndarray, Iterable],
+    *,
+    output_type: Callable[[Tuple[int, ...]], T] = Size,
+) -> T:
     """Scan first argument to return its shape. Works recursively with Tensors, numpy arrays and builtins types instances.
 
     Args:
@@ -215,24 +225,36 @@ def shape(x: Any, *, output_type: Callable[[Tuple[int, ...]], T] = Size) -> T:
         )
 
 
-def item(x: Any) -> Union[int, float, bool, complex]:
+def item(x: Union[ScalarLike, Tensor, np.ndarray, SizedIterable]) -> BuiltinScalar:
     """Convert scalar value to built-in type."""
-    if is_builtin_number(x):
+    if is_builtin_scalar(x):
         return x
     elif is_tensor0d(x) or is_numpy_number_like(x):
         return x.item()
+    elif isinstance(x, SizedIterable) and len(x) == 1:
+        return item(next(iter(x)))
     else:
-        raise ValueError(f"Invalid argument {x=}. (expected scalar number object)")
+        raise TypeError(f"Invalid argument type {x=}. (expected scalar-like object)")
 
 
-def _search_ndim(x: Any) -> Tuple[bool, int]:
-    if is_number_like(x) or isinstance(x, (str, bytes)) or x is None:
+def ranks(x: Tensor, dim: int = -1, descending: bool = False) -> Tensor:
+    """Get the ranks of each value in range [0, x.shape[dim][."""
+    return x.argsort(dim, descending).argsort(dim)
+
+
+def nelement(x: Union[ScalarLike, Tensor, np.ndarray, Iterable]) -> int:
+    """Returns the number of elements in Tensor-like object."""
+    return prod(shape(x))
+
+
+def _search_ndim(
+    x: Union[ScalarLike, Tensor, np.ndarray, Iterable]
+) -> Tuple[bool, int]:
+    if is_scalar_like(x):
         return True, 0
-    elif isinstance(x, Tensor) or isinstance(x, np.ndarray):
+    elif isinstance(x, (Tensor, np.ndarray, np.generic)):
         return True, x.ndim
     elif isinstance(x, Iterable):
-        if isinstance(x, Mapping):
-            x = x.values()
         ndims = [_search_ndim(xi)[1] for xi in x]
         if len(ndims) == 0:
             return True, 1
@@ -244,14 +266,14 @@ def _search_ndim(x: Any) -> Tuple[bool, int]:
         raise TypeError(f"Invalid argument type {type(x)}.")
 
 
-def _search_shape(x: Any) -> Tuple[bool, Tuple[int, ...]]:
-    if is_number_like(x) or isinstance(x, (str, bytes)) or x is None:
+def _search_shape(
+    x: Union[ScalarLike, Tensor, np.ndarray, Iterable]
+) -> Tuple[bool, Tuple[int, ...]]:
+    if is_scalar_like(x):
         return True, ()
-    elif isinstance(x, Tensor) or isinstance(x, np.ndarray):
+    elif isinstance(x, (Tensor, np.ndarray, np.generic)):
         return True, tuple(x.shape)
     elif isinstance(x, Iterable):
-        if isinstance(x, Mapping):
-            x = x.values()
         shapes = [_search_shape(xi)[1] for xi in x]
         if len(shapes) == 0:
             return True, (0,)
@@ -294,13 +316,3 @@ def __can_be_converted_to_tensor_nested(x: Any) -> bool:
         return __can_be_converted_to_tensor_list_tuple(x)
     else:
         return False
-
-
-def ranks(x: Tensor, dim: int = -1, descending: bool = False) -> Tensor:
-    """Get the ranks of each value in range [0, x.shape[dim][."""
-    return x.argsort(dim, descending).argsort(dim)
-
-
-def nelement(x: Any) -> int:
-    """Returns the number of elements in Tensor-like object."""
-    return prod(shape(x, output_type=tuple))

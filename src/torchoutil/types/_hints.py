@@ -20,6 +20,9 @@ from typing_extensions import Annotated
 from pyoutil.typing import BuiltinNumber, BuiltinScalar
 from torchoutil.types.classes import np
 
+r"""/!\ These type hints meants for type annotation only, not for runtime checks.
+"""
+
 Tensor0D = Annotated[Tensor, "0D"]
 Tensor1D = Annotated[Tensor, "1D"]
 Tensor2D = Annotated[Tensor, "2D"]

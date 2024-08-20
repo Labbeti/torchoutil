@@ -404,11 +404,13 @@ class Imag(nn.Module):
     Module version of :func:`~torch.Tensor.imag`.
     """
 
-    def __init__(self, return_zeros: bool = False) -> None:
+    def __init__(self, *, return_zeros: bool = False) -> None:
         """Return the imaginary part of a complex tensor.
 
         Args:
-            return_zeros: If the input is not a complex tensor and return_zeros=True, the module will return a tensor containing zeros.
+            return_zeros:
+                If True and the input is not a complex tensor, the module will return a tensor of same shape containing zeros.
+                If False and the input is not a complex tensor, raises the default RuntimError of PyTorch.
         """
         super().__init__()
         self.return_zeros = return_zeros

@@ -9,6 +9,8 @@ from .classes import ACCEPTED_NUMPY_DTYPES, TORCH_DTYPES, np, numpy
 from .guards import (
     is_bool_tensor,
     is_bool_tensor1d,
+    is_builtin_number,
+    is_builtin_scalar,
     is_integer_dtype,
     is_integer_tensor,
     is_integer_tensor1d,
