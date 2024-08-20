@@ -8,10 +8,10 @@ from typing import Literal, Protocol, Union
 
 from typing_extensions import Buffer
 
-HashType = Literal["sha256", "md5"]
+HashName = Literal["sha256", "md5"]
 
 DEFAULT_CHUNK_SIZE = 256 * 1024**2  # 256 MiB
-HASH_TYPES = ("sha256", "md5")
+HASH_NAMES = ("sha256", "md5")
 
 pylog = logging.getLogger(__name__)
 
@@ -30,7 +30,7 @@ class Hasher(Protocol):
 
 def hash_file(
     fpath: Union[str, Path],
-    hash_type: Union[HashType, Hasher],
+    hash_type: Union[HashName, Hasher],
     chunk_size: int = DEFAULT_CHUNK_SIZE,
 ) -> str:
     """Return the hash value for a file.
@@ -45,7 +45,7 @@ def hash_file(
         hasher = hash_type
     else:
         raise ValueError(
-            f"Invalid argument hash_type={hash_type}. (expected one of {HASH_TYPES} or a custom hasher)"
+            f"Invalid argument hash_type={hash_type}. (expected one of {HASH_NAMES} or a custom hasher)"
         )
     del hash_type
 
