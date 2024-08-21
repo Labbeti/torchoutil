@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+from .abc import Singleton
 from .argparse import (
     str_to_bool,
     str_to_optional_bool,
@@ -32,6 +33,7 @@ from .collections import (
 from .csv import load_csv, to_csv
 from .dataclasses import get_defaults_values
 from .datetime import now_iso
+from .enum import StrEnum
 from .functools import identity
 from .hashlib import hash_file
 from .importlib import package_is_available, reimport_modules
