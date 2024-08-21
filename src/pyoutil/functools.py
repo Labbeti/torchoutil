@@ -41,7 +41,7 @@ def get_argnames(fn: Callable) -> List[str]:
     return argnames
 
 
-def filter_and_call(fn: Callable, **kwargs: Any) -> Any:
+def filter_and_call(fn: Callable[..., T], **kwargs: Any) -> T:
     """Filter kwargs with function arg names and call function."""
     argnames = get_argnames(fn)
     kwargs_filtered = {
