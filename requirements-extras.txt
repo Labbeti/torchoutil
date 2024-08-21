@@ -4,6 +4,7 @@ colorlog
 h5py
 numpy<2.0.0
 omegaconf
+pandas
 pyyaml
 tensorboard
 tqdm
