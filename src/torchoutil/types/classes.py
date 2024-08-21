@@ -61,5 +61,7 @@ TORCH_DTYPES: Final[Dict[str, torch.dtype]] = {
     "quint4x2": torch.quint4x2,
 }
 
+if hasattr(torch, "chalf"):
+    TORCH_DTYPES["chalf"] = torch.chalf
 if hasattr(torch, "quint2x4"):
     TORCH_DTYPES["quint2x4"] = torch.quint2x4
