@@ -32,9 +32,7 @@ from torchoutil.nn.functional.get import get_device
 from torchoutil.types import (
     ACCEPTED_NUMPY_DTYPES,
     is_list_tensor,
-    is_numpy_number_like,
     is_scalar_like,
-    is_tensor0d,
     is_tuple_tensor,
     np,
 )
@@ -229,12 +227,14 @@ def item(x: Union[ScalarLike, Tensor, np.ndarray, SizedIterable]) -> BuiltinScal
     """Convert scalar value to built-in type."""
     if is_builtin_scalar(x):
         return x
-    elif is_tensor0d(x) or is_numpy_number_like(x):
+    elif isinstance(x, (Tensor, np.ndarray)) and nelement(x) == 1:
         return x.item()
     elif isinstance(x, SizedIterable) and len(x) == 1:
         return item(next(iter(x)))
     else:
-        raise TypeError(f"Invalid argument type {x=}. (expected scalar-like object)")
+        raise TypeError(
+            f"Invalid argument type {type(x)=}. (expected scalar-like object)"
+        )
 
 
 def ranks(x: Tensor, dim: int = -1, descending: bool = False) -> Tensor:
