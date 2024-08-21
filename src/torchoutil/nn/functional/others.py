@@ -17,7 +17,7 @@ from typing import (
 )
 
 import torch
-from torch import Size, Tensor, nn
+from torch import LongTensor, Size, Tensor, nn
 from typing_extensions import TypeGuard
 
 from pyoutil.collections import all_eq, prod
@@ -70,7 +70,7 @@ def find(
     value: Any,
     default: Union[None, Tensor, int, float] = None,
     dim: int = -1,
-) -> Tensor:
+) -> LongTensor:
     """Return the index of the first occurrence of value in a tensor."""
     if x.ndim == 0:
         raise ValueError(
@@ -78,7 +78,7 @@ def find(
         )
     mask = x.eq(value)
     contains = mask.any(dim=dim)
-    indices = mask.int().argmax(dim=dim)
+    indices = mask.long().argmax(dim=dim)
 
     if default is None:
         if not contains.all():
