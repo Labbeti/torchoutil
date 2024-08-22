@@ -9,7 +9,12 @@ from typing import Any, Dict, Iterable, List, Literal, Mapping, TypeVar, Union, 
 
 from torch import Tensor
 
-from pyoutil.typing import BuiltinNumber, is_dataclass_instance, is_namedtuple_instance
+from pyoutil.typing import (
+    BuiltinNumber,
+    is_builtin_scalar,
+    is_dataclass_instance,
+    is_namedtuple_instance,
+)
 from torchoutil.utils.packaging import (
     _NUMPY_AVAILABLE,
     _OMEGACONF_AVAILABLE,
@@ -102,7 +107,7 @@ def to_builtin(
             If unk_mode == "error", a TypeError is raised.
     """
     # Terminal cases
-    if isinstance(x, (int, float, bool, complex, str, bytes)) or x is None:
+    if is_builtin_scalar(x):
         return x
     elif isinstance(x, Enum):
         return x.name

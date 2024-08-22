@@ -10,7 +10,9 @@ TStrEnum = TypeVar("TStrEnum", bound="StrEnum")
 class StrEnum(str, Enum):
     @classmethod
     def from_str(
-        cls: Type[TStrEnum], value: str, case_sensitive: bool = False
+        cls: Type[TStrEnum],
+        value: str,
+        case_sensitive: bool = False,
     ) -> TStrEnum:
         members = cls.__members__.keys()
         for member in members:
