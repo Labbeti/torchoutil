@@ -16,4 +16,5 @@ Submodules
    torchoutil.utils.data.collate
    torchoutil.utils.data.dataloader
    torchoutil.utils.data.dataset
+   torchoutil.utils.data.slicer
    torchoutil.utils.data.split
