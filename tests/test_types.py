@@ -65,19 +65,19 @@ class TestIsNumber(TestCase):
 
             try:
                 ndim = F.ndim(x)
-                assert x_is_scalar == (ndim == 0)
+                assert x_is_scalar == (ndim == 0), f"{type(x)=} ; {x=}"
 
                 shape = F.shape(x)
-                assert x_is_scalar == (len(shape) == 0)
-                assert len(shape) == ndim
+                assert x_is_scalar == (len(shape) == 0), f"{type(x)=} ; {x=}"
+                assert len(shape) == ndim, f"{type(x)=} ; {x=}"
 
                 nelements = F.nelement(x)
-                assert not x_is_scalar or (nelements == 1)
+                assert not x_is_scalar or (nelements == 1), f"{type(x)=} ; {x=}"
 
                 xitem = F.item(x)
-                assert is_builtin_scalar(xitem)
+                assert is_builtin_scalar(xitem), f"{x=}"
             except (ValueError, RuntimeError, TypeError):
-                assert not x_is_scalar
+                assert not x_is_scalar, f"{type(x)=} ; {x=}"
 
 
 if __name__ == "__main__":

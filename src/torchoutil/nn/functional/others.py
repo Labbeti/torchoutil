@@ -227,7 +227,7 @@ def item(x: Union[ScalarLike, Tensor, np.ndarray, SizedIterable]) -> BuiltinScal
     """Convert scalar value to built-in type."""
     if is_builtin_scalar(x):
         return x
-    elif isinstance(x, (Tensor, np.ndarray)) and nelement(x) == 1:
+    elif isinstance(x, (Tensor, np.ndarray, np.generic)) and nelement(x) == 1:
         return x.item()
     elif isinstance(x, SizedIterable) and len(x) == 1:
         return item(next(iter(x)))
