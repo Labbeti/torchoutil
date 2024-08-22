@@ -121,6 +121,7 @@ class DatasetSlicerWrapper(DatasetSlicer):
         add_indices_support: bool = True,
         add_mask_support: bool = True,
     ) -> None:
+        """Wrap a sequence to support slice, indices and mask arguments types."""
         super().__init__(
             add_slice_support=add_slice_support,
             add_indices_support=add_indices_support,
