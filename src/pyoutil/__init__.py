@@ -52,6 +52,6 @@ from .logging import (
     warn_once,
 )
 from .math import clamp, clip
-from .os import safe_rmdir, tree_iter
+from .os import get_num_cpus_available, safe_rmdir, tree_iter
 from .re import PatternLike, compile_patterns, find_pattern, pass_patterns
 from .typing import *

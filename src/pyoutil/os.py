@@ -14,6 +14,21 @@ from pyoutil.re import PatternLike, compile_patterns, pass_patterns
 pylog = logging.getLogger(__name__)
 
 
+def get_num_cpus_available() -> int:
+    """Returns the number of CPUs available for the current process on Linux-based platforms.
+
+    On Windows and MAC OS, this will just return the number of logical CPUs on this machine.
+    If the number of CPUs cannot be detected, returns 0.
+    """
+    try:
+        num_cpus = len(os.sched_getaffinity(0))
+    except AttributeError:
+        num_cpus = os.cpu_count()
+        if num_cpus is None:
+            num_cpus = 0
+    return num_cpus
+
+
 def safe_rmdir(
     root: Union[str, Path],
     *,
