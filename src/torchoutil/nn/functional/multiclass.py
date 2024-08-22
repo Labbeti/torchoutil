@@ -37,6 +37,10 @@ def index_to_onehot(
     """
     device = get_device(device)
     index = torch.as_tensor(index, device=device, dtype=torch.long)
+    if padding_idx is None and not (0 <= index.min() <= index.max() < num_classes):
+        raise ValueError(
+            f"Invalid argument {index=}. (expected 0 <= {index.min()} <= {index.max()} < {num_classes})"
+        )
 
     if padding_idx is not None:
         mask = index == padding_idx

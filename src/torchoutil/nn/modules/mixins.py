@@ -26,22 +26,25 @@ from torch import Tensor, nn
 from torch.nn.parameter import Parameter
 
 from pyoutil.collections import dump_dict
+from pyoutil.typing import is_dict_str, is_mapping_str
 from torchoutil.nn.functional.checksum import checksum_module
 from torchoutil.nn.functional.others import count_parameters
-from torchoutil.types import is_dict_str, is_mapping_str
 
 InType = TypeVar("InType", covariant=False, contravariant=True)
 OutType = TypeVar("OutType", covariant=True, contravariant=False)
 OutType2 = TypeVar("OutType2", covariant=True, contravariant=False)
 
-DEVICE_DETECT_MODES = ("proxy", "first_param", "none")
 DeviceDetectMode = Literal["proxy", "first_param", "none"]
+DEVICE_DETECT_MODES = ("proxy", "first_param", "none")
 
 
 pylog = logging.getLogger(__name__)
 
 
 class SupportsTypedForward(Protocol[InType, OutType]):
+    def __call__(self, *args, **kwargs):
+        ...
+
     def forward(self, x: InType) -> OutType:
         ...
 

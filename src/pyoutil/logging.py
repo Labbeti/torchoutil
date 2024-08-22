@@ -9,14 +9,15 @@ from pathlib import Path
 from types import ModuleType
 from typing import IO, List, Literal, Optional, Sequence, Union
 
-pylog = logging.getLogger(__name__)
+PackageOrLogger = Union[str, ModuleType, None, Logger]
 
 DEFAULT_FMT = "[%(asctime)s][%(name)s][%(levelname)s] - %(message)s"
 VERBOSE_DEBUG = 2
 VERBOSE_INFO = 1
 VERBOSE_WARNING = 0
 VERBOSE_ERROR = -1
-PackageOrLogger = Union[str, ModuleType, None, Logger]
+
+pylog = logging.getLogger(__name__)
 
 
 @lru_cache(maxsize=None)
