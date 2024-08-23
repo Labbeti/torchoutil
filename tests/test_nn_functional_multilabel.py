@@ -30,7 +30,7 @@ class TestMultilabel(TestCase):
 
         result = indices_to_multihot(indices, num_classes=num_classes)
 
-        self.assertTrue(torch.equal(result, expected_multihot))
+        assert torch.equal(result, expected_multihot)
 
     def test_probs_to_indices_1(self) -> None:
         probs = torch.as_tensor([[1.0, 0.4, 0.1, 0.9]])
@@ -38,7 +38,7 @@ class TestMultilabel(TestCase):
 
         result = probs_to_indices(probs, threshold=0.5)
 
-        self.assertListEqual(result, expected_indices)
+        assert result == expected_indices
 
     def test_probs_to_multihot_1(self) -> None:
         probs = torch.as_tensor([[1.0, 0.4, 0.1, 0.9]])
@@ -46,7 +46,7 @@ class TestMultilabel(TestCase):
 
         result = probs_to_multihot(probs, threshold=0.5)
 
-        self.assertTrue(torch.equal(result, expected_multihot))
+        assert torch.equal(result, expected_multihot)
 
     def test_probs_to_names_1(self) -> None:
         probs = torch.as_tensor([[1.0, 0.4, 0.1, 0.9]])
@@ -56,7 +56,7 @@ class TestMultilabel(TestCase):
         idx_to_name = dict(zip(range(num_classes), map(str, range(num_classes))))
         result = probs_to_names(probs, threshold=0.5, idx_to_name=idx_to_name)
 
-        self.assertListEqual(result, expected_names)
+        assert result == expected_names
 
     def test_convert_multihot(self) -> None:
         num_samples = int(torch.randint(1, 20, ()).item())
@@ -75,8 +75,8 @@ class TestMultilabel(TestCase):
         indices_2 = names_to_indices(names_2, idx_to_name)
 
         assert torch.equal(multihot_1, multihot_2), f"{multihot_1=} ; {multihot_2=}"
-        self.assertListEqual(names_1, names_2)
-        self.assertListEqual(indices_1, indices_2)
+        assert names_1 == names_2
+        assert indices_1 == indices_2
 
     def test_ints_to_multihots(self) -> None:
         device = get_device()
@@ -85,8 +85,8 @@ class TestMultilabel(TestCase):
         multihots = indices_to_multihot(ints, num_classes, dtype=torch.int)
         expected = torch.as_tensor([[1, 1, 0, 0, 0]], device=device)
 
-        self.assertEqual(multihots.shape, expected.shape)
-        self.assertTrue(multihots.eq(expected).all(), f"{multihots=}")
+        assert multihots.shape == expected.shape
+        assert multihots.eq(expected).all(), f"{multihots=}"
 
     def test_convert_and_reconvert(self) -> None:
         device = get_device()
@@ -107,9 +107,9 @@ class TestMultilabel(TestCase):
             ints, num_classes, dtype=torch.int, device=device
         )
 
-        self.assertListEqual(ints, expected_ints)
-        self.assertEqual(multihots.shape, new_multihots.shape)
-        self.assertTrue(multihots.eq(new_multihots).all())
+        assert ints == expected_ints
+        assert multihots.shape == new_multihots.shape
+        assert multihots.eq(new_multihots).all()
 
     def test_empty_case_1(self) -> None:
         num_samples = 0

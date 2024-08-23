@@ -9,12 +9,12 @@ from pyoutil.collections import (
     flat_dict_of_dict,
     flat_list_of_list,
     flatten,
-    get_key_fn,
     intersect_lists,
     list_dict_to_dict_list,
     unflat_dict_of_dict,
     unflat_list_of_list,
 )
+from pyoutil.re import get_key_fn
 from pyoutil.typing import is_list_list_str, is_list_str
 
 
@@ -30,14 +30,14 @@ class TestFlatDict(TestCase):
         expected = {"a": 1, "b.a": 2, "b.b": 10}
 
         output = flat_dict_of_dict(x)
-        self.assertDictEqual(output, expected)
+        assert output == expected
 
     def test_example_2(self) -> None:
         x = {"a": ["hello", "world"], "b": 3}
         expected = {"a.0": "hello", "a.1": "world", "b": 3}
 
         output = flat_dict_of_dict(x, flat_iterables=True)
-        self.assertDictEqual(output, expected)
+        assert output == expected
 
     def test_example_3(self) -> None:
         x = {"a": {"b": 1}, "a.b": 2}
@@ -60,14 +60,15 @@ class TestFlatDict(TestCase):
         y = {"a": {"a": 1}, "b": {"a": 2, "b": 3}, "c": 4}
 
         y_hat = unflat_dict_of_dict(x)
-        self.assertEqual(y_hat, y)
+        assert y_hat == y
 
 
 class TestListDictToDictList(TestCase):
     def test_example_1(self) -> None:
         lst = [{"a": 1, "b": 2}, {"a": 4, "b": 3, "c": 5}]
         output = list_dict_to_dict_list(lst, default_val=0)
-        self.assertDictEqual(output, {"a": [1, 4], "b": [2, 3], "c": [0, 5]})
+        expected = {"a": [1, 4], "b": [2, 3], "c": [0, 5]}
+        assert output == expected
 
     def test_example_2(self) -> None:
         lst = [{"a": 1, "b": 2}, {"a": 4, "b": 3, "c": 5}]
@@ -86,16 +87,16 @@ class TestListDictToDictList(TestCase):
             default_val=None,
             key_mode="same",
         )
-        self.assertDictEqual(output, {"a": [1, 11], "b": [2, 22], "c": [3, 33]})
+        expected = {"a": [1, 11], "b": [2, 22], "c": [3, 33]}
+        assert output == expected
 
 
 class TestIntersectLists(TestCase):
     def test_example_1(self) -> None:
         input_ = [["a", "b", "b", "c"], ["c", "d", "b", "a"], ["b", "a", "a", "e"]]
         expected = ["a", "b"]
-
         output = intersect_lists(input_)
-        self.assertListEqual(output, expected)
+        assert output == expected
 
 
 class TestFlatList(TestCase):
@@ -108,19 +109,17 @@ class TestFlatList(TestCase):
             random.shuffle(sublst)
         random.shuffle(lst)
 
-        self.assertTrue(is_list_list_str(lst))
+        assert is_list_list_str(lst)
 
         flatten, sizes = flat_list_of_list(lst)
-
-        self.assertTrue(is_list_str(flatten))
-        self.assertEqual(len(lst), len(sizes))
-        self.assertEqual(len(flatten), sum(sizes))
+        assert is_list_str(flatten)
+        assert len(lst) == len(sizes)
+        assert len(flatten) == sum(sizes)
 
         unflat = unflat_list_of_list(flatten, sizes)
-
-        self.assertTrue(is_list_list_str(unflat))
-        self.assertEqual(len(lst), len(unflat))
-        self.assertListEqual(lst, unflat)
+        assert is_list_list_str(unflat)
+        assert len(lst) == len(unflat)
+        assert lst == unflat
 
 
 class TestGetKeyFn(TestCase):

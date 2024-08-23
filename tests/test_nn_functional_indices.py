@@ -20,9 +20,9 @@ class TestRandpermDiff(TestCase):
             perm = randperm_diff(i)
             arange = torch.arange(0, i, device=perm.device)
 
-            self.assertIsInstance(perm, Tensor)
-            self.assertEqual(perm.shape, arange.shape)
-            self.assertFalse(perm.eq(arange).any(), f"{perm}; {arange}")
+            assert isinstance(perm, Tensor)
+            assert perm.shape == arange.shape
+            assert not perm.eq(arange).any(), f"{perm}; {arange}"
 
 
 class TestGetInversePerm(TestCase):

@@ -18,6 +18,8 @@ class TestTypeChecks(TestCase):
             (("a",), True, True),
             ((), True, True),
             (1.0, False, False),
+            ([["a"]], False, False),
+            ("", True, False),
         ]
 
         for x, expected_1, expected_2 in inputs:
