@@ -8,7 +8,7 @@ All notable changes to this project will be documented in this file.
 - Option `on_error` to `load_yaml` to ignore yaml scanner and parser exceptions.
 - Function `ranks` to get the ranking values in a tensor.
 - Function `sort_with_patterns` to sort values using string-based patterns.
-- Function `pad_and_crop_dim` and class `PadCropDim` to pa then crop a tensor along a specified dimension.
+- Function `pad_and_crop_dim` and class `PadCropDim` to pad then crop a tensor along a specified dimension.
 - Function `reimport_modules` to re-import modules and functions in a notebook.
 - Function `checksum_module` to compare module weights.
 - Function `nelement` to get number of elements in Tensor-like object.
