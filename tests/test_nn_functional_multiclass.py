@@ -48,13 +48,13 @@ class TestMulticlass(TestCase):
 
     def test_index_to_onehot_padding_idx(self) -> None:
         x = torch.randint(0, 100, (1000,))
-        mask = torch.rand_like(x, dtype=torch.bool) > 0.2
+        mask = torch.rand_like(x, dtype=torch.float) > 0.2
         x = torch.where(mask, -10, x)
         onehots = index_to_onehot(x, 100, padding_idx=-10)
         assert onehots[mask].eq(False).all()
 
         index = onehot_to_index(onehots, padding_idx=-10)
-        assert torch.equal(x, index)
+        assert torch.equal(x, torch.as_tensor(index))
 
 
 if __name__ == "__main__":
