@@ -19,8 +19,10 @@ def print_tree(
     *,
     exclude: Union[PatternLike, Iterable[PatternLike]] = (),
     max_depth: int = sys.maxsize,
-    followlinks: bool = True,
+    followlinks: bool = False,
 ) -> None:
+    num_dirs = 0
+    num_files = 0
     for line in tree_iter(
         root=root,
         exclude=exclude,
@@ -29,6 +31,13 @@ def print_tree(
     ):
         print(f"{line}")
 
+        if line.endswith("/"):
+            num_dirs += 1
+        else:
+            num_files += 1
+
+    print(f"\n{num_dirs} directories, {num_files} files")
+
 
 def main_tree() -> None:
     parser = ArgumentParser()
@@ -36,27 +45,30 @@ def main_tree() -> None:
         "root",
         type=str,
         help="Root directory path.",
+        default=".",
+        nargs="?",  # for optional positional argument
     )
     parser.add_argument(
         "--exclude",
         type=str,
+        help="Exclude file patterns.",
         default=(),
         nargs="*",
-        help="Exclude file patterns.",
     )
     parser.add_argument(
         "--max_depth",
         type=int,
-        default=sys.maxsize,
         help="Max directory tree depth.",
+        default=sys.maxsize,
     )
     parser.add_argument(
         "--followlinks",
         type=str_to_bool,
-        default=True,
         help="Indicates whether or not symbolic links shound be followed. defaults to True.",
+        default=True,
     )
     args = parser.parse_args()
+
     print_tree(
         root=args.root,
         exclude=args.exclude,
