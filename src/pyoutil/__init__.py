@@ -12,18 +12,16 @@ from .collections import (
     KeyMode,
     all_eq,
     all_ne,
+    contained,
     dict_list_to_list_dict,
     dump_dict,
     filter_iterable,
     flat_dict_of_dict,
     flat_list_of_list,
     flatten,
-    get_key_fn,
     intersect_lists,
     list_dict_to_dict_list,
-    pass_filter,
     prod,
-    sort_with_patterns,
     sorted_dict,
     unflat_dict_of_dict,
     unflat_list_of_list,
@@ -53,5 +51,12 @@ from .logging import (
 )
 from .math import clamp, clip
 from .os import get_num_cpus_available, safe_rmdir, tree_iter
-from .re import PatternLike, compile_patterns, find_pattern, pass_patterns
+from .re import (
+    PatternLike,
+    compile_patterns,
+    contained_patterns,
+    find_patterns,
+    get_key_fn,
+    sort_with_patterns,
+)
 from .typing import *

@@ -9,6 +9,7 @@ from .classes import (
     NamedTupleInstance,
     NoneType,
     SizedIterable,
+    TBuiltinScalar,
 )
 from .guards import (
     is_builtin_number,

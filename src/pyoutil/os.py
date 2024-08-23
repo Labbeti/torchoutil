@@ -9,7 +9,7 @@ from pathlib import Path
 from re import Pattern
 from typing import Any, Generator, Iterable, List, Union
 
-from pyoutil.re import PatternLike, compile_patterns, pass_patterns
+from pyoutil.re import PatternLike, compile_patterns, contained_patterns
 
 pylog = logging.getLogger(__name__)
 
@@ -88,7 +88,7 @@ def tree_iter(
     tee: str = "├── ",
     last: str = "└── ",
     max_depth: int = sys.maxsize,
-    followlinks: bool = True,
+    followlinks: bool = False,
 ) -> Generator[str, Any, None]:
     """A recursive generator, given a directory Path object will yield a visual tree structure line by line with each line prefixed by the same characters
 
@@ -103,7 +103,7 @@ def tree_iter(
         return
 
     exclude = compile_patterns(exclude)
-    if pass_patterns(str(root), exclude):
+    if contained_patterns(str(root), exclude):
         yield from ()
         return
 
@@ -139,12 +139,15 @@ def _tree_impl(
     followlinks: bool,
 ) -> Generator[str, Any, None]:
     paths = root.iterdir()
-    paths = [
-        path
-        for path in paths
-        if (followlinks or not path.is_symlink())
-        and not pass_patterns(str(path), exclude)
-    ]
+    try:
+        paths = [
+            path
+            for path in paths
+            if (followlinks or not path.is_symlink())
+            and not contained_patterns(str(path), exclude)
+        ]
+    except PermissionError:
+        paths = []
 
     # contents each get pointers that are ├── with a final └── :
     pointers = [tee] * (len(paths) - 1) + [last]

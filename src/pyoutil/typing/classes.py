@@ -19,6 +19,8 @@ BuiltinCollection = Union[list, tuple, dict, set, frozenset]
 BuiltinNumber = Union[int, float, bool, complex]
 BuiltinScalar = Union[int, float, bool, complex, str, bytes, NoneType]
 
+TBuiltinScalar = TypeVar("TBuiltinScalar", bound=Union[BuiltinNumber, str, bytes, None])
+
 
 @runtime_checkable
 class DataclassInstance(Protocol):

@@ -7,8 +7,8 @@ from typing import Any, Callable, Iterable, List, Literal, TypeVar, Union, overl
 import torch
 from torch import Generator, Tensor
 
-from pyoutil.collections import TBuiltinScalar
 from pyoutil.collections import flatten as builtin_flatten
+from pyoutil.typing import TBuiltinScalar
 from torchoutil.nn.functional.crop import crop_dim
 from torchoutil.nn.functional.get import get_generator
 from torchoutil.nn.functional.pad import PadMode, PadValue, pad_dim

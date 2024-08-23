@@ -2,9 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import copy
-import re
-from functools import partial
-from re import Pattern
+import operator
 from typing import (
     Any,
     Callable,
@@ -23,8 +21,7 @@ from typing import (
 
 from typing_extensions import TypeGuard
 
-from pyoutil.re import PatternLike, compile_patterns, find_pattern
-from pyoutil.typing import BuiltinNumber, is_builtin_scalar, is_mapping_str
+from pyoutil.typing import is_builtin_scalar, is_mapping_str
 
 K = TypeVar("K")
 T = TypeVar("T")
@@ -32,9 +29,6 @@ U = TypeVar("U")
 V = TypeVar("V")
 W = TypeVar("W")
 X = TypeVar("X")
-
-TBuiltinScalar = TypeVar("TBuiltinScalar", bound=Union[BuiltinNumber, str, bytes, None])
-
 
 KEY_MODES = ("same", "intersect", "union")
 KeyMode = Literal["intersect", "same", "union"]
@@ -203,28 +197,102 @@ def dump_dict(
     return result
 
 
-def pass_filter(
+@overload
+def find(
+    x: T,
+    include: Iterable[V],
+    *,
+    match_fn: Callable[[V, T], bool] = operator.eq,
+    order: Literal["right"] = "right",
+    default: U = -1,
+) -> Union[int, U]:
+    ...
+
+
+@overload
+def find(
+    x: T,
+    include: Iterable[V],
+    *,
+    match_fn: Callable[[T, V], bool] = operator.eq,
+    order: Literal["left"],
+    default: U = -1,
+) -> Union[int, U]:
+    ...
+
+
+def find(
+    x: T,
+    include: Iterable[T],
+    *,
+    match_fn: Callable[[T, T], bool] = operator.eq,
+    order: Literal["left", "right"] = "right",
+    default: U = -1,
+) -> Union[int, U]:
+    if order == "right":
+        pass
+    elif order == "left":
+
+        def revert(f):
+            def reverted_f(a, b):
+                return f(b, a)
+
+            return reverted_f
+
+        match_fn = revert(match_fn)
+    else:
+        ORDER_VALUES = ("left", "right")
+        raise ValueError(f"Invalid argument {order=}. (expected one of {ORDER_VALUES})")
+
+    for i, include_i in enumerate(include):
+        if match_fn(include_i, x):
+            return i
+    return default
+
+
+def contained(
     x: T,
     include: Optional[Iterable[T]] = None,
     exclude: Optional[Iterable[T]] = None,
+    *,
+    match_fn: Callable[[T, T], bool] = operator.eq,
+    order: Literal["left", "right"] = "right",
 ) -> bool:
     """Returns True if name in include set and not in exclude set."""
-    if include is not None and exclude is not None:
-        return (x in include) and (x not in exclude)
-    if include is not None:
-        return x in include
-    elif exclude is not None:
-        return x not in exclude
-    else:
-        return True
+    if (
+        include is not None
+        and find(x, include, match_fn=match_fn, order=order, default=-1) == -1
+    ):
+        return False
+
+    if (
+        exclude is not None
+        and find(x, exclude, match_fn=match_fn, order=order, default=-1) != -1
+    ):
+        return False
+
+    return True
 
 
 def filter_iterable(
     it: Iterable[T],
     include: Optional[Iterable[T]] = None,
     exclude: Optional[Iterable[T]] = None,
+    *,
+    match_fn: Callable[[T, T], bool] = operator.eq,
+    order: Literal["left", "right"] = "right",
 ) -> List[T]:
-    return [item for item in it if pass_filter(item, include, exclude)]
+    return [
+        item
+        for item in it
+        if contained(
+            item,
+            include=include,
+            exclude=exclude,
+            match_fn=match_fn,
+            order=order,
+        )
+    ]
 
 
 def all_eq(it: Iterable[T], eq_fn: Optional[Callable[[T, T], bool]] = None) -> bool:
@@ -441,42 +509,6 @@ def sorted_dict(
     reverse: bool = False,
 ) -> Dict[K, V]:
     return {k: x[k] for k in sorted(x.keys(), key=key, reverse=reverse)}  # type: ignore
-
-
-def get_key_fn(
-    patterns: Union[PatternLike, Iterable[PatternLike]],
-    *,
-    match_fn: Callable[[Pattern, str], bool] = re.search,  # type: ignore
-) -> Callable[[str], int]:
-    """
-    Usage:
-    ```
-    >>> lst = ["a", "abc", "aa", "abcd"]
-    >>> patterns = ["^ab"]  # sort list with elements starting with 'ab' first
-    >>> list(sorted(lst, key=get_key_fn(patterns)))
-    ... ["abc", "abcd", "a", "aa"]
-    ```
-    """
-    patterns = compile_patterns(patterns)
-    key_fn = partial(
-        find_pattern,
-        patterns=patterns,
-        match_fn=match_fn,
-        default=len(patterns),
-    )
-    return key_fn  # type: ignore
-
-
-def sort_with_patterns(
-    x: Iterable[T],
-    patterns: Union[PatternLike, Iterable[PatternLike]],
-    *,
-    match_fn: Callable[[Pattern, str], bool] = re.search,  # type: ignore
-    reverse: bool = False,
-) -> List[T]:
-    key_fn = get_key_fn(patterns, match_fn=match_fn)
-    x = sorted(x, key=key_fn, reverse=reverse)
-    return x
 
 
 @overload
