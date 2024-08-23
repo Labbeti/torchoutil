@@ -25,8 +25,7 @@ class SoftmaxMultidim(nn.Module):
         self,
         input: Tensor,
     ) -> Tensor:
-        input = softmax_multidim(input, dims=self.dims)
-        return input
+        return softmax_multidim(input, dims=self.dims)
 
     def extra_repr(self) -> str:
         return dump_dict(dict(dims=self.dims))
@@ -48,8 +47,7 @@ class LogSoftmaxMultidim(nn.Module):
         self,
         input: Tensor,
     ) -> Tensor:
-        input = log_softmax_multidim(input, dims=self.dims)
-        return input
+        return log_softmax_multidim(input, dims=self.dims)
 
     def extra_repr(self) -> str:
         return dump_dict(dict(dims=self.dims))

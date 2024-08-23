@@ -20,6 +20,7 @@ class StrEnum(str, Enum):
                 not case_sensitive and member.lower() == value.lower()
             ):
                 return cls[member]
+
         raise ValueError(
             f"Invalid argument {value=}. (expected one of {tuple(members)})"
         )

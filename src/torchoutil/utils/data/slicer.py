@@ -137,6 +137,6 @@ class DatasetSlicerWrapper(DatasetSlicer):
 
 
 def _where_1d(mask: Union[Iterable[bool], BoolTensor1D]) -> Tensor1D:
-    if is_iterable_bool(mask):
+    if not isinstance(mask, Tensor):
         mask = torch.as_tensor(mask)
     return torch.where(mask)[0]
