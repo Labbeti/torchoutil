@@ -5,13 +5,13 @@ from typing import Callable, Generic, Optional, Sequence, Sized, TypeVar, Union
 
 from torch.utils.data.dataset import Dataset
 
-from pyoutil.typing.classes import SupportsGetItemLen
+from pyoutil.typing.classes import SupportsLenAndGetItem
 
 T = TypeVar("T", covariant=False)
 U = TypeVar("U", covariant=False)
 
 
-SizedDatasetLike = SupportsGetItemLen
+SizedDatasetLike = SupportsLenAndGetItem
 
 
 class EmptyDataset(Dataset[None]):
