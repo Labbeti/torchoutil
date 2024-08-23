@@ -37,15 +37,20 @@ def index_to_onehot(
     """
     device = get_device(device)
     index = torch.as_tensor(index, device=device, dtype=torch.long)
-    if padding_idx is None and not (0 <= index.min() <= index.max() < num_classes):
-        raise ValueError(
-            f"Invalid argument {index=}. (expected 0 <= {index.min()} <= {index.max()} < {num_classes})"
-        )
 
     if padding_idx is not None:
         mask = index == padding_idx
         index = torch.where(mask, num_classes, index)
         num_classes += 1
+
+    if index.nelement() > 0 and not (
+        0 <= index.min() <= index.max() < num_classes
+        if padding_idx is None
+        else num_classes + 1
+    ):
+        raise ValueError(
+            f"Invalid argument {index=}. (expected 0 <= {index.min()} <= {index.max()} < {num_classes})"
+        )
 
     onehot: Tensor = F.one_hot(index, num_classes)
     onehot = onehot.to(dtype=dtype)
@@ -84,6 +89,7 @@ def index_to_name(
 def onehot_to_index(
     onehot: Tensor,
     *,
+    padding_idx: Optional[int] = None,
     dim: int = -1,
 ) -> List[int]:
     """Convert onehot boolean encoding to indices of labels.
@@ -93,6 +99,11 @@ def onehot_to_index(
     """
     onehot = onehot.int()
     index = onehot.argmax(dim=dim)
+
+    if padding_idx is not None:
+        empty = onehot.eq(False).all(dim=dim)
+        index = torch.where(empty, padding_idx, index)
+
     index = index.tolist()
     return index
 
