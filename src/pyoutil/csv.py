@@ -13,11 +13,14 @@ from typing import (
     Literal,
     Mapping,
     Optional,
+    TypeVar,
     Union,
     overload,
 )
 
 from pyoutil.collections import dict_list_to_list_dict, list_dict_to_dict_list
+
+T = TypeVar("T")
 
 ORIENT_VALUES = ("list", "dict")
 
@@ -29,6 +32,7 @@ def to_csv(
     overwrite: bool = True,
     make_parents: bool = True,
     header: bool = True,
+    align_content: bool = False,
     **csv_writer_kwargs,
 ) -> str:
     """Dump content to csv format."""
@@ -40,25 +44,49 @@ def to_csv(
             fpath.parent.mkdir(parents=True, exist_ok=True)
 
     if isinstance(data, Mapping):
-        data = dict_list_to_list_dict(data)  # type: ignore
+        data_lst = dict_list_to_list_dict(data)  # type: ignore
     else:
-        data = list(data)
+        data_lst = list(data)
+    del data
 
     if header:
         writer_cls = DictWriter
-        if len(data) == 0:
+        if len(data_lst) == 0:
             fieldnames = []
         else:
-            fieldnames = [str(k) for k in data[0].keys()]
-        csv_writer_kwargs["fieldnames"] = fieldnames
+            fieldnames = [str(k) for k in data_lst[0].keys()]
     else:
         writer_cls = csv.writer
+        fieldnames = list(range(len(next(data_lst))))
+
+    if align_content:
+        old_fieldnames = fieldnames
+        data_lst = _stringify(data_lst)
+        fieldnames = _stringify(fieldnames)
+        max_num_chars = {
+            k: max(max(len(data_i[k]) for data_i in data_lst), len(k)) + 1
+            for k in fieldnames
+        }
+
+        fieldnames = [f"{{:^{max_num_chars[k]}s}}".format(k) for k in fieldnames]
+        old_to_new_fieldnames = dict(zip(old_fieldnames, fieldnames))
+
+        data_lst = [
+            {
+                old_to_new_fieldnames[k]: f"{{:^{max_num_chars[k]}s}}".format(v)
+                for k, v in data_i.items()
+            }
+            for data_i in data_lst
+        ]
+
+    if header:
+        csv_writer_kwargs["fieldnames"] = fieldnames
 
     file = io.StringIO()
     writer = writer_cls(file, **csv_writer_kwargs)
     if isinstance(writer, DictWriter):
         writer.writeheader()
-    writer.writerows(data)  # type: ignore
+    writer.writerows(data_lst)  # type: ignore
     content = file.getvalue()
     file.close()
 
@@ -76,6 +104,7 @@ def load_csv(
     orient: Literal["dict"],
     header: bool = True,
     comment_start: Optional[str] = None,
+    strip_content: bool = False,
     **csv_reader_kwargs,
 ) -> Dict[str, List[Any]]:
     ...
@@ -89,6 +118,7 @@ def load_csv(
     orient: Literal["list"] = "list",
     header: bool = True,
     comment_start: Optional[str] = None,
+    strip_content: bool = False,
     **csv_reader_kwargs,
 ) -> List[Dict[str, Any]]:
     ...
@@ -101,6 +131,7 @@ def load_csv(
     orient: Literal["list", "dict"] = "list",
     header: bool = True,
     comment_start: Optional[str] = None,
+    strip_content: bool = False,
     **csv_reader_kwargs,
 ) -> Union[List[Dict[str, Any]], Dict[str, List[Any]]]:
     """Load content from csv filepath."""
@@ -111,31 +142,49 @@ def load_csv(
 
     with open(fpath, "r") as file:
         reader = reader_cls(file, **csv_reader_kwargs)
-        data = list(reader)
+        data_lst = list(reader)
 
         if comment_start is None:
             pass
         elif header:
-            data = [
+            data_lst = [
                 line
-                for line in data
+                for line in data_lst
                 if not next(iter(line.values())).startswith(comment_start)
             ]
         else:
-            data = [line for line in data if not line[0].startswith(comment_start)]
+            data_lst = [
+                line for line in data_lst if not line[0].startswith(comment_start)
+            ]
 
     if not header:
-        data = [
-            {str(j): data_ij for j, data_ij in enumerate(data_i)} for data_i in data
+        data_lst = [
+            {str(j): data_ij for j, data_ij in enumerate(data_i)} for data_i in data_lst
+        ]
+
+    if strip_content:
+        data_lst = [
+            {k.strip(): v.strip() for k, v in data_i.items()} for data_i in data_lst
         ]
 
     if orient == "dict":
-        data = list_dict_to_dict_list(data, key_mode="same")  # type: ignore
+        result = list_dict_to_dict_list(data_lst, key_mode="same")  # type: ignore
     elif orient == "list":
-        pass
+        result = data_lst
     else:
         raise ValueError(
             f"Invalid argument {orient=}. (expected one of {ORIENT_VALUES})"
         )
 
-    return data  # type: ignore
+    return result  # type: ignore
+
+
+def _stringify(x: T) -> T:
+    if isinstance(x, str):
+        return x
+    elif isinstance(x, dict):
+        return {_stringify(k): _stringify(v) for k, v in x.items()}
+    elif isinstance(x, (list, tuple, set, frozenset)):
+        return type(x)(_stringify(xi) for xi in x)
+    else:
+        return str(x)

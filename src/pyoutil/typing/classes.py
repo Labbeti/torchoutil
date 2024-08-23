@@ -19,7 +19,7 @@ BuiltinCollection = Union[list, tuple, dict, set, frozenset]
 BuiltinNumber = Union[int, float, bool, complex]
 BuiltinScalar = Union[int, float, bool, complex, str, bytes, NoneType]
 
-TBuiltinScalar = TypeVar("TBuiltinScalar", bound=Union[BuiltinNumber, str, bytes, None])
+TBuiltinScalar = TypeVar("TBuiltinScalar", bound=BuiltinScalar)
 
 
 @runtime_checkable
@@ -50,4 +50,13 @@ class SizedIterable(Protocol[T]):
         ...
 
     def __len__(self) -> int:
+        ...
+
+
+@runtime_checkable
+class SupportsLenAndGetItem(Protocol[T]):
+    def __len__(self) -> int:
+        ...
+
+    def __getitem__(self, idx) -> T:
         ...

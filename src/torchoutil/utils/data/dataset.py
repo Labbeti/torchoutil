@@ -1,30 +1,17 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from typing import (
-    Callable,
-    Generic,
-    Optional,
-    Protocol,
-    Sequence,
-    Sized,
-    TypeVar,
-    Union,
-    runtime_checkable,
-)
+from typing import Callable, Generic, Optional, Sequence, Sized, TypeVar, Union
 
 from torch.utils.data.dataset import Dataset
+
+from pyoutil.typing.classes import SupportsGetItemLen
 
 T = TypeVar("T", covariant=False)
 U = TypeVar("U", covariant=False)
 
 
-@runtime_checkable
-class SizedDatasetLike(Protocol[T]):
-    __getitem__: Callable[..., T]
-
-    def __len__(self) -> int:
-        ...
+SizedDatasetLike = SupportsGetItemLen
 
 
 class EmptyDataset(Dataset[None]):
