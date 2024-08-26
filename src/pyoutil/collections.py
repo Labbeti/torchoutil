@@ -3,6 +3,7 @@
 
 import copy
 import operator
+import sys
 from typing import (
     Any,
     Callable,
@@ -515,7 +516,7 @@ def sorted_dict(
 def flatten(
     x: T,
     start_dim: int = 0,
-    end_dim: int = 1000,
+    end_dim: Optional[int] = None,
     is_scalar_fn: Callable[[Any], TypeGuard[T]] = is_builtin_scalar,
 ) -> List[T]:
     ...
@@ -525,7 +526,7 @@ def flatten(
 def flatten(
     x: Iterable[T],
     start_dim: int = 0,
-    end_dim: int = 1000,
+    end_dim: Optional[int] = None,
     is_scalar_fn: Callable[[Any], TypeGuard[T]] = is_builtin_scalar,
 ) -> List[T]:
     ...
@@ -535,7 +536,7 @@ def flatten(
 def flatten(
     x: Any,
     start_dim: int = 0,
-    end_dim: int = 1000,
+    end_dim: Optional[int] = None,
     is_scalar_fn: Callable[[Any], TypeGuard[T]] = is_builtin_scalar,
 ) -> List[Any]:
     ...
@@ -544,9 +545,11 @@ def flatten(
 def flatten(
     x: Any,
     start_dim: int = 0,
-    end_dim: int = 1000,
+    end_dim: Optional[int] = None,
     is_scalar_fn: Callable[[Any], TypeGuard[T]] = is_builtin_scalar,
 ) -> List[Any]:
+    if end_dim is None:
+        end_dim = sys.maxsize
     if start_dim < 0:
         raise ValueError(f"Invalid argument {start_dim=}. (expected positive integer)")
     if end_dim < 0:

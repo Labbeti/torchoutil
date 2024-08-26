@@ -24,8 +24,8 @@ if _TQDM_AVAILABLE:
     import tqdm
 
 
-T = TypeVar("T")
-U = TypeVar("U")
+T = TypeVar("T", covariant=True)
+U = TypeVar("U", covariant=True)
 
 
 pylog = logging.getLogger(__name__)
@@ -175,7 +175,7 @@ def pack_dataset(
 
     i = 0
     for batch_lst in loader:
-        if not transform_in_worker:
+        if pre_transform is not None and not transform_in_worker:
             batch_lst = [pre_transform(item) for item in batch_lst]
 
         if content_mode == "item":

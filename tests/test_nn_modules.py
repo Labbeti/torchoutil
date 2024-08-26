@@ -12,6 +12,7 @@ from torchoutil.nn.modules import (
     AsTensor,
     CropDim,
     CropDims,
+    Identity,
     Mean,
     PadAndStackRec,
     PadDim,
@@ -59,6 +60,19 @@ class TestSequential(TestCase):
 
         x = torch.rand(16, 10)
         result = transform(x)
+
+        assert x.shape == result.shape
+
+    def test_example_3(self) -> None:
+        transform = ESequential(
+            ToList(),
+            Identity(),
+            AsTensor(),
+        )
+
+        x = torch.rand(16, 10)
+        result = transform(x)
+
         assert x.shape == result.shape
 
 

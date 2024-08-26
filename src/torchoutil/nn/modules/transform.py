@@ -13,6 +13,7 @@ from torchoutil.nn.functional.transform import (
     PadValue,
     TBuiltinScalar,
     flatten,
+    identity,
     pad_and_crop_dim,
     repeat_interleave_nd,
     resample_nearest_freqs,
@@ -231,3 +232,16 @@ class Flatten(nn.Module):
 
     def forward(self, x):
         return flatten(x)
+
+
+class Identity(nn.Module):
+    """Identity class placeholder.
+
+    Unlike torch.nn.Identity which only supports Tensor typing, its type output is the same than its input type.
+    """
+
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__()
+
+    def forward(self, x: T) -> T:
+        return identity(x)

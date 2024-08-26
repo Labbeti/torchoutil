@@ -2,12 +2,23 @@
 # -*- coding: utf-8 -*-
 
 import math
-from typing import Any, Callable, Iterable, List, Literal, TypeVar, Union, overload
+from typing import (
+    Any,
+    Callable,
+    Iterable,
+    List,
+    Literal,
+    Optional,
+    TypeVar,
+    Union,
+    overload,
+)
 
 import torch
 from torch import Generator, Tensor
 
 from pyoutil.collections import flatten as builtin_flatten
+from pyoutil.functools import identity  # noqa: F401
 from pyoutil.typing import TBuiltinScalar
 from torchoutil.nn.functional.crop import crop_dim
 from torchoutil.nn.functional.get import get_generator
@@ -18,6 +29,7 @@ T = TypeVar("T")
 U = TypeVar("U")
 
 PadCropAlign = Literal["left", "right", "center", "random"]
+PAD_CROP_ALIGN_VALUES = ("left", "right", "center", "random")
 
 
 def repeat_interleave_nd(x: Tensor, repeats: int, dim: int = 0) -> Tensor:
@@ -203,7 +215,7 @@ def shuffled(
         dims = list(dims)
 
     generator = get_generator(generator)
-    slices = [slice(None) for _ in range(x.ndim)]
+    slices: List[Union[slice, Tensor]] = [slice(None) for _ in range(x.ndim)]
     for dim in dims:
         indices = torch.randperm(x.shape[dim], generator=generator)
         slices[dim] = indices
@@ -215,7 +227,7 @@ def shuffled(
 def flatten(
     x: Tensor,
     start_dim: int = 0,
-    end_dim: int = 1000,
+    end_dim: Optional[int] = None,
 ) -> Tensor:
     ...
 
@@ -224,7 +236,7 @@ def flatten(
 def flatten(
     x: Union[np.ndarray, np.generic],
     start_dim: int = 0,
-    end_dim: int = 1000,
+    end_dim: Optional[int] = None,
 ) -> np.ndarray:
     ...
 
@@ -233,7 +245,7 @@ def flatten(
 def flatten(
     x: TBuiltinScalar,
     start_dim: int = 0,
-    end_dim: int = 1000,
+    end_dim: Optional[int] = None,
 ) -> List[TBuiltinScalar]:
     ...
 
@@ -242,7 +254,7 @@ def flatten(
 def flatten(
     x: Iterable[TBuiltinScalar],
     start_dim: int = 0,
-    end_dim: int = 1000,
+    end_dim: Optional[int] = None,
 ) -> List[TBuiltinScalar]:
     ...
 
@@ -251,17 +263,24 @@ def flatten(
 def flatten(
     x: Any,
     start_dim: int = 0,
-    end_dim: int = 1000,
+    end_dim: Optional[int] = None,
 ) -> List[Any]:
     ...
 
 
 def flatten(
-    x,
+    x: Any,
     start_dim: int = 0,
-    end_dim: int = 1000,
-):
-    if isinstance(x, (Tensor, np.ndarray, np.generic)):
+    end_dim: Optional[int] = None,
+) -> Any:
+    if isinstance(x, Tensor):
+        end_dim = end_dim if end_dim is not None else x.ndim - 1
         return x.flatten(start_dim, end_dim)
+    elif (
+        isinstance(x, (np.ndarray, np.generic))
+        and start_dim == 0
+        and (end_dim is None or end_dim >= x.ndim - 1)
+    ):
+        return x.flatten()
     else:
         return builtin_flatten(x, start_dim, end_dim, is_scalar_fn=is_scalar_like)

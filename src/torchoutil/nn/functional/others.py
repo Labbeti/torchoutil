@@ -7,6 +7,7 @@ from typing import Generator as PythonGenerator
 from typing import (
     Iterable,
     List,
+    Literal,
     Mapping,
     Optional,
     Sized,
@@ -21,7 +22,6 @@ from torch import LongTensor, Size, Tensor, nn
 from typing_extensions import TypeGuard
 
 from pyoutil.collections import all_eq, prod
-from pyoutil.functools import identity  # noqa: F401
 from pyoutil.typing import (
     BuiltinScalar,
     SizedIterable,
@@ -81,10 +81,10 @@ def find(
     if default is None:
         if not contains.all():
             raise RuntimeError(f"Cannot find {value=} in tensor.")
-        return indices
+        return indices  # type: ignore
     else:
         output = torch.where(contains, indices, default)
-        return output
+        return output  # type: ignore
 
 
 @overload
@@ -179,17 +179,42 @@ def is_convertible_to_tensor(x: Any) -> bool:
         return __can_be_converted_to_tensor_nested(x)
 
 
-def ndim(x: Union[ScalarLike, Tensor, np.ndarray, Iterable]) -> int:
+@overload
+def ndim(
+    x: Union[ScalarLike, Tensor, np.ndarray, Iterable],
+    *,
+    return_valid: Literal[False] = False,
+) -> int:
+    ...
+
+
+@overload
+def ndim(
+    x: Union[ScalarLike, Tensor, np.ndarray, Iterable],
+    *,
+    return_valid: Literal[True],
+) -> Tuple[bool, int]:
+    ...
+
+
+def ndim(
+    x: Union[ScalarLike, Tensor, np.ndarray, Iterable],
+    *,
+    return_valid: bool = False,
+) -> Union[int, Tuple[bool, int]]:
     """Scan first argument to return its number of dimension(s). Works recursively with Tensors, numpy arrays and builtins types instances.
 
     Args:
         x: Input value to scan.
+        return_valid: If True, returns a tuple containing a boolean indicator if the data has an homogeneous ndim instead of raising a ValueError.
 
     Raises:
         ValueError if input has an heterogeneous number of dimensions.
         TypeError if input has an unsupported type.
     """
     valid, ndim = _search_ndim(x)
+    if return_valid:
+        return valid, ndim
     if valid:
         return ndim
     else:
@@ -198,23 +223,48 @@ def ndim(x: Union[ScalarLike, Tensor, np.ndarray, Iterable]) -> int:
         )
 
 
+@overload
 def shape(
     x: Union[ScalarLike, Tensor, np.ndarray, Iterable],
     *,
     output_type: Callable[[Tuple[int, ...]], T] = Size,
+    return_valid: Literal[False] = False,
 ) -> T:
+    ...
+
+
+@overload
+def shape(
+    x: Union[ScalarLike, Tensor, np.ndarray, Iterable],
+    *,
+    output_type: Callable[[Tuple[int, ...]], T] = Size,
+    return_valid: Literal[True],
+) -> Tuple[bool, T]:
+    ...
+
+
+def shape(
+    x: Union[ScalarLike, Tensor, np.ndarray, Iterable],
+    *,
+    output_type: Callable[[Tuple[int, ...]], T] = Size,
+    return_valid: bool = False,
+) -> Union[T, Tuple[bool, T]]:
     """Scan first argument to return its shape. Works recursively with Tensors, numpy arrays and builtins types instances.
 
     Args:
         x: Input value to scan.
         output_type: Output shape type. defaults to torch.Size.
+        return_valid: If True, returns a tuple containing a boolean indicator if the data has an homogeneous shape instead of raising a ValueError.
 
     Raises:
         ValueError: if input has an heterogeneous shape.
         TypeError: if input has an unsupported type.
     """
     valid, shape = _search_shape(x)
-    if valid:
+    if return_valid:
+        shape = output_type(shape)
+        return valid, shape
+    elif valid:
         shape = output_type(shape)
         return shape
     else:
@@ -255,7 +305,7 @@ def _search_ndim(
     elif isinstance(x, (Tensor, np.ndarray, np.generic)):
         return True, x.ndim
     elif isinstance(x, Iterable):
-        ndims = [_search_ndim(xi)[1] for xi in x]
+        ndims = [_search_ndim(xi)[1] for xi in x]  # type: ignore
         if len(ndims) == 0:
             return True, 1
         elif all_eq(ndims):
@@ -274,7 +324,7 @@ def _search_shape(
     elif isinstance(x, (Tensor, np.ndarray, np.generic)):
         return True, tuple(x.shape)
     elif isinstance(x, Iterable):
-        shapes = [_search_shape(xi)[1] for xi in x]
+        shapes = [_search_shape(xi)[1] for xi in x]  # type: ignore
         if len(shapes) == 0:
             return True, (0,)
         elif all_eq(shapes):
