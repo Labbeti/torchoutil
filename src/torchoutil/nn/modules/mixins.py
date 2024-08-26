@@ -6,6 +6,7 @@ import logging
 import re
 from typing import (
     Any,
+    Callable,
     ClassVar,
     Dict,
     Generic,
@@ -30,6 +31,7 @@ from pyoutil.typing import is_dict_str, is_mapping_str
 from torchoutil.nn.functional.checksum import checksum_module
 from torchoutil.nn.functional.others import count_parameters
 
+T = TypeVar("T", covariant=True)
 InType = TypeVar("InType", covariant=False, contravariant=True)
 OutType = TypeVar("OutType", covariant=True, contravariant=False)
 OutType2 = TypeVar("OutType2", covariant=True, contravariant=False)
@@ -41,7 +43,7 @@ DEVICE_DETECT_MODES = ("proxy", "first_param", "none")
 pylog = logging.getLogger(__name__)
 
 
-class SupportsTypedForward(Protocol[InType, OutType]):
+class _SupportsTypedForward(Protocol[InType, OutType]):
     def __call__(self, *args, **kwargs):
         ...
 
@@ -49,7 +51,7 @@ class SupportsTypedForward(Protocol[InType, OutType]):
         ...
 
 
-class ProxyDeviceModule(nn.Module):
+class _ProxyDeviceModule(nn.Module):
     def __init__(
         self,
         *,
@@ -74,7 +76,7 @@ class ProxyDeviceModule(nn.Module):
             return self._buffers["__proxy"].device  # type: ignore
         elif self.__device_detect_mode == "first_param":
             try:
-                device0 = next(iter(self.get_devices(params=True, buffers=False)))
+                device0 = next(self._get_devices_iterator(params=True, buffers=False))
                 return device0
             except StopIteration:
                 return None
@@ -82,6 +84,22 @@ class ProxyDeviceModule(nn.Module):
             return None
 
     def get_devices(
+        self,
+        *,
+        params: bool = True,
+        buffers: bool = True,
+        recurse: bool = True,
+        output_type: Callable[[Iterator[torch.device]], T] = list,
+    ) -> T:
+        return output_type(
+            self._get_devices_iterator(
+                params=params,
+                buffers=buffers,
+                recurse=recurse,
+            )
+        )
+
+    def _get_devices_iterator(
         self,
         *,
         params: bool = True,
@@ -104,7 +122,7 @@ class ProxyDeviceModule(nn.Module):
                 devices[param_or_buffer.device] = None
 
 
-class ConfigModule(nn.Module):
+class _ConfigModule(nn.Module):
     _CONFIG_TYPES: ClassVar[Tuple[type, ...]] = (int, str, bool, float)
     _CONFIG_EXCLUDE: ClassVar[Tuple[str, ...]] = ("^_.*",) + tuple(
         f".*{k}$" for k in nn.Module().__dict__.keys()
@@ -122,7 +140,7 @@ class ConfigModule(nn.Module):
             "config_to_extra_repr": config_to_extra_repr,
         }
         for name, value in attrs.items():
-            object.__setattr__(self, f"_{ConfigModule.__name__}__{name}", value)
+            object.__setattr__(self, f"_{_ConfigModule.__name__}__{name}", value)
 
         super().__init__()
         self.__config: Dict[str, Any]
@@ -171,7 +189,7 @@ class ConfigModule(nn.Module):
         if self._is_config_value(name, value):
             subconfig = {name: value}
             prefix = ""
-        elif isinstance(value, ConfigModule):
+        elif isinstance(value, _ConfigModule):
             subconfig = value.config
         elif hasattr(value, "_hparams") and is_mapping_str(value._hparams):
             subconfig = dict(value._hparams.items())  # type: ignore
@@ -191,7 +209,13 @@ class ConfigModule(nn.Module):
         )
 
 
-class TypedModule(Generic[InType, OutType], nn.Module):
+TypedModuleLike = Union[
+    _SupportsTypedForward[InType, OutType],
+    "_TypedModule[InType, OutType]",
+]
+
+
+class _TypedModule(Generic[InType, OutType], nn.Module):
     """Typed version of torch.nn.Module. Can specify an input and output type."""
 
     def __call__(self, *args: InType, **kwargs: InType) -> OutType:
@@ -201,23 +225,29 @@ class TypedModule(Generic[InType, OutType], nn.Module):
         return super().forward(*args, **kwargs)
 
     @overload
-    def compose(
+    def chain(
         self,
-        other: "TypedModule[Any, OutType2]",
-    ) -> "TypedSequential[InType, OutType2]":
+        *others: TypedModuleLike[Any, OutType],
+    ) -> "ESequential[InType, OutType]":
         ...
 
     @overload
-    def compose(self, other: nn.Module) -> "TypedSequential[InType, Any]":
+    def chain(self, *others: nn.Module) -> "ESequential[InType, Any]":
         ...
 
-    def compose(self, other) -> "TypedSequential[InType, Any]":
-        return TypedSequential(self, other)
+    def chain(self, *others):
+        return ESequential(self, *others)
+
+    def __or__(
+        self,
+        other: TypedModuleLike[Any, OutType],
+    ) -> "ESequential[InType, OutType]":
+        return self.chain(other)
 
 
-class TypedSequential(
+class _TypedSequential(
     Generic[InType, OutType],
-    TypedModule[InType, OutType],
+    _TypedModule[InType, OutType],
     nn.Sequential,
 ):
     def __init__(
@@ -226,7 +256,7 @@ class TypedSequential(
         unpack_tuple: bool = False,
         unpack_dict: bool = False,
     ) -> None:
-        TypedModule.__init__(self)
+        _TypedModule.__init__(self)
         nn.Sequential.__init__(self, *args)
 
         self.__unpack_tuple = unpack_tuple
@@ -262,9 +292,9 @@ class TypedSequential(
 
 class EModule(
     Generic[InType, OutType],
-    ConfigModule,
-    TypedModule[InType, OutType],
-    ProxyDeviceModule,
+    _ConfigModule,
+    _TypedModule[InType, OutType],
+    _ProxyDeviceModule,
 ):
     """Enriched torch.nn.Module with proxy device, forward typing and automatic configuration detection from attributes.
 
@@ -278,14 +308,20 @@ class EModule(
         config_to_extra_repr: bool = False,
         device_detect_mode: DeviceDetectMode = "proxy",
     ) -> None:
+        """
+        Args:
+            strict_load: If True, Module config will be compared during load_state_dict(...) method call and raises a ValueError. defaults to False.
+            config_to_extra_repr: If True, add config to extra repr. defaults to False.
+            device_detect_mode: Enable automatic detection of this
+        """
         # ConfigModule must be first
-        ConfigModule.__init__(
+        _ConfigModule.__init__(
             self,
             strict_load=strict_load,
             config_to_extra_repr=config_to_extra_repr,
         )
-        TypedModule.__init__(self)
-        ProxyDeviceModule.__init__(
+        _TypedModule.__init__(self)
+        _ProxyDeviceModule.__init__(
             self,
             device_detect_mode=device_detect_mode,
         )
@@ -313,16 +349,10 @@ class EModule(
         return checksum_module(self, only_trainable=only_trainable)
 
 
-TypedModuleLike = Union[
-    SupportsTypedForward[InType, OutType],
-    TypedModule[InType, OutType],
-]
-
-
 class ESequential(
     Generic[InType, OutType],
     EModule[InType, OutType],
-    TypedSequential[InType, OutType],
+    _TypedSequential[InType, OutType],
 ):
     """Enriched torch.nn.Sequential with proxy device, forward typing and automatic configuration detection from attributes.
 
@@ -517,7 +547,7 @@ class ESequential(
             config_to_extra_repr=config_to_extra_repr,
             device_detect_mode=device_detect_mode,
         )
-        TypedSequential.__init__(
+        _TypedSequential.__init__(
             self,
             *args,
             unpack_tuple=unpack_tuple,
@@ -529,15 +559,15 @@ def __test_typing_1() -> None:
     import torch
     from torch import Tensor
 
-    class LayerA(TypedModule[Tensor, Tensor]):
+    class LayerA(_TypedModule[Tensor, Tensor]):
         def forward(self, x: Tensor) -> Tensor:
             return x * x
 
-    class LayerB(TypedModule[Tensor, int]):
+    class LayerB(_TypedModule[Tensor, int]):
         def forward(self, x: Tensor) -> int:
             return int(x.sum().item())
 
-    class LayerC(TypedModule[int, Tensor]):
+    class LayerC(_TypedModule[int, Tensor]):
         def forward(self, x: int) -> Tensor:
             return torch.as_tensor(x)
 
@@ -572,7 +602,7 @@ def __test_typing_1() -> None:
 
     assert isinstance(y, str)
 
-    class LayerF(TypedModule[bool, str]):
+    class LayerF(_TypedModule[bool, str]):
         def forward(self, x):
             return str(x)
 
