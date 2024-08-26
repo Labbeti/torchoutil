@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 
 from enum import auto
-from types import EllipsisType
 from typing import Any, Generic, List, Literal, Type, TypeVar, Union
 
 import torch
@@ -12,8 +11,6 @@ from torch.types import _bool
 
 from pyoutil import BuiltinNumber, StrEnum
 from torchoutil.types import TORCH_DTYPES
-
-ellipsis = EllipsisType
 
 DType = TypeVar("DType", "DTypeEnum", None)
 NDim = TypeVar("NDim", bound=int)
