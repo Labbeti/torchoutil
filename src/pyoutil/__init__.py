@@ -55,9 +55,9 @@ from .os import get_num_cpus_available, safe_rmdir, tree_iter
 from .re import (
     PatternLike,
     compile_patterns,
-    contained_patterns,
     find_patterns,
     get_key_fn,
+    match_any_patterns,
     sort_with_patterns,
 )
 from .typing import *

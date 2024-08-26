@@ -50,10 +50,10 @@ def pass_patterns(
     pylog.warning(
         f"Deprecate function call '{get_current_fn_name()}'. Use 'contained_patterns' instead."
     )
-    return contained_patterns(x, include, exclude=exclude, match_fn=match_fn)
+    return match_any_patterns(x, include, exclude=exclude, match_fn=match_fn)
 
 
-def contained_patterns(
+def match_any_patterns(
     x: str,
     include: Union[PatternLike, Iterable[PatternLike]],
     *,

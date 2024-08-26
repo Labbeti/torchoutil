@@ -9,7 +9,7 @@ from pathlib import Path
 from re import Pattern
 from typing import Any, Generator, Iterable, List, Union
 
-from pyoutil.re import PatternLike, compile_patterns, contained_patterns
+from pyoutil.re import PatternLike, compile_patterns, match_any_patterns
 
 pylog = logging.getLogger(__name__)
 
@@ -103,7 +103,7 @@ def tree_iter(
         return
 
     exclude = compile_patterns(exclude)
-    if contained_patterns(str(root), exclude):
+    if match_any_patterns(str(root), exclude):
         yield from ()
         return
 
@@ -144,7 +144,7 @@ def _tree_impl(
             path
             for path in paths
             if (followlinks or not path.is_symlink())
-            and not contained_patterns(str(path), exclude)
+            and not match_any_patterns(str(path), exclude)
         ]
     except PermissionError:
         paths = []
