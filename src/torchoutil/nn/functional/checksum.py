@@ -8,12 +8,35 @@ from typing import Any, Iterable, Mapping, Union
 import torch
 from torch import Tensor, nn
 
+from pyoutil.inspect import get_fullname
 from torchoutil.types import np
 from torchoutil.utils.packaging import _NUMPY_AVAILABLE
 
+CHECKSUM_TYPES = (
+    "int",
+    "bool",
+    "complex",
+    "float",
+    "bytes",
+    "str",
+    "NoneType",
+    "torch.nn.Module",
+    "torch.Tensor",
+    "numpy.ndarray",
+    "numpy.generic",
+    "Mapping",
+    "Iterable",
+)
+
 
 # Recursive functions
+def checksum(x: Any, **kwargs) -> int:
+    """Alias for `torchoutil.checksum_any`."""
+    return checksum_any(x, **kwargs)
+
+
 def checksum_any(x: Any, **kwargs) -> int:
+    """Compute checksum of a single arbitrary python object."""
     if isinstance(x, (int, bool, complex, float)):
         return checksum_number(x, **kwargs)
     elif isinstance(x, bytes):
@@ -33,18 +56,18 @@ def checksum_any(x: Any, **kwargs) -> int:
     elif isinstance(x, Iterable):
         return checksum_iterable(x, **kwargs)
     else:
-        raise TypeError(f"Unsupported type {type(x)}.")
+        msg = f"Invalid argument type {type(x)}. (expected one of {CHECKSUM_TYPES})"
+        raise TypeError(msg)
 
 
 def checksum_iterable(x: Iterable[Any], **kwargs) -> int:
     accumulator = kwargs.pop("accumulator", 0)
-    return (
-        sum(
-            checksum_any(xi, accumulator=accumulator + (i + 1), **kwargs) * (i + 1)
-            for i, xi in enumerate(x)
-        )
-        + accumulator
+    accumulator += checksum_str(get_fullname(x), **kwargs)
+    csum = sum(
+        checksum_any(xi, accumulator=accumulator + (i + 1), **kwargs) * (i + 1)
+        for i, xi in enumerate(x)
     )
+    return csum + accumulator
 
 
 def checksum_mapping(x: Mapping[Any, Any], **kwargs) -> int:
@@ -54,10 +77,8 @@ def checksum_mapping(x: Mapping[Any, Any], **kwargs) -> int:
 def checksum_module(x: nn.Module, *, only_trainable: bool = False, **kwargs) -> int:
     """Compute a simple checksum over module parameters."""
     kwargs["only_trainable"] = only_trainable
-    return checksum_iterable(
-        (p for p in x.parameters() if not only_trainable or p.requires_grad),
-        **kwargs,
-    )
+    iterator = (p for p in x.parameters() if not only_trainable or p.requires_grad)
+    return checksum_iterable(iterator, **kwargs)
 
 
 # Intermediate functions
@@ -76,9 +97,9 @@ def checksum_tensor(x: Tensor, **kwargs) -> int:
         x = x * torch.arange(1, len(x) + 1, device=x.device, dtype=dtype)
         x = x.nansum()
 
-    x = x.item()
-    x = checksum_number(x, **kwargs)
-    return x
+    xitem = x.item()
+    csum = checksum_number(xitem, **kwargs)
+    return csum
 
 
 def checksum_ndarray(x: Union[np.ndarray, np.generic], **kwargs) -> int:
@@ -122,9 +143,9 @@ def checksum_bytes(x: bytes, **kwargs) -> int:
 
 
 def checksum_float(x: float, **kwargs) -> int:
-    x = struct.pack("!f", x)
-    x = struct.unpack("!i", x)[0]
-    return x + kwargs.get("accumulator", 0)
+    xbytes = struct.pack("!f", x)
+    xint = struct.unpack("!i", xbytes)[0]
+    return xint + kwargs.get("accumulator", 0)
 
 
 def checksum_int(x: int, **kwargs) -> int:

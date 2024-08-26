@@ -183,7 +183,7 @@ def _stringify(x: T) -> T:
     if isinstance(x, str):
         return x
     elif isinstance(x, dict):
-        return {_stringify(k): _stringify(v) for k, v in x.items()}
+        return {_stringify(k): _stringify(v) for k, v in x.items()}  # type: ignore
     elif isinstance(x, (list, tuple, set, frozenset)):
         return type(x)(_stringify(xi) for xi in x)
     else:

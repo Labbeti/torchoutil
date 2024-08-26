@@ -1,7 +1,17 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from typing import Any, Callable, Generic, Iterable, List, TypeVar, Union, overload
+from typing import (
+    Any,
+    Callable,
+    Generic,
+    Iterable,
+    List,
+    Optional,
+    TypeVar,
+    Union,
+    overload,
+)
 
 import torch
 from torch import Generator, Tensor, nn
@@ -194,6 +204,17 @@ class PadAndCropDim(nn.Module):
             generator=self.generator,
         )
 
+    def extra_repr(self) -> str:
+        return dump_dict(
+            dict(
+                target_length=self.target_length,
+                align=self.align,
+                pad_value=self.pad_value,
+                dim=self.dim,
+                mode=self.mode,
+            )
+        )
+
 
 class Shuffled(nn.Module):
     def __init__(
@@ -208,8 +229,16 @@ class Shuffled(nn.Module):
     def forward(self, x: Tensor) -> Tensor:
         return shuffled(x, dims=self.dims, generator=self.generator)
 
+    def extra_repr(self) -> str:
+        return dump_dict(dict(dims=self.dims))
+
 
 class Flatten(nn.Module):
+    def __init__(self, start_dim: int = 0, end_dim: Optional[int] = None) -> None:
+        super().__init__()
+        self.start_dim = start_dim
+        self.end_dim = end_dim
+
     @overload
     def forward(self, x: Tensor) -> Tensor:
         ...
@@ -230,8 +259,11 @@ class Flatten(nn.Module):
     def forward(self, x: Any) -> List[Any]:
         ...
 
-    def forward(self, x):
-        return flatten(x)
+    def forward(self, x: Any) -> Any:
+        return flatten(x, start_dim=self.start_dim, end_dim=self.end_dim)
+
+    def extra_repr(self) -> str:
+        return dump_dict(dict(start_dim=self.start_dim, end_dim=self.end_dim))
 
 
 class Identity(nn.Module):

@@ -5,6 +5,7 @@ from torch.nn.functional import *
 
 from .activation import log_softmax_multidim, softmax_multidim
 from .checksum import (
+    checksum,
     checksum_any,
     checksum_bool,
     checksum_bytes,

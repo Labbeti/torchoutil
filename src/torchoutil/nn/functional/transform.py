@@ -24,6 +24,7 @@ from torchoutil.nn.functional.crop import crop_dim
 from torchoutil.nn.functional.get import get_generator
 from torchoutil.nn.functional.pad import PadMode, PadValue, pad_dim
 from torchoutil.types import is_scalar_like, np
+from torchoutil.types._hints import Tensor1D
 
 T = TypeVar("T")
 U = TypeVar("U")
@@ -228,7 +229,7 @@ def flatten(
     x: Tensor,
     start_dim: int = 0,
     end_dim: Optional[int] = None,
-) -> Tensor:
+) -> Tensor1D:
     ...
 
 
