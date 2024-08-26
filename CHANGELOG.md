@@ -13,9 +13,12 @@ All notable changes to this project will be documented in this file.
 - Function `checksum_module` to compare module weights.
 - Function `nelement` to get number of elements in Tensor-like object.
 - Function `flatten` to get flat of elements in Tensors, numpy array, builtins scalars and lists.
+- Added `DatasetSlicer` class in utils.
+- Tensor typing classes for instance checks like `FloatTensor1D`.
 
 ### Changed
 - Rename `is_pickle_root` to `is_packed_root` (old name was kept for backward compatibility).
+- Split python functions into a separate directory called `pyoutil`.
 
 
 ## [0.4.0] 2024-05-27
