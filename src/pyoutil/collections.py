@@ -23,15 +23,15 @@ from typing_extensions import TypeGuard
 
 from pyoutil.typing import is_builtin_scalar, is_mapping_str
 
-K = TypeVar("K")
-T = TypeVar("T")
-U = TypeVar("U")
-V = TypeVar("V")
-W = TypeVar("W")
-X = TypeVar("X")
+K = TypeVar("K", covariant=True)
+T = TypeVar("T", covariant=True)
+U = TypeVar("U", covariant=True)
+V = TypeVar("V", covariant=True)
+W = TypeVar("W", covariant=True)
+X = TypeVar("X", covariant=True)
 
-KEY_MODES = ("same", "intersect", "union")
 KeyMode = Literal["intersect", "same", "union"]
+KEY_MODES = ("same", "intersect", "union")
 
 
 @overload
@@ -569,7 +569,7 @@ def flatten(
                     for xij in flatten_impl(xi, start_dim - 1, end_dim - 1)
                 ]
             else:
-                return x
+                return list(x)
         else:
             raise TypeError(f"Invalid argument type {type(x)=}.")
 
