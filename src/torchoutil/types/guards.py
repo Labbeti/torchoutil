@@ -81,25 +81,25 @@ def is_integer_dtype(dtype: torch.dtype) -> bool:
     return not dtype.is_floating_point and not dtype.is_complex and dtype != torch.bool
 
 
-def is_integer_tensor(x: Tensor) -> TypeGuard[Tensor]:
+def is_integer_tensor(x: Any) -> TypeGuard[Tensor]:
     return isinstance(x, Tensor) and is_integer_dtype(x.dtype)
 
 
-def is_integer_tensor1d(x: Tensor) -> TypeGuard[Tensor1D]:
+def is_integer_tensor1d(x: Any) -> TypeGuard[Tensor1D]:
     return is_integer_tensor(x) and x.ndim == 1
 
 
-def is_complex_tensor(x: Tensor) -> TypeGuard[Tensor]:
+def is_complex_tensor(x: Any) -> TypeGuard[Tensor]:
     return isinstance(x, Tensor) and x.is_complex()
 
 
-def is_floating_tensor(x: Tensor) -> TypeGuard[Tensor]:
+def is_floating_tensor(x: Any) -> TypeGuard[Tensor]:
     return isinstance(x, Tensor) and x.is_floating_point()
 
 
-def is_bool_tensor(x: Tensor) -> TypeGuard[BoolTensor]:
+def is_bool_tensor(x: Any) -> TypeGuard[BoolTensor]:
     return isinstance(x, BoolTensor)
 
 
-def is_bool_tensor1d(x: Tensor) -> TypeGuard[BoolTensor1D]:
+def is_bool_tensor1d(x: Any) -> TypeGuard[BoolTensor1D]:
     return is_bool_tensor(x) and x.ndim == 1

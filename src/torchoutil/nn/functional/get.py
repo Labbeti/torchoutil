@@ -16,7 +16,7 @@ def get_device(
 ) -> Optional[torch.device]:
     if device == CUDA_IF_AVAILABLE:
         device = "cuda" if torch.cuda.is_available() else "cpu"
-    if isinstance(device, str):
+    if isinstance(device, (str, int)):
         device = torch.device(device)
     return device
 
