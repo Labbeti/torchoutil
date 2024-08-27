@@ -31,7 +31,7 @@ def find_patterns(
     x: str,
     patterns: Union[PatternLike, Iterable[PatternLike]],
     *,
-    match_fn: Callable[[Pattern, str], bool] = re.search,  # type: ignore
+    match_fn: Callable[[PatternLike, str], bool] = re.search,  # type: ignore
     default: T = -1,
 ) -> Union[int, T]:
     """Find index of a pattern that match the first argument. If no pattern matches, returns the default value (-1)."""
@@ -45,7 +45,7 @@ def pass_patterns(
     include: Union[PatternLike, Iterable[PatternLike]],
     *,
     exclude: Union[PatternLike, Iterable[PatternLike]] = (),
-    match_fn: Callable[[Pattern, str], bool] = re.search,  # type: ignore
+    match_fn: Callable[[PatternLike, str], bool] = re.search,  # type: ignore
 ) -> bool:
     pylog.warning(
         f"Deprecate function call '{get_current_fn_name()}'. Use 'contained_patterns' instead."
@@ -58,7 +58,7 @@ def match_any_patterns(
     include: Union[PatternLike, Iterable[PatternLike]],
     *,
     exclude: Union[PatternLike, Iterable[PatternLike]] = (),
-    match_fn: Callable[[Pattern, str], bool] = re.search,  # type: ignore
+    match_fn: Callable[[PatternLike, str], bool] = re.search,  # type: ignore
 ) -> bool:
     """Returns True if at least 1 pattern match the first argument."""
     return (
@@ -70,7 +70,7 @@ def match_any_patterns(
 def get_key_fn(
     patterns: Union[PatternLike, Iterable[PatternLike]],
     *,
-    match_fn: Callable[[Pattern, str], bool] = re.search,  # type: ignore
+    match_fn: Callable[[PatternLike, str], bool] = re.search,  # type: ignore
 ) -> Callable[[str], int]:
     """
     Usage:
@@ -95,7 +95,7 @@ def sort_with_patterns(
     x: Iterable[str],
     patterns: Union[PatternLike, Iterable[PatternLike]],
     *,
-    match_fn: Callable[[Pattern, str], bool] = re.search,  # type: ignore
+    match_fn: Callable[[PatternLike, str], bool] = re.search,  # type: ignore
     reverse: bool = False,
 ) -> List[str]:
     key_fn = get_key_fn(patterns, match_fn=match_fn)
