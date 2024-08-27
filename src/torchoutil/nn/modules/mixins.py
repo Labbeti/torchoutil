@@ -43,7 +43,10 @@ DEVICE_DETECT_MODES = ("proxy", "first_param", "none")
 pylog = logging.getLogger(__name__)
 
 
-class _SupportsTypedForward(Protocol[InType, OutType]):
+__all__ = ["DeviceDetectMode", "EModule", "ESequential"]
+
+
+class SupportsTypedForward(Protocol[InType, OutType]):
     def __call__(self, *args, **kwargs):
         ...
 
@@ -51,7 +54,7 @@ class _SupportsTypedForward(Protocol[InType, OutType]):
         ...
 
 
-class _ProxyDeviceModule(nn.Module):
+class ProxyDeviceModule(nn.Module):
     def __init__(
         self,
         *,
@@ -122,7 +125,7 @@ class _ProxyDeviceModule(nn.Module):
                 devices[param_or_buffer.device] = None
 
 
-class _ConfigModule(nn.Module):
+class ConfigModule(nn.Module):
     _CONFIG_TYPES: ClassVar[Tuple[type, ...]] = (int, str, bool, float)
     _CONFIG_EXCLUDE: ClassVar[Tuple[str, ...]] = ("^_.*",) + tuple(
         f".*{k}$" for k in nn.Module().__dict__.keys()
@@ -140,7 +143,7 @@ class _ConfigModule(nn.Module):
             "config_to_extra_repr": config_to_extra_repr,
         }
         for name, value in attrs.items():
-            object.__setattr__(self, f"_{_ConfigModule.__name__}__{name}", value)
+            object.__setattr__(self, f"_{ConfigModule.__name__}__{name}", value)
 
         super().__init__()
         self.__config: Dict[str, Any]
@@ -189,7 +192,7 @@ class _ConfigModule(nn.Module):
         if self._is_config_value(name, value):
             subconfig = {name: value}
             prefix = ""
-        elif isinstance(value, _ConfigModule):
+        elif isinstance(value, ConfigModule):
             subconfig = value.config
         elif hasattr(value, "_hparams") and is_mapping_str(value._hparams):
             subconfig = dict(value._hparams.items())  # type: ignore
@@ -210,12 +213,12 @@ class _ConfigModule(nn.Module):
 
 
 TypedModuleLike = Union[
-    _SupportsTypedForward[InType, OutType],
-    "_TypedModule[InType, OutType]",
+    SupportsTypedForward[InType, OutType],
+    "TypedModule[InType, OutType]",
 ]
 
 
-class _TypedModule(Generic[InType, OutType], nn.Module):
+class TypedModule(Generic[InType, OutType], nn.Module):
     """Typed version of torch.nn.Module. Can specify an input and output type."""
 
     def __call__(self, *args: InType, **kwargs: InType) -> OutType:
@@ -245,9 +248,9 @@ class _TypedModule(Generic[InType, OutType], nn.Module):
         return self.chain(other)
 
 
-class _TypedSequential(
+class TypedSequential(
     Generic[InType, OutType],
-    _TypedModule[InType, OutType],
+    TypedModule[InType, OutType],
     nn.Sequential,
 ):
     def __init__(
@@ -256,7 +259,7 @@ class _TypedSequential(
         unpack_tuple: bool = False,
         unpack_dict: bool = False,
     ) -> None:
-        _TypedModule.__init__(self)
+        TypedModule.__init__(self)
         nn.Sequential.__init__(self, *args)
 
         self.__unpack_tuple = unpack_tuple
@@ -292,9 +295,9 @@ class _TypedSequential(
 
 class EModule(
     Generic[InType, OutType],
-    _ConfigModule,
-    _TypedModule[InType, OutType],
-    _ProxyDeviceModule,
+    ConfigModule,
+    TypedModule[InType, OutType],
+    ProxyDeviceModule,
 ):
     """Enriched torch.nn.Module with proxy device, forward typing and automatic configuration detection from attributes.
 
@@ -315,13 +318,13 @@ class EModule(
             device_detect_mode: Enable automatic detection of this
         """
         # ConfigModule must be first
-        _ConfigModule.__init__(
+        ConfigModule.__init__(
             self,
             strict_load=strict_load,
             config_to_extra_repr=config_to_extra_repr,
         )
-        _TypedModule.__init__(self)
-        _ProxyDeviceModule.__init__(
+        TypedModule.__init__(self)
+        ProxyDeviceModule.__init__(
             self,
             device_detect_mode=device_detect_mode,
         )
@@ -352,7 +355,7 @@ class EModule(
 class ESequential(
     Generic[InType, OutType],
     EModule[InType, OutType],
-    _TypedSequential[InType, OutType],
+    TypedSequential[InType, OutType],
 ):
     """Enriched torch.nn.Sequential with proxy device, forward typing and automatic configuration detection from attributes.
 
@@ -547,7 +550,7 @@ class ESequential(
             config_to_extra_repr=config_to_extra_repr,
             device_detect_mode=device_detect_mode,
         )
-        _TypedSequential.__init__(
+        TypedSequential.__init__(
             self,
             *args,
             unpack_tuple=unpack_tuple,
@@ -559,15 +562,15 @@ def __test_typing_1() -> None:
     import torch
     from torch import Tensor
 
-    class LayerA(_TypedModule[Tensor, Tensor]):
+    class LayerA(TypedModule[Tensor, Tensor]):
         def forward(self, x: Tensor) -> Tensor:
             return x * x
 
-    class LayerB(_TypedModule[Tensor, int]):
+    class LayerB(TypedModule[Tensor, int]):
         def forward(self, x: Tensor) -> int:
             return int(x.sum().item())
 
-    class LayerC(_TypedModule[int, Tensor]):
+    class LayerC(TypedModule[int, Tensor]):
         def forward(self, x: int) -> Tensor:
             return torch.as_tensor(x)
 
@@ -602,7 +605,7 @@ def __test_typing_1() -> None:
 
     assert isinstance(y, str)
 
-    class LayerF(_TypedModule[bool, str]):
+    class LayerF(TypedModule[bool, str]):
         def forward(self, x):
             return str(x)
 
