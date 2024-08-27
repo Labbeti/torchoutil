@@ -6,19 +6,21 @@ from typing import (
     ClassVar,
     Dict,
     Protocol,
+    Sized,
     Tuple,
     TypeVar,
     Union,
     runtime_checkable,
 )
 
-T = TypeVar("T", covariant=True)
-
 NoneType = type(None)
+EllipsisType = type(...)
+
 BuiltinCollection = Union[list, tuple, dict, set, frozenset]
 BuiltinNumber = Union[int, float, bool, complex]
 BuiltinScalar = Union[int, float, bool, complex, str, bytes, NoneType]
 
+T = TypeVar("T", covariant=True)
 TBuiltinScalar = TypeVar("TBuiltinScalar", bound=BuiltinScalar)
 
 
@@ -60,3 +62,12 @@ class SupportsLenAndGetItem(Protocol[T]):
 
     def __getitem__(self, idx) -> T:
         ...
+
+
+@runtime_checkable
+class SupportsBool(Protocol):
+    def __bool__(self) -> bool:
+        ...
+
+
+BoolLike = Union[SupportsBool, Sized]

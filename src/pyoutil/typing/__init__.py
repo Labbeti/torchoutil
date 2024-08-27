@@ -2,10 +2,12 @@
 # -*- coding: utf-8 -*-
 
 from .classes import (
+    BoolLike,
     BuiltinCollection,
     BuiltinNumber,
     BuiltinScalar,
     DataclassInstance,
+    EllipsisType,
     NamedTupleInstance,
     NoneType,
     SizedIterable,
