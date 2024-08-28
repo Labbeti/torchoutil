@@ -11,6 +11,7 @@ from .classes import (
     NamedTupleInstance,
     NoneType,
     SizedIterable,
+    TBuiltinNumber,
     TBuiltinScalar,
 )
 from .guards import (
