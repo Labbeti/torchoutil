@@ -18,7 +18,7 @@ class ClassLike(Protocol):
     __qualname__: str
 
 
-def get_fullname(obj: Any, *, inst_suffix: str = "(...)") -> str:
+def get_fullname(x: Any, *, inst_suffix: str = "(...)") -> str:
     """Returns the classname of an object with parent modules.
 
     Args:
@@ -42,11 +42,12 @@ def get_fullname(obj: Any, *, inst_suffix: str = "(...)") -> str:
     >>> get_fullname(A.f)
     ... '__main__.A.f'
     """
-    if isinstance(obj, ClassLike):
-        name = f"{obj.__module__}.{obj.__qualname__}"
-    elif inspect.ismodule(obj):
-        name = obj.__name__
+    # note: inspect.ismethod check is required for python 3.12
+    if isinstance(x, ClassLike) or inspect.ismethod(x):
+        name = f"{x.__module__}.{x.__qualname__}"
+    elif inspect.ismodule(x):
+        name = x.__name__
     else:
-        cls = obj.__class__
+        cls = x.__class__
         name = f"{cls.__module__}.{cls.__qualname__}{inst_suffix}"
     return name
