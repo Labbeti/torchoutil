@@ -42,7 +42,10 @@ def tensor_to_numpy(
             f"Invalid argument {force=} for {get_current_fn_name()}. (expected True because torrch version is below 1.13)"
         )
 
-    return x.cpu().numpy(**kwargs).astype(dtype=dtype)
+    x_arr: np.ndarray = x.cpu().numpy(**kwargs)
+    if dtype is not None:
+        x_arr = x_arr.astype(dtype=dtype)
+    return x_arr
 
 
 def numpy_to_tensor(
