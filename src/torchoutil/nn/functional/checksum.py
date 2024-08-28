@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import math
 import struct
 import zlib
 from typing import Any, Iterable, Mapping, Union
@@ -74,28 +75,52 @@ def checksum_mapping(x: Mapping[Any, Any], **kwargs) -> int:
     return checksum_iterable(x.items(), **kwargs)
 
 
-def checksum_module(x: nn.Module, *, only_trainable: bool = False, **kwargs) -> int:
+def checksum_module(
+    x: nn.Module,
+    *,
+    only_trainable: bool = False,
+    with_names: bool = False,
+    training: bool = False,
+    **kwargs,
+) -> int:
     """Compute a simple checksum over module parameters."""
-    kwargs["only_trainable"] = only_trainable
-    iterator = (p for p in x.parameters() if not only_trainable or p.requires_grad)
-    return checksum_iterable(iterator, **kwargs)
+    training = x.training
+    x.train(training)
+
+    if with_names:
+        iterator = (
+            (n, p)
+            for n, p in x.named_parameters()
+            if not only_trainable or p.requires_grad
+        )
+    else:
+        iterator = (p for p in x.parameters() if not only_trainable or p.requires_grad)
+
+    csum = checksum_iterable(iterator, **kwargs)
+    x.train(training)
+    return csum
 
 
 # Intermediate functions
+@torch.inference_mode()
 def checksum_tensor(x: Tensor, **kwargs) -> int:
     """Compute a simple checksum of a tensor. Order of values matter for the checksum."""
     if x.ndim > 0:
-        x = x.detach().flatten().cpu()
+        x = x.flatten().cpu()
 
         if x.dtype == torch.bool:
-            dtype = torch.int
+            range_dtype = torch.int
         elif x.is_complex():
-            dtype = x.real.dtype
+            range_dtype = x.real.dtype
         else:
-            dtype = x.dtype
+            range_dtype = x.dtype
 
-        x = x * torch.arange(1, len(x) + 1, device=x.device, dtype=dtype)
-        x = x.nansum()
+        if x.is_floating_point() or x.is_complex():
+            nan_csum = checksum_float(math.nan, **kwargs)
+            x = x.nan_to_num(nan_csum)
+
+        arange = torch.arange(1, len(x) + 1, device=x.device, dtype=range_dtype)
+        x = (x * arange).sum()
 
     xitem = x.item()
     csum = checksum_number(xitem, **kwargs)
@@ -143,8 +168,7 @@ def checksum_bytes(x: bytes, **kwargs) -> int:
 
 
 def checksum_float(x: float, **kwargs) -> int:
-    xbytes = struct.pack("!f", x)
-    xint = struct.unpack("!i", xbytes)[0]
+    xint = _interpret_float_as_int(x)
     return xint + kwargs.get("accumulator", 0)
 
 
@@ -154,3 +178,9 @@ def checksum_int(x: int, **kwargs) -> int:
 
 def checksum_none(x: None, **kwargs) -> int:
     return kwargs.get("accumulator", 0)
+
+
+def _interpret_float_as_int(x: float) -> int:
+    xbytes = struct.pack("!f", x)
+    xint = struct.unpack("!i", xbytes)[0]
+    return xint
