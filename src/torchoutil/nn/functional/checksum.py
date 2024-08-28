@@ -106,8 +106,6 @@ def checksum_module(
 def checksum_tensor(x: Tensor, **kwargs) -> int:
     """Compute a simple checksum of a tensor. Order of values matter for the checksum."""
     if x.ndim > 0:
-        x = x.flatten().cpu()
-
         if x.dtype == torch.bool:
             range_dtype = torch.int
         elif x.is_complex():
@@ -119,8 +117,11 @@ def checksum_tensor(x: Tensor, **kwargs) -> int:
             nan_csum = checksum_float(math.nan, **kwargs)
             x = x.nan_to_num(nan_csum)
 
-        arange = torch.arange(1, len(x) + 1, device=x.device, dtype=range_dtype)
-        x = (x * arange).sum()
+        x = x.flatten()
+        arange = torch.arange(1, x.nelement() + 1, device=x.device, dtype=range_dtype)
+        x = x + arange
+        x = x * arange
+        x = x.sum()
 
     xitem = x.item()
     csum = checksum_number(xitem, **kwargs)
