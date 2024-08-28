@@ -57,9 +57,8 @@ from torchoutil.types.tensor_typing import (  # noqa: F401
     Tensor3D,
 )
 
-r"""/!\ These type hints meants for type annotation only, not for runtime checks.
+r"""/!\ The following type hints meants for type annotation only, not for runtime checks.
 """
-
 
 NumpyNumberLike = Union[np.ndarray, np.number]
 NumpyScalarLike = Union[np.ndarray, np.generic]
