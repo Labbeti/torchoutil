@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import inspect
-from typing import Any, Protocol, runtime_checkable
+from typing import Any
 
 
 def get_current_fn_name() -> str:
@@ -10,12 +10,6 @@ def get_current_fn_name() -> str:
         return inspect.currentframe().f_back.f_code.co_name  # type: ignore
     except AttributeError:
         return ""
-
-
-@runtime_checkable
-class ClassLike(Protocol):
-    __module__: str
-    __qualname__: str
 
 
 def get_fullname(x: Any, *, inst_suffix: str = "(...)") -> str:
@@ -42,8 +36,7 @@ def get_fullname(x: Any, *, inst_suffix: str = "(...)") -> str:
     >>> get_fullname(A.f)
     ... '__main__.A.f'
     """
-    # note: inspect.ismethod check is required for python 3.12
-    if isinstance(x, ClassLike) or inspect.ismethod(x):
+    if hasattr(x, "__module__") and hasattr(x, "__qualname__"):
         name = f"{x.__module__}.{x.__qualname__}"
     elif inspect.ismodule(x):
         name = x.__name__
