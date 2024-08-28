@@ -25,6 +25,9 @@ class StrEnum(str, Enum):
             f"Invalid argument {value=}. (expected one of {tuple(members)})"
         )
 
+    def __str__(self) -> str:
+        return self.name
+
     def __eq__(self, other: object) -> bool:
         other = other.value if isinstance(other, Enum) else str(other)
         return self.value.lower() == other.lower()  # type: ignore
