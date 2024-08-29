@@ -21,7 +21,13 @@ from . import nn as nn
 from . import optim as optim
 from . import utils as utils
 from .nn.functional import *
-from .types.classes import Device, DeviceLike, DTypeLike, GeneratorLike
+from .types.classes import (
+    CUDA_IF_AVAILABLE,
+    Device,
+    DeviceLike,
+    DTypeLike,
+    GeneratorLike,
+)
 from .types.tensor_typing import (
     BoolTensor,
     BoolTensor0D,
