@@ -37,6 +37,7 @@ T = TypeVar("T", covariant=True)
 InType = TypeVar("InType", covariant=False, contravariant=True)
 OutType = TypeVar("OutType", covariant=True, contravariant=False)
 OutType2 = TypeVar("OutType2", covariant=True, contravariant=False)
+OutType3 = TypeVar("OutType3", covariant=False, contravariant=False)
 
 DeviceDetectMode = Literal["proxy", "first_param", "none"]
 DEVICE_DETECT_MODES = ("proxy", "first_param", "none")
@@ -62,6 +63,12 @@ class SupportsTypedForward(Protocol[InType, OutType]):
         ...
 
 
+TypedModuleLike = Union[
+    SupportsTypedForward[InType, OutType],
+    "TypedModule[InType, OutType]",
+]
+
+
 class ProxyDeviceModule(nn.Module):
     def __init__(
         self,
@@ -74,11 +81,11 @@ class ProxyDeviceModule(nn.Module):
             )
 
         super().__init__()
-        self.__device_detect_mode = device_detect_mode
+        self.__device_detect_mode: DeviceDetectMode = device_detect_mode
         self.register_buffer("__proxy", torch.empty((0,)), persistent=False)
 
     @property
-    def device_detect_mode(self) -> str:
+    def device_detect_mode(self) -> DeviceDetectMode:
         return self.__device_detect_mode
 
     def get_device(self) -> Optional[torch.device]:
@@ -218,12 +225,6 @@ class ConfigModule(nn.Module):
         return isinstance(value, cls._CONFIG_TYPES) and all(
             re.match(exclude_i, name) is None for exclude_i in cls._CONFIG_EXCLUDE
         )
-
-
-TypedModuleLike = Union[
-    SupportsTypedForward[InType, OutType],
-    "TypedModule[InType, OutType]",
-]
 
 
 class TypedModule(Generic[InType, OutType], nn.Module):
@@ -575,13 +576,41 @@ class ESequential(
 
 
 class EModuleList(
-    Generic[InType, OutType],
-    EModule[InType, OutType],
+    Generic[InType, OutType3],
+    EModule[InType, List[OutType3]],
     nn.ModuleList,
 ):
+    """Enriched torch.nn.ModuleList with proxy device, forward typing and automatic configuration detection from attributes.
+
+    Designed to work with `torchoutil.nn.EModule` instances.
+    The default behaviour is the same than PyTorch ModuleList class, except for the forward call which returns a list containing the output of each model called separately.
+    """
+
+    @overload
+    def __init__(
+        self,
+        modules: Optional[Iterable[TypedModuleLike[InType, OutType3]]] = None,
+        *,
+        strict_load: bool = False,
+        config_to_extra_repr: bool = False,
+        device_detect_mode: DeviceDetectMode = "proxy",
+    ) -> None:
+        ...
+
+    @overload
     def __init__(
         self,
         modules: Optional[Iterable[nn.Module]] = None,
+        *,
+        strict_load: bool = False,
+        config_to_extra_repr: bool = False,
+        device_detect_mode: DeviceDetectMode = "proxy",
+    ) -> None:
+        ...
+
+    def __init__(
+        self,
+        modules=None,
         *,
         strict_load: bool = False,
         config_to_extra_repr: bool = False,
@@ -595,15 +624,46 @@ class EModuleList(
         )
         nn.ModuleList.__init__(self, modules)
 
+    def forward(self, *args: InType, **kwargs: InType) -> List[OutType3]:
+        return [module(*args, **kwargs) for module in self]
+
 
 class EModuleDict(
-    Generic[InType, OutType],
-    EModule[InType, OutType],
+    Generic[InType, OutType3],
+    EModule[InType, Dict[str, OutType3]],
     nn.ModuleDict,
 ):
+    """Enriched torch.nn.ModuleDict with proxy device, forward typing and automatic configuration detection from attributes.
+
+    Designed to work with `torchoutil.nn.EModule` instances.
+    The default behaviour is the same than PyTorch ModuleDict class, except for the forward call which returns a dict containing the output of each model called separately.
+    """
+
+    @overload
+    def __init__(
+        self,
+        modules: Optional[Mapping[str, TypedModuleLike[InType, OutType3]]] = None,
+        *,
+        strict_load: bool = False,
+        config_to_extra_repr: bool = False,
+        device_detect_mode: DeviceDetectMode = "proxy",
+    ) -> None:
+        ...
+
+    @overload
     def __init__(
         self,
         modules: Optional[Mapping[str, nn.Module]] = None,
+        *,
+        strict_load: bool = False,
+        config_to_extra_repr: bool = False,
+        device_detect_mode: DeviceDetectMode = "proxy",
+    ) -> None:
+        ...
+
+    def __init__(
+        self,
+        modules=None,
         *,
         strict_load: bool = False,
         config_to_extra_repr: bool = False,
@@ -616,6 +676,9 @@ class EModuleDict(
             device_detect_mode=device_detect_mode,
         )
         nn.ModuleDict.__init__(self, modules)
+
+    def forward(self, *args: InType, **kwargs: InType) -> Dict[str, OutType3]:
+        return {name: module(*args, **kwargs) for name, module in self.items()}
 
 
 def __test_typing_1() -> None:

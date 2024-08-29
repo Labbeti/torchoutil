@@ -8,6 +8,7 @@ from typing import (
     Any,
     Callable,
     Dict,
+    Generator,
     Iterable,
     List,
     Literal,
@@ -577,3 +578,23 @@ def flatten(
             raise TypeError(f"Invalid argument type {type(x)=}.")
 
     return flatten_impl(x, start_dim, end_dim)
+
+
+def recursive_generator(x: Any) -> Generator[Tuple[Any, int, int], None, None]:
+    def recursive_generator_impl(
+        x: Any,
+        i: int,
+        deep: int,
+    ) -> Generator[Tuple[Any, int, int], None, None]:
+        if isinstance(x, Iterable):
+            for j, xj in enumerate(x):
+                if xj == x:
+                    yield xj, i, deep
+                    return
+                else:
+                    yield from recursive_generator_impl(xj, j, deep + 1)
+        else:
+            yield x, i, deep
+        return
+
+    return recursive_generator_impl(x, 0, 0)
