@@ -294,7 +294,10 @@ def ranks(x: Tensor, dim: int = -1, descending: bool = False) -> Tensor:
 
 def nelement(x: Union[ScalarLike, Tensor, np.ndarray, Iterable]) -> int:
     """Returns the number of elements in Tensor-like object."""
-    return prod(shape(x))
+    if isinstance(x, Tensor):
+        return x.nelement()
+    else:
+        return prod(shape(x))
 
 
 def _search_ndim(

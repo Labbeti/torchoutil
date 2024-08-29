@@ -1,17 +1,22 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from typing import Callable, Generic, Optional, TypeVar, Union
+from typing import Callable, Generic, Iterator, Optional, TypeVar, Union
 
-from torch.utils.data.dataset import Dataset, Subset
+from torch.utils.data.dataset import Dataset, IterableDataset, Subset
 
-from pyoutil.typing.classes import SupportsLenAndGetItem
+from pyoutil.typing.classes import SupportsLenAndGetItem, SupportsLenAndGetItemAndIter
 
 T = TypeVar("T", covariant=False)
 U = TypeVar("U", covariant=False)
 
 SizedDatasetLike = SupportsLenAndGetItem
-TSizedDatasetLike = TypeVar("TSizedDatasetLike", bound=SizedDatasetLike)
+
+T_SizedDatasetLike = TypeVar("T_SizedDatasetLike", bound=SupportsLenAndGetItem)
+T_Dataset = TypeVar("T_Dataset", bound=Dataset)
+T_SizedIterableDataset = TypeVar(
+    "T_SizedIterableDataset", bound=SupportsLenAndGetItemAndIter
+)
 
 
 class EmptyDataset(Dataset[None]):
@@ -24,10 +29,10 @@ class EmptyDataset(Dataset[None]):
         return 0
 
 
-class Wrapper(Generic[TSizedDatasetLike, T], Dataset[T]):
+class Wrapper(Generic[T_SizedDatasetLike, T], Dataset[T]):
     def __init__(
         self,
-        dataset: TSizedDatasetLike,
+        dataset: T_SizedDatasetLike,
     ) -> None:
         super().__init__()
         self.dataset = dataset
@@ -49,10 +54,29 @@ class Wrapper(Generic[TSizedDatasetLike, T], Dataset[T]):
         return dataset
 
 
-class TransformWrapper(Generic[TSizedDatasetLike, T, U], Wrapper[TSizedDatasetLike, U]):
+class IterableWrapper(
+    Generic[T_SizedIterableDataset, T],
+    IterableDataset[T],
+    Wrapper[T_SizedIterableDataset, T],
+):
     def __init__(
         self,
-        dataset: TSizedDatasetLike,
+        dataset: T_SizedIterableDataset,
+    ) -> None:
+        IterableDataset.__init__(self)
+        Wrapper.__init__(self, dataset)
+
+    def __iter__(self) -> Iterator[T]:
+        return iter(self.dataset)
+
+
+class TransformWrapper(
+    Generic[T_SizedDatasetLike, T, U],
+    Wrapper[T_SizedDatasetLike, U],
+):
+    def __init__(
+        self,
+        dataset: T_SizedDatasetLike,
         transform: Optional[Callable[[T], U]],
         condition: Optional[Callable[[T, int], bool]] = None,
     ) -> None:

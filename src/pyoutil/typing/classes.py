@@ -5,6 +5,7 @@ from typing import (
     Any,
     ClassVar,
     Dict,
+    Iterator,
     Protocol,
     Sized,
     Tuple,
@@ -40,7 +41,7 @@ class NamedTupleInstance(Protocol):
     def _asdict(self) -> Dict[str, Any]:
         ...
 
-    def __getitem__(self, idx):
+    def __getitem__(self, idx, /):
         ...
 
     def __len__(self) -> int:
@@ -61,7 +62,19 @@ class SupportsLenAndGetItem(Protocol[T]):
     def __len__(self) -> int:
         ...
 
-    def __getitem__(self, idx) -> T:
+    def __getitem__(self, idx, /) -> T:
+        ...
+
+
+@runtime_checkable
+class SupportsLenAndGetItemAndIter(Protocol[T]):
+    def __len__(self) -> int:
+        ...
+
+    def __getitem__(self, idx, /) -> T:
+        ...
+
+    def __iter__(self) -> Iterator[T]:
         ...
 
 

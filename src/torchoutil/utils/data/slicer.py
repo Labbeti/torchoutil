@@ -11,7 +11,7 @@ from torch.utils.data.dataset import Dataset
 from pyoutil.typing import is_iterable_bool, is_iterable_int
 from torchoutil.types import is_bool_tensor1d, is_integer_tensor1d
 from torchoutil.types._hints import BoolTensor1D, Tensor1D
-from torchoutil.utils.data.dataset import TSizedDatasetLike, Wrapper
+from torchoutil.utils.data.dataset import T_SizedDatasetLike, Wrapper
 
 T = TypeVar("T", covariant=False)
 U = TypeVar("U", covariant=False)
@@ -115,13 +115,13 @@ class DatasetSlicer(Generic[T], ABC, Dataset[T]):
 
 
 class DatasetSlicerWrapper(
-    Generic[TSizedDatasetLike, T],
+    Generic[T_SizedDatasetLike, T],
     DatasetSlicer[T],
-    Wrapper[TSizedDatasetLike, T],
+    Wrapper[T_SizedDatasetLike, T],
 ):
     def __init__(
         self,
-        dataset: TSizedDatasetLike,
+        dataset: T_SizedDatasetLike,
         *,
         add_slice_support: bool = True,
         add_indices_support: bool = True,

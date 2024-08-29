@@ -22,6 +22,7 @@ from .collections import (
     intersect_lists,
     list_dict_to_dict_list,
     prod,
+    recursive_generator,
     sorted_dict,
     unflat_dict_of_dict,
     unflat_list_of_list,
@@ -32,7 +33,7 @@ from .csv import load_csv, to_csv
 from .dataclasses import get_defaults_values
 from .datetime import now_iso
 from .enum import StrEnum
-from .functools import identity
+from .functools import Compose, compose, identity
 from .hashlib import hash_file
 from .importlib import package_is_available, reimport_modules
 from .inspect import get_current_fn_name, get_fullname
