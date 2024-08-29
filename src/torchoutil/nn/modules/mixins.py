@@ -10,9 +10,11 @@ from typing import (
     ClassVar,
     Dict,
     Generic,
+    Iterable,
     Iterator,
     List,
     Literal,
+    Mapping,
     Optional,
     OrderedDict,
     Protocol,
@@ -43,7 +45,13 @@ DEVICE_DETECT_MODES = ("proxy", "first_param", "none")
 pylog = logging.getLogger(__name__)
 
 
-__all__ = ["DeviceDetectMode", "EModule", "ESequential"]
+__all__ = [
+    "DeviceDetectMode",
+    "EModule",
+    "ESequential",
+    "EModuleList",
+    "EModuleDict",
+]
 
 
 class SupportsTypedForward(Protocol[InType, OutType]):
@@ -564,6 +572,50 @@ class ESequential(
             unpack_tuple=unpack_tuple,
             unpack_dict=unpack_dict,
         )
+
+
+class EModuleList(
+    Generic[InType, OutType],
+    EModule[InType, OutType],
+    nn.ModuleList,
+):
+    def __init__(
+        self,
+        modules: Optional[Iterable[nn.Module]] = None,
+        *,
+        strict_load: bool = False,
+        config_to_extra_repr: bool = False,
+        device_detect_mode: DeviceDetectMode = "proxy",
+    ) -> None:
+        EModule.__init__(
+            self,
+            strict_load=strict_load,
+            config_to_extra_repr=config_to_extra_repr,
+            device_detect_mode=device_detect_mode,
+        )
+        nn.ModuleList.__init__(self, modules)
+
+
+class EModuleDict(
+    Generic[InType, OutType],
+    EModule[InType, OutType],
+    nn.ModuleDict,
+):
+    def __init__(
+        self,
+        modules: Optional[Mapping[str, nn.Module]] = None,
+        *,
+        strict_load: bool = False,
+        config_to_extra_repr: bool = False,
+        device_detect_mode: DeviceDetectMode = "proxy",
+    ) -> None:
+        EModule.__init__(
+            self,
+            strict_load=strict_load,
+            config_to_extra_repr=config_to_extra_repr,
+            device_detect_mode=device_detect_mode,
+        )
+        nn.ModuleDict.__init__(self, modules)
 
 
 def __test_typing_1() -> None:
