@@ -315,7 +315,7 @@ class EModule(
         Args:
             strict_load: If True, Module config will be compared during load_state_dict(...) method call and raises a ValueError. defaults to False.
             config_to_extra_repr: If True, add config to extra repr. defaults to False.
-            device_detect_mode: Enable automatic detection of this
+            device_detect_mode: Enable automatic detection of the module device. defaults to "proxy".
         """
         # ConfigModule must be first
         ConfigModule.__init__(
@@ -544,6 +544,14 @@ class ESequential(
         config_to_extra_repr: bool = False,
         device_detect_mode: DeviceDetectMode = "proxy",
     ) -> None:
+        """
+        Args:
+            unpack_tuple: If True, the outputs of a module that returns a tuple at position i will be unpacked for positional arguments for the next module at position i+1. defaults to False.
+            unpack_tuple: If True, the outputs of a module that returns a dict at position i will be unpacked for keywords arguments for the next module at position i+1. defaults to False.
+            strict_load: If True, Module config will be compared during load_state_dict(...) method call and raises a ValueError. defaults to False.
+            config_to_extra_repr: If True, add config to extra repr. defaults to False.
+            device_detect_mode: Enable automatic detection of the module device. defaults to "proxy".
+        """
         EModule.__init__(
             self,
             strict_load=strict_load,
