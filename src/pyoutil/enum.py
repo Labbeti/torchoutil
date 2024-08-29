@@ -30,7 +30,7 @@ class StrEnum(str, Enum):
 
     def __eq__(self, other: object) -> bool:
         other = other.value if isinstance(other, Enum) else str(other)
-        return self.value.lower() == other.lower()  # type: ignore
+        return self.value == other  # type: ignore
 
     def __hash__(self) -> int:
-        return hash(self.value.lower())
+        return hash(self.value)

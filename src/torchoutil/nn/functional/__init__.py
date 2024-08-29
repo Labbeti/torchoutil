@@ -21,7 +21,7 @@ from .checksum import (
     checksum_tensor,
 )
 from .crop import crop_dim, crop_dims
-from .get import CUDA_IF_AVAILABLE, get_device, get_dtype, get_generator
+from .get import get_device, get_dtype, get_generator
 from .indices import (
     get_inverse_perm,
     get_perm_indices,

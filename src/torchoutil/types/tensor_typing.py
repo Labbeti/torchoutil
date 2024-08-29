@@ -6,7 +6,6 @@
 Note: torchoutil.FloatTensor != torch.FloatTensor but issubclass(torchoutil.FloatTensor, torch.FloatTensor) is False because torch.FloatTensor cannot be subclassed
 """
 
-from enum import auto
 from typing import (
     Any,
     Dict,
@@ -15,18 +14,21 @@ from typing import (
     List,
     Literal,
     Optional,
+    Sequence,
     Type,
     TypeVar,
     Union,
+    overload,
 )
 
 import torch
 from torch._C import _TensorMeta
-from torch.types import Device, _bool
+from torch.types import Device
 
-from pyoutil import BuiltinNumber, StrEnum, TBuiltinNumber
+from pyoutil import BuiltinNumber, TBuiltinNumber
 from torchoutil.nn import functional as F
-from torchoutil.types.classes import TORCH_DTYPES
+from torchoutil.types.classes import DeviceLike, DTypeLike
+from torchoutil.types.dtype_typing import DTypeEnum
 
 T_DType = TypeVar("T_DType", "DTypeEnum", None)
 T_NDim = TypeVar("T_NDim", bound=int)
@@ -50,64 +52,6 @@ _TORCH_BASE_CLASSES: Final[Dict[str, Type]] = {
     "long": torch.LongTensor,
     "bool": torch.BoolTensor,
 }
-
-
-class DTypeEnum(StrEnum):
-    """Enum of torch dtypes."""
-
-    float32 = auto()
-    float = auto()  # float32
-    float64 = auto()
-    double = auto()  # float64
-    float16 = auto()
-    bfloat16 = auto()
-    half = auto()  # float16
-    uint8 = auto()  # byte
-    int8 = auto()  # char
-    int16 = auto()
-    short = auto()  # int16
-    int32 = auto()
-    int = auto()  # int32
-    int64 = auto()
-    long = auto()  # int64
-    complex32 = auto()
-    chalf = auto()  # complex32
-    complex64 = auto()
-    cfloat = auto()  # complex64
-    complex128 = auto()
-    cdouble = auto()  # complex128
-    quint8 = auto()
-    qint8 = auto()
-    qint32 = auto()
-    bool = auto()
-    quint4x2 = auto()
-    quint2x4 = auto()
-
-    @classmethod
-    def from_dtype(cls, dtype: torch.dtype) -> "DTypeEnum":
-        for name, dtype_ in TORCH_DTYPES.items():
-            if dtype_ == dtype:
-                return DTypeEnum.from_str(name)
-
-        raise ValueError(
-            f"Invalid argument {dtype=}. (expected one of {tuple(TORCH_DTYPES.keys())})"
-        )
-
-    @property
-    def dtype(self) -> torch.dtype:
-        return TORCH_DTYPES[self.name]
-
-    @property
-    def is_floating_point(self) -> _bool:
-        return self.dtype.is_floating_point
-
-    @property
-    def is_complex(self) -> _bool:
-        return self.dtype.is_complex
-
-    @property
-    def is_signed(self) -> _bool:
-        return self.dtype.is_signed
 
 
 class _TensorNDMeta(Generic[T_DType, T_NDim, TBuiltinNumber], _TensorMeta):
@@ -167,16 +111,38 @@ class _TensorNDMeta(Generic[T_DType, T_NDim, TBuiltinNumber], _TensorMeta):
 
 
 class _TensorNDBase(Generic[T_DType, T_NDim, TBuiltinNumber], torch.Tensor):
+    @overload
     def __new__(
         cls: Type[T_Tensor],
-        data: Any = None,
+        *dims: int,
+        dtype: DTypeLike = None,
+        device: DeviceLike = None,
+    ) -> T_Tensor:
+        ...
+
+    @overload
+    def __new__(
+        cls: Type[T_Tensor],
+        data: Union[TBuiltinNumber, Sequence],
+        /,
         *,
-        dtype: Optional[torch.dtype] = None,
-        device: Device = None,
+        dtype: DTypeLike = None,
+        device: DeviceLike = None,
+    ) -> T_Tensor:
+        ...
+
+    def __new__(
+        cls: Type[T_Tensor],
+        *args: Any,
+        dtype: DTypeLike = None,
+        device: DeviceLike = None,
     ) -> T_Tensor:
         self_generic_args = cls.__orig_class__.__args__  # type: ignore
 
-        # Check dtype
+        dtype = F.get_dtype(dtype)
+        device = F.get_device(device)
+
+        # Get dtype
         self_dtype: Union[DTypeEnum, None] = self_generic_args[0].__args__[0]
         if self_dtype is None:
             pass
@@ -186,12 +152,42 @@ class _TensorNDBase(Generic[T_DType, T_NDim, TBuiltinNumber], torch.Tensor):
             msg = f"Invalid argument {dtype=} for {cls.__name__}. (expected {self_dtype.dtype})"
             raise ValueError(msg)
 
-        # Check ndim
+        # Get ndim
         self_ndim_lit = self_generic_args[1]
         if self_ndim_lit is not _DEFAULT_T_NDIM:
             self_ndim: Optional[int] = self_ndim_lit.__args__[0]
         else:
             self_ndim: Optional[int] = None
+
+        # Sanity checks
+        is_int_args = all(isinstance(arg, int) for arg in args)
+        if self_ndim is None:
+            if len(args) == 0:
+                size = (0,)
+                data = None
+            elif is_int_args:
+                size = args
+                data = None
+            elif len(args) == 1 and not isinstance(args[0], int):
+                size = None
+                data = args[0]
+            else:
+                msg = f"Invalid arguments {args=}. (expected only ints or one sequence of data)"
+                raise ValueError(msg)
+
+        elif self_ndim == len(args) and is_int_args:
+            size = args
+            data = None
+        elif len(args) == 1:
+            size = None
+            data = args[0]
+        elif len(args) == 0:
+            size = [0] * self_ndim
+            data = None
+        else:
+            msg = f"Invalid arguments {args=}. (expected {self_ndim} ints or one sequence of data)"
+            raise ValueError(msg)
+        del args
 
         if data is not None and self_ndim is not None:
             valid, ndim = F.ndim(data, return_valid=True)
@@ -204,10 +200,39 @@ class _TensorNDBase(Generic[T_DType, T_NDim, TBuiltinNumber], torch.Tensor):
 
         if data is not None:
             return torch.as_tensor(data=data, dtype=dtype, device=device)  # type: ignore
-        elif self_ndim is not None:
-            return torch.empty([0] * self_ndim, dtype=dtype, device=device)  # type: ignore
+        elif size is not None:
+            return torch.empty(size, dtype=dtype, device=device)  # type: ignore
         else:
-            return torch.empty([], dtype=dtype, device=device)  # type: ignore
+            msg = f"Internal error: found {data=} and {size=} in {cls.__name__}."
+            raise RuntimeError(msg)
+
+    @overload
+    def __init__(
+        self,
+        *dims: int,
+        dtype: Optional[torch.dtype] = None,
+        device: Device = None,
+    ) -> None:
+        ...
+
+    @overload
+    def __init__(
+        self,
+        data: Union[TBuiltinNumber, Sequence],
+        /,
+        *,
+        dtype: Optional[torch.dtype] = None,
+        device: Device = None,
+    ) -> None:
+        ...
+
+    def __init__(
+        self,
+        *args: Any,
+        dtype: Optional[torch.dtype] = None,
+        device: Device = None,
+    ) -> None:
+        ...
 
     ndim: T_NDim
 

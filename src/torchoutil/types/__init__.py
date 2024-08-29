@@ -5,7 +5,15 @@ from torch.types import *
 
 from pyoutil.typing import *
 
-from .classes import ACCEPTED_NUMPY_DTYPES, TORCH_DTYPES, np, numpy
+from .classes import (
+    ACCEPTED_NUMPY_DTYPES,
+    CUDA_IF_AVAILABLE,
+    DeviceLike,
+    DTypeLike,
+    GeneratorLike,
+    np,
+    numpy,
+)
 from .guards import (
     is_bool_tensor,
     is_bool_tensor1d,

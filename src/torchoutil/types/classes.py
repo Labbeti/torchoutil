@@ -1,11 +1,21 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from typing import Dict, Final
+from typing import Literal, Union
 
 import torch
+from torch import Generator
+from torch.types import Device
 
+from torchoutil.types.dtype_typing import DTypeEnum
 from torchoutil.utils.packaging import _NUMPY_AVAILABLE
+
+DeviceLike = Union[Device, Literal["cuda_if_available"]]
+DTypeLike = Union[torch.dtype, None, Literal["default"], str, DTypeEnum]
+GeneratorLike = Union[int, Generator, None, Literal["default"]]
+
+CUDA_IF_AVAILABLE = "cuda_if_available"
+
 
 if not _NUMPY_AVAILABLE:
     from torchoutil.types import _numpy_placeholder as np  # noqa: F401
@@ -31,37 +41,3 @@ else:
         np.uint8,
         bool,
     )
-
-
-TORCH_DTYPES: Final[Dict[str, torch.dtype]] = {
-    "float32": torch.float32,
-    "float": torch.float,
-    "float64": torch.float64,
-    "double": torch.double,
-    "float16": torch.float16,
-    "bfloat16": torch.bfloat16,
-    "half": torch.half,
-    "uint8": torch.uint8,
-    "int8": torch.int8,
-    "int16": torch.int16,
-    "short": torch.short,
-    "int32": torch.int32,
-    "int": torch.int,
-    "int64": torch.int64,
-    "long": torch.long,
-    "complex32": torch.complex32,
-    "complex64": torch.complex64,
-    "cfloat": torch.cfloat,
-    "complex128": torch.complex128,
-    "cdouble": torch.cdouble,
-    "quint8": torch.quint8,
-    "qint8": torch.qint8,
-    "qint32": torch.qint32,
-    "bool": torch.bool,
-    "quint4x2": torch.quint4x2,
-}
-
-if hasattr(torch, "chalf"):
-    TORCH_DTYPES["chalf"] = torch.chalf
-if hasattr(torch, "quint2x4"):
-    TORCH_DTYPES["quint2x4"] = torch.quint2x4
