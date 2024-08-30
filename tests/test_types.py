@@ -8,8 +8,8 @@ from unittest import TestCase
 
 import torch
 
-from pyoutil.typing import is_builtin_number, is_builtin_scalar
 from torchoutil.nn import functional as F
+from torchoutil.pyoutil.typing import is_builtin_number, is_builtin_scalar
 from torchoutil.types import (
     is_number_like,
     is_numpy_number_like,

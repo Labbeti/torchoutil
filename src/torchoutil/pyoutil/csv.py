@@ -18,7 +18,10 @@ from typing import (
     overload,
 )
 
-from pyoutil.collections import dict_list_to_list_dict, list_dict_to_dict_list
+from torchoutil.pyoutil.collections import (
+    dict_list_to_list_dict,
+    list_dict_to_dict_list,
+)
 
 T = TypeVar("T")
 

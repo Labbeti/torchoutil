@@ -26,8 +26,8 @@ from torch import Tensor
 from torch.types import Device
 from typing_extensions import NotRequired
 
-from pyoutil.hashlib import HashName, hash_file
 from torchoutil.nn.functional.get import get_device
+from torchoutil.pyoutil.hashlib import HashName, hash_file
 
 T = TypeVar("T", bound=Hashable)
 

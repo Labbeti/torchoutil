@@ -9,7 +9,7 @@ from typing import Any, Dict, Iterable, List, Literal, Mapping, TypeVar, Union, 
 
 from torch import Tensor
 
-from pyoutil.typing import (
+from torchoutil.pyoutil.typing import (
     BuiltinNumber,
     is_builtin_scalar,
     is_dataclass_instance,

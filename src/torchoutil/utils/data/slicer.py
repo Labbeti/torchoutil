@@ -2,14 +2,14 @@
 # -*- coding: utf-8 -*-
 
 from abc import ABC, abstractmethod
-from typing import Any, Generic, Iterable, List, Tuple, TypeVar, Union, overload
+from typing import Any, Generic, Iterable, List, Tuple, TypeVar, Union, final, overload
 
 import torch
 from torch import Tensor
 from torch.utils.data.dataset import Dataset
 
-from pyoutil.typing import is_iterable_bool, is_iterable_int
-from pyoutil.typing.classes import SupportsLenAndGetItem
+from torchoutil.pyoutil.typing import is_iterable_bool, is_iterable_int
+from torchoutil.pyoutil.typing.classes import SupportsLenAndGetItem
 from torchoutil.types import is_bool_tensor1d, is_integer_tensor1d
 from torchoutil.types._hints import BoolTensor, BoolTensor1D, Tensor1D
 from torchoutil.utils.data.dataset import Wrapper
@@ -38,42 +38,44 @@ class DatasetSlicer(Generic[T], ABC, Dataset[T]):
         raise NotImplementedError
 
     @abstractmethod
-    def get_item(self, index, *args):
+    def get_item(self, idx, *args):
         raise NotImplementedError
 
     @overload
-    def __getitem__(self, index: int) -> T:
+    def __getitem__(self, idx: int, /) -> T:
         ...
 
     @overload
-    def __getitem__(self, index: Indices) -> List[T]:
+    def __getitem__(self, idx: Indices, /) -> List[T]:
         ...
 
     @overload
-    def __getitem__(self, index: Tuple[Any, ...]) -> Any:
+    def __getitem__(self, idx: Tuple[Any, ...], /) -> Any:
         ...
 
-    def __getitem__(self, index):
-        if isinstance(index, tuple) and len(index) > 1:
-            index, *args = index
+    @final
+    def __getitem__(self, idx, /):
+        if isinstance(idx, tuple) and len(idx) > 1:
+            idx, *args = idx
         else:
             args = ()
 
-        if isinstance(index, int) or (isinstance(index, Tensor) and index.ndim == 0):
-            return self.get_item(index, *args)
+        if isinstance(idx, int) or (isinstance(idx, Tensor) and idx.ndim == 0):
+            return self.get_item(idx, *args)
 
-        elif isinstance(index, slice):
-            return self.get_items_slice(index, *args)
+        elif isinstance(idx, slice):
+            return self.get_items_slice(idx, *args)
 
-        elif is_iterable_bool(index) or is_bool_tensor1d(index):
-            return self.get_items_mask(index, *args)
+        elif is_iterable_bool(idx) or is_bool_tensor1d(idx):
+            return self.get_items_mask(idx, *args)
 
-        elif is_iterable_int(index) or is_integer_tensor1d(index):
-            return self.get_items_indices(index, *args)
+        elif is_iterable_int(idx) or is_integer_tensor1d(idx):
+            return self.get_items_indices(idx, *args)
 
         else:
-            raise TypeError(f"Invalid argument type {type(index)=} with {args=}.")
+            raise TypeError(f"Invalid argument type {type(idx)=} with {args=}.")
 
+    @final
     def __getitems__(
         self,
         indices: Indices,
@@ -140,8 +142,8 @@ class DatasetSlicerWrapper(Generic[T], DatasetSlicer[T], Wrapper[T]):
     def __len__(self) -> int:
         return len(self.dataset)
 
-    def get_item(self, index: int, *args) -> T:
-        return self.dataset[index, *args]
+    def get_item(self, idx: int, *args) -> T:
+        return self.dataset[idx, *args]
 
 
 def _where_1d(mask: Union[Iterable[bool], BoolTensor1D]) -> Tensor1D:

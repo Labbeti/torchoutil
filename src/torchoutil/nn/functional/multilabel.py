@@ -10,9 +10,9 @@ import torch
 from torch import Tensor
 from torch.types import Device
 
-from pyoutil.typing import is_sequence_bool, is_sequence_int
 from torchoutil.nn.functional.get import get_device
 from torchoutil.nn.functional.pad import pad_and_stack_rec
+from torchoutil.pyoutil.typing import is_sequence_bool, is_sequence_int
 from torchoutil.types import is_number_like
 
 T = TypeVar("T")

@@ -7,8 +7,8 @@ from typing import Optional, Union
 
 from torch.hub import download_url_to_file
 
-from pyoutil.hashlib import hash_file  # noqa: F401
-from pyoutil.os import safe_rmdir  # noqa: F401
+from torchoutil.pyoutil.hashlib import hash_file  # noqa: F401
+from torchoutil.pyoutil.os import safe_rmdir  # noqa: F401
 
 pylog = logging.getLogger(__name__)
 

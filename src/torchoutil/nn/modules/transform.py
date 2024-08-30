@@ -16,7 +16,6 @@ from typing import (
 import torch
 from torch import Generator, Tensor, nn
 
-from pyoutil.collections import dump_dict
 from torchoutil.nn.functional.transform import (
     PadCropAlign,
     PadMode,
@@ -32,6 +31,7 @@ from torchoutil.nn.functional.transform import (
     shuffled,
     transform_drop,
 )
+from torchoutil.pyoutil.collections import dump_dict
 from torchoutil.types import np
 
 T = TypeVar("T")

@@ -7,7 +7,7 @@ from typing import Dict, Final
 import torch
 from torch.types import _bool
 
-from pyoutil.enum import StrEnum
+from torchoutil.pyoutil.enum import StrEnum
 
 TORCH_DTYPES: Final[Dict[str, torch.dtype]] = {
     "float32": torch.float32,

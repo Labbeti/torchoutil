@@ -23,7 +23,7 @@ from typing import (
 
 from typing_extensions import TypeGuard
 
-from pyoutil.typing import is_builtin_scalar, is_mapping_str
+from torchoutil.pyoutil.typing import is_builtin_scalar, is_mapping_str
 
 K = TypeVar("K", covariant=True)
 T = TypeVar("T", covariant=True)

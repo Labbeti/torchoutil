@@ -7,8 +7,8 @@ import torch
 from torch import Tensor
 from torch.types import Device
 
-from pyoutil import get_current_fn_name
 from torchoutil.nn.functional.get import get_device
+from torchoutil.pyoutil import get_current_fn_name
 from torchoutil.types import np
 from torchoutil.utils.packaging import torch_version_ge_1_13
 

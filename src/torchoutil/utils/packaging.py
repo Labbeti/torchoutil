@@ -7,8 +7,8 @@ from typing import Callable, Final, Iterable, Optional, Union
 
 import torch
 
-from pyoutil.functools import identity
-from pyoutil.importlib import package_is_available
+from torchoutil.pyoutil.functools import identity
+from torchoutil.pyoutil.importlib import package_is_available
 
 _EXTRAS_PACKAGES = (
     "numpy",

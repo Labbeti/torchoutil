@@ -7,8 +7,8 @@ from functools import partial
 from re import Pattern
 from typing import Any, Callable, Iterable, List, TypeVar, Union
 
-from pyoutil.collections import find
-from pyoutil.inspect import get_current_fn_name
+from torchoutil.pyoutil.collections import find
+from torchoutil.pyoutil.inspect import get_current_fn_name
 
 T = TypeVar("T")
 

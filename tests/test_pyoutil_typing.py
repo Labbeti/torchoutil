@@ -6,7 +6,11 @@ from dataclasses import dataclass
 from typing import NamedTuple
 from unittest import TestCase
 
-from pyoutil import is_dataclass_instance, is_iterable_str, is_namedtuple_instance
+from torchoutil.pyoutil import (
+    is_dataclass_instance,
+    is_iterable_str,
+    is_namedtuple_instance,
+)
 
 
 class TestTypeChecks(TestCase):

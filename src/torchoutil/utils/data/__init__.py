@@ -8,6 +8,7 @@ from .dataset import (
     EmptyDataset,
     IterableSubset,
     IterableWrapper,
+    Subset,
     TransformWrapper,
     Wrapper,
 )

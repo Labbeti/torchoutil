@@ -21,14 +21,14 @@ import torch
 from torch import LongTensor, Size, Tensor, nn
 from typing_extensions import TypeGuard
 
-from pyoutil.collections import all_eq, prod
-from pyoutil.typing import (
+from torchoutil.nn.functional.get import get_device
+from torchoutil.pyoutil.collections import all_eq, prod
+from torchoutil.pyoutil.typing import (
     BuiltinScalar,
     SizedIterable,
     is_builtin_number,
     is_builtin_scalar,
 )
-from torchoutil.nn.functional.get import get_device
 from torchoutil.types import (
     ACCEPTED_NUMPY_DTYPES,
     is_list_tensor,

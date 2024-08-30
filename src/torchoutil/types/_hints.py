@@ -3,7 +3,7 @@
 
 from typing import Union
 
-from pyoutil.typing import BuiltinNumber, BuiltinScalar
+from torchoutil.pyoutil.typing import BuiltinNumber, BuiltinScalar
 from torchoutil.types.classes import np
 from torchoutil.types.tensor_typing import (  # noqa: F401
     BoolTensor,

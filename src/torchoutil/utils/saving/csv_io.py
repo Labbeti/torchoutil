@@ -4,8 +4,8 @@
 from pathlib import Path
 from typing import Any, Iterable, Mapping, Union
 
-from pyoutil.csv import load_csv  # noqa: F401
-from pyoutil.csv import to_csv as to_csv_base
+from torchoutil.pyoutil.csv import load_csv  # noqa: F401
+from torchoutil.pyoutil.csv import to_csv as to_csv_base
 from torchoutil.utils.saving.common import to_builtin
 
 

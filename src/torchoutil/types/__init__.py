@@ -3,7 +3,7 @@
 
 from torch.types import *
 
-from pyoutil.typing import *
+from torchoutil.pyoutil.typing import *
 
 from .classes import (
     ACCEPTED_NUMPY_DTYPES,

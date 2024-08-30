@@ -28,10 +28,10 @@ import torch
 from torch import Tensor, nn
 from torch.nn.parameter import Parameter
 
-from pyoutil.collections import dump_dict
-from pyoutil.typing import is_dict_str, is_mapping_str
 from torchoutil.nn.functional.checksum import checksum_module
 from torchoutil.nn.functional.others import count_parameters
+from torchoutil.pyoutil.collections import dump_dict
+from torchoutil.pyoutil.typing import is_dict_str, is_mapping_str
 
 T = TypeVar("T", covariant=True)
 InType = TypeVar("InType", covariant=False, contravariant=True)

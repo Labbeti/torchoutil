@@ -6,8 +6,8 @@ import unittest
 from typing import Mapping
 from unittest import TestCase
 
-from pyoutil import inspect
-from pyoutil.inspect import get_fullname
+from torchoutil.pyoutil import inspect
+from torchoutil.pyoutil.inspect import get_fullname
 
 
 class DummyClass:

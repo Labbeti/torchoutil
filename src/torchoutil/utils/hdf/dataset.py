@@ -29,9 +29,13 @@ from torch import Tensor
 from torch.utils.data.dataset import Dataset
 from typing_extensions import TypeGuard
 
-from pyoutil.collections import all_eq
-from pyoutil.typing import is_iterable_bytes_or_list, is_iterable_int, is_iterable_str
 from torchoutil.nn.functional.indices import get_inverse_perm
+from torchoutil.pyoutil.collections import all_eq
+from torchoutil.pyoutil.typing import (
+    is_iterable_bytes_or_list,
+    is_iterable_int,
+    is_iterable_str,
+)
 from torchoutil.utils.hdf.common import (
     HDF_ENCODING,
     HDF_STRING_DTYPE,

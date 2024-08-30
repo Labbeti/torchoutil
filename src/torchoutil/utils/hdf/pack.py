@@ -27,8 +27,8 @@ from h5py import Dataset as HDFRawDataset
 from torch import Tensor, nn
 from torch.utils.data.dataloader import DataLoader
 
-from pyoutil.collections import all_eq, unzip
-from pyoutil.typing import is_dict_str
+from torchoutil.pyoutil.collections import all_eq, unzip
+from torchoutil.pyoutil.typing import is_dict_str
 from torchoutil.types import is_numpy_number_like
 from torchoutil.utils.data.dataloader import get_auto_num_cpus
 from torchoutil.utils.data.dataset import SizedDatasetLike, TransformWrapper

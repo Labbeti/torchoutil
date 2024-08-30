@@ -24,14 +24,13 @@ from typing import (
 
 import torch
 from torch._C import _TensorMeta
-from torch.types import Device
 
-from pyoutil import BuiltinNumber, T_BuiltinNumber
 from torchoutil.nn import functional as F
+from torchoutil.pyoutil import BuiltinNumber, T_BuiltinNumber
 from torchoutil.types.classes import DeviceLike, DTypeLike
 from torchoutil.types.dtype_typing import DTypeEnum
 
-T_Tensor = TypeVar("T_Tensor", "_TensorNDMeta", "_TensorNDBase")
+T_Tensor = TypeVar("T_Tensor", bound=torch.Tensor)
 T_DType = TypeVar("T_DType", "DTypeEnum", None)
 T_NDim = TypeVar("T_NDim", bound=int)
 T_Floating = TypeVar("T_Floating", bound=bool)
@@ -159,8 +158,7 @@ class _TensorNDBase(Generic[T_DType, T_NDim, T_BuiltinNumber], torch.Tensor):
     ) -> T_Tensor:
         dtype = F.get_dtype(dtype)
         device = F.get_device(device)
-
-        cls_dtype, cls_ndim = _get_generics(cls)
+        cls_dtype, cls_ndim = _get_generics(cls)  # type: ignore
 
         if cls_dtype is None:
             pass
@@ -232,8 +230,13 @@ class _TensorNDBase(Generic[T_DType, T_NDim, T_BuiltinNumber], torch.Tensor):
     def __init__(
         self,
         *dims: int,
-        dtype: Optional[torch.dtype] = None,
-        device: Device = None,
+        dtype: DTypeLike = None,
+        device: DeviceLike = None,
+        memory_format: torch.memory_format | None = None,
+        out: torch.Tensor | None = None,
+        layout: torch.layout | None = None,
+        pin_memory: bool | None = False,
+        requires_grad: bool | None = False,
     ) -> None:
         ...
 
@@ -243,16 +246,21 @@ class _TensorNDBase(Generic[T_DType, T_NDim, T_BuiltinNumber], torch.Tensor):
         data: Union[T_BuiltinNumber, Sequence],
         /,
         *,
-        dtype: Optional[torch.dtype] = None,
-        device: Device = None,
+        dtype: DTypeLike = None,
+        device: DeviceLike = None,
     ) -> None:
         ...
 
     def __init__(
         self,
         *args: Any,
-        dtype: Optional[torch.dtype] = None,
-        device: Device = None,
+        dtype: DTypeLike = None,
+        device: DeviceLike = None,
+        memory_format: torch.memory_format | None = None,
+        out: torch.Tensor | None = None,
+        layout: torch.layout | None = None,
+        pin_memory: bool | None = False,
+        requires_grad: bool | None = False,
     ) -> None:
         ...
 

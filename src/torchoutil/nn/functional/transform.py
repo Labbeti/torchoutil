@@ -17,12 +17,12 @@ from typing import (
 import torch
 from torch import Generator, Tensor
 
-from pyoutil.collections import flatten as builtin_flatten
-from pyoutil.functools import identity  # noqa: F401
-from pyoutil.typing import T_BuiltinScalar
 from torchoutil.nn.functional.crop import crop_dim
 from torchoutil.nn.functional.get import get_generator
 from torchoutil.nn.functional.pad import PadMode, PadValue, pad_dim
+from torchoutil.pyoutil.collections import flatten as builtin_flatten
+from torchoutil.pyoutil.functools import identity  # noqa: F401
+from torchoutil.pyoutil.typing import T_BuiltinScalar
 from torchoutil.types import is_scalar_like, np
 from torchoutil.types._hints import Tensor1D
 

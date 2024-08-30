@@ -3,7 +3,7 @@
 
 import torch
 
-from pyoutil.os import get_num_cpus_available
+from torchoutil.pyoutil.os import get_num_cpus_available
 
 
 def get_auto_num_cpus() -> int:

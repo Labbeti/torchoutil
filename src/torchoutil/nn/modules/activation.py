@@ -5,8 +5,8 @@ from typing import Iterable, Union
 
 from torch import Tensor, nn
 
-from pyoutil.collections import dump_dict
 from torchoutil.nn.functional.activation import log_softmax_multidim, softmax_multidim
+from torchoutil.pyoutil.collections import dump_dict
 
 
 class SoftmaxMultidim(nn.Module):

@@ -9,7 +9,7 @@ from typing import Any, Iterable, Mapping, Union
 import torch
 from torch import Tensor, nn
 
-from pyoutil.inspect import get_fullname
+from torchoutil.pyoutil.inspect import get_fullname
 from torchoutil.types import np
 from torchoutil.utils.packaging import _NUMPY_AVAILABLE
 

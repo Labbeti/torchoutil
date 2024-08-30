@@ -9,7 +9,7 @@ from pathlib import Path
 from re import Pattern
 from typing import Any, Generator, Iterable, List, Union
 
-from pyoutil.re import PatternLike, compile_patterns, match_any_patterns
+from torchoutil.pyoutil.re import PatternLike, compile_patterns, match_any_patterns
 
 pylog = logging.getLogger(__name__)
 
