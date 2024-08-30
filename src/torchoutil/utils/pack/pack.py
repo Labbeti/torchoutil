@@ -14,7 +14,11 @@ from torch import nn
 from torch.utils.data.dataloader import DataLoader
 
 from torchoutil.utils.data.dataloader import get_auto_num_cpus
-from torchoutil.utils.data.dataset import SizedDatasetLike, TransformWrapper
+from torchoutil.utils.data.dataset import (
+    SizedDatasetLike,
+    SizedIterableDatasetLike,
+    TransformWrapper,
+)
 from torchoutil.utils.pack.common import ATTRS_FNAME, CONTENT_DNAME, ContentMode
 from torchoutil.utils.pack.dataset import PackedDataset
 from torchoutil.utils.packaging import _TQDM_AVAILABLE
@@ -93,6 +97,10 @@ def pack_dataset(
         )
     if len(dataset) == 0:
         raise ValueError("Cannot pack to hdf an empty dataset.")
+    if transform_in_worker and isinstance(dataset, SizedIterableDatasetLike):
+        raise NotImplementedError(
+            "Cannot apply transform in worker with an iterable dataset kind."
+        )
 
     root = Path(root).resolve()
     if root.exists() and not root.is_dir():
@@ -124,7 +132,12 @@ def pack_dataset(
     now = datetime.datetime.now()
     creation_date = now.strftime("%Y-%m-%d_%H-%M-%S")
 
-    wrapped = TransformWrapper(dataset, pre_transform if transform_in_worker else None)
+    if transform_in_worker:
+        wrapped = TransformWrapper(dataset, pre_transform)
+        source_dataset = wrapped.unwrap().__class__.__name__
+    else:
+        wrapped = dataset
+        source_dataset = dataset.__class__.__name__
 
     loader = DataLoader(
         wrapped,  # type: ignore
@@ -205,7 +218,7 @@ def pack_dataset(
         source_attrs = {}
 
     attributes = {
-        "source_dataset": wrapped.unwrap().__class__.__name__,
+        "source_dataset": source_dataset,
         "length": len(wrapped),
         "creation_date": creation_date,
         "batch_size": batch_size,

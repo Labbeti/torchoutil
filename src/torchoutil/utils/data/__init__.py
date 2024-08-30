@@ -4,6 +4,12 @@
 
 from .collate import AdvancedCollateDict, CollateDict
 from .dataloader import get_auto_num_cpus
-from .dataset import EmptyDataset, TransformWrapper
+from .dataset import (
+    EmptyDataset,
+    IterableSubset,
+    IterableWrapper,
+    TransformWrapper,
+    Wrapper,
+)
 from .slicer import DatasetSlicer, DatasetSlicerWrapper
 from .split import balanced_monolabel_split, random_split

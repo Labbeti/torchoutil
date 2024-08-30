@@ -2,16 +2,17 @@
 # -*- coding: utf-8 -*-
 
 from abc import ABC, abstractmethod
-from typing import Generic, Iterable, List, TypeVar, Union, overload
+from typing import Any, Generic, Iterable, List, Tuple, TypeVar, Union, overload
 
 import torch
 from torch import Tensor
 from torch.utils.data.dataset import Dataset
 
 from pyoutil.typing import is_iterable_bool, is_iterable_int
+from pyoutil.typing.classes import SupportsLenAndGetItem
 from torchoutil.types import is_bool_tensor1d, is_integer_tensor1d
-from torchoutil.types._hints import BoolTensor1D, Tensor1D
-from torchoutil.utils.data.dataset import T_SizedDatasetLike, Wrapper
+from torchoutil.types._hints import BoolTensor, BoolTensor1D, Tensor1D
+from torchoutil.utils.data.dataset import Wrapper
 
 T = TypeVar("T", covariant=False)
 U = TypeVar("U", covariant=False)
@@ -48,7 +49,11 @@ class DatasetSlicer(Generic[T], ABC, Dataset[T]):
     def __getitem__(self, index: Indices) -> List[T]:
         ...
 
-    def __getitem__(self, index) -> Union[T, List[T]]:
+    @overload
+    def __getitem__(self, index: Tuple[Any, ...]) -> Any:
+        ...
+
+    def __getitem__(self, index):
         if isinstance(index, tuple) and len(index) > 1:
             index, *args = index
         else:
@@ -114,14 +119,10 @@ class DatasetSlicer(Generic[T], ABC, Dataset[T]):
             return self.get_item(slice_, *args)
 
 
-class DatasetSlicerWrapper(
-    Generic[T_SizedDatasetLike, T],
-    DatasetSlicer[T],
-    Wrapper[T_SizedDatasetLike, T],
-):
+class DatasetSlicerWrapper(Generic[T], DatasetSlicer[T], Wrapper[T]):
     def __init__(
         self,
-        dataset: T_SizedDatasetLike,
+        dataset: SupportsLenAndGetItem[T],
         *,
         add_slice_support: bool = True,
         add_indices_support: bool = True,
@@ -140,10 +141,10 @@ class DatasetSlicerWrapper(
         return len(self.dataset)
 
     def get_item(self, index: int, *args) -> T:
-        return self.dataset.__getitem__(index, *args)
+        return self.dataset[index, *args]
 
 
 def _where_1d(mask: Union[Iterable[bool], BoolTensor1D]) -> Tensor1D:
-    if not isinstance(mask, Tensor):
+    if not isinstance(mask, BoolTensor):
         mask = torch.as_tensor(list(mask), dtype=torch.bool)  # type: ignore
     return torch.where(mask)[0]  # type: ignore
