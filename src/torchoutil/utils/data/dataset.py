@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from abc import ABC, abstractmethod
+from abc import abstractmethod
 from typing import Callable, Generic, Iterable, Iterator, Optional, TypeVar, Union
 
 from torch.utils.data.dataset import Dataset, IterableDataset
@@ -37,7 +37,7 @@ class EmptyDataset(Dataset[None]):
         return 0
 
 
-class Wrapper(Generic[T], Dataset[T], ABC):
+class Wrapper(Generic[T], Dataset[T]):
     def __init__(self, dataset: SupportsLenAndGetItem[T]) -> None:
         Dataset.__init__(self)
         self.dataset = dataset
@@ -64,7 +64,7 @@ class Wrapper(Generic[T], Dataset[T], ABC):
         return f"{self.__class__.__name__}({repr(self.dataset)})"
 
 
-class IterableWrapper(Generic[T], IterableDataset[T], Wrapper[T], ABC):
+class IterableWrapper(Generic[T], IterableDataset[T], Wrapper[T]):
     def __init__(self, dataset: SupportsLenAndGetItem[T]) -> None:
         IterableDataset.__init__(self)
         Wrapper.__init__(self, dataset)
