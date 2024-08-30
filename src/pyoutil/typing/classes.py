@@ -22,8 +22,8 @@ BuiltinNumber = Union[int, float, bool, complex]
 BuiltinScalar = Union[int, float, bool, complex, str, bytes, NoneType]
 
 T = TypeVar("T", covariant=True)
-TBuiltinNumber = TypeVar("TBuiltinNumber", bound=BuiltinNumber)
-TBuiltinScalar = TypeVar("TBuiltinScalar", bound=BuiltinScalar)
+T_BuiltinNumber = TypeVar("T_BuiltinNumber", bound=BuiltinNumber)
+T_BuiltinScalar = TypeVar("T_BuiltinScalar", bound=BuiltinScalar)
 
 
 @runtime_checkable

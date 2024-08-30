@@ -11,8 +11,8 @@ from .classes import (
     NamedTupleInstance,
     NoneType,
     SizedIterable,
-    TBuiltinNumber,
-    TBuiltinScalar,
+    T_BuiltinNumber,
+    T_BuiltinScalar,
 )
 from .guards import (
     is_builtin_number,

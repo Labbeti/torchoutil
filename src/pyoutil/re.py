@@ -5,7 +5,7 @@ import logging
 import re
 from functools import partial
 from re import Pattern
-from typing import Callable, Iterable, List, TypeVar, Union
+from typing import Any, Callable, Iterable, List, TypeVar, Union
 
 from pyoutil.collections import find
 from pyoutil.inspect import get_current_fn_name
@@ -13,13 +13,12 @@ from pyoutil.inspect import get_current_fn_name
 T = TypeVar("T")
 
 PatternLike = Union[str, Pattern]
+PatternListLike = Union[PatternLike, Iterable[PatternLike]]
 
 pylog = logging.getLogger(__name__)
 
 
-def compile_patterns(
-    patterns: Union[PatternLike, Iterable[PatternLike]]
-) -> List[Pattern]:
+def compile_patterns(patterns: PatternListLike) -> List[Pattern]:
     """Compile patterns-like to a list."""
     if isinstance(patterns, (str, Pattern)):
         patterns = [patterns]
@@ -29,9 +28,9 @@ def compile_patterns(
 
 def find_patterns(
     x: str,
-    patterns: Union[PatternLike, Iterable[PatternLike]],
+    patterns: PatternListLike,
     *,
-    match_fn: Callable[[PatternLike, str], bool] = re.search,  # type: ignore
+    match_fn: Callable[[PatternLike, str], Any] = re.search,
     default: T = -1,
 ) -> Union[int, T]:
     """Find index of a pattern that match the first argument. If no pattern matches, returns the default value (-1)."""
@@ -42,10 +41,10 @@ def find_patterns(
 
 def pass_patterns(
     x: str,
-    include: Union[PatternLike, Iterable[PatternLike]],
+    include: PatternListLike,
     *,
-    exclude: Union[PatternLike, Iterable[PatternLike]] = (),
-    match_fn: Callable[[PatternLike, str], bool] = re.search,  # type: ignore
+    exclude: PatternListLike = (),
+    match_fn: Callable[[PatternLike, str], Any] = re.search,
 ) -> bool:
     pylog.warning(
         f"Deprecate function call '{get_current_fn_name()}'. Use 'contained_patterns' instead."
@@ -55,10 +54,10 @@ def pass_patterns(
 
 def match_any_patterns(
     x: str,
-    include: Union[PatternLike, Iterable[PatternLike]],
+    include: PatternListLike,
     *,
-    exclude: Union[PatternLike, Iterable[PatternLike]] = (),
-    match_fn: Callable[[PatternLike, str], bool] = re.search,  # type: ignore
+    exclude: PatternListLike = (),
+    match_fn: Callable[[PatternLike, str], Any] = re.search,
 ) -> bool:
     """Returns True if at least 1 pattern match the first argument."""
     return (
@@ -68,9 +67,9 @@ def match_any_patterns(
 
 
 def get_key_fn(
-    patterns: Union[PatternLike, Iterable[PatternLike]],
+    patterns: PatternListLike,
     *,
-    match_fn: Callable[[PatternLike, str], bool] = re.search,  # type: ignore
+    match_fn: Callable[[PatternLike, str], Any] = re.search,
 ) -> Callable[[str], int]:
     """
     Usage:
@@ -93,9 +92,9 @@ def get_key_fn(
 
 def sort_with_patterns(
     x: Iterable[str],
-    patterns: Union[PatternLike, Iterable[PatternLike]],
+    patterns: PatternListLike,
     *,
-    match_fn: Callable[[PatternLike, str], bool] = re.search,  # type: ignore
+    match_fn: Callable[[PatternLike, str], Any] = re.search,
     reverse: bool = False,
 ) -> List[str]:
     key_fn = get_key_fn(patterns, match_fn=match_fn)
