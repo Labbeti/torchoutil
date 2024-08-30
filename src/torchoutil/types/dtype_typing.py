@@ -46,9 +46,9 @@ if hasattr(torch, "quint2x4"):
 class DTypeEnum(StrEnum):
     """Enum of torch dtypes."""
 
+    float16 = auto()
     float32 = auto()
     float64 = auto()
-    float16 = auto()
     int16 = auto()
     int32 = auto()
     int64 = auto()
@@ -75,6 +75,10 @@ class DTypeEnum(StrEnum):
     bool = auto()
     quint4x2 = auto()
     quint2x4 = auto()
+
+    @classmethod
+    def default(cls) -> "DTypeEnum":
+        return cls.from_dtype(torch.get_default_dtype())
 
     @classmethod
     def from_dtype(cls, dtype: torch.dtype) -> "DTypeEnum":
