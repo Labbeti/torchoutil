@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import copy
 import random
 import unittest
 from unittest import TestCase
@@ -10,6 +11,7 @@ from pyoutil.collections import (
     flat_list_of_list,
     flatten,
     intersect_lists,
+    is_sorted,
     list_dict_to_dict_list,
     unflat_dict_of_dict,
     unflat_list_of_list,
@@ -152,6 +154,17 @@ class TestFlatten(TestCase):
         expected = [range(0, 3), range(3, 6), range(6, 9), range(9, 12)]
         result = flatten(xlst, 0, 1)
         assert result == expected
+
+
+class TestIsSorted(TestCase):
+    def test_example_1(self) -> None:
+        x_sorted = list(range(10))
+        x = copy.copy(x_sorted)
+        x[0] = x_sorted[-1]
+        x[-1] = x_sorted[0]
+
+        assert is_sorted(x_sorted)
+        assert not is_sorted(x)
 
 
 if __name__ == "__main__":
