@@ -598,3 +598,26 @@ def recursive_generator(x: Any) -> Generator[Tuple[Any, int, int], None, None]:
         return
 
     return recursive_generator_impl(x, 0, 0)
+
+
+def is_sorted(
+    x: Iterable[Any],
+    *,
+    reverse: bool = False,
+    strict: bool = False,
+) -> bool:
+    it = iter(x)
+    try:
+        prev = next(it)
+    except StopIteration:
+        return True
+
+    for xi in it:
+        if not reverse and prev > xi:
+            return False
+        if reverse and prev < xi:
+            return False
+        if strict and prev == xi:
+            return False
+        prev = xi
+    return True
