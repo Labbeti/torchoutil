@@ -41,6 +41,7 @@ OutType3 = TypeVar("OutType3", covariant=False, contravariant=False)
 
 DeviceDetectMode = Literal["proxy", "first_param", "none"]
 DEVICE_DETECT_MODES = ("proxy", "first_param", "none")
+_DEFAULT_DEVICE_DETECT_MODE = "first_param"
 
 
 pylog = logging.getLogger(__name__)
@@ -73,7 +74,7 @@ class ProxyDeviceModule(nn.Module):
     def __init__(
         self,
         *,
-        device_detect_mode: DeviceDetectMode = "proxy",
+        device_detect_mode: DeviceDetectMode = _DEFAULT_DEVICE_DETECT_MODE,
     ) -> None:
         if device_detect_mode not in DEVICE_DETECT_MODES:
             raise ValueError(
@@ -82,7 +83,8 @@ class ProxyDeviceModule(nn.Module):
 
         super().__init__()
         self.__device_detect_mode: DeviceDetectMode = device_detect_mode
-        self.register_buffer("__proxy", torch.empty((0,)), persistent=False)
+        if device_detect_mode == "proxy":
+            self.register_buffer("__proxy", torch.empty((0,)), persistent=False)
 
     @property
     def device_detect_mode(self) -> DeviceDetectMode:
@@ -94,7 +96,7 @@ class ProxyDeviceModule(nn.Module):
             return self._buffers["__proxy"].device  # type: ignore
         elif self.__device_detect_mode == "first_param":
             try:
-                device0 = next(self._get_devices_iterator(params=True, buffers=False))
+                device0 = next(self._get_devices_iterator(params=True, buffers=True))
                 return device0
             except StopIteration:
                 return None
@@ -192,15 +194,30 @@ class ConfigModule(nn.Module):
         return state
 
     def set_extra_state(self, state: Any) -> None:
+        if not self.__strict_load:
+            return None
+
         in_config = state["config"]
         if self.config == in_config:
             return None
 
-        msg = f"Invalid saved config {in_config} with current one {self.config}."
-        if self.__strict_load:
-            raise ValueError(msg)
+        if is_dict_str(in_config) and is_dict_str(self.config):
+            MISSING = "<missing>"
+            union = set(in_config.keys()).union(self.config.keys())
+            msgs = []
+            for key in union:
+                v1 = in_config.get(key, MISSING)
+                v2 = in_config.get(key, MISSING)
+                if v1 != v2:
+                    msgs.append(f"{v1} != {v2}")
+            msg = (
+                "Invalid loaded config with current one. Invalid keys are:\n"
+                + "\n\t".join(msgs)
+            )
         else:
-            pylog.warning(msg)
+            msg = f"Invalid loaded config {in_config} with current one {self.config}."
+
+        raise ValueError(msg)
 
     def __update_config(self, name: str, value: Any) -> None:
         prefix = f"{name}."
@@ -255,6 +272,12 @@ class TypedModule(Generic[InType, OutType], nn.Module):
         other: TypedModuleLike[Any, OutType],
     ) -> "ESequential[InType, OutType]":
         return self.chain(other)
+
+    def __ror__(
+        self,
+        other: TypedModuleLike[InType, Any],
+    ) -> "ESequential[InType, OutType]":
+        return ESequential(other, self)
 
 
 class TypedSequential(
@@ -318,13 +341,13 @@ class EModule(
         *,
         strict_load: bool = False,
         config_to_extra_repr: bool = False,
-        device_detect_mode: DeviceDetectMode = "proxy",
+        device_detect_mode: DeviceDetectMode = _DEFAULT_DEVICE_DETECT_MODE,
     ) -> None:
         """
         Args:
             strict_load: If True, Module config will be compared during load_state_dict(...) method call and raises a ValueError. defaults to False.
             config_to_extra_repr: If True, add config to extra repr. defaults to False.
-            device_detect_mode: Enable automatic detection of the module device. defaults to "proxy".
+            device_detect_mode: Enable automatic detection of the module device. defaults to "first_param".
         """
         # ConfigModule must be first
         ConfigModule.__init__(
@@ -381,7 +404,7 @@ class ESequential(
         unpack_dict: bool = False,
         strict_load: bool = False,
         config_to_extra_repr: bool = False,
-        device_detect_mode: DeviceDetectMode = "proxy",
+        device_detect_mode: DeviceDetectMode = _DEFAULT_DEVICE_DETECT_MODE,
     ) -> None:
         ...
 
@@ -394,7 +417,7 @@ class ESequential(
         unpack_tuple: bool = False,
         strict_load: bool = False,
         config_to_extra_repr: bool = False,
-        device_detect_mode: DeviceDetectMode = "proxy",
+        device_detect_mode: DeviceDetectMode = _DEFAULT_DEVICE_DETECT_MODE,
         unpack_dict: bool = False,
     ) -> None:
         ...
@@ -410,7 +433,7 @@ class ESequential(
         unpack_dict: bool = False,
         strict_load: bool = False,
         config_to_extra_repr: bool = False,
-        device_detect_mode: DeviceDetectMode = "proxy",
+        device_detect_mode: DeviceDetectMode = _DEFAULT_DEVICE_DETECT_MODE,
     ) -> None:
         ...
 
@@ -426,7 +449,7 @@ class ESequential(
         unpack_dict: bool = False,
         strict_load: bool = False,
         config_to_extra_repr: bool = False,
-        device_detect_mode: DeviceDetectMode = "proxy",
+        device_detect_mode: DeviceDetectMode = _DEFAULT_DEVICE_DETECT_MODE,
     ) -> None:
         ...
 
@@ -443,7 +466,7 @@ class ESequential(
         unpack_dict: bool = False,
         strict_load: bool = False,
         config_to_extra_repr: bool = False,
-        device_detect_mode: DeviceDetectMode = "proxy",
+        device_detect_mode: DeviceDetectMode = _DEFAULT_DEVICE_DETECT_MODE,
     ) -> None:
         ...
 
@@ -461,7 +484,7 @@ class ESequential(
         unpack_dict: bool = False,
         strict_load: bool = False,
         config_to_extra_repr: bool = False,
-        device_detect_mode: DeviceDetectMode = "proxy",
+        device_detect_mode: DeviceDetectMode = _DEFAULT_DEVICE_DETECT_MODE,
     ) -> None:
         ...
 
@@ -480,7 +503,7 @@ class ESequential(
         unpack_dict: bool = False,
         strict_load: bool = False,
         config_to_extra_repr: bool = False,
-        device_detect_mode: DeviceDetectMode = "proxy",
+        device_detect_mode: DeviceDetectMode = _DEFAULT_DEVICE_DETECT_MODE,
     ) -> None:
         ...
 
@@ -500,7 +523,7 @@ class ESequential(
         unpack_dict: bool = False,
         strict_load: bool = False,
         config_to_extra_repr: bool = False,
-        device_detect_mode: DeviceDetectMode = "proxy",
+        device_detect_mode: DeviceDetectMode = _DEFAULT_DEVICE_DETECT_MODE,
     ) -> None:
         ...
 
@@ -514,7 +537,7 @@ class ESequential(
         unpack_dict: bool = False,
         strict_load: bool = False,
         config_to_extra_repr: bool = False,
-        device_detect_mode: DeviceDetectMode = "proxy",
+        device_detect_mode: DeviceDetectMode = _DEFAULT_DEVICE_DETECT_MODE,
     ) -> None:
         ...
 
@@ -528,7 +551,7 @@ class ESequential(
         unpack_dict: bool = False,
         strict_load: bool = False,
         config_to_extra_repr: bool = False,
-        device_detect_mode: DeviceDetectMode = "proxy",
+        device_detect_mode: DeviceDetectMode = _DEFAULT_DEVICE_DETECT_MODE,
     ) -> None:
         ...
 
@@ -540,7 +563,7 @@ class ESequential(
         unpack_dict: bool = False,
         strict_load: bool = False,
         config_to_extra_repr: bool = False,
-        device_detect_mode: DeviceDetectMode = "proxy",
+        device_detect_mode: DeviceDetectMode = _DEFAULT_DEVICE_DETECT_MODE,
     ) -> None:
         ...
 
@@ -551,7 +574,7 @@ class ESequential(
         unpack_dict: bool = False,
         strict_load: bool = False,
         config_to_extra_repr: bool = False,
-        device_detect_mode: DeviceDetectMode = "proxy",
+        device_detect_mode: DeviceDetectMode = _DEFAULT_DEVICE_DETECT_MODE,
     ) -> None:
         """
         Args:
@@ -559,7 +582,7 @@ class ESequential(
             unpack_tuple: If True, the outputs of a module that returns a dict at position i will be unpacked for keywords arguments for the next module at position i+1. defaults to False.
             strict_load: If True, Module config will be compared during load_state_dict(...) method call and raises a ValueError. defaults to False.
             config_to_extra_repr: If True, add config to extra repr. defaults to False.
-            device_detect_mode: Enable automatic detection of the module device. defaults to "proxy".
+            device_detect_mode: Enable automatic detection of the module device. defaults to "first_param".
         """
         EModule.__init__(
             self,
@@ -593,7 +616,7 @@ class EModuleList(
         *,
         strict_load: bool = False,
         config_to_extra_repr: bool = False,
-        device_detect_mode: DeviceDetectMode = "proxy",
+        device_detect_mode: DeviceDetectMode = _DEFAULT_DEVICE_DETECT_MODE,
     ) -> None:
         ...
 
@@ -604,7 +627,7 @@ class EModuleList(
         *,
         strict_load: bool = False,
         config_to_extra_repr: bool = False,
-        device_detect_mode: DeviceDetectMode = "proxy",
+        device_detect_mode: DeviceDetectMode = _DEFAULT_DEVICE_DETECT_MODE,
     ) -> None:
         ...
 
@@ -614,7 +637,7 @@ class EModuleList(
         *,
         strict_load: bool = False,
         config_to_extra_repr: bool = False,
-        device_detect_mode: DeviceDetectMode = "proxy",
+        device_detect_mode: DeviceDetectMode = _DEFAULT_DEVICE_DETECT_MODE,
     ) -> None:
         EModule.__init__(
             self,
@@ -646,7 +669,7 @@ class EModuleDict(
         *,
         strict_load: bool = False,
         config_to_extra_repr: bool = False,
-        device_detect_mode: DeviceDetectMode = "proxy",
+        device_detect_mode: DeviceDetectMode = _DEFAULT_DEVICE_DETECT_MODE,
     ) -> None:
         ...
 
@@ -657,7 +680,7 @@ class EModuleDict(
         *,
         strict_load: bool = False,
         config_to_extra_repr: bool = False,
-        device_detect_mode: DeviceDetectMode = "proxy",
+        device_detect_mode: DeviceDetectMode = _DEFAULT_DEVICE_DETECT_MODE,
     ) -> None:
         ...
 
@@ -667,7 +690,7 @@ class EModuleDict(
         *,
         strict_load: bool = False,
         config_to_extra_repr: bool = False,
-        device_detect_mode: DeviceDetectMode = "proxy",
+        device_detect_mode: DeviceDetectMode = _DEFAULT_DEVICE_DETECT_MODE,
     ) -> None:
         EModule.__init__(
             self,
@@ -704,10 +727,10 @@ def __test_typing_1() -> None:
     seq = ESequential(LayerA(), LayerA(), LayerB())
     xab = seq(x)
 
-    seq = LayerA().compose(LayerA()).compose(LayerB())
+    seq = LayerA() | LayerA() | LayerB()
     xab = seq(x)
 
-    seq = LayerC().compose(LayerA())
+    seq = LayerC().chain(LayerA())
     xc = seq(2)
 
     assert isinstance(xa, Tensor)
