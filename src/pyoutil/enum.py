@@ -25,6 +25,10 @@ class StrEnum(str, Enum):
             f"Invalid argument {value=}. (expected one of {tuple(members)})"
         )
 
+    @staticmethod
+    def _generate_next_value_(name, start, count, last_values) -> str:
+        return name
+
     def __str__(self) -> str:
         return self.name
 
