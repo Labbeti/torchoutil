@@ -22,8 +22,9 @@ pylog = logging.getLogger(__name__)
 
 @lru_cache(maxsize=None)
 def warn_once(msg: str, logger: PackageOrLogger) -> None:
-    pylog = _get_loggers(logger)[0]
-    pylog.warning(msg)
+    loggers = _get_loggers(logger)
+    for logger in loggers:
+        logger.warning(msg)
 
 
 def setup_logging_verbose(
