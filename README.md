@@ -83,13 +83,13 @@ result = masked_mean(x, mask)
 
 ### Pre-compute datasets to pickle or HDF files
 
-Here is an example of pre-computing spectrograms of torchaudio `SPEECHCOMMANDS` dataset, using `pack_to_custom` function:
+Here is an example of pre-computing spectrograms of torchaudio `SPEECHCOMMANDS` dataset, using `pack_dataset` function:
 
 ```python
 from torch import nn
 from torchaudio.datasets import SPEECHCOMMANDS
 from torchaudio.transforms import Spectrogram
-from torchoutil.utils.pack import pack_to_custom
+from torchoutil.utils.pack import pack_dataset
 
 speech_commands_root = "path/to/speech_commands"
 packed_root = "path/to/packed_dataset"
@@ -107,7 +107,7 @@ class MyTransform(nn.Module):
         spectrogram = self.spectrogram_extractor(waveform)
         return (spectrogram,) + item[1:]
 
-pack_to_custom(dataset, packed_root, MyTransform())
+pack_dataset(dataset, packed_root, MyTransform())
 ```
 
 Then you can load the pre-computed dataset using `PackedDataset`:
@@ -143,6 +143,86 @@ x3 = x2[inv_perm]
 # inv_perm are indices that allow us to get x3 from x2, i.e. x1 == x3 here
 ```
 
+<!--
+## Main modules
+
+- [IndexToName](https://torchoutil.readthedocs.io/en/latest/torchoutil.nn.modules.multiclass.html#torchoutil.nn.modules.multiclass.IndexToName): Convert multiclass indices to names.
+- [IndexToOnehot](https://torchoutil.readthedocs.io/en/latest/torchoutil.nn.modules.multiclass.html#torchoutil.nn.modules.multiclass.IndexToOnehot): Convert multiclass indices to onehot encoding.
+- [NameToIndex](https://torchoutil.readthedocs.io/en/latest/torchoutil.nn.modules.multiclass.html#torchoutil.nn.modules.multiclass.NameToIndex): Convert names to multiclass indices.
+- [NameToOnehot](https://torchoutil.readthedocs.io/en/latest/torchoutil.nn.modules.multiclass.html#torchoutil.nn.modules.multiclass.NameToOnehot): Convert names to onehot encoding.
+- [OnehotToIndex](https://torchoutil.readthedocs.io/en/latest/torchoutil.nn.modules.multiclass.html#torchoutil.nn.modules.multiclass.OnehotToIndex): Convert onehot encoding to multiclass indices.
+- [OnehotToName](https://torchoutil.readthedocs.io/en/latest/torchoutil.nn.modules.multiclass.html#torchoutil.nn.modules.multiclass.OnehotToName): Convert onehot encoding to names.
+- [ProbsToIndex](https://torchoutil.readthedocs.io/en/latest/torchoutil.nn.modules.multiclass.html#torchoutil.nn.modules.multiclass.ProbsToIndex): Convert probabilities to multiclass indices using a threshold.
+- [ProbsToName](https://torchoutil.readthedocs.io/en/latest/torchoutil.nn.modules.multiclass.html#torchoutil.nn.modules.multiclass.ProbsToName): Convert probabilities to names using a threshold.
+- [ProbsToOnehot](https://torchoutil.readthedocs.io/en/latest/torchoutil.nn.modules.multiclass.html#torchoutil.nn.modules.multiclass.ProbsToOnehot): Convert probabilities to onehot encoding using a threshold.
+- [IndicesToMultihot](https://torchoutil.readthedocs.io/en/latest/torchoutil.nn.modules.multilabel.html#torchoutil.nn.modules.multilabel.IndicesToMultihot): Convert multilabel indices to names.
+- [IndicesToNames](https://torchoutil.readthedocs.io/en/latest/torchoutil.nn.modules.multilabel.html#torchoutil.nn.modules.multilabel.IndicesToNames): Convert multilabel indices to multihot encoding.
+- [MultihotToIndices](https://torchoutil.readthedocs.io/en/latest/torchoutil.nn.modules.multilabel.html#torchoutil.nn.modules.multilabel.MultihotToIndices): Convert multihot encoding to multilabel indices.
+- [MultihotToNames](https://torchoutil.readthedocs.io/en/latest/torchoutil.nn.modules.multilabel.html#torchoutil.nn.modules.multilabel.MultihotToNames): Convert multihot encoding to names.
+- [NamesToIndices](https://torchoutil.readthedocs.io/en/latest/torchoutil.nn.modules.multilabel.html#torchoutil.nn.modules.multilabel.NamesToIndices): Convert names to multilabel indices.
+- [NamesToMultihot](https://torchoutil.readthedocs.io/en/latest/torchoutil.nn.modules.multilabel.html#torchoutil.nn.modules.multilabel.NamesToMultihot): Convert names to multihot encoding.
+- [ProbsToIndices](https://torchoutil.readthedocs.io/en/latest/torchoutil.nn.modules.multilabel.html#torchoutil.nn.modules.multilabel.ProbsToIndices): Convert probabilities to multilabel indices using a threshold.
+- [ProbsToMultihot](https://torchoutil.readthedocs.io/en/latest/torchoutil.nn.modules.multilabel.html#torchoutil.nn.modules.multilabel.ProbsToMultihot): Convert probabilities to names using a threshold.
+- [ProbsToNames](https://torchoutil.readthedocs.io/en/latest/torchoutil.nn.modules.multilabel.html#torchoutil.nn.modules.multilabel.ProbsToNames): Convert probabilities to multihot encoding using a threshold.
+
+- [LogSoftmaxMultidim](https://torchoutil.readthedocs.io/en/latest/torchoutil.nn.modules.activation.html#torchoutil.nn.modules.activation.LogSoftmaxMultidim): Apply LogSoftmax along multiple dimensions.
+- [SoftmaxMultidim](https://torchoutil.readthedocs.io/en/latest/torchoutil.nn.modules.activation.html#torchoutil.nn.modules.activation.SoftmaxMultidim): Apply Softmax along multiple dimensions.
+- [CropDim](https://torchoutil.readthedocs.io/en/latest/torchoutil.nn.modules.crop.html#torchoutil.nn.modules.crop.CropDim): Crop a tensor along a single dimension.
+- [CropDims](https://torchoutil.readthedocs.io/en/latest/torchoutil.nn.modules.crop.html#torchoutil.nn.modules.crop.CropDims): Crop a tensor along multiple dimensions.
+- [PositionalEncoding](https://torchoutil.readthedocs.io/en/latest/torchoutil.nn.modules.layer.html#torchoutil.nn.modules.layer.PositionalEncoding): Positional encoding layer for vanilla transformers models.
+- [MaskedMean](https://torchoutil.readthedocs.io/en/latest/torchoutil.nn.modules.mask.html#torchoutil.nn.modules.mask.MaskedMean): Average non-masked element of a tensor.
+- [MaskedSum](https://torchoutil.readthedocs.io/en/latest/torchoutil.nn.modules.mask.html#torchoutil.nn.modules.mask.MaskedSum): Sum non-masked element of a tensor.
+- [NumpyToTensor](https://torchoutil.readthedocs.io/en/latest/torchoutil.nn.modules.numpy.html#torchoutil.nn.modules.numpy.NumpyToTensor): Convert numpy array or generic to tensor.
+- [NumpyToTensor](https://torchoutil.readthedocs.io/en/latest/torchoutil.nn.modules.numpy.html#torchoutil.nn.modules.numpy.TensorToNumpy): Convert tensor to numpy array.
+- [NumpyToTensor](https://torchoutil.readthedocs.io/en/latest/torchoutil.nn.modules.numpy.html#torchoutil.nn.modules.numpy.ToNumpy): Convert sequence to numpy array.
+- [PadAndStackRec](https://torchoutil.readthedocs.io/en/latest/torchoutil.nn.modules.pad.html#torchoutil.nn.modules.pad.PadAndStackRec): Pad and stack sequence to tensor.
+- [PadDim](https://torchoutil.readthedocs.io/en/latest/torchoutil.nn.modules.pad.html#torchoutil.nn.modules.pad.PadDim): Pad a tensor along a single dimension.
+- [PadDims](https://torchoutil.readthedocs.io/en/latest/torchoutil.nn.modules.pad.html#torchoutil.nn.modules.pad.PadDims): Pad a tensor along multiples dimensions.
+- [RepeatInterleaveNd](https://torchoutil.readthedocs.io/en/latest/torchoutil.nn.modules.transform.html#torchoutil.nn.modules.transform.RepeatInterleaveNd): Repeat interleave a tensor with an arbitrary number of dimensions.
+
+from .tensor import (
+    FFT,
+    IFFT,
+    Abs,
+    Angle,
+    AsTensor,
+    Exp,
+    Exp2,
+    Imag,
+    Log,
+    Log2,
+    Log10,
+    Max,
+    Mean,
+    Min,
+    Normalize,
+    Permute,
+    Pow,
+    Real,
+    Repeat,
+    RepeatInterleave,
+    Reshape,
+    Squeeze,
+    TensorTo,
+    ToItem,
+    ToList,
+    Transpose,
+    Unsqueeze,
+)
+from .transform import (
+    Flatten,
+    Identity,
+    PadAndCropDim,
+    RepeatInterleaveNd,
+    ResampleNearestFreqs,
+    ResampleNearestRates,
+    ResampleNearestSteps,
+    Shuffled,
+    TransformDrop,
+)
+-->
+
+
 ## Extras requirements
 `torchoutil` also provides additional modules when some specific package are already installed in your environment.
 All extras can be installed with `pip install torchoutil[extras]`
@@ -150,6 +230,7 @@ All extras can be installed with `pip install torchoutil[extras]`
 - If `tensorboard` is installed, the function `load_event_file` can be used. It is useful to load manually all data contained in an tensorboard event file.
 - If `numpy` is installed, the classes `NumpyToTensor` and  `ToNumpy` can be used and their related function. It is meant to be used to compose dynamic transforms into `Sequential` module.
 - If `h5py` is installed, the function `pack_to_hdf` and class `HDFDataset` can be used. Can be used to pack/read dataset to HDF files, and supports variable-length sequences of data.
+- If `pyyaml` is installed, the functions `to_yaml` and `load_yaml` can be used.
 
 
 ## Contact
