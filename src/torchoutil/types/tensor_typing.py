@@ -126,11 +126,11 @@ class _TensorNDBase(Generic[T_DType, T_NDim, T_BuiltinNumber], torch.Tensor):
         *dims: int,
         dtype: DTypeLike = None,
         device: DeviceLike = None,
-        memory_format: torch.memory_format | None = None,
-        out: torch.Tensor | None = None,
-        layout: torch.layout | None = None,
-        pin_memory: bool | None = False,
-        requires_grad: bool | None = False,
+        memory_format: Union[torch.memory_format, None] = None,
+        out: Union[torch.Tensor, None] = None,
+        layout: Union[torch.layout, None] = None,
+        pin_memory: Union[bool, None] = False,
+        requires_grad: Union[bool, None] = False,
     ) -> T_Tensor:
         ...
 
@@ -150,11 +150,11 @@ class _TensorNDBase(Generic[T_DType, T_NDim, T_BuiltinNumber], torch.Tensor):
         *args: Any,
         dtype: DTypeLike = None,
         device: DeviceLike = None,
-        memory_format: torch.memory_format | None = None,
-        out: torch.Tensor | None = None,
-        layout: torch.layout | None = None,
-        pin_memory: bool | None = False,
-        requires_grad: bool | None = False,
+        memory_format: Union[torch.memory_format, None] = None,
+        out: Union[torch.Tensor, None] = None,
+        layout: Union[torch.layout, None] = None,
+        pin_memory: Union[bool, None] = False,
+        requires_grad: Union[bool, None] = False,
     ) -> T_Tensor:
         dtype = F.get_dtype(dtype)
         device = F.get_device(device)
@@ -232,11 +232,11 @@ class _TensorNDBase(Generic[T_DType, T_NDim, T_BuiltinNumber], torch.Tensor):
         *dims: int,
         dtype: DTypeLike = None,
         device: DeviceLike = None,
-        memory_format: torch.memory_format | None = None,
-        out: torch.Tensor | None = None,
-        layout: torch.layout | None = None,
-        pin_memory: bool | None = False,
-        requires_grad: bool | None = False,
+        memory_format: Union[torch.memory_format, None] = None,
+        out: Union[torch.Tensor, None] = None,
+        layout: Union[torch.layout, None] = None,
+        pin_memory: Union[bool, None] = False,
+        requires_grad: Union[bool, None] = False,
     ) -> None:
         ...
 
@@ -256,11 +256,11 @@ class _TensorNDBase(Generic[T_DType, T_NDim, T_BuiltinNumber], torch.Tensor):
         *args: Any,
         dtype: DTypeLike = None,
         device: DeviceLike = None,
-        memory_format: torch.memory_format | None = None,
-        out: torch.Tensor | None = None,
-        layout: torch.layout | None = None,
-        pin_memory: bool | None = False,
-        requires_grad: bool | None = False,
+        memory_format: Union[torch.memory_format, None] = None,
+        out: Union[torch.Tensor, None] = None,
+        layout: Union[torch.layout, None] = None,
+        pin_memory: Union[bool, None] = False,
+        requires_grad: Union[bool, None] = False,
     ) -> None:
         ...
 
