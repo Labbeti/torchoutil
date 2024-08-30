@@ -18,6 +18,7 @@ from torchoutil.types.tensor_typing import (
     LongTensor,
     LongTensor0D,
     LongTensor1D,
+    ShortTensor1D,
     Tensor0D,
     Tensor1D,
 )
@@ -124,6 +125,9 @@ class TestTensorTyping(TestCase):
 
         with self.assertRaises(ValueError):
             Tensor0D([1, 2], dtype=torch.float16)
+
+        with self.assertRaises(ValueError):
+            ShortTensor1D([1, 2], dtype=torch.uint16)
 
         x = Tensor0D(10.0)
         assert x.ndim == 0 and x.dtype == torch.float
