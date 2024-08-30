@@ -18,11 +18,12 @@ from typing import (
 )
 
 import torch
-from torch import LongTensor, Size, Tensor, nn
+from torch import LongTensor, Tensor, nn
 from typing_extensions import TypeGuard
 
 from torchoutil.nn.functional.get import get_device
 from torchoutil.pyoutil.collections import all_eq, prod
+from torchoutil.pyoutil.functools import identity
 from torchoutil.pyoutil.typing import (
     BuiltinScalar,
     SizedIterable,
@@ -227,7 +228,7 @@ def ndim(
 def shape(
     x: Union[ScalarLike, Tensor, np.ndarray, Iterable],
     *,
-    output_type: Callable[[Tuple[int, ...]], T] = Size,
+    output_type: Callable[[Tuple[int, ...]], T] = identity,
     return_valid: Literal[False] = False,
 ) -> T:
     ...
@@ -237,7 +238,7 @@ def shape(
 def shape(
     x: Union[ScalarLike, Tensor, np.ndarray, Iterable],
     *,
-    output_type: Callable[[Tuple[int, ...]], T] = Size,
+    output_type: Callable[[Tuple[int, ...]], T] = identity,
     return_valid: Literal[True],
 ) -> Tuple[bool, T]:
     ...
@@ -246,7 +247,7 @@ def shape(
 def shape(
     x: Union[ScalarLike, Tensor, np.ndarray, Iterable],
     *,
-    output_type: Callable[[Tuple[int, ...]], T] = Size,
+    output_type: Callable[[Tuple[int, ...]], T] = identity,
     return_valid: bool = False,
 ) -> Union[T, Tuple[bool, T]]:
     """Scan first argument to return its shape. Works recursively with Tensors, numpy arrays and builtins types instances.
