@@ -19,7 +19,7 @@ from torch import Generator, Tensor
 
 from pyoutil.collections import flatten as builtin_flatten
 from pyoutil.functools import identity  # noqa: F401
-from pyoutil.typing import TBuiltinScalar
+from pyoutil.typing import T_BuiltinScalar
 from torchoutil.nn.functional.crop import crop_dim
 from torchoutil.nn.functional.get import get_generator
 from torchoutil.nn.functional.pad import PadMode, PadValue, pad_dim
@@ -244,19 +244,19 @@ def flatten(
 
 @overload
 def flatten(
-    x: TBuiltinScalar,
+    x: T_BuiltinScalar,
     start_dim: int = 0,
     end_dim: Optional[int] = None,
-) -> List[TBuiltinScalar]:
+) -> List[T_BuiltinScalar]:
     ...
 
 
 @overload
 def flatten(
-    x: Iterable[TBuiltinScalar],
+    x: Iterable[T_BuiltinScalar],
     start_dim: int = 0,
     end_dim: Optional[int] = None,
-) -> List[TBuiltinScalar]:
+) -> List[T_BuiltinScalar]:
     ...
 
 

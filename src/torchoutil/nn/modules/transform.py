@@ -21,7 +21,7 @@ from torchoutil.nn.functional.transform import (
     PadCropAlign,
     PadMode,
     PadValue,
-    TBuiltinScalar,
+    T_BuiltinScalar,
     flatten,
     identity,
     pad_and_crop_dim,
@@ -248,11 +248,11 @@ class Flatten(nn.Module):
         ...
 
     @overload
-    def forward(self, x: TBuiltinScalar) -> List[TBuiltinScalar]:
+    def forward(self, x: T_BuiltinScalar) -> List[T_BuiltinScalar]:
         ...
 
     @overload
-    def forward(self, x: Iterable[TBuiltinScalar]) -> List[TBuiltinScalar]:
+    def forward(self, x: Iterable[T_BuiltinScalar]) -> List[T_BuiltinScalar]:
         ...
 
     @overload
