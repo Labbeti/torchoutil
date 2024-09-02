@@ -32,7 +32,8 @@ class TestPyoutilInspect(TestCase):
 
     def test_example_2(self) -> None:
         assert get_fullname(TestCase) == "unittest.case.TestCase"
-        assert get_fullname(inspect) == "pyoutil.inspect"
+        assert get_fullname(inspect) == "torchoutil.pyoutil.inspect"
+        assert get_fullname(get_fullname) == "torchoutil.pyoutil.inspect.get_fullname"
 
         if sys.version_info.minor >= 11:
             assert get_fullname(Mapping) == "typing.Mapping"
