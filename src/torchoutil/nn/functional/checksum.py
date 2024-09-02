@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import itertools
 import math
 import struct
 import zlib
@@ -80,6 +81,7 @@ def checksum_module(
     *,
     only_trainable: bool = False,
     with_names: bool = False,
+    buffers: bool = False,
     training: bool = False,
     **kwargs,
 ) -> int:
@@ -88,13 +90,26 @@ def checksum_module(
     x.train(training)
 
     if with_names:
-        iterator = (
+        params_it = (
             (n, p)
             for n, p in x.named_parameters()
             if not only_trainable or p.requires_grad
         )
     else:
-        iterator = (p for p in x.parameters() if not only_trainable or p.requires_grad)
+        params_it = (
+            param
+            for param in x.parameters()
+            if not only_trainable or param.requires_grad
+        )
+
+    if not buffers:
+        iterator = params_it
+    elif with_names:
+        buffers_it = (name_buffer for name_buffer in x.named_buffers())
+        iterator = itertools.chain(params_it, buffers_it)
+    else:
+        buffers_it = (buffer for buffer in x.buffers())
+        iterator = itertools.chain(params_it, buffers_it)
 
     csum = checksum_iterable(iterator, **kwargs)
     x.train(training)

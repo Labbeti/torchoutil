@@ -380,8 +380,15 @@ class EModule(
         self,
         *,
         only_trainable: bool = False,
+        with_names: bool = False,
+        training: bool = False,
     ) -> int:
-        return checksum_module(self, only_trainable=only_trainable)
+        return checksum_module(
+            self,
+            only_trainable=only_trainable,
+            with_names=with_names,
+            training=training,
+        )
 
 
 class ESequential(
