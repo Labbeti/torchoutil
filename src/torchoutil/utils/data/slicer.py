@@ -147,7 +147,8 @@ class DatasetSlicerWrapper(Generic[T], DatasetSlicer[T], Wrapper[T]):
         if len(args) == 0:
             return self.dataset[idx]
         else:
-            return self.dataset[idx, *args]
+            # equivalent to self.dataset[idx, *args], but only in recent python versions
+            return self.dataset.__getitem__((idx,) + args)
 
 
 def _where_1d(mask: Union[Iterable[bool], BoolTensor1D]) -> Tensor1D:
