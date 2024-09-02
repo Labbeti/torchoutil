@@ -143,7 +143,11 @@ class DatasetSlicerWrapper(Generic[T], DatasetSlicer[T], Wrapper[T]):
         return len(self.dataset)
 
     def get_item(self, idx: int, *args) -> T:
-        return self.dataset[idx, *args]
+        # note: we need to split calls here, because self.dataset[idx] give an int as argument while self.dataset[idx, *args] always gives a tuple even if args == ()
+        if len(args) == 0:
+            return self.dataset[idx]
+        else:
+            return self.dataset[idx, *args]
 
 
 def _where_1d(mask: Union[Iterable[bool], BoolTensor1D]) -> Tensor1D:
