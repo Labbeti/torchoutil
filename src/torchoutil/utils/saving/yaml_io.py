@@ -37,7 +37,7 @@ else:
     )
 
 if _OMEGACONF_AVAILABLE:
-    from omegaconf import OmegaConf
+    from omegaconf import OmegaConf  # type: ignore
 
 
 YamlLoaders = Union[

@@ -25,7 +25,7 @@ if _NUMPY_AVAILABLE:
     import numpy as np
 
 if _OMEGACONF_AVAILABLE:
-    from omegaconf import DictConfig, ListConfig, OmegaConf
+    from omegaconf import DictConfig, ListConfig, OmegaConf  # type: ignore
 
 if _PANDAS_AVAILABLE:
     from pandas import DataFrame
