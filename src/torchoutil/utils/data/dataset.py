@@ -117,15 +117,16 @@ class IterableSubset(IterableWrapper[T], Generic[T]):
     def __init__(
         self,
         dataset: SupportsLenAndGetItem[T],
-        indices: Iterable[int] | LongTensor1D,
+        indices: Union[Iterable[int], LongTensor1D],
     ) -> None:
         if isinstance(indices, LongTensor1D):
             indices = indices.tolist()
         else:
             indices = list(indices)
 
-        assert all(idx >= 0 for idx in indices)
-        assert is_sorted(indices)
+        if not all(idx >= 0 for idx in indices) or not is_sorted(indices):
+            msg = f"Invalid argument {indices=}. (expected a sorted list of positive integers)"
+            raise ValueError(msg)
 
         super().__init__(dataset)
         self._indices = indices
