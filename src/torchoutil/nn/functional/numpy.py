@@ -43,7 +43,7 @@ def tensor_to_numpy(
         )
 
     x_arr: np.ndarray = x.cpu().numpy(**kwargs)
-    if dtype is not None:
+    if dtype is not None:  # supports older numpy version
         x_arr = x_arr.astype(dtype=dtype)
     return x_arr
 
