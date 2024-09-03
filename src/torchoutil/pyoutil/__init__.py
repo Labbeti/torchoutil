@@ -58,7 +58,7 @@ from .re import (
     compile_patterns,
     find_patterns,
     get_key_fn,
-    match_any_patterns,
+    match_patterns,
     sort_with_patterns,
 )
 from .typing import *

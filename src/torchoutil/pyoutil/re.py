@@ -47,14 +47,27 @@ def pass_patterns(
     match_fn: Callable[[PatternLike, str], Any] = re.search,
 ) -> bool:
     pylog.warning(
-        f"Deprecate function call '{get_current_fn_name()}'. Use 'contained_patterns' instead."
+        f"Deprecate function call '{get_current_fn_name()}'. Use 'match_patterns' instead."
     )
     return match_any_patterns(x, include, exclude=exclude, match_fn=match_fn)
 
 
 def match_any_patterns(
     x: str,
-    include: PatternListLike,
+    include: PatternListLike = ".*",
+    *,
+    exclude: PatternListLike = (),
+    match_fn: Callable[[PatternLike, str], Any] = re.search,
+) -> bool:
+    pylog.warning(
+        f"Deprecate function call '{get_current_fn_name()}'. Use 'match_patterns' instead."
+    )
+    return match_any_patterns(x, include, exclude=exclude, match_fn=match_fn)
+
+
+def match_patterns(
+    x: str,
+    include: PatternListLike = ".*",
     *,
     exclude: PatternListLike = (),
     match_fn: Callable[[PatternLike, str], Any] = re.search,
