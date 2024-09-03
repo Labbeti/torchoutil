@@ -5,6 +5,7 @@ from argparse import Namespace
 from dataclasses import asdict
 from enum import Enum
 from pathlib import Path
+from re import Pattern
 from typing import Any, Dict, Iterable, List, Literal, Mapping, TypeVar, Union, overload
 
 from torch import Tensor
@@ -51,6 +52,15 @@ def to_builtin(
 @overload
 def to_builtin(
     x: Path,
+    *,
+    unk_mode: UnkMode = "identity",
+) -> str:
+    ...
+
+
+@overload
+def to_builtin(
+    x: Pattern,
     *,
     unk_mode: UnkMode = "identity",
 ) -> str:
@@ -111,7 +121,7 @@ def to_builtin(
         return x
     elif isinstance(x, Enum):
         return x.name
-    elif isinstance(x, Path):
+    elif isinstance(x, (Path, Pattern)):
         return str(x)
     elif isinstance(x, Tensor):
         return x.tolist()
