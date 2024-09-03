@@ -11,7 +11,7 @@ from torch.utils.data.dataset import Dataset
 from torchoutil.pyoutil.typing import is_iterable_bool, is_iterable_int
 from torchoutil.pyoutil.typing.classes import SupportsLenAndGetItem
 from torchoutil.types import is_bool_tensor1d, is_integer_tensor1d
-from torchoutil.types._hints import BoolTensor, BoolTensor1D, Tensor1D
+from torchoutil.types._hints import BoolTensor, Tensor1D
 from torchoutil.utils.data.dataset import Wrapper
 
 T = TypeVar("T", covariant=False)
@@ -42,14 +42,17 @@ class DatasetSlicer(Generic[T], ABC, Dataset[T]):
         raise NotImplementedError
 
     @overload
+    @final
     def __getitem__(self, idx: int, /) -> T:
         ...
 
     @overload
+    @final
     def __getitem__(self, idx: Indices, /) -> List[T]:
         ...
 
     @overload
+    @final
     def __getitem__(self, idx: Tuple[Any, ...], /) -> Any:
         ...
 
@@ -83,6 +86,9 @@ class DatasetSlicer(Generic[T], ABC, Dataset[T]):
     ) -> List[T]:
         return self.__getitem__(indices, *args)
 
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__}()"
+
     def get_items_indices(
         self,
         indices: Union[Iterable[int], Tensor1D],
@@ -95,7 +101,7 @@ class DatasetSlicer(Generic[T], ABC, Dataset[T]):
 
     def get_items_mask(
         self,
-        mask: Union[Iterable[bool], BoolTensor1D],
+        mask: Union[Iterable[bool], Tensor],
         *args,
     ) -> List[T]:
         if self._add_mask_support:
@@ -151,7 +157,7 @@ class DatasetSlicerWrapper(Generic[T], DatasetSlicer[T], Wrapper[T]):
             return self.dataset.__getitem__((idx,) + args)
 
 
-def _where_1d(mask: Union[Iterable[bool], BoolTensor1D]) -> Tensor1D:
+def _where_1d(mask: Union[Iterable[bool], Tensor]) -> Tensor1D:
     if not isinstance(mask, BoolTensor):
         mask = torch.as_tensor(list(mask), dtype=torch.bool)  # type: ignore
     return torch.where(mask)[0]  # type: ignore
