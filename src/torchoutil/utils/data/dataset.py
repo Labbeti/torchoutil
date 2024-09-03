@@ -98,11 +98,44 @@ class TransformWrapper(Generic[T, U], Wrapper[T]):
     def __getitem__(self, idx) -> Union[T, U]:
         assert isinstance(idx, int)
         item = self.dataset[idx]
-        if (
+        if self._transform is not None and (
             self._condition is None or self._condition(item, idx)
-        ) and self._transform is not None:
+        ):
             item = self._transform(item)
         return item
+
+    @property
+    def transform(self) -> Optional[Callable[[T], U]]:
+        return self._transform
+
+    @property
+    def condition(self) -> Optional[Callable[[T, int], bool]]:
+        return self._condition
+
+
+class IterableTransformWrapper(IterableWrapper[T], Generic[T, U]):
+    def __init__(
+        self,
+        dataset: SupportsLenAndGetItem[T],
+        transform: Optional[Callable[[T], U]],
+        condition: Optional[Callable[[T, int], bool]] = None,
+    ) -> None:
+        super().__init__(dataset)
+        self._transform = transform
+        self._condition = condition
+
+    def __len__(self) -> int:
+        return len(self.dataset)
+
+    def __iter__(self) -> Iterator[Union[T, U]]:
+        it = super()._get_dataset_iter()
+        for i, item in enumerate(it):
+            if self._transform is not None and (
+                self._condition is None or self._condition(item, i)
+            ):
+                item = self._transform(item)
+            yield item
+        return
 
     @property
     def transform(self) -> Optional[Callable[[T], U]]:
