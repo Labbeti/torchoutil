@@ -3,7 +3,6 @@
 
 import copy
 import logging
-import re
 from typing import (
     Any,
     Callable,
@@ -15,6 +14,7 @@ from typing import (
     List,
     Literal,
     Mapping,
+    MutableMapping,
     Optional,
     OrderedDict,
     Protocol,
@@ -31,13 +31,15 @@ from torch.nn.parameter import Parameter
 from torchoutil.nn.functional.checksum import checksum_module
 from torchoutil.nn.functional.others import count_parameters
 from torchoutil.pyoutil.collections import dump_dict
-from torchoutil.pyoutil.typing import is_dict_str, is_mapping_str
+from torchoutil.pyoutil.re import match_patterns
+from torchoutil.pyoutil.typing import NoneType, is_dict_str, is_mapping_str
 
 T = TypeVar("T", covariant=True)
 InType = TypeVar("InType", covariant=False, contravariant=True)
 OutType = TypeVar("OutType", covariant=True, contravariant=False)
 OutType2 = TypeVar("OutType2", covariant=True, contravariant=False)
 OutType3 = TypeVar("OutType3", covariant=False, contravariant=False)
+T_MutableMappingStr = TypeVar("T_MutableMappingStr", bound=MutableMapping[str, Any])
 
 DeviceDetectMode = Literal["proxy", "first_param", "none"]
 DEVICE_DETECT_MODES = ("proxy", "first_param", "none")
@@ -142,8 +144,8 @@ class ProxyDeviceModule(nn.Module):
                 devices[param_or_buffer.device] = None
 
 
-class ConfigModule(nn.Module):
-    _CONFIG_TYPES: ClassVar[Tuple[type, ...]] = (int, str, bool, float)
+class ConfigModule(Generic[T_MutableMappingStr], nn.Module):
+    _CONFIG_TYPES: ClassVar[Tuple[type, ...]] = (int, str, bool, float, NoneType)
     _CONFIG_EXCLUDE: ClassVar[Tuple[str, ...]] = ("^_.*",) + tuple(
         f".*{k}$" for k in nn.Module().__dict__.keys()
     )
@@ -153,9 +155,13 @@ class ConfigModule(nn.Module):
         *,
         strict_load: bool = False,
         config_to_extra_repr: bool = False,
+        config: Optional[T_MutableMappingStr] = None,
     ) -> None:
+        if config is None:
+            config = {}  # type: ignore
+
         attrs = {
-            "config": {},
+            "config": config,
             "strict_load": strict_load,
             "config_to_extra_repr": config_to_extra_repr,
         }
@@ -163,12 +169,12 @@ class ConfigModule(nn.Module):
             object.__setattr__(self, f"_{ConfigModule.__name__}__{name}", value)
 
         super().__init__()
-        self.__config: Dict[str, Any]
+        self.__config: T_MutableMappingStr
         self.__strict_load: bool
         self.__config_to_extra_repr: bool
 
     @property
-    def config(self) -> Dict[str, Any]:
+    def config(self) -> T_MutableMappingStr:
         return self.__config
 
     def __setattr__(self, name: str, value: Any) -> None:
@@ -220,28 +226,65 @@ class ConfigModule(nn.Module):
         raise ValueError(msg)
 
     def __update_config(self, name: str, value: Any) -> None:
+        subconfig = self.__class__._detect_subconfig(name, value)
+        self.__config.update(subconfig)
+
+    @classmethod
+    def _detect_subconfig(cls, name: str, value: Any) -> Dict[str, Any]:
         prefix = f"{name}."
-        if self._is_config_value(name, value):
+        if cls._is_config_name_value(name, value):
             subconfig = {name: value}
             prefix = ""
         elif isinstance(value, ConfigModule):
             subconfig = value.config
         elif hasattr(value, "_hparams") and is_mapping_str(value._hparams):
             subconfig = dict(value._hparams.items())  # type: ignore
+        elif isinstance(value, torch.nn.Module):
+            subconfig = cls._detect_torch_module_subconfig(value)
         elif hasattr(value, "__dict__"):
             subconfig = value.__dict__
         else:
             subconfig = {}
 
         subconfig = {f"{prefix}{k}": v for k, v in subconfig.items()}
-        subconfig = {k: v for k, v in subconfig.items() if self._is_config_value(k, v)}
-        self.__config.update(subconfig)
+        subconfig = {
+            k: v for k, v in subconfig.items() if cls._is_config_name_value(k, v)
+        }
+        return subconfig
 
     @classmethod
-    def _is_config_value(cls, name: str, value: Any) -> bool:
-        return isinstance(value, cls._CONFIG_TYPES) and all(
-            re.match(exclude_i, name) is None for exclude_i in cls._CONFIG_EXCLUDE
-        )
+    def _detect_torch_module_subconfig(cls, value: torch.nn.Module) -> Dict[str, Any]:
+        subconfig = {
+            k: v
+            for k, v in value.__dict__.items()
+            if k != "_modules" and match_patterns(k, exclude=cls._CONFIG_EXCLUDE)
+        } | {
+            kv: vv
+            for k, v in value.__dict__["_modules"].items()
+            for kv, vv in cls._detect_subconfig(k, v).items()
+        }
+        return subconfig
+
+    @classmethod
+    def _is_config_name_value(cls, name: str, value: Any) -> bool:
+        if not match_patterns(name, exclude=cls._CONFIG_EXCLUDE):
+            return False
+        else:
+            return cls._is_config_value(value)
+
+    @classmethod
+    def _is_config_value(cls, value) -> bool:
+        if isinstance(value, cls._CONFIG_TYPES):
+            return True
+        elif isinstance(value, (list, tuple, set, frozenset)):
+            return all(cls._is_config_value(vi) for vi in value)
+        elif isinstance(value, dict):
+            return all(
+                cls._is_config_value(k) and cls._is_config_value(v)
+                for k, v in value.items()
+            )
+        else:
+            return False
 
 
 class TypedModule(Generic[InType, OutType], nn.Module):

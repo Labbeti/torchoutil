@@ -11,15 +11,28 @@ from torchoutil import Tensor, nn
 from torchoutil.nn.modules.mixins import _DEFAULT_DEVICE_DETECT_MODE
 
 
+class Intermediate(torch.nn.Module):
+    """Subclass of torch Module instead of torchoutil EModule here."""
+
+    def __init__(self, in_features: int, out_features: int) -> None:
+        super().__init__()
+        self.linear = nn.Linear(in_features, out_features)
+        self.intermediate_attr = "abcd"
+
+    def forward(self, x: Tensor) -> Tensor:
+        return self.linear(x)
+
+
 class MyModule(nn.EModule[Tensor, Tensor]):
     def __init__(self, in_features: int, out_features: int, p: float) -> None:
-        projection = nn.Linear(in_features, out_features)
+        projection = Intermediate(in_features, out_features)
         dropout = nn.Dropout(p=p)
 
         super().__init__()
         self.projection = projection
         self.dropout = dropout
         self.p = p
+        self.sizes = (in_features, out_features)
 
     def forward(self, x: Tensor) -> Tensor:
         return self.dropout(self.projection(x))
@@ -39,11 +52,13 @@ class TestInheritEModule(TestCase):
         assert module1.get_device() == torch.device("cpu")
 
         expected_config = {
-            "projection.in_features": 32,
-            "projection.out_features": 16,
+            "projection.linear.in_features": 32,
+            "projection.linear.out_features": 16,
+            "projection.intermediate_attr": "abcd",
             "dropout.p": 0.5,
             "dropout.inplace": False,
             "p": 0.5,
+            "sizes": (32, 16),
         }
         assert module1.config == expected_config
         assert module1.count_parameters() == in_features * out_features + out_features
