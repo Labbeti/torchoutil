@@ -49,11 +49,12 @@ from torchoutil.utils.hdf.dataset import HDFDataset
 T = TypeVar("T")
 U = TypeVar("U", bound=Union[int, float, str, Tensor, list])
 
-_HDF_SUPPORTED_DTYPES = (
-    "b",
-    "i",
-    "u",
-    "f",
+_SUPPORTED_HDF_DTYPES = (
+    "b",  # bool
+    "i",  # int
+    "u",  # uint
+    "f",  # float
+    "c",  # complex
     HDF_STRING_DTYPE,
     HDF_VOID_DTYPE,
 )
@@ -162,6 +163,15 @@ def pack_to_hdf(
         attr_name: True for attr_name in item_0_dict.keys()
     }
 
+    invalid = {
+        name: hdf_dtype
+        for name, hdf_dtype in hdf_dtypes.items()
+        if hdf_dtype not in _SUPPORTED_HDF_DTYPES
+    }
+    if len(invalid) > 0:
+        msg = f"Invalid hdf dtype found in item. (found {len(invalid)}/{len(hdf_dtypes)} unsupported dtypes with {invalid=}, but expected dtypes in {_SUPPORTED_HDF_DTYPES})"
+        raise ValueError(msg)
+
     if isinstance(dataset, IterableDataset):
         wrapped = IterableTransformWrapper(dataset, dict_pre_transform)
     else:
@@ -239,11 +249,13 @@ def pack_to_hdf(
                 kwargs["fillvalue"] = 0
             elif hdf_dtype == "f":
                 kwargs["fillvalue"] = 0.0
+            elif hdf_dtype == "c":
+                kwargs["fillvalue"] = 0.0 + 0.0j
             elif hdf_dtype in (HDF_STRING_DTYPE, HDF_VOID_DTYPE):
                 pass
             else:
                 raise ValueError(
-                    f"Unsupported type {hdf_dtype=}. (expected one of {_HDF_SUPPORTED_DTYPES})"
+                    f"Unsupported type {hdf_dtype=}. (expected one of {_SUPPORTED_HDF_DTYPES})"
                 )
 
             if verbose >= 2:
