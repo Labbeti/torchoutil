@@ -4,7 +4,6 @@
 import datetime
 import json
 import logging
-import zlib
 from dataclasses import asdict
 from pathlib import Path
 from typing import (
@@ -27,6 +26,7 @@ from h5py import Dataset as HDFRawDataset
 from torch import Tensor, nn
 from torch.utils.data.dataloader import DataLoader
 
+from torchoutil.nn.functional.checksum import checksum
 from torchoutil.pyoutil.collections import all_eq, unzip
 from torchoutil.pyoutil.typing import is_dataclass_instance, is_dict_str
 from torchoutil.types import is_numpy_number_like
@@ -358,7 +358,7 @@ def pack_to_hdf(
                         hdf_shapes_dset = hdf_dsets[shape_name]
                         hdf_shapes_dset[i] = shape
 
-                    global_hash_value += _checksum(value)
+                    global_hash_value += checksum(value)
 
                 i += 1
 
@@ -407,23 +407,6 @@ class Compose:
         for fn in self.fns:
             x = fn(x)
         return x
-
-
-def _checksum(
-    value: Any,
-) -> int:
-    if isinstance(value, bytes):
-        return zlib.adler32(value)
-    elif isinstance(value, (np.ndarray, Tensor)):
-        return int(value.sum().item())
-    elif isinstance(value, (int, float)):
-        return int(value)
-    elif isinstance(value, str):
-        return _checksum(value.encode())
-    elif isinstance(value, (list, tuple)):
-        return sum(map(_checksum, value))
-    else:
-        raise TypeError(f"Invalid argument type {value.__class__.__name__}.")
 
 
 def _get_shape_and_dtype(
