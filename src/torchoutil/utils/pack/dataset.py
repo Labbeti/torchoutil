@@ -8,8 +8,8 @@ from pathlib import Path
 from typing import Any, Callable, Dict, Generic, List, Optional, TypeVar, Union
 
 import torch
-from torch.utils.data.dataset import Dataset
 
+from torchoutil.utils.data import DatasetSlicer
 from torchoutil.utils.pack.common import (
     ATTRS_FNAME,
     ContentMode,
@@ -22,7 +22,7 @@ U = TypeVar("U")
 pylog = logging.getLogger(__name__)
 
 
-class PackedDataset(Generic[T, U], Dataset[U]):
+class PackedDataset(Generic[T, U], DatasetSlicer[U]):
     def __init__(
         self,
         root: Union[str, Path],
@@ -70,14 +70,14 @@ class PackedDataset(Generic[T, U], Dataset[U]):
     def batch_size(self) -> int:
         return self._attrs["batch_size"]
 
-    def __getitem__(self, idx: int) -> U:
+    def __len__(self) -> int:
+        return self._attrs["length"]
+
+    def get_item(self, idx: int) -> Union[T, U]:
         item = self._load_item(idx)
         if self._transform is not None:
             item = self._transform(item)
         return item  # type: ignore
-
-    def __len__(self) -> int:
-        return self._attrs["length"]
 
     def _load_item(self, idx: int) -> T:
         if self.content_mode == "item":
