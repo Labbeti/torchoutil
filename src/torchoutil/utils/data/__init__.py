@@ -3,10 +3,11 @@
 
 
 from .collate import AdvancedCollateDict, CollateDict
-from .dataloader import get_auto_num_cpus
+from .dataloader import get_auto_num_cpus, get_auto_num_gpus
 from .dataset import (
     EmptyDataset,
     IterableSubset,
+    IterableTransformWrapper,
     IterableWrapper,
     Subset,
     TransformWrapper,
