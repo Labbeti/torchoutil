@@ -144,10 +144,11 @@ def checksum_tensor(x: Tensor, **kwargs) -> int:
 
 
 def checksum_ndarray(x: Union[np.ndarray, np.generic], **kwargs) -> int:
-    if _NUMPY_AVAILABLE:
-        return kwargs.get("accumulator", 0)
-    else:
-        return checksum_tensor(torch.as_tensor(x), **kwargs)
+    if not _NUMPY_AVAILABLE:
+        raise NotImplementedError(
+            "Cannot call function 'checksum_ndarray' because optional dependancy 'numpy' is not installed. Please install it using 'pip install torchoutil[extras]'"
+        )
+    return checksum_tensor(torch.as_tensor(x), **kwargs)
 
 
 def checksum_number(x: Union[int, bool, complex, float], **kwargs) -> int:
