@@ -397,9 +397,9 @@ def pack_to_hdf(
             "global_hash_value": global_hash_value,
             "item_type": item_type,
             "added_columns": added_columns,
-            "load_as_complex": json.dumps(load_as_complex),
             "shape_suffix": shape_suffix,
             "file_kwargs": json.dumps(file_kwargs),
+            "load_as_complex": json.dumps(load_as_complex),
         }
         if verbose >= 2:
             dumped_attributes = json.dumps(attributes, indent="\t")
