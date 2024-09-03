@@ -10,42 +10,52 @@ from torch.types import _bool
 from torchoutil.pyoutil.enum import StrEnum
 
 TORCH_DTYPES: Final[Dict[str, torch.dtype]] = {
-    "float32": torch.float32,
-    "float": torch.float,
-    "float64": torch.float64,
-    "double": torch.double,
+    # Base types
     "float16": torch.float16,
-    "bfloat16": torch.bfloat16,
-    "half": torch.half,
-    "uint8": torch.uint8,
-    "int8": torch.int8,
+    "float32": torch.float32,
+    "float64": torch.float64,
     "int16": torch.int16,
-    "short": torch.short,
     "int32": torch.int32,
-    "int": torch.int,
     "int64": torch.int64,
-    "long": torch.long,
     "complex32": torch.complex32,
     "complex64": torch.complex64,
-    "cfloat": torch.cfloat,
     "complex128": torch.complex128,
+    # Aliases
+    "half": torch.half,
+    "float": torch.float,
+    "double": torch.double,
+    "short": torch.short,
+    "int": torch.int,
+    "long": torch.long,
+    "chalf": torch.chalf if hasattr(torch, "chalf") else torch.complex32,
+    "cfloat": torch.cfloat,
     "cdouble": torch.cdouble,
-    "quint8": torch.quint8,
+    # Others
+    "bfloat16": torch.bfloat16,
+    "bool": torch.bool,
+    "int8": torch.int8,
     "qint8": torch.qint8,
     "qint32": torch.qint32,
-    "bool": torch.bool,
     "quint4x2": torch.quint4x2,
+    "quint8": torch.quint8,
+    "uint8": torch.uint8,
 }
 
-if hasattr(torch, "chalf"):
-    TORCH_DTYPES["chalf"] = torch.chalf
+# Optional
 if hasattr(torch, "quint2x4"):
     TORCH_DTYPES["quint2x4"] = torch.quint2x4
+if hasattr(torch, "uint16"):
+    TORCH_DTYPES["uint16"] = torch.uint16
+if hasattr(torch, "uint32"):
+    TORCH_DTYPES["uint32"] = torch.uint32
+if hasattr(torch, "uint64"):
+    TORCH_DTYPES["uint64"] = torch.uint64
 
 
 class DTypeEnum(StrEnum):
     """Enum of torch dtypes."""
 
+    # Base types
     float16 = auto()
     float32 = auto()
     float64 = auto()
@@ -56,9 +66,10 @@ class DTypeEnum(StrEnum):
     complex64 = auto()
     complex128 = auto()
 
+    # Aliases
+    half = float16
     float = float32
     double = float64
-    half = float16
     short = int16
     int = int32
     long = int64
@@ -66,15 +77,21 @@ class DTypeEnum(StrEnum):
     cfloat = complex64
     cdouble = complex128
 
+    # Others
     bfloat16 = auto()
-    uint8 = auto()  # byte
+    bool = auto()
     int8 = auto()  # char
-    quint8 = auto()
     qint8 = auto()
     qint32 = auto()
-    bool = auto()
     quint4x2 = auto()
+    quint8 = auto()
+    uint8 = auto()  # byte
+
+    # Optional
     quint2x4 = auto()
+    uint16 = auto()
+    uint32 = auto()
+    uint64 = auto()
 
     @classmethod
     def default(cls) -> "DTypeEnum":
@@ -86,9 +103,10 @@ class DTypeEnum(StrEnum):
             if dtype_i == dtype:
                 return DTypeEnum.from_str(name_i)
 
-        raise ValueError(
+        msg = (
             f"Invalid argument {dtype=}. (expected one of {tuple(TORCH_DTYPES.keys())})"
         )
+        raise ValueError(msg)
 
     @property
     def dtype(self) -> torch.dtype:
@@ -105,6 +123,12 @@ class DTypeEnum(StrEnum):
     @property
     def is_signed(self) -> _bool:
         return self.dtype.is_signed
+
+    def to_real(self) -> "DTypeEnum":
+        return DTypeEnum.from_dtype(self.dtype.to_real())
+
+    def to_complex(self) -> "DTypeEnum":
+        return DTypeEnum.from_dtype(self.dtype.to_complex())
 
 
 def torch_dtype_to_enum_dtype(dtype: torch.dtype) -> DTypeEnum:

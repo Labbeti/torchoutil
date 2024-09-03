@@ -127,7 +127,7 @@ class TestTensorTyping(TestCase):
             Tensor0D([1, 2], dtype=torch.float16)
 
         with self.assertRaises(ValueError):
-            ShortTensor1D([1, 2], dtype=torch.uint16)
+            ShortTensor1D([1, 2], dtype=torch.uint8)
 
         x = Tensor0D(10.0)
         assert x.ndim == 0 and x.dtype == torch.float
