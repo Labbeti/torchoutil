@@ -38,6 +38,7 @@ from torchoutil.types import (
     np,
 )
 from torchoutil.types._hints import ScalarLike
+from torchoutil.utils import return_types
 
 T = TypeVar("T")
 U = TypeVar("U")
@@ -194,7 +195,7 @@ def ndim(
     x: Union[ScalarLike, Tensor, np.ndarray, Iterable],
     *,
     return_valid: Literal[True],
-) -> Tuple[bool, int]:
+) -> return_types.ndim:
     ...
 
 
@@ -202,7 +203,7 @@ def ndim(
     x: Union[ScalarLike, Tensor, np.ndarray, Iterable],
     *,
     return_valid: bool = False,
-) -> Union[int, Tuple[bool, int]]:
+) -> Union[int, return_types.ndim]:
     """Scan first argument to return its number of dimension(s). Works recursively with Tensors, numpy arrays and builtins types instances.
 
     Args:
@@ -215,7 +216,7 @@ def ndim(
     """
     valid, ndim = _search_ndim(x)
     if return_valid:
-        return valid, ndim
+        return return_types.ndim(valid, ndim)
     if valid:
         return ndim
     else:
@@ -240,7 +241,7 @@ def shape(
     *,
     output_type: Callable[[Tuple[int, ...]], T] = identity,
     return_valid: Literal[True],
-) -> Tuple[bool, T]:
+) -> return_types.shape[T]:
     ...
 
 
@@ -249,7 +250,7 @@ def shape(
     *,
     output_type: Callable[[Tuple[int, ...]], T] = identity,
     return_valid: bool = False,
-) -> Union[T, Tuple[bool, T]]:
+) -> Union[T, return_types.shape[T]]:
     """Scan first argument to return its shape. Works recursively with Tensors, numpy arrays and builtins types instances.
 
     Args:
@@ -264,7 +265,7 @@ def shape(
     valid, shape = _search_shape(x)
     if return_valid:
         shape = output_type(shape)
-        return valid, shape
+        return return_types.shape(valid, shape)
     elif valid:
         shape = output_type(shape)
         return shape
