@@ -12,6 +12,7 @@ from typing import (
     Dict,
     Literal,
     Mapping,
+    NamedTuple,
     Optional,
     Tuple,
     TypeVar,
@@ -26,8 +27,10 @@ from h5py import Dataset as HDFRawDataset
 from torch import Tensor, nn
 from torch.utils.data.dataloader import DataLoader
 
+import torchoutil as to
 from torchoutil.nn.functional.checksum import checksum
 from torchoutil.pyoutil.collections import all_eq, unzip
+from torchoutil.pyoutil.functools import Compose
 from torchoutil.pyoutil.typing import is_dataclass_instance, is_dict_str
 from torchoutil.types import is_numpy_number_like
 from torchoutil.utils.data.dataloader import get_auto_num_cpus
@@ -49,6 +52,15 @@ from torchoutil.utils.hdf.dataset import HDFDataset
 T = TypeVar("T")
 U = TypeVar("U", bound=Union[int, float, str, Tensor, list])
 
+_HDFDType = Union[Literal["b", "i", "u", "f", "c"], Any]
+
+
+class _ShapeDTypeInfo(NamedTuple):
+    shape: Tuple[int, ...]
+    hdf_dtype: _HDFDType
+    src_dtype: str
+
+
 _SUPPORTED_HDF_DTYPES = (
     "b",  # bool
     "i",  # int
@@ -58,7 +70,6 @@ _SUPPORTED_HDF_DTYPES = (
     HDF_STRING_DTYPE,
     HDF_VOID_DTYPE,
 )
-_HDFDType = Union[Literal["b", "i", "u", "f"], Any]
 
 pylog = logging.getLogger(__name__)
 
@@ -76,6 +87,7 @@ def pack_to_hdf(
     shape_suffix: str = SHAPE_SUFFIX,
     open_hdf: bool = True,
     file_kwargs: Optional[Dict[str, Any]] = None,
+    store_complex_as_real: bool = True,
 ) -> HDFDataset[U, U]:
     """Pack a dataset to HDF file.
 
@@ -153,9 +165,9 @@ def pack_to_hdf(
     del pre_transform, item_0
 
     for attr_name, value in item_0_dict.items():
-        shape, hdf_dtype, _src_dtype = _get_shape_and_dtype(value)
-        shapes_0[attr_name] = shape
-        hdf_dtypes_0[attr_name] = hdf_dtype
+        info = _scan_shape_dtype(value)
+        shapes_0[attr_name] = info.shape
+        hdf_dtypes_0[attr_name] = info.hdf_dtype
 
     max_shapes: Dict[str, Tuple[int, ...]] = shapes_0
     hdf_dtypes: Dict[str, str] = hdf_dtypes_0
@@ -194,7 +206,7 @@ def pack_to_hdf(
     ):
         for item in batch:
             for attr_name, value in item.items():
-                shape, hdf_dtype, _src_dtype = _get_shape_and_dtype(value)
+                shape, hdf_dtype, _src_dtype = _scan_shape_dtype(value)
                 all_eq_shapes[attr_name] &= max_shapes[attr_name] == shape
                 max_shapes[attr_name] = tuple(
                     map(max, zip(max_shapes[attr_name], shape))
@@ -209,6 +221,15 @@ def pack_to_hdf(
                     raise ValueError(
                         f"Found different hdf_dtype. (with {hdf_dtypes[attr_name]=} != {hdf_dtype=} and {attr_name=} with {value=})"
                     )
+
+    load_as_complex = {k: False for k in hdf_dtypes.keys()}
+    if store_complex_as_real:
+        for attr_name in list(hdf_dtypes.keys()):
+            if hdf_dtypes[attr_name] != "c":
+                continue
+            load_as_complex[attr_name] = True
+            hdf_dtypes[attr_name] = "f"
+            max_shapes[attr_name] = max_shapes[attr_name] + (2,)
 
     if verbose >= 2:
         pylog.debug(f"Found max_shapes:\n{max_shapes}")
@@ -249,9 +270,7 @@ def pack_to_hdf(
                 kwargs["fillvalue"] = 0
             elif hdf_dtype == "f":
                 kwargs["fillvalue"] = 0.0
-            elif hdf_dtype == "c":
-                kwargs["fillvalue"] = 0.0 + 0.0j
-            elif hdf_dtype in (HDF_STRING_DTYPE, HDF_VOID_DTYPE):
+            elif hdf_dtype in ("c", HDF_STRING_DTYPE, HDF_VOID_DTYPE):
                 pass
             else:
                 raise ValueError(
@@ -313,7 +332,11 @@ def pack_to_hdf(
             for item in batch:
                 for attr_name, value in item.items():
                     hdf_dset = hdf_dsets[attr_name]
-                    shape, hdf_dtype, _src_dtype = _get_shape_and_dtype(value)
+
+                    if load_as_complex[attr_name]:
+                        value = to.view_as_real(value)
+
+                    shape, hdf_dtype, _src_dtype = _scan_shape_dtype(value)
 
                     # Check every shape
                     if len(shape) != hdf_dset.ndim - 1:
@@ -337,19 +360,18 @@ def pack_to_hdf(
                         value = value.cpu()  # type: ignore
 
                     # If the value is a sequence but not an array or tensor
-                    if hdf_dtype in ("i", "f") and not isinstance(
+                    if hdf_dtype in ("i", "f", "c") and not isinstance(
                         value, (Tensor, np.ndarray)
                     ):
                         value = np.array(value)
 
-                    # Note: "dset_audios[slices]" is a generic version of "dset_audios[i, :shape_0, :shape_1]"
+                    # Note: "hdf_dset[slices]" is a generic version of "hdf_dset[i, :shape_0, :shape_1]"
                     slices = (i,) + tuple(slice(shape_i) for shape_i in shape)
                     try:
                         hdf_dset[slices] = value
-                    except TypeError as err:
-                        pylog.error(
-                            f"Cannot set data {value} into {hdf_dset[slices].shape} ({attr_name=}, {i=}, {slices=})"
-                        )
+                    except (TypeError, ValueError) as err:
+                        msg = f"Cannot set data {value} into {hdf_dset[slices].shape} ({attr_name=}, {i=}, {slices=})"
+                        pylog.error(msg)
                         raise err
 
                     # Store original shape if needed
@@ -375,8 +397,9 @@ def pack_to_hdf(
             "global_hash_value": global_hash_value,
             "item_type": item_type,
             "added_columns": added_columns,
+            "load_as_complex": json.dumps(load_as_complex),
             "shape_suffix": shape_suffix,
-            "file_kwargs": json.dumps(info),
+            "file_kwargs": json.dumps(file_kwargs),
         }
         if verbose >= 2:
             dumped_attributes = json.dumps(attributes, indent="\t")
@@ -398,20 +421,9 @@ def pack_to_hdf(
     return hdf_dataset
 
 
-class Compose:
-    def __init__(self, *fns: Callable) -> None:
-        super().__init__()
-        self.fns = fns
-
-    def __call__(self, x: Any) -> Any:
-        for fn in self.fns:
-            x = fn(x)
-        return x
-
-
-def _get_shape_and_dtype(
-    x: Union[int, float, str, list, Tensor, np.ndarray]
-) -> Tuple[Tuple[int, ...], _HDFDType, str]:
+def _scan_shape_dtype(
+    x: Union[int, float, str, list, tuple, Tensor, np.ndarray]
+) -> _ShapeDTypeInfo:
     """Returns the shape and the hdf_dtype for an input."""
     if isinstance(x, int):
         shape = ()
@@ -428,9 +440,16 @@ def _get_shape_and_dtype(
         hdf_dtype = HDF_STRING_DTYPE
         src_dtype = "str"
 
+    elif isinstance(x, complex):
+        shape = ()
+        hdf_dtype = "c"
+        src_dtype = "complex"
+
     elif isinstance(x, Tensor):
         shape = tuple(x.shape)
-        if x.is_floating_point():
+        if x.is_complex():
+            hdf_dtype = "c"
+        elif x.is_floating_point():
             hdf_dtype = "f"
         else:
             hdf_dtype = "i"
@@ -451,7 +470,7 @@ def _get_shape_and_dtype(
             hdf_dtype = HDF_VOID_DTYPE
             src_dtype = "void"
         else:
-            sub_data = list(map(_get_shape_and_dtype, x))
+            sub_data = list(map(_scan_shape_dtype, x))
             sub_shapes, sub_hdf_dtypes, sub_src_dtypes = unzip(sub_data)
             sub_dims = list(map(len, sub_shapes))
 
@@ -463,7 +482,7 @@ def _get_shape_and_dtype(
                 raise TypeError(
                     f"Unsupported list of heterogeneous types. (found {sub_hdf_dtypes=})"
                 )
-            # Check to avoid ragged array like [["a", "b"], ["c"], ["d", "e"]]
+            # Check to avoid ragged array like [["0", "1"], ["2"], ["3", "4"]]
             if not all_eq(sub_shapes):
                 raise TypeError(
                     f"Unsupported list of heterogeneous shapes. (found {sub_shapes=} for {x=})"
@@ -481,4 +500,4 @@ def _get_shape_and_dtype(
             f"Unsupported type {x.__class__.__name__} in function get_shape_and_dtype."
         )
 
-    return shape, hdf_dtype, src_dtype
+    return _ShapeDTypeInfo(shape, hdf_dtype, src_dtype)

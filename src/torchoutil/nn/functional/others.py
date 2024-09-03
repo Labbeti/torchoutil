@@ -10,6 +10,7 @@ from typing import (
     Literal,
     Mapping,
     Optional,
+    Sequence,
     Sized,
     Tuple,
     TypeVar,
@@ -371,3 +372,43 @@ def __can_be_converted_to_tensor_nested(x: Any) -> bool:
         return __can_be_converted_to_tensor_list_tuple(x)
     else:
         return False
+
+
+def view_as_real(
+    x: Union[Tensor, np.ndarray, complex]
+) -> Union[Tensor, np.ndarray, Tuple[float, float]]:
+    if isinstance(x, Tensor):
+        return torch.view_as_real(x)
+
+    elif isinstance(x, np.ndarray):
+        if x.dtype == np.complex64:
+            float_dtype = np.float32
+        elif x.dtype == np.complex128:
+            float_dtype = np.float64
+        elif x.dtype == np.complex256:
+            float_dtype = np.float128
+        else:
+            DTYPES = (np.complex64, np.complex128, np.complex256)
+            raise ValueError(f"Unexpected dtype {x.dtype}. (expected one of {DTYPES})")
+
+        return x.view(float_dtype).reshape(*x.shape, 2)
+    else:
+        return x.real, x.imag
+
+
+def view_as_complex(
+    x: Union[Tensor, np.ndarray, Sequence[float]]
+) -> Union[Tensor, np.ndarray, complex]:
+    if isinstance(x, Tensor):
+        return torch.view_as_complex(x)
+    elif isinstance(x, np.ndarray):
+        return x[..., 0] + x[..., 1] * 1j
+    elif (
+        isinstance(x, Sequence)
+        and len(x) == 2
+        and isinstance(x[0], float)
+        and isinstance(x[1], float)
+    ):
+        return x[0] + x[1] * 1j
+    else:
+        raise TypeError(f"Invalid argument type {type(x)=}.")

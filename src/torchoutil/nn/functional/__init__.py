@@ -78,6 +78,8 @@ from .others import (
     nelement,
     ranks,
     shape,
+    view_as_complex,
+    view_as_real,
 )
 from .pad import cat_padded_batch, pad_and_stack_rec, pad_dim, pad_dims
 from .transform import (

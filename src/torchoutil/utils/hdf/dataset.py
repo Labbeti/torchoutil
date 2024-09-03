@@ -29,6 +29,7 @@ from torch import Tensor
 from torch.utils.data.dataset import Dataset
 from typing_extensions import TypeGuard
 
+import torchoutil as to
 from torchoutil.nn.functional.indices import get_inverse_perm
 from torchoutil.pyoutil.collections import all_eq
 from torchoutil.pyoutil.typing import (
@@ -170,6 +171,10 @@ class HDFDataset(Generic[T, U], Dataset[U]):
     @property
     def transform(self) -> Optional[Callable[[T], U]]:
         return self._transform
+
+    @property
+    def _load_as_complex(self) -> Dict[str, bool]:
+        return json.loads(self._hdf_file.attrs.get("load_as_complex", "{}"))
 
     # Public methods
     @overload
@@ -484,8 +489,12 @@ class HDFDataset(Generic[T, U], Dataset[U]):
             hdf_value: Any = self._hdf_file[column][sorted_idxs]
             inv_local_idxs = get_inverse_perm(local_idxs)
             hdf_value = [hdf_value[local_idx] for local_idx in inv_local_idxs]
+            if self._load_as_complex[column]:
+                hdf_value = [to.view_as_complex(value) for value in hdf_value]
         else:
             hdf_value: Any = self._hdf_file[column][index]
+            if self._load_as_complex[column]:
+                hdf_value = to.view_as_complex(hdf_value)
         return hdf_value
 
 

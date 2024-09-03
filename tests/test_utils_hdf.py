@@ -12,6 +12,7 @@ from torch.utils.data.dataset import Subset
 from torchvision.datasets import CIFAR10
 
 from torchoutil.nn import ESequential, IndexToOnehot, ToList, ToNumpy
+from torchoutil.pyoutil import dict_list_to_list_dict
 from torchoutil.utils.hdf import pack_to_hdf
 
 
@@ -62,6 +63,28 @@ class TestHDF(TestCase):
             data_i = item["data"]
             assert isinstance(data_i, Tensor)
             assert data_i.shape == data_shape[i]
+
+        hdf_dataset.close()
+        os.remove(path)
+
+    def test_special_floating_dtypes(self) -> None:
+        ds_dict = {
+            "float": torch.rand(10, 2, 3, dtype=torch.float16),
+            "complex": torch.rand(10, 2, 3, dtype=torch.complex64),
+        }
+        ds_list = dict_list_to_list_dict(ds_dict, "same")
+
+        path = "/tmp/test_complex.hdf"
+        hdf_dataset = pack_to_hdf(ds_list, path, overwrite=True)
+
+        assert len(hdf_dataset.added_columns) == 0
+
+        for i, item in enumerate(iter(hdf_dataset)):
+            assert set(item.keys()) == {"float", "complex"}
+            assert set(ds_list[i].keys()) == {"float", "complex"}
+
+            assert torch.equal(ds_list[i]["float"], item["float"])
+            assert torch.equal(ds_list[i]["complex"], item["complex"])
 
         hdf_dataset.close()
         os.remove(path)
