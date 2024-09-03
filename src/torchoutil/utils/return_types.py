@@ -3,6 +3,7 @@
 
 """Type used for backward compatibility."""
 
+import sys
 from typing import Generic, NamedTuple, TypeVar
 
 from torch import Tensor, __version__
@@ -27,9 +28,20 @@ else:
     from torch.return_types import max, min  # type: ignore # noqa: F401
 
 
-class shape(Generic[T], NamedTuple):
-    valid: bool
-    shape: T
+if sys.version_info.major == 3 and sys.version_info.minor <= 8:
+    # workaround for typing in python 3.8
+    class _shape_base(NamedTuple):
+        valid: bool
+        shape: T  # type: ignore
+
+    class shape(_shape_base, Generic[T]):
+        ...  # type: ignore
+
+else:
+
+    class shape(NamedTuple, Generic[T]):
+        valid: bool
+        shape: T
 
 
 class ndim(NamedTuple):
