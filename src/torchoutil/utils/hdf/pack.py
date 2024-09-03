@@ -5,7 +5,7 @@ import datetime
 import json
 import logging
 import zlib
-from dataclasses import asdict, is_dataclass
+from dataclasses import asdict
 from pathlib import Path
 from typing import (
     Any,
@@ -28,10 +28,15 @@ from torch import Tensor, nn
 from torch.utils.data.dataloader import DataLoader
 
 from torchoutil.pyoutil.collections import all_eq, unzip
-from torchoutil.pyoutil.typing import is_dict_str
+from torchoutil.pyoutil.typing import is_dataclass_instance, is_dict_str
 from torchoutil.types import is_numpy_number_like
 from torchoutil.utils.data.dataloader import get_auto_num_cpus
-from torchoutil.utils.data.dataset import SizedDatasetLike, TransformWrapper
+from torchoutil.utils.data.dataset import (
+    IterableDataset,
+    IterableTransformWrapper,
+    SizedDatasetLike,
+    TransformWrapper,
+)
 from torchoutil.utils.hdf.common import (
     HDF_ENCODING,
     HDF_STRING_DTYPE,
@@ -124,7 +129,10 @@ def pack_to_hdf(
     # Step 1: Init max_shapes and hdf_dtypes with the first item
     shapes_0 = {}
     hdf_dtypes_0 = {}
-    item_0 = dataset[0]
+    if isinstance(dataset, IterableDataset):
+        item_0 = next(iter(dataset))
+    else:
+        item_0 = dataset[0]
     item_0 = pre_transform(item_0)
 
     dict_pre_transform: Callable[[T], Dict[str, Any]]
@@ -154,7 +162,11 @@ def pack_to_hdf(
         attr_name: True for attr_name in item_0_dict.keys()
     }
 
-    wrapped = TransformWrapper(dataset, dict_pre_transform)
+    if isinstance(dataset, IterableDataset):
+        wrapped = IterableTransformWrapper(dataset, dict_pre_transform)
+    else:
+        wrapped = TransformWrapper(dataset, dict_pre_transform)
+
     loader = DataLoader(
         wrapped,  # type: ignore
         batch_size=batch_size,
@@ -198,7 +210,7 @@ def pack_to_hdf(
 
     if hasattr(dataset, "info"):
         info = dataset.info  # type: ignore
-        if is_dataclass(info):
+        if is_dataclass_instance(info):
             info = asdict(info)
         elif isinstance(info, Mapping):
             info = dict(info.items())  # type: ignore
