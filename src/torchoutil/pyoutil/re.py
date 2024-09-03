@@ -49,7 +49,7 @@ def pass_patterns(
     pylog.warning(
         f"Deprecate function call '{get_current_fn_name()}'. Use 'match_patterns' instead."
     )
-    return match_any_patterns(x, include, exclude=exclude, match_fn=match_fn)
+    return match_patterns(x, include, exclude=exclude, match_fn=match_fn)
 
 
 def match_any_patterns(
@@ -62,7 +62,7 @@ def match_any_patterns(
     pylog.warning(
         f"Deprecate function call '{get_current_fn_name()}'. Use 'match_patterns' instead."
     )
-    return match_any_patterns(x, include, exclude=exclude, match_fn=match_fn)
+    return match_patterns(x, include, exclude=exclude, match_fn=match_fn)
 
 
 def match_patterns(
