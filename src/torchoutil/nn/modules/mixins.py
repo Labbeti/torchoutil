@@ -25,6 +25,7 @@ from typing import (
 )
 
 import torch
+import torch.utils
 from torch import Tensor, nn
 from torch.nn.parameter import Parameter
 
@@ -258,11 +259,14 @@ class ConfigModule(Generic[T_MutableMappingStr], nn.Module):
             k: v
             for k, v in value.__dict__.items()
             if k != "_modules" and match_patterns(k, exclude=cls._CONFIG_EXCLUDE)
-        } | {
-            kv: vv
-            for k, v in value.__dict__["_modules"].items()
-            for kv, vv in cls._detect_subconfig(k, v).items()
         }
+        subconfig.update(
+            {
+                kv: vv
+                for k, v in value.__dict__["_modules"].items()
+                for kv, vv in cls._detect_subconfig(k, v).items()
+            }
+        )
         return subconfig
 
     @classmethod
