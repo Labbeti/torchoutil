@@ -659,3 +659,35 @@ class ShortTensor3D(
 ):
     def tolist(self) -> List[List[List[int]]]:
         return super().tolist()  # type: ignore
+
+
+class CFloatTensor0D(
+    _TensorNDBase[Literal[DTypeEnum.cfloat], Literal[0], complex],
+    metaclass=_TensorNDMeta[Literal[DTypeEnum.cfloat], Literal[0], complex],
+):
+    def tolist(self) -> complex:
+        return super().tolist()  # type: ignore
+
+
+class CFloatTensor1D(
+    _TensorNDBase[Literal[DTypeEnum.cfloat], Literal[1], complex],
+    metaclass=_TensorNDMeta[Literal[DTypeEnum.cfloat], Literal[1], complex],
+):
+    def tolist(self) -> List[complex]:
+        return super().tolist()  # type: ignore
+
+
+class CFloatTensor2D(
+    _TensorNDBase[Literal[DTypeEnum.cfloat], Literal[2], complex],
+    metaclass=_TensorNDMeta[Literal[DTypeEnum.cfloat], Literal[2], complex],
+):
+    def tolist(self) -> List[List[complex]]:
+        return super().tolist()  # type: ignore
+
+
+class CFloatTensor3D(
+    _TensorNDBase[Literal[DTypeEnum.cfloat], Literal[3], complex],
+    metaclass=_TensorNDMeta[Literal[DTypeEnum.cfloat], Literal[3], complex],
+):
+    def tolist(self) -> List[List[List[complex]]]:
+        return super().tolist()  # type: ignore
