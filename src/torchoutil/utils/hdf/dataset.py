@@ -6,6 +6,7 @@ import logging
 import os
 import os.path as osp
 import pickle
+from functools import cached_property
 from pathlib import Path
 from typing import (
     Any,
@@ -150,7 +151,7 @@ class HDFDataset(Generic[T, U], Dataset[U]):
         """Return the tensor shape suffix in column names."""
         return self._hdf_file.attrs.get("shape_suffix", SHAPE_SUFFIX)
 
-    @property
+    @cached_property
     def info(self) -> Dict[str, Any]:
         """Return the global dataset info."""
         return json.loads(self._hdf_file.attrs.get("info", "{}"))
@@ -172,7 +173,7 @@ class HDFDataset(Generic[T, U], Dataset[U]):
     def transform(self) -> Optional[Callable[[T], U]]:
         return self._transform
 
-    @property
+    @cached_property
     def _load_as_complex(self) -> Dict[str, bool]:
         return json.loads(self._hdf_file.attrs.get("load_as_complex", "{}"))
 
@@ -305,6 +306,7 @@ class HDFDataset(Generic[T, U], Dataset[U]):
 
         self._hdf_file.close()
         self._hdf_file = None
+        self._clear_caches()
 
     def get_attrs(self) -> Dict[str, Any]:
         return self._hdf_file.attrs
@@ -337,6 +339,7 @@ class HDFDataset(Generic[T, U], Dataset[U]):
             else:
                 raise RuntimeError("Cannot open the HDF file twice.")
 
+        self._clear_caches()
         self._hdf_file = h5py.File(self._hdf_fpath, "r", **self._file_kwargs)
         self._sanity_check()
 
@@ -489,13 +492,17 @@ class HDFDataset(Generic[T, U], Dataset[U]):
             hdf_value: Any = self._hdf_file[column][sorted_idxs]
             inv_local_idxs = get_inverse_perm(local_idxs)
             hdf_value = [hdf_value[local_idx] for local_idx in inv_local_idxs]
-            if self._load_as_complex[column]:
+            if self._load_as_complex.get(column, False):
                 hdf_value = [to.view_as_complex(value) for value in hdf_value]
         else:
             hdf_value: Any = self._hdf_file[column][index]
-            if self._load_as_complex[column]:
+            if self._load_as_complex.get(column, False):
                 hdf_value = to.view_as_complex(hdf_value)
         return hdf_value
+
+    def _clear_caches(self) -> None:
+        del self._load_as_complex
+        del self.info
 
 
 def _decode_rec(value: Union[bytes, Iterable], encoding: str) -> Union[str, list]:

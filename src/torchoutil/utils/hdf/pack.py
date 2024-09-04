@@ -222,7 +222,7 @@ def pack_to_hdf(
                         f"Found different hdf_dtype. (with {hdf_dtypes[attr_name]=} != {hdf_dtype=} and {attr_name=} with {value=})"
                     )
 
-    load_as_complex = {k: False for k in hdf_dtypes.keys()}
+    load_as_complex: Dict[str, bool] = {}
     if store_complex_as_real:
         for attr_name in list(hdf_dtypes.keys()):
             if hdf_dtypes[attr_name] != "c":
@@ -239,7 +239,9 @@ def pack_to_hdf(
     now = datetime.datetime.now()
     creation_date = now.strftime("%Y-%m-%d_%H-%M-%S")
 
-    if hasattr(dataset, "info"):
+    if not hasattr(dataset, "info"):
+        info = {}
+    else:
         info = dataset.info  # type: ignore
         if is_dataclass_instance(info):
             info = asdict(info)
@@ -247,8 +249,6 @@ def pack_to_hdf(
             info = dict(info.items())  # type: ignore
         else:
             info = {}
-    else:
-        info = {}
 
     added_columns = []
 
