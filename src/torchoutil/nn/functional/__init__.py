@@ -76,6 +76,7 @@ from .others import (
     move_to_rec,
     ndim,
     nelement,
+    prod,
     ranks,
     shape,
     view_as_complex,

@@ -28,6 +28,7 @@ from .types.classes import (
     DTypeLike,
     GeneratorLike,
 )
+from .types.dtype_typing import DTypeEnum
 from .types.tensor_typing import (
     BoolTensor,
     BoolTensor0D,
@@ -39,6 +40,10 @@ from .types.tensor_typing import (
     ByteTensor1D,
     ByteTensor2D,
     ByteTensor3D,
+    CFloatTensor0D,
+    CFloatTensor1D,
+    CFloatTensor2D,
+    CFloatTensor3D,
     CharTensor,
     CharTensor0D,
     CharTensor1D,
@@ -79,4 +84,5 @@ from .types.tensor_typing import (
     Tensor2D,
     Tensor3D,
 )
+from .types.variable_fns import as_tensor
 from .utils.saving.csv_io import load_csv, to_csv
