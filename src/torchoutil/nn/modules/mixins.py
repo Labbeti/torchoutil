@@ -28,6 +28,7 @@ import torch
 import torch.utils
 from torch import Tensor, nn
 from torch.nn.parameter import Parameter
+from typing_extensions import Concatenate, ParamSpec
 
 from torchoutil.nn.functional.checksum import checksum_module
 from torchoutil.nn.functional.others import count_parameters
@@ -41,6 +42,7 @@ OutType = TypeVar("OutType", covariant=True, contravariant=False)
 OutType2 = TypeVar("OutType2", covariant=True, contravariant=False)
 OutType3 = TypeVar("OutType3", covariant=False, contravariant=False)
 T_MutableMappingStr = TypeVar("T_MutableMappingStr", bound=MutableMapping[str, Any])
+P = ParamSpec("P")
 
 DeviceDetectMode = Literal["proxy", "first_param", "none"]
 DEVICE_DETECT_MODES = ("proxy", "first_param", "none")
@@ -428,12 +430,14 @@ class EModule(
         *,
         only_trainable: bool = False,
         with_names: bool = False,
+        buffers: bool = False,
         training: bool = False,
     ) -> int:
         return checksum_module(
             self,
             only_trainable=only_trainable,
             with_names=with_names,
+            buffers=buffers,
             training=training,
         )
 
@@ -756,6 +760,25 @@ class EModuleDict(
 
     def forward(self, *args: InType, **kwargs: InType) -> Dict[str, OutType3]:
         return {name: module(*args, **kwargs) for name, module in self.items()}
+
+
+class EModulePartial(
+    Generic[InType, OutType],
+    EModule[InType, OutType],
+):
+    def __init__(
+        self,
+        callable_: Callable[Concatenate[InType, P], OutType],
+        *args: P.args,
+        **kwargs: P.kwargs,
+    ) -> None:
+        super().__init__()
+        self.callable_ = callable_
+        self.args = args
+        self.kwargs = kwargs
+
+    def forward(self, x: InType) -> OutType:
+        return self.callable_(x, *self.args, **self.kwargs)
 
 
 def __test_typing_1() -> None:
