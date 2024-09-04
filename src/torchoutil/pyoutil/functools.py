@@ -5,6 +5,7 @@ import inspect
 from typing import Any, Callable, Generic, List, TypeVar
 
 T = TypeVar("T")
+U = TypeVar("U")
 
 
 def identity(x: T) -> T:
@@ -12,18 +13,18 @@ def identity(x: T) -> T:
     return x
 
 
-class Compose(Generic[T]):
-    def __init__(self, *fns: Callable[[T], T]) -> None:
+class Compose(Generic[T, U]):
+    def __init__(self, *fns: Callable[[Any], Any]) -> None:
         super().__init__()
         self.fns = fns
 
-    def __call__(self, x: T) -> T:
+    def __call__(self, x: Any) -> Any:
         for fn in self.fns:
             x = fn(x)
         return x
 
 
-def compose(*fns: Callable[[T], T]) -> Callable[[T], T]:
+def compose(*fns: Callable[[Any], Any]) -> Callable[[Any], Any]:
     return Compose(*fns)
 
 
