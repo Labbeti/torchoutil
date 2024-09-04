@@ -6,6 +6,7 @@ from unittest import TestCase
 
 import torch
 
+import pyoutil as po
 from torchoutil.nn.functional.transform import (
     flatten,
     repeat_interleave_nd,
@@ -89,6 +90,30 @@ class TestFlatten(TestCase):
         for xi, expected_i in zip(x, expected):
             result_i = flatten(xi)
             assert result_i == expected_i
+
+    def test_example_2_between_dims(self) -> None:
+        if not _NUMPY_AVAILABLE:
+            return None
+
+        shape = (10, 3, 4, 5)
+
+        x = [
+            (np.zeros(shape), 0, len(shape)),
+            (np.zeros(shape), 1, 2),
+            (np.zeros(shape), 0, 1),
+            (np.float64(1.0), 0, None),
+        ]
+        expected = [
+            np.zeros(po.prod(shape)),
+            np.zeros((10, 12, 5)),
+            np.zeros((30, 4, 5)),
+            np.ones(1, dtype=np.float64),
+        ]
+
+        assert len(x) == len(expected)
+        for (xi, start, end), expected_i in zip(x, expected):
+            result_i = flatten(xi, start, end)
+            assert np.equal(result_i, expected_i).all()
 
 
 if __name__ == "__main__":
