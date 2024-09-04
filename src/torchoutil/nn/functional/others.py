@@ -23,11 +23,13 @@ from torch import LongTensor, Tensor, nn
 from typing_extensions import TypeGuard
 
 from torchoutil.nn.functional.get import get_device
-from torchoutil.pyoutil.collections import all_eq, prod
+from torchoutil.pyoutil.collections import all_eq
+from torchoutil.pyoutil.collections import prod as builtin_prod
 from torchoutil.pyoutil.functools import identity
 from torchoutil.pyoutil.typing import (
     BuiltinScalar,
     SizedIterable,
+    T_BuiltinNumber,
     is_builtin_number,
     is_builtin_scalar,
 )
@@ -300,7 +302,7 @@ def nelement(x: Union[ScalarLike, Tensor, np.ndarray, Iterable]) -> int:
     if isinstance(x, Tensor):
         return x.nelement()
     else:
-        return prod(shape(x))
+        return builtin_prod(shape(x))
 
 
 def _search_ndim(
@@ -412,3 +414,39 @@ def view_as_complex(
         return x[0] + x[1] * 1j
     else:
         raise TypeError(f"Invalid argument type {type(x)=}.")
+
+
+@overload
+def prod(
+    x: Tensor,
+    *,
+    dim: Optional[int] = None,
+    start: Any = 1,
+) -> Tensor:
+    ...
+
+
+@overload
+def prod(
+    x: Iterable[T_BuiltinNumber],
+    *,
+    dim: Any = None,
+    start: T_BuiltinNumber = 1,
+) -> T_BuiltinNumber:
+    ...
+
+
+def prod(
+    x: Union[Tensor, Iterable[T_BuiltinNumber]],
+    *,
+    dim: Optional[int] = None,
+    start: T_BuiltinNumber = 1,
+) -> Union[Tensor, T_BuiltinNumber]:
+    if isinstance(x, Tensor):
+        return torch.prod(x, dim=dim)
+    elif isinstance(x, Iterable):
+        return builtin_prod(x, start=start)  # type: ignore
+    else:
+        raise TypeError(
+            f"Invalid argument type {type(x)=}. (expected Tensor or Iterable)"
+        )
