@@ -34,8 +34,8 @@ if sys.version_info.major == 3 and sys.version_info.minor <= 8:
         valid: bool
         shape: T  # type: ignore
 
-    class shape(_shape_base, Generic[T]):
-        ...  # type: ignore
+    class shape(_shape_base, Generic[T]):  # type: ignore
+        ...
 
 else:
 
