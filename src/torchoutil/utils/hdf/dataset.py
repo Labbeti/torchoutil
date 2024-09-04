@@ -501,8 +501,10 @@ class HDFDataset(Generic[T, U], Dataset[U]):
         return hdf_value
 
     def _clear_caches(self) -> None:
-        del self._load_as_complex
-        del self.info
+        if hasattr(self, "_load_as_complex"):
+            del self._load_as_complex
+        if hasattr(self, "info"):
+            del self.info
 
 
 def _decode_rec(value: Union[bytes, Iterable], encoding: str) -> Union[str, list]:
