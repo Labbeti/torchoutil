@@ -21,6 +21,7 @@ from torchoutil.nn.functional.crop import crop_dim
 from torchoutil.nn.functional.get import get_generator
 from torchoutil.nn.functional.pad import PadMode, PadValue, pad_dim
 from torchoutil.pyoutil.collections import flatten as builtin_flatten
+from torchoutil.pyoutil.collections import prod as builtin_prod
 from torchoutil.pyoutil.functools import identity  # noqa: F401
 from torchoutil.pyoutil.typing import T_BuiltinScalar
 from torchoutil.types import is_scalar_like, np
@@ -277,11 +278,19 @@ def flatten(
     if isinstance(x, Tensor):
         end_dim = end_dim if end_dim is not None else x.ndim - 1
         return x.flatten(start_dim, end_dim)
-    elif (
-        isinstance(x, (np.ndarray, np.generic))
-        and start_dim == 0
-        and (end_dim is None or end_dim >= x.ndim - 1)
-    ):
+    elif isinstance(x, np.generic):
         return x.flatten()
+    elif isinstance(x, np.ndarray):
+        if start_dim == 0 and (end_dim is None or end_dim >= x.ndim - 1):
+            return x.flatten()
+        else:
+            end_dim = end_dim if end_dim is not None else x.ndim - 1
+            shape = list(x.shape)
+            shape = (
+                shape[:start_dim]
+                + [builtin_prod(shape[start_dim : end_dim + 1])]
+                + shape[end_dim + 1 :]
+            )
+            return x.reshape(*shape)
     else:
         return builtin_flatten(x, start_dim, end_dim, is_scalar_fn=is_scalar_like)
