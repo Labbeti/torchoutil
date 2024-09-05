@@ -199,6 +199,7 @@ def pack_to_hdf(
         # Step 2: Build hdf datasets in file
         hdf_dsets: Dict[str, HDFRawDataset] = {}
 
+        # Create sub-datasets for main data
         for attr_name, shape in max_shapes.items():
             hdf_dtype = hdf_dtypes.get(attr_name)
 
@@ -228,6 +229,7 @@ def pack_to_hdf(
                 **kwargs,
             )
 
+        # Create sub-datasets for shape data
         for attr_name, shape in max_shapes.items():
             if len(shape) == 0 or all_eq_shapes[attr_name]:
                 continue
@@ -247,7 +249,7 @@ def pack_to_hdf(
                 shape_name, raw_dset_shape, "i", fillvalue=-1
             )
 
-        # Fill hdf datasets with a second pass through the whole dataset
+        # Fill sub-datasets with a second pass through the whole dataset
         i = 0
         global_hash_value = 0
 
@@ -339,6 +341,7 @@ def pack_to_hdf(
             "shape_suffix": shape_suffix,
             "file_kwargs": json.dumps(file_kwargs),
             "load_as_complex": json.dumps(load_as_complex),
+            "version": str(to.__version__),
         }
         if verbose >= 2:
             dumped_attributes = json.dumps(attributes, indent="\t")

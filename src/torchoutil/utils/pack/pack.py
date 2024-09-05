@@ -10,9 +10,9 @@ from pathlib import Path
 from typing import Callable, Literal, Optional, TypeVar, Union
 
 import torch
-from torch import nn
 from torch.utils.data.dataloader import DataLoader
 
+from torchoutil import nn
 from torchoutil.utils.data.dataloader import get_auto_num_cpus
 from torchoutil.utils.data.dataset import (
     SizedDatasetLike,
@@ -76,7 +76,10 @@ def pack_dataset(
         pre_transform: Transform to apply to each item before saving. defaults to None.
         batch_size: Batch size used by the dataloader. defaults to 32.
         num_workers: Number of workers used by the dataloader. defaults to "auto".
-        overwrite: If True, overwrite all data in root directory. defaults to False.
+        exists: Determine which action should be performed if the target HDF file already exists.
+            "overwrite": Replace the target files then pack dataset.
+            "skip": Skip this function and returns the packed dataset.
+            "error": Raises a ValueError.
         content_mode: Specify how the data should be stored.
             If "item", each dataset item will be stored in a separate file.
             If "batch", each dataset item will be stored in a batch file of size batch_size.
