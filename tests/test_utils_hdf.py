@@ -31,7 +31,7 @@ class TestHDF(TestCase):
         )
 
         path = "/tmp/test_cifar10.hdf"
-        hdf_dataset = pack_to_hdf(dataset, path, overwrite=True)
+        hdf_dataset = pack_to_hdf(dataset, path, exists="overwrite")
 
         idx = 0
         image0, label0 = dataset[idx]
@@ -53,7 +53,7 @@ class TestHDF(TestCase):
         ]
 
         path = "/tmp/test_shape.hdf"
-        hdf_dataset = pack_to_hdf(dataset, path, overwrite=True)
+        hdf_dataset = pack_to_hdf(dataset, path, exists="overwrite")
 
         assert len(hdf_dataset.added_columns) == 0
 
@@ -69,25 +69,39 @@ class TestHDF(TestCase):
 
     def test_special_floating_dtypes(self) -> None:
         ds_dict = {
-            "float": torch.rand(10, 2, 3, dtype=torch.float16),
-            "complex": torch.rand(10, 2, 3, dtype=torch.complex64),
+            "f16": torch.rand(10, 2, 3, dtype=torch.float16),
+            "c64": torch.rand(10, 2, 3, dtype=torch.complex64),
+            "bool": torch.rand(10, 1) > 0.5,
         }
         ds_list = dict_list_to_list_dict(ds_dict, "same")
+        keys = set(ds_dict.keys())
 
         path = "/tmp/test_complex.hdf"
-        hdf_dataset = pack_to_hdf(ds_list, path, overwrite=True)
+        hdf_dataset = pack_to_hdf(ds_list, path, exists="overwrite")
 
         assert len(hdf_dataset.added_columns) == 0
 
         for i, item in enumerate(iter(hdf_dataset)):
-            assert set(item.keys()) == {"float", "complex"}
-            assert set(ds_list[i].keys()) == {"float", "complex"}
+            assert set(item.keys()) == keys
+            assert set(ds_list[i].keys()) == keys
 
-            assert torch.equal(ds_list[i]["float"], item["float"])
-            assert torch.equal(ds_list[i]["complex"], item["complex"])
+            for k in keys:
+                assert torch.equal(ds_list[i][k], item[k])
 
         hdf_dataset.close()
         os.remove(path)
+
+    def test_slice(self) -> None:
+        ds_dict = {
+            "a": list(range(10, 20)),
+            "b": torch.rand(10, 2, 3),
+        }
+        ds_list = dict_list_to_list_dict(ds_dict, "same")
+
+        path = "/tmp/test_slice.hdf"
+        hdf_dataset = pack_to_hdf(ds_list, path, exists="overwrite")
+
+        assert hdf_dataset[:, "a"] == ds_dict["a"]
 
 
 if __name__ == "__main__":
