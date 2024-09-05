@@ -99,7 +99,7 @@ class OnehotToIndex(nn.Module):
     def forward(
         self,
         onehot: Tensor,
-    ) -> List[int]:
+    ) -> Tensor:
         index = onehot_to_index(onehot, dim=self.dim)
         return index
 
@@ -147,7 +147,7 @@ class NameToIndex(Generic[T], nn.Module):
     def forward(
         self,
         name: List[T],
-    ) -> List[int]:
+    ) -> Tensor:
         index = name_to_index(name, self.idx_to_name)
         return index
 
@@ -203,7 +203,7 @@ class ProbsToIndex(nn.Module):
     def forward(
         self,
         probs: Tensor,
-    ) -> List[int]:
+    ) -> Tensor:
         index = probs_to_index(probs, dim=self.dim)
         return index
 

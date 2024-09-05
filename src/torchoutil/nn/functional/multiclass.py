@@ -91,7 +91,7 @@ def onehot_to_index(
     *,
     padding_idx: Optional[int] = None,
     dim: int = -1,
-) -> List[int]:
+) -> Tensor:
     """Convert onehot boolean encoding to indices of labels.
 
     Args:
@@ -104,7 +104,6 @@ def onehot_to_index(
         empty = onehot.eq(False).all(dim=dim)
         index = torch.where(empty, padding_idx, index)
 
-    index = index.tolist()
     return index
 
 
@@ -128,7 +127,7 @@ def onehot_to_name(
 def name_to_index(
     name: List[T],
     idx_to_name: Union[Mapping[int, T], Sequence[T]],
-) -> List[int]:
+) -> Tensor:
     """Convert names to indices of labels.
 
     Args:
@@ -147,11 +146,11 @@ def name_to_index(
         elif isinstance(x, Iterable):
             return [name_to_index_impl(xi) for xi in x]
         else:
-            raise ValueError(
-                f"Invalid argument {x=}. (not present in name_to_idx and not an iterable type)"
-            )
+            msg = f"Invalid argument {x=}. (not present in name_to_idx and not an iterable type)"
+            raise ValueError(msg)
 
     index = name_to_index_impl(name)
+    index = torch.as_tensor(index, dtype=torch.long)
     return index  # type: ignore
 
 
@@ -179,14 +178,13 @@ def probs_to_index(
     probs: Tensor,
     *,
     dim: int = -1,
-) -> List[int]:
+) -> Tensor:
     """Convert matrix of probabilities to indices of labels.
 
     Args:
         probs: Output probabilities for each classes.
     """
     index = probs.argmax(dim=dim)
-    index = index.tolist()
     return index
 
 
