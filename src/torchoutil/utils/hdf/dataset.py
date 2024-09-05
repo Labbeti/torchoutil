@@ -27,7 +27,6 @@ import numpy as np
 import torch
 from h5py import Dataset as HDFRawDataset
 from torch import Tensor
-from torch.utils.data.dataset import Dataset
 from typing_extensions import TypeGuard
 
 import torchoutil as to
@@ -38,6 +37,7 @@ from torchoutil.pyoutil.typing import (
     is_iterable_int,
     is_iterable_str,
 )
+from torchoutil.utils.data import DatasetSlicer
 from torchoutil.utils.hdf.common import (
     HDF_ENCODING,
     HDF_STRING_DTYPE,
@@ -56,7 +56,7 @@ ColumnLike = Union[str, Iterable[str], None]
 pylog = logging.getLogger(__name__)
 
 
-class HDFDataset(Generic[T, U], Dataset[U]):
+class HDFDataset(Generic[T, U], DatasetSlicer[U]):
     def __init__(
         self,
         hdf_fpath: Union[str, Path],
@@ -79,25 +79,30 @@ class HDFDataset(Generic[T, U], Dataset[U]):
             keep_padding: Keys to keep padding values. defaults to ().
             return_added_columns: Returns the columns added by pack_to_hdf(.) function.
             open_hdf: If True, open the HDF file at start. defaults to True.
-            auto_open: If True, open HDF dataset only when __getitem__ or __len__ is called. defaults to False.
+            auto_open: If True and open_hdf=False, it will open HDF file only when __getitem__ or __len__ is called. defaults to False.
             numpy_to_torch: If True, converts numpy array to PyTorch tensors. defaults to True.
             file_kwargs: Options given to h5py file object. defaults to None.
         """
-        hdf_fpath = Path(hdf_fpath).resolve()
+        hdf_fpath = Path(hdf_fpath).resolve().expanduser()
         if not hdf_fpath.is_file():
             names = os.listdir(osp.dirname(hdf_fpath))
             names = [name for name in names if name.endswith(".hdf")]
             names = list(sorted(names))
             names_str = "\n - ".join(names)
-            raise FileNotFoundError(
-                f"Cannot find HDF file in path {hdf_fpath=}. Possible HDF files are:\n - {names_str}"
-            )
+            msg = f"Cannot find HDF file in path {hdf_fpath=}."
+            if len(names) > 0:
+                msg += f" Possible HDF files are:\n - {names_str}"
+            raise FileNotFoundError(msg)
 
         keep_padding = list(keep_padding)
         if file_kwargs is None:
             file_kwargs = {}
 
-        super().__init__()
+        super().__init__(
+            add_indices_support=False,
+            add_mask_support=False,
+            add_slice_support=False,
+        )
         self._hdf_fpath = hdf_fpath
         self._transform = transform
         self._keep_padding = keep_padding
@@ -179,19 +184,19 @@ class HDFDataset(Generic[T, U], Dataset[U]):
 
     # Public methods
     @overload
-    def at(self, index: int) -> T:
+    def get_item(self, index: int) -> T:
         ...
 
     @overload
-    def at(self, index: Union[Iterable[int], slice, None], column: str) -> List:
+    def get_item(self, index: Union[Iterable[int], slice, None], column: str) -> List:
         ...
 
     @overload
-    def at(self, index: Union[Iterable[int], slice, None]) -> Dict[str, List]:
+    def get_item(self, index: Union[Iterable[int], slice, None]) -> Dict[str, List]:
         ...
 
     @overload
-    def at(
+    def get_item(
         self,
         index: Union[Iterable[int], slice, None],
         column: Union[Iterable[str], None],
@@ -199,10 +204,10 @@ class HDFDataset(Generic[T, U], Dataset[U]):
         ...
 
     @overload
-    def at(self, index: Any, column: Any) -> Any:
+    def get_item(self, index: Any, column: Any) -> Any:
         ...
 
-    def at(
+    def get_item(
         self,
         index: IndexLike = None,
         column: ColumnLike = None,
@@ -224,7 +229,7 @@ class HDFDataset(Generic[T, U], Dataset[U]):
             column = self.column_names
 
         if is_iterable_str(column, accept_str=False):
-            return {column_i: self.at(index, column_i) for column_i in column}
+            return {column_i: self.get_item(index, column_i) for column_i in column}
 
         if column not in self.all_columns:
             raise ValueError(
@@ -242,7 +247,7 @@ class HDFDataset(Generic[T, U], Dataset[U]):
         else:
             raise TypeError(f"Invalid argument type {type(index)=}.")
 
-        hdf_value = self._raw_at(index, column)
+        hdf_value = self._raw_get_item(index, column)
         if raw:
             return hdf_value
 
@@ -260,7 +265,7 @@ class HDFDataset(Generic[T, U], Dataset[U]):
         hdf_dtype = hdf_ds.dtype
 
         if must_remove_padding:
-            shapes = self._raw_at(index, shape_name)
+            shapes = self._raw_get_item(index, shape_name)
             if not is_mult:
                 shapes = [shapes]
             slices_lst = [
@@ -380,7 +385,7 @@ class HDFDataset(Generic[T, U], Dataset[U]):
         else:
             column = None
 
-        item = self.at(index, column)  # type: ignore
+        item = self.get_item(index, column)  # type: ignore
 
         if isinstance(index, int) and (
             column is None
@@ -466,6 +471,25 @@ class HDFDataset(Generic[T, U], Dataset[U]):
             self.open()
 
     # Private methods
+    def _raw_get_item(
+        self,
+        index: Union[int, Iterable[int], slice],
+        column: str,
+    ) -> Any:
+        if isinstance(index, Iterable):
+            sorted_idxs, local_idxs = torch.as_tensor(index).sort(dim=-1)
+            sorted_idxs = sorted_idxs.numpy()
+            hdf_value: Any = self._hdf_file[column][sorted_idxs]
+            inv_local_idxs = get_inverse_perm(local_idxs)
+            hdf_value = [hdf_value[local_idx] for local_idx in inv_local_idxs]
+            if self._load_as_complex.get(column, False):
+                hdf_value = [to.view_as_complex(value) for value in hdf_value]
+        else:
+            hdf_value: Any = self._hdf_file[column][index]
+            if self._load_as_complex.get(column, False):
+                hdf_value = to.view_as_complex(hdf_value)
+        return hdf_value
+
     def _sanity_check(self) -> None:
         lens = [dset.shape[0] for dset in self._hdf_file.values()]
         if not all_eq(lens) or lens[0] != len(self):
@@ -485,26 +509,11 @@ class HDFDataset(Generic[T, U], Dataset[U]):
                 f"Invalid HDFDataset typing. (found specified type '{t_type.__name__}' but the internal dataset contains type '{self.item_type}')"
             )
 
-    def _raw_at(self, index: Union[int, Iterable[int], slice], column: str) -> Any:
-        if isinstance(index, Iterable):
-            sorted_idxs, local_idxs = torch.as_tensor(index).sort(dim=-1)
-            sorted_idxs = sorted_idxs.numpy()
-            hdf_value: Any = self._hdf_file[column][sorted_idxs]
-            inv_local_idxs = get_inverse_perm(local_idxs)
-            hdf_value = [hdf_value[local_idx] for local_idx in inv_local_idxs]
-            if self._load_as_complex.get(column, False):
-                hdf_value = [to.view_as_complex(value) for value in hdf_value]
-        else:
-            hdf_value: Any = self._hdf_file[column][index]
-            if self._load_as_complex.get(column, False):
-                hdf_value = to.view_as_complex(hdf_value)
-        return hdf_value
-
     def _clear_caches(self) -> None:
-        if hasattr(self, "_load_as_complex"):
-            del self._load_as_complex
         if hasattr(self, "info"):
             del self.info
+        if hasattr(self, "_load_as_complex"):
+            del self._load_as_complex
 
 
 def _decode_rec(value: Union[bytes, Iterable], encoding: str) -> Union[str, list]:

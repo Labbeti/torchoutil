@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from typing import Dict, List, Tuple, TypedDict, TypeVar
+from typing import Dict, List, Literal, Tuple, TypedDict, TypeVar
 
 import h5py
 
@@ -24,6 +24,9 @@ def _tuple_to_dict(x: Tuple[T, ...]) -> Dict[str, T]:
 
 def _dict_to_tuple(x: Dict[str, T]) -> Tuple[T, ...]:
     return tuple(x.values())
+
+
+ItemType = Literal["dict", "tuple"]
 
 
 class HDFDatasetAttributes(TypedDict):
