@@ -30,7 +30,6 @@ class PackedDataset(Generic[T, U], DatasetSlicer[U]):
         *,
         load_fn: Callable[..., Union[T, List[T]]] = torch.load,
         load_kwds: Optional[Dict[str, Any]] = None,
-        use_cache: bool = False,
     ) -> None:
         """
 
@@ -50,12 +49,9 @@ class PackedDataset(Generic[T, U], DatasetSlicer[U]):
         self._transform = transform
         self._load_fn = load_fn
         self._load_kwds = load_kwds
-        self._use_cache = use_cache
 
         self._attrs = {}
         self._fpaths = []
-        self._cache = None
-        self._cache_idx = None
         self._reload_data()
 
     @property
@@ -85,21 +81,12 @@ class PackedDataset(Generic[T, U], DatasetSlicer[U]):
         elif self.content_mode == "batch":
             batch_size = self.batch_size
         else:
-            raise RuntimeError(
-                f"Invalid PickleDataset state. (cannot load item with {self.content_mode=})"
-            )
+            msg = f"Invalid PickleDataset state. (cannot load item with {self.content_mode=})"
+            raise RuntimeError(msg)
 
-        target_cache_idx = idx // batch_size
-        if self._cache is None or self._cache_idx != target_cache_idx:
-            self._cache = None
-            path = self._fpaths[target_cache_idx]
-            item_or_batch = self._load_fn(path, **self._load_kwds)
-
-            if self._use_cache:
-                self._cache = item_or_batch
-                self._cache_idx = target_cache_idx
-        else:
-            item_or_batch = self._cache
+        target_idx = idx // batch_size
+        path = self._fpaths[target_idx]
+        item_or_batch = self._load_fn(path, **self._load_kwds)
 
         if self.content_mode == "item":
             item: T = item_or_batch  # type: ignore
@@ -145,9 +132,8 @@ class PackedDataset(Generic[T, U], DatasetSlicer[U]):
 
     @classmethod
     def is_pickle_root(cls, root: Union[str, Path]) -> bool:
-        pylog.warning(
-            "Call classmethod `is_pickle_root` is deprecated. Please use `is_packed_root` instead."
-        )
+        msg = "Call classmethod `is_pickle_root` is deprecated. Please use `is_packed_root` instead."
+        pylog.warning(msg)
         return cls.is_packed_root(root)
 
     @classmethod
