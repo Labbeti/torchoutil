@@ -34,9 +34,9 @@ class TestMulticlass(TestCase):
 
     def test_onehot_to_index_3d(self) -> None:
         onehot = torch.as_tensor([[[0, 1, 0], [1, 0, 0]], [[0, 0, 1], [0, 0, 1]]])
-        expected = [[1, 0], [2, 2]]
+        expected = torch.as_tensor([[1, 0], [2, 2]])
         result = onehot_to_index(onehot)
-        assert result == expected
+        assert torch.equal(result, expected)
 
     def test_index_to_onehot_3d(self) -> None:
         indices = [[1, 0], [2, 2]]
@@ -54,7 +54,7 @@ class TestMulticlass(TestCase):
         assert onehots[mask].eq(False).all()
 
         index = onehot_to_index(onehots, padding_idx=-10)
-        assert torch.equal(x, torch.as_tensor(index))
+        assert torch.equal(x, index)
 
 
 if __name__ == "__main__":
