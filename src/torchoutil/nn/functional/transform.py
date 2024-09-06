@@ -18,13 +18,14 @@ import torch
 from torch import Generator, Tensor
 
 from torchoutil.nn.functional.crop import crop_dim
-from torchoutil.nn.functional.get import get_generator
+from torchoutil.nn.functional.get import get_device, get_dtype, get_generator
 from torchoutil.nn.functional.pad import PadMode, PadValue, pad_dim
+from torchoutil.pyoutil.collections import all_eq
 from torchoutil.pyoutil.collections import flatten as builtin_flatten
 from torchoutil.pyoutil.collections import prod as builtin_prod
 from torchoutil.pyoutil.functools import identity  # noqa: F401
 from torchoutil.pyoutil.typing import T_BuiltinScalar
-from torchoutil.types import is_scalar_like, np
+from torchoutil.types import DeviceLike, DTypeLike, is_number_like, is_scalar_like, np
 from torchoutil.types._hints import Tensor1D
 
 T = TypeVar("T")
@@ -294,3 +295,22 @@ def flatten(
             return x.reshape(*shape)
     else:
         return builtin_flatten(x, start_dim, end_dim, is_scalar_fn=is_scalar_like)
+
+
+def to_tensor(data: Any, dtype: DTypeLike = None, device: DeviceLike = None) -> Tensor:
+    """Convert data to tensor. Unlike torch.as_tensor, it works recursively and stack sequences like list[Tensor]."""
+    if isinstance(data, (Tensor, np.ndarray)) or is_number_like(data):
+        dtype = get_dtype(dtype)
+        device = get_device(device)
+        return torch.as_tensor(data, dtype=dtype, device=device)
+
+    elif isinstance(data, (list, tuple)):
+        tensors = [to_tensor(data_i, dtype=dtype, device=device) for data_i in data]
+        shapes = [tensor.shape for tensor in tensors]
+        if not all_eq(shapes):
+            msg = f"Cannot convert to tensor a list of elements with heterogeneous shapes. (found {shapes})"
+            raise ValueError(msg)
+        return torch.stack(tensors)
+
+    else:
+        raise TypeError(f"Invalid argument type '{type(data)}'.")
