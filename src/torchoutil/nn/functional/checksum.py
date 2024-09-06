@@ -10,7 +10,9 @@ from typing import Any, Iterable, Mapping, Union
 import torch
 from torch import Tensor, nn
 
+from torchoutil.nn.functional.others import nelement
 from torchoutil.pyoutil.inspect import get_fullname
+from torchoutil.pyoutil.typing import BuiltinNumber, BuiltinScalar, NoneType
 from torchoutil.types import np
 from torchoutil.utils.packaging import _NUMPY_AVAILABLE
 
@@ -40,7 +42,7 @@ def checksum(x: Any, **kwargs) -> int:
 def checksum_any(x: Any, **kwargs) -> int:
     """Compute checksum of a single arbitrary python object."""
     if isinstance(x, (int, bool, complex, float)):
-        return checksum_number(x, **kwargs)
+        return checksum_builtin_number(x, **kwargs)
     elif isinstance(x, bytes):
         return checksum_bytes(x, **kwargs)
     elif isinstance(x, str):
@@ -120,27 +122,34 @@ def checksum_module(
 @torch.inference_mode()
 def checksum_tensor(x: Tensor, **kwargs) -> int:
     """Compute a simple checksum of a tensor. Order of values matter for the checksum."""
-    if x.ndim > 0:
-        if x.dtype == torch.bool:
-            range_dtype = torch.int
-        elif x.is_complex():
-            range_dtype = x.real.dtype
-        else:
-            range_dtype = x.dtype
+    if x.ndim == 0:
+        return checksum_builtin_number(x.item(), **kwargs)
 
-        if x.is_floating_point() or x.is_complex():
-            nan_csum = checksum_float(math.nan, **kwargs)
-            x = x.nan_to_num(nan_csum)
+    if x.dtype == torch.bool:
+        range_dtype = torch.int
+    elif x.is_complex():
+        range_dtype = x.real.dtype
+    else:
+        range_dtype = x.dtype
 
-        x = x.flatten()
-        arange = torch.arange(1, x.nelement() + 1, device=x.device, dtype=range_dtype)
-        x = x + arange
-        x = x * arange
-        x = x.sum()
+    if x.is_floating_point() or x.is_complex():
+        nan_csum = checksum_float(math.nan, **kwargs)
+        neginf_csum = checksum_float(-math.inf, **kwargs)
+        posinf_csum = checksum_float(math.inf, **kwargs)
+        x = torch.nan_to_num(
+            x,
+            nan=nan_csum,
+            neginf=neginf_csum,
+            posinf=posinf_csum,
+        )
 
-    xitem = x.item()
-    csum = checksum_number(xitem, **kwargs)
-    return csum
+    x = x.flatten()
+    arange = torch.arange(1, nelement(x) + 1, device=x.device, dtype=range_dtype)
+    x = x + arange
+    x = x * arange
+    x = x.sum()
+
+    return checksum_builtin_number(x.item(), **kwargs)
 
 
 def checksum_ndarray(x: Union[np.ndarray, np.generic], **kwargs) -> int:
@@ -148,10 +157,51 @@ def checksum_ndarray(x: Union[np.ndarray, np.generic], **kwargs) -> int:
         raise NotImplementedError(
             "Cannot call function 'checksum_ndarray' because optional dependancy 'numpy' is not installed. Please install it using 'pip install torchoutil[extras]'"
         )
-    return checksum_tensor(torch.as_tensor(x), **kwargs)
+    if x.ndim == 0:
+        return checksum_builtin_number(x.item(), **kwargs)
+
+    if x.dtype == bool:
+        range_dtype = int
+    elif np.iscomplexobj(x):
+        range_dtype = x.real.dtype  # type: ignore
+    else:
+        range_dtype = x.dtype
+
+    if isinstance(x, np.floating) or np.iscomplexobj(x):
+        nan_csum = checksum_float(math.nan, **kwargs)
+        neginf_csum = checksum_float(-math.inf, **kwargs)
+        posinf_csum = checksum_float(math.inf, **kwargs)
+        x = np.nan_to_num(
+            x,
+            nan=nan_csum,
+            neginf=neginf_csum,
+            posinf=posinf_csum,
+        )
+
+    x = x.flatten()
+    arange = np.arange(1, nelement(x) + 1, dtype=range_dtype)
+    x = x + arange
+    x = x * arange
+    x = x.sum()
+
+    return checksum_builtin_number(x.item(), **kwargs)
 
 
-def checksum_number(x: Union[int, bool, complex, float], **kwargs) -> int:
+def checksum_builtin_scalar(x: BuiltinScalar, **kwargs) -> int:
+    if isinstance(x, BuiltinNumber):
+        return checksum_builtin_number(x, **kwargs)
+    elif isinstance(x, bytes):
+        return checksum_bytes(x, **kwargs)
+    elif isinstance(x, NoneType):
+        return checksum_none(x, **kwargs)
+    elif isinstance(x, str):
+        return checksum_str(x, **kwargs)
+    else:
+        msg = f"Invalid argument type {type(x)}. (expected int, bool, complex float, bytes, None, or str)"
+        raise TypeError(msg)
+
+
+def checksum_builtin_number(x: BuiltinNumber, **kwargs) -> int:
     """Compute a simple checksum of a builtin scalar number."""
     if isinstance(x, bool):
         return checksum_bool(x, **kwargs)
@@ -162,9 +212,8 @@ def checksum_number(x: Union[int, bool, complex, float], **kwargs) -> int:
     elif isinstance(x, float):
         return checksum_float(x, **kwargs)
     else:
-        raise TypeError(
-            f"Invalid argument type {type(x)}. (expected int, bool, complex or float)"
-        )
+        msg = f"Invalid argument type {type(x)}. (expected int, bool, complex or float)"
+        raise TypeError(msg)
 
 
 def checksum_str(x: str, **kwargs) -> int:
