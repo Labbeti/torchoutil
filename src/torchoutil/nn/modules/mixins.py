@@ -64,10 +64,10 @@ __all__ = [
 
 @runtime_checkable
 class SupportsTypedForward(Protocol[InType, OutType]):
-    # def __call__(self, *args, **kwargs):
-    #     ...
+    def __call__(self, *args, **kwargs):
+        ...
 
-    def forward(self, x: InType) -> OutType:
+    def forward(self, x: InType, /) -> OutType:
         ...
 
 
