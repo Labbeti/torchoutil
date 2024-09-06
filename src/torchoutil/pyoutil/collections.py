@@ -621,3 +621,10 @@ def is_sorted(
             return False
         prev = xi
     return True
+
+
+def union_dicts(dicts: Iterable[Mapping[K, V]]) -> Dict[K, V]:
+    result = {}
+    for dic in dicts:
+        result.update(dic)
+    return result
