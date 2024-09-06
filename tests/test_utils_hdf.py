@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import os
+import random
 import unittest
 from unittest import TestCase
 
@@ -13,7 +14,7 @@ from torchvision.datasets import CIFAR10
 
 from torchoutil.nn import ESequential, IndexToOnehot, ToList, ToNumpy
 from torchoutil.pyoutil import dict_list_to_list_dict
-from torchoutil.utils.hdf import pack_to_hdf
+from torchoutil.utils.hdf import HDFDataset, pack_to_hdf
 
 
 class TestHDF(TestCase):
@@ -99,9 +100,25 @@ class TestHDF(TestCase):
         ds_list = dict_list_to_list_dict(ds_dict, "same")
 
         path = "/tmp/test_slice.hdf"
-        hdf_dataset = pack_to_hdf(ds_list, path, exists="overwrite")
+        pack_to_hdf(ds_list, path, exists="overwrite", open_hdf=False)
+
+        hdf_dataset = HDFDataset(path, numpy_to_torch=False)
 
         assert hdf_dataset[:, "a"] == ds_dict["a"]
+        assert (hdf_dataset[:, "b"] == ds_dict["b"].numpy()).all()
+
+    def test_string(self) -> None:
+        ds_dict = {
+            "i": list(range(10)),
+            "s": ["".join(map(str, range(random.randint(10, 100)))) for _ in range(10)],
+        }
+        ds_list = dict_list_to_list_dict(ds_dict, "same")
+
+        path = "/tmp/test_string.hdf"
+        hdf_dataset = pack_to_hdf(ds_list, path, exists="overwrite")
+
+        assert hdf_dataset[:, "i"] == ds_dict["i"]
+        assert hdf_dataset[:, "s"] == ds_dict["s"]
 
 
 if __name__ == "__main__":
