@@ -70,5 +70,6 @@ from .transform import (
     ResampleNearestRates,
     ResampleNearestSteps,
     Shuffled,
+    ToTensor,
     TransformDrop,
 )

@@ -92,5 +92,6 @@ from .transform import (
     resample_nearest_rates,
     resample_nearest_steps,
     shuffled,
+    to_tensor,
     transform_drop,
 )
