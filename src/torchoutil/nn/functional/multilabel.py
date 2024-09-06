@@ -11,6 +11,7 @@ from torch import Tensor
 from torch.types import Device
 
 from torchoutil.nn.functional.get import get_device
+from torchoutil.nn.functional.others import item
 from torchoutil.nn.functional.pad import pad_and_stack_rec
 from torchoutil.pyoutil.typing import is_sequence_bool, is_sequence_int
 from torchoutil.types import is_number_like
@@ -93,7 +94,7 @@ def indices_to_names(
 
     def _indices_to_names_impl(x) -> Union[int, list]:
         if is_number_like(x):
-            return idx_to_name[x]  # type: ignore
+            return idx_to_name[item(x)]  # type: ignore
         elif isinstance(x, Iterable):
             return [
                 _indices_to_names_impl(xi)
