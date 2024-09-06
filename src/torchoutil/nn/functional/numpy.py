@@ -49,7 +49,7 @@ def tensor_to_numpy(
 
 
 def numpy_to_tensor(
-    x: np.ndarray,
+    x: Union[np.ndarray, np.number],
     *,
     device: Device = None,
     dtype: Union[torch.dtype, None] = None,
