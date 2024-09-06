@@ -449,3 +449,21 @@ def prod(
     else:
         msg = f"Invalid argument type {type(x)=}. (expected Tensor or Iterable)"
         raise TypeError(msg)
+
+
+def is_floating_point(x: Any) -> bool:
+    if isinstance(x, Tensor):
+        return x.is_floating_point()
+    elif isinstance(x, (np.ndarray, np.generic)):
+        return isinstance(x, np.floating)
+    else:
+        return isinstance(x, float)
+
+
+def is_complex(x: Any) -> bool:
+    if isinstance(x, Tensor):
+        return x.is_complex()
+    elif isinstance(x, (np.ndarray, np.generic)):
+        return np.iscomplexobj(x)
+    else:
+        return isinstance(x, complex)
