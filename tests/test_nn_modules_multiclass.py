@@ -40,7 +40,7 @@ class TestMulticlass(TestCase):
             )
             result = pipeline(onehot)
 
-            assert torch.equal(onehot, result)
+            assert torch.equal(onehot, result), f"{onehot=}; {result=}"
 
 
 if __name__ == "__main__":
