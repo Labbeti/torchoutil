@@ -29,10 +29,11 @@ from torchoutil.nn.functional.transform import (
     resample_nearest_rates,
     resample_nearest_steps,
     shuffled,
+    to_tensor,
     transform_drop,
 )
 from torchoutil.pyoutil.collections import dump_dict
-from torchoutil.types import np
+from torchoutil.types import DeviceLike, DTypeLike, np
 
 T = TypeVar("T")
 
@@ -83,10 +84,6 @@ class ResampleNearestRates(nn.Module):
 
 
 class ResampleNearestFreqs(nn.Module):
-    """
-    For more information, see :func:`~torchoutil.nn.functional.transform.resample_nearest_freqs`.
-    """
-
     def __init__(
         self,
         orig_freq: int,
@@ -94,6 +91,9 @@ class ResampleNearestFreqs(nn.Module):
         dims: Union[int, Iterable[int]] = -1,
         round_fn: Callable[[Tensor], Tensor] = torch.floor,
     ) -> None:
+        """
+        For more information, see :func:`~torchoutil.nn.functional.transform.resample_nearest_freqs`.
+        """
         super().__init__()
         self.orig_freq = orig_freq
         self.new_freq = new_freq
@@ -116,16 +116,15 @@ class ResampleNearestFreqs(nn.Module):
 
 
 class ResampleNearestSteps(nn.Module):
-    """
-    For more information, see :func:`~torchoutil.nn.functional.transform.resample_nearest_steps`.
-    """
-
     def __init__(
         self,
         steps: Union[float, Iterable[float]],
         dims: Union[int, Iterable[int]] = -1,
         round_fn: Callable[[Tensor], Tensor] = torch.floor,
     ) -> None:
+        """
+        For more information, see :func:`~torchoutil.nn.functional.transform.resample_nearest_steps`.
+        """
         super().__init__()
         self.steps = steps
         self.dims = dims
@@ -144,16 +143,15 @@ class ResampleNearestSteps(nn.Module):
 
 
 class TransformDrop(Generic[T], nn.Module):
-    """
-    For more information, see :func:`~torchoutil.nn.functional.transform.transform_drop`.
-    """
-
     def __init__(
         self,
         transform: Callable[[T], T],
         p: float,
         generator: Union[int, Generator, None] = None,
     ) -> None:
+        """
+        For more information, see :func:`~torchoutil.nn.functional.transform.transform_drop`.
+        """
         super().__init__()
         self.transform = transform
         self.p = p
@@ -172,10 +170,6 @@ class TransformDrop(Generic[T], nn.Module):
 
 
 class PadAndCropDim(nn.Module):
-    """
-    For more information, see :func:`~torchoutil.nn.functional.transform.pad_and_crop_dim`.
-    """
-
     def __init__(
         self,
         target_length: int,
@@ -185,6 +179,9 @@ class PadAndCropDim(nn.Module):
         mode: PadMode = "constant",
         generator: Union[int, Generator, None] = None,
     ) -> None:
+        """
+        For more information, see :func:`~torchoutil.nn.functional.transform.pad_and_crop_dim`.
+        """
         super().__init__()
         self.target_length = target_length
         self.align: PadCropAlign = align
@@ -222,6 +219,9 @@ class Shuffled(nn.Module):
         dims: Union[int, Iterable[int]],
         generator: Union[int, Generator, None],
     ) -> None:
+        """
+        For more information, see :func:`~torchoutil.nn.functional.transform.shuffled`.
+        """
         super().__init__()
         self.dims = dims
         self.generator = generator
@@ -235,6 +235,9 @@ class Shuffled(nn.Module):
 
 class Flatten(nn.Module):
     def __init__(self, start_dim: int = 0, end_dim: Optional[int] = None) -> None:
+        """
+        For more information, see :func:`~torchoutil.nn.functional.transform.flatten`.
+        """
         super().__init__()
         self.start_dim = start_dim
         self.end_dim = end_dim
@@ -260,20 +263,55 @@ class Flatten(nn.Module):
         ...
 
     def forward(self, x: Any) -> Any:
-        return flatten(x, start_dim=self.start_dim, end_dim=self.end_dim)
+        return flatten(
+            x,
+            start_dim=self.start_dim,
+            end_dim=self.end_dim,
+        )
 
     def extra_repr(self) -> str:
-        return dump_dict(dict(start_dim=self.start_dim, end_dim=self.end_dim))
+        return dump_dict(
+            dict(
+                start_dim=self.start_dim,
+                end_dim=self.end_dim,
+            )
+        )
 
 
 class Identity(nn.Module):
-    """Identity class placeholder.
-
-    Unlike torch.nn.Identity which only supports Tensor typing, its type output is the same than its input type.
-    """
-
     def __init__(self, *args, **kwargs) -> None:
+        """Identity class placeholder.
+
+        Unlike torch.nn.Identity which only supports Tensor typing, its type output is the same than its input type.
+        """
         super().__init__()
 
     def forward(self, x: T) -> T:
         return identity(x)
+
+
+class ToTensor(nn.Module):
+    def __init__(
+        self,
+        *,
+        device: DeviceLike = None,
+        dtype: DTypeLike = None,
+    ) -> None:
+        """
+        For more information, see :func:`~torchoutil.nn.functional.transform.to_tensor`.
+        """
+        super().__init__()
+        self.device = device
+        self.dtype = dtype
+
+    def forward(self, x: Any) -> Tensor:
+        return to_tensor(x, dtype=self.dtype, device=self.device)
+
+    def extra_repr(self) -> str:
+        return dump_dict(
+            dict(
+                dtype=self.dtype,
+                device=self.device,
+            ),
+            ignore_lst=(None,),
+        )
