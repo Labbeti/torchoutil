@@ -22,6 +22,7 @@ from typing import (
     TypeVar,
     Union,
     overload,
+    runtime_checkable,
 )
 
 import torch
@@ -61,9 +62,10 @@ __all__ = [
 ]
 
 
+@runtime_checkable
 class SupportsTypedForward(Protocol[InType, OutType]):
-    def __call__(self, *args, **kwargs):
-        ...
+    # def __call__(self, *args, **kwargs):
+    #     ...
 
     def forward(self, x: InType) -> OutType:
         ...
