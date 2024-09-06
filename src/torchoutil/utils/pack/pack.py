@@ -1,17 +1,19 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import datetime
 import json
 import logging
 import math
 import shutil
 from pathlib import Path
-from typing import Callable, Literal, Optional, TypeVar, Union
+from typing import Any, Callable, Dict, Literal, Optional, Tuple, TypeVar, Union
 
 import torch
+from torch import Tensor
 from torch.utils.data.dataloader import DataLoader
 
+import pyoutil as po
+import torchoutil as to
 from torchoutil import nn
 from torchoutil.utils.data.dataloader import get_auto_num_cpus
 from torchoutil.utils.data.dataset import (
@@ -19,17 +21,32 @@ from torchoutil.utils.data.dataset import (
     SizedIterableDatasetLike,
     TransformWrapper,
 )
+from torchoutil.utils.data.dtype import (
+    merge_numpy_dtypes,
+    numpy_dtype_to_fill_value,
+    scan_shape_dtypes,
+)
+from torchoutil.utils.hdf.common import _tuple_to_dict
 from torchoutil.utils.pack.common import ATTRS_FNAME, CONTENT_DNAME, ContentMode
 from torchoutil.utils.pack.dataset import PackedDataset
-from torchoutil.utils.packaging import _TQDM_AVAILABLE
+from torchoutil.utils.packaging import _NUMPY_AVAILABLE, _TQDM_AVAILABLE
 from torchoutil.utils.saving.common import to_builtin
 
 if _TQDM_AVAILABLE:
     import tqdm
+if _NUMPY_AVAILABLE:
+    import numpy as np
 
 
 T = TypeVar("T", covariant=True)
 U = TypeVar("U", covariant=True)
+T_DictOrTuple = TypeVar("T_DictOrTuple", tuple, dict, covariant=True)
+
+
+ExistsMode = Literal["overwrite", "skip", "error"]
+SaveMode = Literal["numpy"]
+EXISTS_MODES = ("overwrite", "skip", "error")
+SAVE_MODES = ("numpy",)
 
 
 pylog = logging.getLogger(__name__)
@@ -43,7 +60,7 @@ def pack_dataset(
     *,
     batch_size: int = 32,
     num_workers: Union[int, Literal["auto"]] = "auto",
-    exists: Literal["overwrite", "skip", "error"] = "error",
+    exists: ExistsMode = "error",
     content_mode: ContentMode = "item",
     custom_file_fmt: Union[None, str, Callable[[int], str]] = None,
     save_fn: Callable[..., None] = torch.save,  # type: ignore
@@ -108,39 +125,21 @@ def pack_dataset(
     root = Path(root).resolve()
     if root.exists() and not root.is_dir():
         raise RuntimeError(f"Item {root=} exists but it is not a file.")
+    content_dpath = root.joinpath(CONTENT_DNAME)
 
     if num_workers == "auto":
         num_workers = get_auto_num_cpus()
 
-    content_dpath = root.joinpath(CONTENT_DNAME)
-
-    if not content_dpath.is_dir():
-        pass
-    elif exists == "error":
-        raise ValueError(
-            f"Cannot overwrite root data {str(content_dpath)}. Please remove it or use overwrite=True option."
-        )
-    elif exists == "skip":
-        return PackedDataset(root)
-    elif exists == "overwrite":
-        shutil.rmtree(content_dpath)
-    else:
-        EXISTS_VALUES = ("overwrite", "skip", "error")
-        raise ValueError(
-            f"Invalid argument {exists=}. (expected one of {EXISTS_VALUES})"
-        )
-
-    content_dpath.mkdir(parents=True, exist_ok=True)
-
-    now = datetime.datetime.now()
-    creation_date = now.strftime("%Y-%m-%d_%H-%M-%S")
+    packed, root, content_dpath = _setup_args(root, exists)
+    if packed is not None:
+        return packed
 
     if transform_in_worker:
         wrapped = TransformWrapper(dataset, pre_transform)
-        source_dataset = wrapped.unwrap().__class__.__name__
+        src_dataset_name = wrapped.unwrap().__class__.__name__
     else:
         wrapped = dataset
-        source_dataset = dataset.__class__.__name__
+        src_dataset_name = dataset.__class__.__name__
 
     loader = DataLoader(
         wrapped,  # type: ignore
@@ -221,22 +220,249 @@ def pack_dataset(
         source_attrs = {}
 
     attributes = {
-        "source_dataset": source_dataset,
+        "source_dataset": src_dataset_name,
         "length": len(wrapped),
-        "creation_date": creation_date,
+        "creation_date": po.now_iso(),
         "batch_size": batch_size,
         "content_mode": content_mode,
         "content_dname": CONTENT_DNAME,
-        "subdir_size": subdir_size,
         "info": info,
         "source_attrs": source_attrs,
         "num_files": len(fnames),
         "files": fnames,
+        "subdir_size": subdir_size,
     }
 
     attrs_fpath = root.joinpath(ATTRS_FNAME)
     with open(attrs_fpath, "w") as file:
         json.dump(attributes, file, indent="\t")
 
-    pack = PackedDataset(root)
-    return pack
+    packed = PackedDataset(root)
+    return packed
+
+
+def pack_dataset_per_column(
+    dataset: SizedDatasetLike[T],
+    root: Union[str, Path],
+    pre_transform: Optional[Callable[[T], T_DictOrTuple]] = None,
+    *,
+    batch_size: int = 32,
+    num_workers: Union[int, Literal["auto"]] = "auto",
+    exists: ExistsMode = "error",
+    verbose: int = 0,
+) -> PackedDataset[T_DictOrTuple, T_DictOrTuple]:
+    if not isinstance(dataset, SizedDatasetLike):
+        raise TypeError(
+            f"Cannot pack to hdf a non-sized-dataset '{dataset.__class__.__name__}'."
+        )
+    if len(dataset) == 0:
+        raise ValueError("Cannot pack to hdf an empty dataset.")
+
+    if not _NUMPY_AVAILABLE:
+        msg = f"Function '{po.get_current_fn_name()}' cannot be called without numpy installed. Please install it with `pip install torchoutil[extras]`."
+        raise RuntimeError(msg)
+
+    packed, root, content_dpath = _setup_args(root, exists)
+    if packed is not None:
+        return packed
+
+    if pre_transform is None:
+        pre_transform = nn.Identity()
+    if num_workers == "auto":
+        num_workers = get_auto_num_cpus()
+
+    src_dataset_name = dataset.__class__.__name__
+
+    loader = DataLoader(
+        dataset,  # type: ignore
+        batch_size=batch_size,
+        shuffle=False,
+        num_workers=num_workers,
+        collate_fn=nn.Identity(),
+        drop_last=False,
+        pin_memory=False,
+    )
+
+    it = iter(loader)
+    item_0 = next(it)
+    item_0 = pre_transform(item_0)
+
+    dict_pre_transform: Callable[[T], Dict[str, Any]]
+
+    if po.is_dict_str(item_0):
+        item_type = "dict"
+        dict_pre_transform = pre_transform  # type: ignore
+
+    elif isinstance(item_0, tuple):
+        item_type = "tuple"
+        dict_pre_transform = po.compose(pre_transform, _tuple_to_dict)
+        item_0 = _tuple_to_dict(item_0)
+
+    else:
+        msg = f"Invalid item type for {dataset.__class__.__name__}. (expected dict[str, Any] or tuple but found {type(item_0)})"
+        raise ValueError(msg)
+
+    infos_0 = {name: scan_shape_dtypes(value) for name, value in item_0.items()}
+    max_shapes = {name: info.shape for name, info in infos_0.items()}
+    dtypes = {name: info.numpy_dtype for name, info in infos_0.items()}
+
+    del pre_transform, item_0, infos_0
+
+    if _TQDM_AVAILABLE:
+        it = tqdm.tqdm(it, total=len(loader), disable=verbose < 1)
+
+    i = 0
+    for batch in it:
+        batch = [dict_pre_transform(item) for item in batch]
+        for item in batch:
+            for name, value in item.items():
+                info = scan_shape_dtypes(value)
+
+                if info.ndim != len(max_shapes[name]):
+                    msg = f"Invalid argument shape at index {i} with key {name}. (found {info.ndim} ndim but expected {len(max_shapes[name])})"
+                    raise ValueError(msg)
+
+                max_shapes[name] = tuple(
+                    max(info.shape[i], max_shapes[name][i]) for i in range(info.ndim)
+                )
+                dtypes[name] = merge_numpy_dtypes([info.numpy_dtype, dtypes[name]])
+            i += 1
+
+    fill_values = {
+        name: numpy_dtype_to_fill_value(np_dtype) for name, np_dtype in dtypes.items()
+    }
+
+    data_dict = {
+        name: np.full(
+            (len(dataset),) + shape,
+            fill_value=fill_values[name],
+            dtype=dtypes[name],
+        )
+        for name, shape in max_shapes.items()
+    }
+
+    i = 0
+    it = iter(loader)
+    if _TQDM_AVAILABLE:
+        it = tqdm.tqdm(it, total=len(loader), disable=verbose < 1)
+
+    for batch in it:
+        batch = [dict_pre_transform(item) for item in batch]
+        for item in batch:
+            for k, v in item.items():
+                data_dict[k][i] = to.to_numpy(v)
+            i += 1
+
+    if hasattr(dataset, "info"):
+        info = dataset.info  # type: ignore
+        info = to_builtin(info)
+    else:
+        info = {}
+
+    if hasattr(dataset, "attrs"):
+        source_attrs = dataset.attrs  # type: ignore
+        source_attrs = to_builtin(source_attrs)
+    else:
+        source_attrs = {}
+
+    attributes = {
+        "source_dataset": src_dataset_name,
+        "batch_size": len(dataset),
+        "item_type": item_type,
+        "info": info,
+        "source_attrs": source_attrs,
+        "subdir_size": None,
+    }
+    return _pack_dataset_dict(
+        data_dict=data_dict,  # type: ignore
+        root=root,
+        content_dpath=content_dpath,
+        attributes=attributes,
+    )
+
+
+def pack_dataset_dict(
+    data_dict: Dict[str, Union[np.ndarray, Tensor]],
+    root: Union[str, Path],
+    *,
+    exists: ExistsMode = "error",
+) -> PackedDataset:
+    if not po.all_eq(map(len, data_dict.values())):
+        raise ValueError
+
+    packed, root, content_dpath = _setup_args(root, exists)
+    if packed is not None:
+        return packed
+
+    attributes = {
+        "source_dataset": data_dict.__class__.__name__,
+        "batch_size": len(next(iter(data_dict.values()))),
+        "item_type": "batch",
+        "info": {},
+        "source_attrs": {},
+        "subdir_size": None,
+    }
+    return _pack_dataset_dict(
+        data_dict=data_dict,
+        root=root,
+        content_dpath=content_dpath,
+        attributes=attributes,
+    )
+
+
+def _pack_dataset_dict(
+    data_dict: Dict[str, Union[np.ndarray, Tensor]],
+    root: Path,
+    content_dpath: Path,
+    attributes: Dict[str, Any],
+) -> PackedDataset:
+    fnames = []
+    for name, values in data_dict.items():
+        fname = f"{name}.npy"
+        fpath = content_dpath.joinpath(fname)
+        values = to.to_numpy(values)
+        np.save(fpath, values)
+        fnames.append(fname)
+
+    attributes = {
+        "length": len(data_dict),
+        "creation_date": po.now_iso(),
+        "content_mode": "column",
+        "content_dname": CONTENT_DNAME,
+        "num_files": len(fnames),
+        "files": fnames,
+    } | attributes
+
+    attrs_fpath = root.joinpath(ATTRS_FNAME)
+    with open(attrs_fpath, "w") as file:
+        json.dump(attributes, file, indent="\t")
+
+    packed = PackedDataset(root)
+    return packed
+
+
+def _setup_args(
+    root: Union[str, Path],
+    exists: ExistsMode,
+) -> Tuple[Optional[PackedDataset], Path, Path]:
+    root = Path(root).resolve()
+    if root.exists() and not root.is_dir():
+        raise RuntimeError(f"Path {root=} exists but it is not a directory.")
+
+    content_dpath = root.joinpath(CONTENT_DNAME)
+
+    if not content_dpath.is_dir():
+        pass
+    elif exists == "error":
+        msg = f"Cannot overwrite root data {str(content_dpath)}. Please remove it or use exists='overwrite' option."
+        raise ValueError(msg)
+    elif exists == "skip":
+        return PackedDataset(root), root, content_dpath
+    elif exists == "overwrite":
+        shutil.rmtree(content_dpath)
+    else:
+        msg = f"Invalid argument {exists=}. (expected one of {EXISTS_MODES})"
+        raise ValueError(msg)
+
+    content_dpath.mkdir(parents=True, exist_ok=True)
+    return None, root, content_dpath
