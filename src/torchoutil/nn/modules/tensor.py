@@ -3,15 +3,15 @@
 
 """Module versions of tensor functions that do not already exists in PyTorch."""
 
-from typing import List, Optional, Tuple, Union
+from typing import Any, List, Optional, Tuple, Union
 
 import torch
 from torch import Tensor, nn
 from torch.nn import functional as F
 from torch.types import Device, Number
 
-from torchoutil.nn.functional.get import get_device
 from torchoutil.pyoutil.collections import dump_dict
+from torchoutil.types import BuiltinNumber
 from torchoutil.utils import return_types
 
 
@@ -97,7 +97,7 @@ class Max(nn.Module):
             values_indices = x.max(dim=self.dim, keepdim=self.keepdim)
 
         if self.return_values and self.return_indices:
-            return values_indices
+            return values_indices  # type: ignore
         elif self.return_values:
             return values_indices.values
         elif self.return_indices:
@@ -155,7 +155,7 @@ class Min(nn.Module):
             values_indices = x.min(dim=self.dim, keepdim=self.keepdim)
 
         if self.return_values and self.return_indices:
-            return values_indices
+            return values_indices  # type: ignore
         elif self.return_values:
             return values_indices.values
         elif self.return_indices:
@@ -339,8 +339,17 @@ class ToItem(nn.Module):
     Module version of :func:`~torch.Tensor.item`.
     """
 
-    def forward(self, x: Tensor) -> Number:
+    def forward(self, x: Tensor) -> BuiltinNumber:
         return x.item()
+
+
+class Abs(nn.Module):
+    """
+    Module version of :func:`~torch.abs`.
+    """
+
+    def forward(self, x: Tensor) -> Tensor:
+        return x.abs()
 
 
 class AsTensor(nn.Module):
@@ -352,33 +361,23 @@ class AsTensor(nn.Module):
         self,
         *,
         device: Device = None,
-        dtype: Union[torch.dtype, None] = None,
+        dtype: Optional[torch.dtype] = None,
     ) -> None:
-        device = get_device(device)
         super().__init__()
         self.device = device
         self.dtype = dtype
 
-    def forward(self, x: Union[List, Number, Tensor]) -> Tensor:
-        return torch.as_tensor(x, dtype=self.dtype, device=self.device)  # type: ignore
+    def forward(self, x: Any) -> Tensor:
+        return torch.as_tensor(x, dtype=self.dtype, device=self.device)
 
     def extra_repr(self) -> str:
         return dump_dict(
             dict(
-                device=self.device,
                 dtype=self.dtype,
+                device=self.device,
             ),
             ignore_lst=(None,),
         )
-
-
-class Abs(nn.Module):
-    """
-    Module version of :func:`~torch.abs`.
-    """
-
-    def forward(self, x: Tensor) -> Tensor:
-        return x.abs()
 
 
 class Angle(nn.Module):
