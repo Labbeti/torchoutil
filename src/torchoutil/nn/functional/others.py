@@ -447,6 +447,5 @@ def prod(
     elif isinstance(x, Iterable):
         return builtin_prod(x, start=start)  # type: ignore
     else:
-        raise TypeError(
-            f"Invalid argument type {type(x)=}. (expected Tensor or Iterable)"
-        )
+        msg = f"Invalid argument type {type(x)=}. (expected Tensor or Iterable)"
+        raise TypeError(msg)
