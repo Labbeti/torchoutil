@@ -10,14 +10,14 @@ ContentMode = Literal["item", "batch"]
 
 
 class PackedDatasetAttributes(TypedDict):
-    source_dataset: str
-    length: int
-    creation_date: str
     batch_size: int
-    content_mode: ContentMode
     content_dname: str
-    subdir_size: Optional[int]
-    info: Dict[str, Any]
-    source_attrs: "PackedDatasetAttributes"
-    num_files: int
+    content_mode: ContentMode
+    creation_date: str
     files: List[str]
+    info: Dict[str, Any]
+    length: int
+    num_files: int
+    source_attrs: Dict[str, Any]
+    source_dataset: str
+    subdir_size: Optional[int]
