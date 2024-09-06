@@ -4,6 +4,7 @@
 from typing import Dict, List, Literal, Tuple, TypedDict, TypeVar
 
 import h5py
+import numpy as np
 
 T = TypeVar("T")
 
@@ -13,9 +14,9 @@ HDF_ENCODING = "utf-8"
 # Key suffix to store tensor shapes (because they are padded in hdf file)
 SHAPE_SUFFIX = "_shape"
 # Type for strings
-HDF_STRING_DTYPE = h5py.string_dtype(HDF_ENCODING, None)
+HDF_STRING_DTYPE: np.dtypes.BytesDType = h5py.string_dtype(HDF_ENCODING, None)
 # Type for empty lists
-HDF_VOID_DTYPE = h5py.opaque_dtype("V1")
+HDF_VOID_DTYPE: np.dtypes.VoidDType = h5py.opaque_dtype("V1")
 
 
 def _tuple_to_dict(x: Tuple[T, ...]) -> Dict[str, T]:
