@@ -525,7 +525,7 @@ def _decode_rec(
     """Decode bytes to str with the specified encoding. Works recursively on list of bytes, list of list of bytes, etc."""
     if isinstance(value, bytes):
         return value.decode(encoding=encoding)
-    elif isinstance(value, np.ndarray):
+    elif isinstance(value, np.ndarray) and value.dtype.kind in ("S", "U"):
         return np.char.decode(value, encoding=encoding)
     elif is_iterable_bytes_or_list(value):
         return [_decode_rec(elt, encoding) for elt in value]

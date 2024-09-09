@@ -24,17 +24,24 @@ import numpy as np
 import torch
 import tqdm
 from h5py import Dataset as HDFRawDataset
-from torch import Tensor, nn
+from torch import Tensor
 from torch.utils.data.dataloader import DataLoader
 
 import torchoutil as to
+from torchoutil import nn
 from torchoutil.nn.functional.checksum import checksum
+from torchoutil.pyoutil.collections import all_eq
 from torchoutil.pyoutil.functools import Compose
+from torchoutil.pyoutil.logging import warn_once
 from torchoutil.pyoutil.typing import is_dataclass_instance, is_dict_str
 from torchoutil.types import BuiltinScalar
 from torchoutil.utils.data.dataloader import get_auto_num_cpus
 from torchoutil.utils.data.dataset import IterableDataset, SizedDatasetLike
-from torchoutil.utils.data.dtype import scan_shape_dtypes
+from torchoutil.utils.data.dtype import (
+    ShapeDTypeInfo,
+    merge_numpy_dtypes,
+    scan_shape_dtypes,
+)
 from torchoutil.utils.hdf.common import (
     HDF_ENCODING,
     HDF_STRING_DTYPE,
@@ -48,9 +55,7 @@ from torchoutil.utils.hdf.dataset import HDFDataset
 T = TypeVar("T", covariant=True)
 T_DictOrTuple = TypeVar("T_DictOrTuple", tuple, dict, covariant=True)
 
-HDFDType = Union[
-    Literal["b", "i", "u", "f", "c"], np.dtypes.BytesDType, np.dtypes.VoidDType
-]
+HDFDType = Union[Literal["b", "i", "u", "f", "c"], np.dtype]
 
 
 _SUPPORTED_HDF_DTYPES = (
@@ -341,7 +346,7 @@ def pack_to_hdf(
                 raise err
 
     if verbose >= 2:
-        pylog.debug(f"Data into has been packed into HDF file '{hdf_fpath}'.")
+        pylog.debug(f"Data has been packed into HDF file '{hdf_fpath}'.")
 
     hdf_dataset = HDFDataset(hdf_fpath, open_hdf=open_hdf, return_added_columns=False)
     return hdf_dataset
@@ -400,15 +405,6 @@ def _scan_dataset(
         attr_name: True for attr_name in item_0_dict.keys()
     }
 
-    invalid = {
-        name: hdf_dtype
-        for name, hdf_dtype in hdf_dtypes.items()
-        if hdf_dtype not in _SUPPORTED_HDF_DTYPES
-    }
-    if len(invalid) > 0:
-        msg = f"Invalid hdf dtype found in item. (found {len(invalid)}/{len(hdf_dtypes)} unsupported dtypes with {invalid=}, but expected dtypes in {_SUPPORTED_HDF_DTYPES})"
-        raise ValueError(msg)
-
     loader = DataLoader(
         dataset,  # type: ignore
         batch_size=batch_size,
@@ -418,6 +414,9 @@ def _scan_dataset(
         drop_last=False,
         pin_memory=False,
     )
+    infos_dict: dict[str, set[ShapeDTypeInfo]] = {
+        name: set() for name in max_shapes.keys()
+    }
 
     for batch in tqdm.tqdm(
         loader,
@@ -427,25 +426,46 @@ def _scan_dataset(
         batch = [dict_pre_transform(item) for item in batch]
         for item in batch:
             for attr_name, value in item.items():
-                # info = _scan_shape_dtype(value)
                 info = scan_shape_dtypes(value)
-                shape = info.shape
-                hdf_dtype = numpy_dtype_to_hdf_dtype(info.numpy_dtype)
+                infos_dict[attr_name].add(info)
 
-                all_eq_shapes[attr_name] &= max_shapes[attr_name] == shape
-                max_shapes[attr_name] = tuple(
-                    map(max, zip(max_shapes[attr_name], shape))
-                )
-                if hdf_dtypes[attr_name] == hdf_dtype or hdf_dtype == HDF_VOID_DTYPE:
-                    # Note: HDF_VOID_DTYPE is compatible
-                    pass
-                elif hdf_dtypes[attr_name] == HDF_VOID_DTYPE:
-                    # Note: if the element 0 was void dtype, override with more specific dtype
-                    hdf_dtypes[attr_name] = hdf_dtype
-                else:
-                    raise ValueError(
-                        f"Found different hdf_dtype. (with {hdf_dtypes[attr_name]=} != {hdf_dtype=} and {attr_name=} with {value=})"
-                    )
+    for attr_name, infos in infos_dict.items():
+        shapes = [info.shape for info in infos]
+
+        if not all_eq(map(len, shapes)):
+            raise ValueError(f"Invalid ndim for attribute {attr_name}.")
+
+        np_dtypes = [info.numpy_dtype for info in infos]
+        np_dtype = merge_numpy_dtypes(np_dtypes)
+        hdf_dtype = numpy_dtype_to_hdf_dtype(np_dtype)
+
+        if verbose >= 2 and np_dtype not in (
+            None,
+            str,
+            bool,
+            np.int32,
+            np.int8,
+            np.float32,
+            np.dtype("|S1"),
+        ):
+            expected_np_dtype = hdf_dtype_to_numpy_dtype(hdf_dtype)
+            msg = f"Found input dtype {np_dtype} which is not compatible with HDF. It will be cast to {expected_np_dtype}. (from {hdf_dtype=})"
+            warn_once(msg, __name__)
+
+        all_eq_shapes[attr_name] = all_eq(shapes)
+        max_shapes[attr_name] = tuple(map(max, zip(*shapes)))
+        hdf_dtypes[attr_name] = hdf_dtype
+
+    del infos_dict
+
+    invalid = {
+        name: hdf_dtype
+        for name, hdf_dtype in hdf_dtypes.items()
+        if hdf_dtype not in _SUPPORTED_HDF_DTYPES
+    }
+    if len(invalid) > 0:
+        msg = f"Invalid hdf dtype found in item. (found {len(invalid)}/{len(hdf_dtypes)} unsupported dtypes with {invalid=}, but expected dtypes in {_SUPPORTED_HDF_DTYPES})"
+        raise ValueError(msg)
 
     load_as_complex: Dict[str, bool] = {}
     if store_complex_as_real:
@@ -487,18 +507,36 @@ def hdf_dtype_to_fill_value(hdf_dtype: Optional[HDFDType]) -> BuiltinScalar:
         raise ValueError(msg)
 
 
-def numpy_dtype_to_hdf_dtype(
-    dtype: Optional[np.dtype],
-) -> HDFDType:
+def numpy_dtype_to_hdf_dtype(dtype: Optional[np.dtype]) -> HDFDType:
     if dtype is None:
         return HDF_VOID_DTYPE
 
     kind = dtype.kind
+
     if kind == "u":  # uint stored as int
         return "i"
     elif kind == "U":  # unicode string
         return HDF_STRING_DTYPE
-    elif kind in ("b", "i", "u", "f", "c"):
+    elif kind == "V":
+        return HDF_VOID_DTYPE
+    elif kind in ("b", "i", "f", "c"):
         return kind
     else:
         raise ValueError(f"Unsupported dtype {kind=} for HDF dtype.")
+
+
+def hdf_dtype_to_numpy_dtype(hdf_dtype: HDFDType) -> np.dtype:
+    if hdf_dtype == HDF_VOID_DTYPE:
+        return np.dtype("V")
+    if hdf_dtype == HDF_STRING_DTYPE:
+        return np.dtype("<U")
+    if hdf_dtype == "f":
+        return np.dtype("float32")
+    if hdf_dtype == "i":
+        return np.dtype("int32")
+    if hdf_dtype == "b":
+        return np.dtype("int8")
+    if hdf_dtype == "c":
+        return np.dtype("|S1")
+
+    raise ValueError(f"Unsupported dtype {hdf_dtype=} for numpy dtype.")

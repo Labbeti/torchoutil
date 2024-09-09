@@ -48,15 +48,15 @@ class TestHDF(TestCase):
     def test_shape_column(self) -> None:
         data = [torch.rand(10, 2), torch.rand(10, 5), torch.rand(10, 3)]
         data_shape = [(10, 1), (10, 2), (10, 1)]
-
-        dataset = [
+        ds_list = [
             {"data": data[i], "data_shape": data_shape[i]} for i in range(len(data))
         ]
 
         path = "/tmp/test_shape.hdf"
-        hdf_dataset = pack_to_hdf(dataset, path, exists="overwrite")
+        hdf_dataset = pack_to_hdf(ds_list, path, exists="overwrite")
 
         assert len(hdf_dataset.added_columns) == 0
+        assert len(hdf_dataset) == len(ds_list)
 
         for i, item in enumerate(iter(hdf_dataset)):
             assert set(item.keys()) == {"data", "data_shape"}
@@ -81,13 +81,16 @@ class TestHDF(TestCase):
         hdf_dataset = pack_to_hdf(ds_list, path, exists="overwrite")
 
         assert len(hdf_dataset.added_columns) == 0
+        assert len(hdf_dataset) == len(ds_list)
 
         for i, item in enumerate(iter(hdf_dataset)):
             assert set(item.keys()) == keys
             assert set(ds_list[i].keys()) == keys
 
             for k in keys:
-                assert torch.equal(ds_list[i][k], item[k])
+                assert torch.equal(
+                    ds_list[i][k], item[k]
+                ), f"{i=}; {k=}; {ds_list[i][k]=}; {item[k]=}"
 
         hdf_dataset.close()
         os.remove(path)
@@ -104,21 +107,33 @@ class TestHDF(TestCase):
 
         hdf_dataset = HDFDataset(path, numpy_to_torch=False)
 
+        assert len(hdf_dataset) == len(ds_list)
         assert hdf_dataset[:, "a"] == ds_dict["a"]
         assert (hdf_dataset[:, "b"] == ds_dict["b"].numpy()).all()
+
+        indices = torch.randperm(len(hdf_dataset))
+
+        assert hdf_dataset[indices, "a"] == [ds_dict["a"][idx] for idx in indices]
+        assert (hdf_dataset[indices, "b"] == ds_dict["b"][indices].numpy()).all()
 
     def test_string(self) -> None:
         ds_dict = {
             "i": list(range(10)),
             "s": ["".join(map(str, range(random.randint(10, 100)))) for _ in range(10)],
+            "ls": [[], ["aa", "bbb"], [], ["cccc"], ["dd"], ["e", "ff"]] + [[]] * 4,
+            "l": [[]] * 10,
         }
         ds_list = dict_list_to_list_dict(ds_dict, "same")
 
         path = "/tmp/test_string.hdf"
         hdf_dataset = pack_to_hdf(ds_list, path, exists="overwrite")
 
-        assert hdf_dataset[:, "i"] == ds_dict["i"]
-        assert hdf_dataset[:, "s"] == ds_dict["s"]
+        assert len(hdf_dataset) == len(ds_list)
+
+        for k in ds_dict.keys():
+            assert (
+                hdf_dataset[:, k] == ds_dict[k]
+            ), f"{hdf_dataset[:, k]=} != {ds_dict[k]=}"
 
 
 if __name__ == "__main__":

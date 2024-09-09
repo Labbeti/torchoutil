@@ -209,8 +209,15 @@ class _TensorNDBase(Generic[T_DType, T_NDim, T_BuiltinNumber], torch.Tensor):
                 msg = f"Invalid number of dimension(s) for argument data in {cls.__name__}. (found {ndim} but expected {cls_ndim})"
                 raise ValueError(msg)
 
+        if layout is None:  # supports older torch versions
+            layout = torch.strided
+
         if data is not None:
-            return torch.as_tensor(data=data, dtype=dtype, device=device)  # type: ignore
+            return torch.as_tensor(
+                data=data,
+                dtype=dtype,
+                device=device,
+            )  # type: ignore
         elif size is not None:
             return torch.empty(
                 size,

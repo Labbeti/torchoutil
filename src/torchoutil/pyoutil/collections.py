@@ -76,19 +76,21 @@ def list_dict_to_dict_list(
     if key_mode == "same":
         invalids = [list(item.keys()) for item in lst[1:] if keys != set(item.keys())]
         if len(invalids) > 0:
-            raise ValueError(
-                f"Invalid dict keys for conversion from list[dict] to dict[list]. (with {key_mode=}, {keys=} and {invalids=})"
-            )
+            msg = f"Invalid dict keys for conversion from list[dict] to dict[list]. (with {key_mode=}, {keys=} and {invalids=})"
+            raise ValueError(msg)
+
     elif key_mode == "intersect":
         keys = intersect_lists([item.keys() for item in lst])
-    elif key_mode == "union":
-        keys = union_lists([item.keys() for item in lst])
-    else:
-        raise ValueError(
-            f"Invalid argument key_mode={key_mode}. (expected one of {KEY_MODES})"
-        )
 
-    return {key: [item.get(key, default_val) for item in lst] for key in keys}
+    elif key_mode == "union":
+        keys = union_lists(item.keys() for item in lst)
+
+    else:
+        msg = f"Invalid argument key_mode={key_mode}. (expected one of {KEY_MODES})"
+        raise ValueError(msg)
+
+    result = {key: [item.get(key, default_val) for item in lst] for key in keys}
+    return result
 
 
 @overload
@@ -132,18 +134,19 @@ def dict_list_to_list_dict(
 
     if key_mode == "same":
         if not all_eq(lengths):
-            raise ValueError(
-                f"Invalid sequences for batch. (found different lengths in sub-lists: {set(lengths)})"
-            )
+            msg = f"Invalid sequences for batch. (found different lengths in sub-lists: {set(lengths)})"
+            raise ValueError(msg)
         length = lengths[0]
+
     elif key_mode == "intersect":
         length = min(lengths)
+
     elif key_mode == "union":
         length = max(lengths)
+
     else:
-        raise ValueError(
-            f"Invalid argument key_mode={key_mode}. (expected one of {KEY_MODES})"
-        )
+        msg = f"Invalid argument key_mode={key_mode}. (expected one of {KEY_MODES})"
+        raise ValueError(msg)
 
     result = [
         {k: (v[i] if i < len(v) else default_val) for k, v in dic.items()}
