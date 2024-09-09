@@ -88,9 +88,9 @@ def pack_to_hdf(
     batch_size: int = 32,
     num_workers: Union[int, Literal["auto"]] = "auto",
     shape_suffix: str = SHAPE_SUFFIX,
-    open_hdf: bool = True,
-    file_kwargs: Optional[Dict[str, Any]] = None,
     store_complex_as_real: bool = True,
+    file_kwds: Optional[Dict[str, Any]] = None,
+    ds_kwds: Optional[Dict[str, Any]] = None,
 ) -> HDFDataset[T_DictOrTuple, T_DictOrTuple]:
     """Pack a dataset to HDF file.
 
@@ -130,6 +130,9 @@ def pack_to_hdf(
     if hdf_fpath.exists() and not hdf_fpath.is_file():
         raise RuntimeError(f"Item {hdf_fpath=} exists but it is not a file.")
 
+    if ds_kwds is None:
+        ds_kwds = {}
+
     if not hdf_fpath.is_file():
         pass
     elif exists == "overwrite":
@@ -138,14 +141,14 @@ def pack_to_hdf(
         msg = f"Cannot overwrite file {hdf_fpath}. Please remove it or use exists='overwrite' or exists='skip' option."
         raise ValueError(msg)
     elif exists == "skip":
-        return HDFDataset(hdf_fpath, open_hdf=open_hdf)
+        return HDFDataset(hdf_fpath, **ds_kwds)
     else:
         EXISTS_VALUES = ("error", "skip", "overwrite")
         msg = f"Invalid argument {exists=}. (expected one of {EXISTS_VALUES})"
         raise ValueError(msg)
 
-    if file_kwargs is None:
-        file_kwargs = {}
+    if file_kwds is None:
+        file_kwds = {}
 
     if num_workers == "auto":
         num_workers = get_auto_num_cpus()
@@ -183,7 +186,7 @@ def pack_to_hdf(
     with h5py.File(
         hdf_fpath,
         "w",
-        **file_kwargs,
+        **file_kwds,
     ) as hdf_file:
         # Step 2: Build hdf datasets in file
         hdf_dsets: Dict[str, HDFRawDataset] = {}
@@ -329,7 +332,7 @@ def pack_to_hdf(
             "item_type": item_type,
             "added_columns": added_columns,
             "shape_suffix": shape_suffix,
-            "file_kwargs": json.dumps(file_kwargs),
+            "file_kwargs": json.dumps(file_kwds),
             "load_as_complex": json.dumps(load_as_complex),
             "version": str(to.__version__),
         }
@@ -348,7 +351,7 @@ def pack_to_hdf(
     if verbose >= 2:
         pylog.debug(f"Data has been packed into HDF file '{hdf_fpath}'.")
 
-    hdf_dataset = HDFDataset(hdf_fpath, open_hdf=open_hdf, return_added_columns=False)
+    hdf_dataset = HDFDataset(hdf_fpath, **ds_kwds)
     return hdf_dataset
 
 

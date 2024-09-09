@@ -249,6 +249,8 @@ def pack_dataset_per_column(
     batch_size: int = 32,
     num_workers: Union[int, Literal["auto"]] = "auto",
     exists: ExistsMode = "error",
+    save_fn: Callable[[Path, Any], None] = np.save,
+    ds_kwds: Optional[Dict[str, Any]] = None,
     verbose: int = 0,
 ) -> PackedDataset[T_DictOrTuple, T_DictOrTuple]:
     if not isinstance(dataset, SizedDatasetLike):
@@ -273,18 +275,7 @@ def pack_dataset_per_column(
 
     src_dataset_name = dataset.__class__.__name__
 
-    loader = DataLoader(
-        dataset,  # type: ignore
-        batch_size=batch_size,
-        shuffle=False,
-        num_workers=num_workers,
-        collate_fn=nn.Identity(),
-        drop_last=False,
-        pin_memory=False,
-    )
-
-    it = iter(loader)
-    item_0 = next(it)
+    item_0 = next(iter(dataset))
     item_0 = pre_transform(item_0)
 
     dict_pre_transform: Callable[[T], Dict[str, Any]]
@@ -308,11 +299,21 @@ def pack_dataset_per_column(
 
     del pre_transform, item_0, infos_0
 
+    loader = DataLoader(
+        dataset,  # type: ignore
+        batch_size=batch_size,
+        shuffle=False,
+        num_workers=num_workers,
+        collate_fn=nn.Identity(),
+        drop_last=False,
+        pin_memory=False,
+    )
+
     if _TQDM_AVAILABLE:
-        it = tqdm.tqdm(it, total=len(loader), disable=verbose < 1)
+        loader = tqdm.tqdm(loader, total=len(loader), disable=verbose < 1)
 
     i = 0
-    for batch in it:
+    for batch in loader:
         batch = [dict_pre_transform(item) for item in batch]
         for item in batch:
             for name, value in item.items():
@@ -378,6 +379,8 @@ def pack_dataset_per_column(
         root=root,
         content_dpath=content_dpath,
         attributes=attributes,
+        save_fn=save_fn,
+        ds_kwds=ds_kwds,
     )
 
 
@@ -386,6 +389,8 @@ def pack_dataset_dict(
     root: Union[str, Path],
     *,
     exists: ExistsMode = "error",
+    save_fn: Callable[[Path, Any], None] = np.save,
+    ds_kwds: Optional[Dict[str, Any]] = None,
 ) -> PackedDataset:
     if not po.all_eq(map(len, data_dict.values())):
         raise ValueError
@@ -407,6 +412,8 @@ def pack_dataset_dict(
         root=root,
         content_dpath=content_dpath,
         attributes=attributes,
+        save_fn=save_fn,
+        ds_kwds=ds_kwds,
     )
 
 
@@ -415,13 +422,15 @@ def _pack_dataset_dict(
     root: Path,
     content_dpath: Path,
     attributes: Dict[str, Any],
+    save_fn: Callable[[Path, Any], None] = np.save,
+    ds_kwds: Optional[Dict[str, Any]] = None,
 ) -> PackedDataset:
     fnames = []
     for name, values in data_dict.items():
         fname = f"{name}.npy"
         fpath = content_dpath.joinpath(fname)
         values = to.to_numpy(values)
-        np.save(fpath, values)
+        save_fn(fpath, values)
         fnames.append(fname)
 
     attributes = {
@@ -437,7 +446,9 @@ def _pack_dataset_dict(
     with open(attrs_fpath, "w") as file:
         json.dump(attributes, file, indent="\t")
 
-    packed = PackedDataset(root)
+    if ds_kwds is None:
+        ds_kwds = {}
+    packed = PackedDataset(root, **ds_kwds)
     return packed
 
 

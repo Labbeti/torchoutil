@@ -52,6 +52,7 @@ class PackedDataset(Generic[T, U], DatasetSlicer[U]):
 
         self._attrs = {}
         self._fpaths = []
+        self._loaded = {}
         self._reload_data()
 
     @property
@@ -76,6 +77,9 @@ class PackedDataset(Generic[T, U], DatasetSlicer[U]):
         return item  # type: ignore
 
     def _load_item(self, idx: int) -> T:
+        if self.content_mode == "column":
+            return {k: v[idx] for k, v in self._loaded.items()}  # type: ignore
+
         if self.content_mode == "item":
             batch_size = 1
         elif self.content_mode == "batch":
@@ -127,8 +131,15 @@ class PackedDataset(Generic[T, U], DatasetSlicer[U]):
         fnames = attrs["files"]
         fpaths = [content_dpath.joinpath(fname) for fname in fnames]
 
+        content_mode = self._attrs.get("content_mode")
+        if content_mode == "column":
+            loaded = {fpath.stem: self._load_fn(fpath) for fpath in fpaths}
+        else:
+            loaded = {}
+
         self._attrs = attrs
         self._fpaths = fpaths
+        self._loaded = loaded
 
     @classmethod
     def is_pickle_root(cls, root: Union[str, Path]) -> bool:
