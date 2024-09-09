@@ -5,12 +5,12 @@ import itertools
 import math
 import struct
 import zlib
-from typing import Any, Iterable, Mapping, Union
+from typing import Any, Callable, Iterable, Mapping, Union
 
 import torch
 from torch import Tensor, nn
 
-from torchoutil.nn.functional.others import nelement
+from torchoutil.nn.functional.others import is_complex, is_floating_point, nelement
 from torchoutil.pyoutil.inspect import get_fullname
 from torchoutil.pyoutil.typing import BuiltinNumber, BuiltinScalar, NoneType
 from torchoutil.types import np
@@ -122,69 +122,27 @@ def checksum_module(
 @torch.inference_mode()
 def checksum_tensor(x: Tensor, **kwargs) -> int:
     """Compute a simple checksum of a tensor. Order of values matter for the checksum."""
-    if x.ndim == 0:
-        return checksum_builtin_number(x.item(), **kwargs)
-
-    if x.dtype == torch.bool:
-        range_dtype = torch.int
-    elif x.is_complex():
-        range_dtype = x.real.dtype
-    else:
-        range_dtype = x.dtype
-
-    if x.is_floating_point() or x.is_complex():
-        nan_csum = checksum_float(math.nan, **kwargs)
-        neginf_csum = checksum_float(-math.inf, **kwargs)
-        posinf_csum = checksum_float(math.inf, **kwargs)
-        x = torch.nan_to_num(
-            x,
-            nan=nan_csum,
-            neginf=neginf_csum,
-            posinf=posinf_csum,
-        )
-
-    x = x.flatten()
-    arange = torch.arange(1, nelement(x) + 1, device=x.device, dtype=range_dtype)
-    x = x + arange
-    x = x * arange
-    x = x.sum()
-
-    return checksum_builtin_number(x.item(), **kwargs)
+    return _checksum_tensor_array_like(
+        x,
+        nan_to_num_fn=torch.nan_to_num,
+        arange_fn=torch.arange,
+    )
 
 
 def checksum_ndarray(x: Union[np.ndarray, np.generic], **kwargs) -> int:
     if not _NUMPY_AVAILABLE:
-        raise NotImplementedError(
-            "Cannot call function 'checksum_ndarray' because optional dependancy 'numpy' is not installed. Please install it using 'pip install torchoutil[extras]'"
-        )
-    if x.ndim == 0:
-        return checksum_builtin_number(x.item(), **kwargs)
+        msg = "Cannot call function 'checksum_ndarray' because optional dependancy 'numpy' is not installed. Please install it using 'pip install torchoutil[extras]'"
+        raise NotImplementedError(msg)
 
-    if x.dtype == bool:
-        range_dtype = int
-    elif np.iscomplexobj(x):
-        range_dtype = x.real.dtype  # type: ignore
-    else:
-        range_dtype = x.dtype
+    # Supports non-numeric numpy arrays (byte string, unicode string, object, void)
+    if x.dtype.kind in ("S", "U", "O", "V"):
+        return checksum_iterable(x.tolist(), **kwargs)
 
-    if isinstance(x, np.floating) or np.iscomplexobj(x):
-        nan_csum = checksum_float(math.nan, **kwargs)
-        neginf_csum = checksum_float(-math.inf, **kwargs)
-        posinf_csum = checksum_float(math.inf, **kwargs)
-        x = np.nan_to_num(
-            x,
-            nan=nan_csum,
-            neginf=neginf_csum,
-            posinf=posinf_csum,
-        )
-
-    x = x.flatten()
-    arange = np.arange(1, nelement(x) + 1, dtype=range_dtype)
-    x = x + arange
-    x = x * arange
-    x = x.sum()
-
-    return checksum_builtin_number(x.item(), **kwargs)
+    return _checksum_tensor_array_like(
+        x,
+        nan_to_num_fn=np.nan_to_num,
+        arange_fn=np.arange,
+    )
 
 
 def checksum_builtin_scalar(x: BuiltinScalar, **kwargs) -> int:
@@ -250,3 +208,42 @@ def _interpret_float_as_int(x: float) -> int:
     xbytes = struct.pack("!f", x)
     xint = struct.unpack("!i", xbytes)[0]
     return xint
+
+
+def _checksum_tensor_array_like(
+    x: Union[Tensor, np.ndarray, np.generic],
+    *,
+    nan_to_num_fn: Callable,
+    arange_fn: Callable,
+    **kwargs,
+) -> int:
+    if x.ndim == 0:
+        return checksum_builtin_number(x.item(), **kwargs)
+
+    if x.dtype == bool:
+        range_dtype = int
+    elif x.dtype == torch.bool:
+        range_dtype = torch.int
+    elif is_complex(x):
+        range_dtype = x.real.dtype  # type: ignore
+    else:
+        range_dtype = x.dtype
+
+    if is_floating_point(x) or is_complex(x):
+        nan_csum = checksum_float(math.nan, **kwargs)
+        neginf_csum = checksum_float(-math.inf, **kwargs)
+        posinf_csum = checksum_float(math.inf, **kwargs)
+        x = nan_to_num_fn(
+            x,
+            nan=nan_csum,
+            neginf=neginf_csum,
+            posinf=posinf_csum,
+        )
+
+    x = x.flatten()
+    arange = arange_fn(1, nelement(x) + 1, dtype=range_dtype)
+    x = x + arange
+    x = x * arange
+    x = x.sum()
+
+    return checksum_builtin_number(x.item(), **kwargs)
