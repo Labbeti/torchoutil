@@ -4,7 +4,7 @@
 import hashlib
 import logging
 from pathlib import Path
-from typing import Literal, Protocol, Union
+from typing import Literal, Protocol, Union, runtime_checkable
 
 from typing_extensions import Buffer
 
@@ -16,6 +16,7 @@ HASH_NAMES = ("sha256", "md5")
 pylog = logging.getLogger(__name__)
 
 
+@runtime_checkable
 class Hasher(Protocol):
     digest_size: int
     block_size: int
