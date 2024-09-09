@@ -14,9 +14,9 @@ HDF_ENCODING = "utf-8"
 # Key suffix to store tensor shapes (because they are padded in hdf file)
 SHAPE_SUFFIX = "_shape"
 # Type for strings
-HDF_STRING_DTYPE: np.dtypes.BytesDType = h5py.string_dtype(HDF_ENCODING, None)
+HDF_STRING_DTYPE: np.dtype = h5py.string_dtype(HDF_ENCODING, None)
 # Type for empty lists
-HDF_VOID_DTYPE: np.dtypes.VoidDType = h5py.opaque_dtype("V1")
+HDF_VOID_DTYPE: np.dtype = h5py.opaque_dtype("V1")
 
 
 def _tuple_to_dict(x: Tuple[T, ...]) -> Dict[str, T]:
