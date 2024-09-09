@@ -481,7 +481,9 @@ class HDFDataset(Generic[T, U], DatasetSlicer[U]):
             sorted_idxs = sorted_idxs.numpy()
             hdf_value: Any = self._hdf_file[column][sorted_idxs]
             inv_local_idxs = get_inverse_perm(local_idxs)
-            hdf_value = [hdf_value[local_idx] for local_idx in inv_local_idxs]
+            # TODO: rm
+            # hdf_value = [hdf_value[local_idx] for local_idx in inv_local_idxs]
+            hdf_value = hdf_value[inv_local_idxs]
             if self._load_as_complex.get(column, False):
                 hdf_value = [to.view_as_complex(value) for value in hdf_value]
         else:
@@ -516,16 +518,20 @@ class HDFDataset(Generic[T, U], DatasetSlicer[U]):
             del self._load_as_complex
 
 
-def _decode_rec(value: Union[bytes, Iterable], encoding: str) -> Union[str, list]:
+def _decode_rec(
+    value: Union[bytes, np.ndarray, Iterable],
+    encoding: str,
+) -> Union[str, np.ndarray, list]:
     """Decode bytes to str with the specified encoding. Works recursively on list of bytes, list of list of bytes, etc."""
     if isinstance(value, bytes):
         return value.decode(encoding=encoding)
+    elif isinstance(value, np.ndarray):
+        return np.char.decode(value, encoding=encoding)
     elif is_iterable_bytes_or_list(value):
         return [_decode_rec(elt, encoding) for elt in value]
     else:
-        raise TypeError(
-            f"Invalid argument type {type(value)}. (expected bytes or Iterable)"
-        )
+        msg = f"Invalid argument type {type(value)}. (expected bytes or Iterable)"
+        raise TypeError(msg)
 
 
 def _is_index(index: Any) -> TypeGuard[IndexLike]:
