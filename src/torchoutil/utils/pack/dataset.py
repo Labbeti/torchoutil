@@ -7,7 +7,18 @@ import pickle
 import sys
 from io import BufferedReader
 from pathlib import Path
-from typing import Any, Callable, Generic, Iterable, List, Optional, TypeVar, Union
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    Generic,
+    Iterable,
+    List,
+    Optional,
+    Sequence,
+    TypeVar,
+    Union,
+)
 
 from typing_extensions import override
 
@@ -76,6 +87,16 @@ class PackedDataset(Generic[T, U], DatasetSlicer[U]):
     @override
     def __len__(self) -> int:
         return self._attrs["length"]
+
+    def to_dict(self) -> Dict[str, Sequence]:
+        if self.item_type != "dict":
+            msg = f"Cannot convert non-dict dataset to dict. (found {self.item_type=})"
+            raise ValueError(msg)
+
+        if self.content_mode == "column":
+            return self._loaded
+        else:
+            return self[:]  # type: ignore
 
     @override
     def get_item(self, idx: int) -> Union[T, U]:
