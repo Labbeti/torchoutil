@@ -449,18 +449,19 @@ def _pack_dataset_dict(
             save_fn(values, file)
         fnames.append(fname)
 
-    attributes = {
+    attrs = {
         "length": len(next(iter(data_dict.values()))),
         "creation_date": po.now_iso(),
         "content_mode": "column",
         "content_dname": CONTENT_DNAME,
         "num_files": len(fnames),
         "files": fnames,
-    } | attributes
+    }
+    attrs.update(attributes)
 
     attrs_fpath = root.joinpath(ATTRS_FNAME)
     with open(attrs_fpath, "w") as file:
-        json.dump(attributes, file, indent="\t")
+        json.dump(attrs, file, indent="\t")
 
     if ds_kwds is None:
         ds_kwds = {}
