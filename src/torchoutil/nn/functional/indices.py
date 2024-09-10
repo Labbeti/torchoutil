@@ -8,7 +8,7 @@ from torch import Tensor
 from torch.types import Device, Number
 
 from torchoutil.nn.functional.get import CUDA_IF_AVAILABLE, get_device, get_generator
-from torchoutil.types._hints import LongTensor1D, Tensor0D, Tensor1D
+from torchoutil.types._hints import LongTensor1D, Tensor1D
 
 
 def get_inverse_perm(indices: Tensor, dim: int = -1) -> Tensor:
@@ -62,7 +62,7 @@ def randperm_diff(
 
     while perm.eq(arange).any():
         perm = torch.randperm(size, **perm_kws)
-    return perm
+    return perm  # type: ignore
 
 
 def get_perm_indices(x1: Tensor1D, x2: Tensor1D) -> LongTensor1D:
@@ -77,13 +77,13 @@ def get_perm_indices(x1: Tensor1D, x2: Tensor1D) -> LongTensor1D:
         True
     """
     indices = (x1[..., None, :] == x2[..., :, None]).int().argmax(dim=-2)
-    return indices
+    return indices  # type: ignore
 
 
 def insert_at_indices(
     x: Tensor,
-    indices: Union[Tensor1D, List, Number],
-    values: Union[Number, Tensor0D, Tensor1D],
+    indices: Union[Tensor, List, Number],
+    values: Union[Number, Tensor],
 ) -> Tensor:
     """Insert value(s) in vector at specified indices.
 
@@ -96,9 +96,8 @@ def insert_at_indices(
         tensor([1, 1, 4, 2, 2, 2, 4, 3])
     """
     if x.ndim != 1:
-        raise ValueError(
-            f"Invalid argument number of dims. (found {x.ndim=} but expected 1)"
-        )
+        msg = f"Invalid argument number of dims. (found {x.ndim=} but expected 1)"
+        raise ValueError(msg)
 
     device = x.device
     if isinstance(indices, (int, float, bool)):
@@ -119,7 +118,7 @@ def insert_at_indices(
 
 def remove_at_indices(
     x: Tensor,
-    indices: Union[Tensor1D, Tensor0D, List, Number],
+    indices: Union[Tensor, List, Number],
 ) -> Tensor:
     """Remove value(s) in vector at specified indices."""
     if x.ndim != 1:
