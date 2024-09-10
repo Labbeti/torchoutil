@@ -4,6 +4,7 @@
 import os
 import random
 import unittest
+from pathlib import Path
 from unittest import TestCase
 
 import numpy as np
@@ -18,9 +19,17 @@ from torchoutil.utils.hdf import HDFDataset, pack_to_hdf
 
 
 class TestHDF(TestCase):
+    @classmethod
+    def setUpClass(cls) -> None:
+        tmpdir = Path(os.getenv("TORCHOUTIL_TMPDIR", "/tmp/torchoutil_tests"))
+        cls.tmpdir = tmpdir
+
     def test_cifar10_pack_to_hdf(self) -> None:
+        cls = self.__class__
+        tmpdir = cls.tmpdir
+
         dataset = CIFAR10(
-            "/tmp",
+            tmpdir,
             train=False,
             transform=ToNumpy(),
             target_transform=ESequential(IndexToOnehot(10), ToList()),
@@ -31,7 +40,7 @@ class TestHDF(TestCase):
             torch.randint(0, len(dataset), (max(len(dataset) // 10, 1),)).tolist(),
         )
 
-        path = "/tmp/test_cifar10.hdf"
+        path = tmpdir.joinpath("test_cifar10.hdf")
         hdf_dataset = pack_to_hdf(dataset, path, exists="overwrite")
 
         idx = 0
@@ -46,13 +55,16 @@ class TestHDF(TestCase):
         os.remove(path)
 
     def test_shape_column(self) -> None:
+        cls = self.__class__
+        tmpdir = cls.tmpdir
+
         data = [torch.rand(10, 2), torch.rand(10, 5), torch.rand(10, 3)]
         data_shape = [(10, 1), (10, 2), (10, 1)]
         ds_list = [
             {"data": data[i], "data_shape": data_shape[i]} for i in range(len(data))
         ]
 
-        path = "/tmp/test_shape.hdf"
+        path = tmpdir.joinpath("test_shape.hdf")
         hdf_dataset = pack_to_hdf(ds_list, path, exists="overwrite")
 
         assert len(hdf_dataset.added_columns) == 0
@@ -69,6 +81,9 @@ class TestHDF(TestCase):
         os.remove(path)
 
     def test_special_floating_dtypes(self) -> None:
+        cls = self.__class__
+        tmpdir = cls.tmpdir
+
         ds_dict = {
             "f16": torch.rand(10, 2, 3, dtype=torch.float16),
             "c64": torch.rand(10, 2, 3, dtype=torch.complex64),
@@ -77,7 +92,7 @@ class TestHDF(TestCase):
         ds_list = dict_list_to_list_dict(ds_dict, "same")
         keys = set(ds_dict.keys())
 
-        path = "/tmp/test_complex.hdf"
+        path = tmpdir.joinpath("test_complex.hdf")
         hdf_dataset = pack_to_hdf(ds_list, path, exists="overwrite")
 
         assert len(hdf_dataset.added_columns) == 0
@@ -96,14 +111,17 @@ class TestHDF(TestCase):
         os.remove(path)
 
     def test_slice(self) -> None:
+        cls = self.__class__
+        tmpdir = cls.tmpdir
+
         ds_dict = {
             "a": list(range(10, 20)),
             "b": torch.rand(10, 2, 3),
         }
         ds_list = dict_list_to_list_dict(ds_dict, "same")
 
-        path = "/tmp/test_slice.hdf"
-        pack_to_hdf(ds_list, path, exists="overwrite", open_hdf=False)
+        path = tmpdir.joinpath("test_slice.hdf")
+        pack_to_hdf(ds_list, path, exists="overwrite", ds_kwds=dict(open_hdf=False))
 
         hdf_dataset = HDFDataset(path, numpy_to_torch=False)
 
@@ -117,6 +135,9 @@ class TestHDF(TestCase):
         assert (hdf_dataset[indices, "b"] == ds_dict["b"][indices].numpy()).all()
 
     def test_string(self) -> None:
+        cls = self.__class__
+        tmpdir = cls.tmpdir
+
         ds_dict = {
             "i": list(range(10)),
             "s": ["".join(map(str, range(random.randint(10, 100)))) for _ in range(10)],
@@ -125,11 +146,10 @@ class TestHDF(TestCase):
         }
         ds_list = dict_list_to_list_dict(ds_dict, "same")
 
-        path = "/tmp/test_string.hdf"
+        path = tmpdir.joinpath("test_string.hdf")
         hdf_dataset = pack_to_hdf(ds_list, path, exists="overwrite")
 
         assert len(hdf_dataset) == len(ds_list)
-
         for k in ds_dict.keys():
             assert (
                 hdf_dataset[:, k] == ds_dict[k]

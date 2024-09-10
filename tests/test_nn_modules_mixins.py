@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import os
 import unittest
 from pathlib import Path
 from unittest import TestCase
@@ -39,6 +40,11 @@ class MyModule(nn.EModule[Tensor, Tensor]):
 
 
 class TestInheritEModule(TestCase):
+    @classmethod
+    def setUpClass(cls) -> None:
+        tmpdir = Path(os.getenv("TORCHOUTIL_TMPDIR", "/tmp/torchoutil_tests"))
+        cls.tmpdir = tmpdir
+
     def test_multiple(self) -> None:
         bsize = 8
         in_features = 2**5
@@ -63,7 +69,7 @@ class TestInheritEModule(TestCase):
         assert module1.config == expected_config
         assert module1.count_parameters() == in_features * out_features + out_features
 
-        path = Path("/tmp/state_dict.pt")
+        path = self.tmpdir.joinpath("state_dict.pt")
         path.parent.mkdir(parents=True, exist_ok=True)
         with open(path, "wb") as file:
             torch.save(module1.state_dict(), file)
