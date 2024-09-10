@@ -26,6 +26,7 @@ from .guards import (
     is_iterable_iterable_int,
     is_iterable_str,
     is_list_bool,
+    is_list_builtin_number,
     is_list_float,
     is_list_int,
     is_list_list_str,

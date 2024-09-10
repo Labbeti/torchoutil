@@ -97,6 +97,10 @@ def is_list_number(x: Any) -> TypeGuard[List[Number]]:
     return isinstance(x, list) and all(isinstance(xi, Number) for xi in x)
 
 
+def is_list_builtin_number(x: Any) -> TypeGuard[List[BuiltinNumber]]:
+    return isinstance(x, list) and all(is_builtin_number(xi) for xi in x)
+
+
 def is_list_str(x: Any) -> TypeGuard[List[str]]:
     return isinstance(x, list) and all(isinstance(xi, str) for xi in x)
 
