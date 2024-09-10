@@ -442,7 +442,7 @@ def _pack_dataset_dict(
 ) -> PackedDataset:
     fnames = []
     for name, values in data_dict.items():
-        fname = f"{name}.npy"
+        fname = f"{name}.bin"
         fpath = content_dpath.joinpath(fname)
         values = to.to_numpy(values)
         with open(fpath, "wb") as file:
