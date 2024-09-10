@@ -67,7 +67,7 @@ class HDFDataset(Generic[T, U], DatasetSlicer[U]):
         open_hdf: bool = True,
         auto_open: bool = False,
         numpy_to_torch: bool = True,
-        file_kwargs: Optional[Dict[str, Any]] = None,
+        file_kwds: Optional[Dict[str, Any]] = None,
     ) -> None:
         """HDFDataset to read an packed hdf file.
 
@@ -82,7 +82,7 @@ class HDFDataset(Generic[T, U], DatasetSlicer[U]):
             open_hdf: If True, open the HDF file at start. defaults to True.
             auto_open: If True and open_hdf=False, it will open HDF file only when __getitem__ or __len__ is called. defaults to False.
             numpy_to_torch: If True, converts numpy array to PyTorch tensors. defaults to True.
-            file_kwargs: Options given to h5py file object. defaults to None.
+            file_kwds: Options given to h5py file object. defaults to None.
         """
         hdf_fpath = Path(hdf_fpath).resolve().expanduser()
         if not hdf_fpath.is_file():
@@ -96,8 +96,8 @@ class HDFDataset(Generic[T, U], DatasetSlicer[U]):
             raise FileNotFoundError(msg)
 
         keep_padding = list(keep_padding)
-        if file_kwargs is None:
-            file_kwargs = {}
+        if file_kwds is None:
+            file_kwds = {}
 
         super().__init__(
             add_indices_support=False,
@@ -110,7 +110,7 @@ class HDFDataset(Generic[T, U], DatasetSlicer[U]):
         self._return_added_columns = return_added_columns
         self._auto_open = auto_open
         self._numpy_to_torch = numpy_to_torch
-        self._file_kwargs = file_kwargs
+        self._file_kwds = file_kwds
 
         self._hdf_file: Any = None
 
@@ -346,7 +346,7 @@ class HDFDataset(Generic[T, U], DatasetSlicer[U]):
                 raise RuntimeError("Cannot open the HDF file twice.")
 
         self._clear_caches()
-        self._hdf_file = h5py.File(self._hdf_fpath, "r", **self._file_kwargs)
+        self._hdf_file = h5py.File(self._hdf_fpath, "r", **self._file_kwds)
         self._sanity_check()
 
     # Magic methods
@@ -410,7 +410,7 @@ class HDFDataset(Generic[T, U], DatasetSlicer[U]):
             "return_added_columns": self._return_added_columns,
             "auto_open": self._auto_open,
             "numpy_to_torch": self._numpy_to_torch,
-            "file_kwargs": self._file_kwargs,
+            "file_kwds": self._file_kwds,
             "is_open": self.is_open(),
         }
 
@@ -464,7 +464,7 @@ class HDFDataset(Generic[T, U], DatasetSlicer[U]):
         self._return_added_columns = data["return_added_columns"]
         self._auto_open = data["auto_open"]
         self._numpy_to_torch = data["numpy_to_torch"]
-        self._file_kwargs = data["file_kwargs"]
+        self._file_kwds = data["file_kwds"]
 
         self._hdf_file = None
 

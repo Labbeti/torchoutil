@@ -36,7 +36,7 @@ def to_csv(
     make_parents: bool = True,
     header: bool = True,
     align_content: bool = False,
-    **csv_writer_kwargs,
+    **csv_writer_kwds,
 ) -> str:
     """Dump content to csv format."""
     if fpath is not None:
@@ -60,7 +60,7 @@ def to_csv(
             fieldnames = [str(k) for k in data_lst[0].keys()]
     else:
         writer_cls = csv.writer
-        fieldnames = list(range(len(next(data_lst))))
+        fieldnames = list(range(len(next(iter(data_lst)))))
 
     if align_content:
         old_fieldnames = fieldnames
@@ -83,10 +83,10 @@ def to_csv(
         ]
 
     if header:
-        csv_writer_kwargs["fieldnames"] = fieldnames
+        csv_writer_kwds["fieldnames"] = fieldnames
 
     file = io.StringIO()
-    writer = writer_cls(file, **csv_writer_kwargs)
+    writer = writer_cls(file, **csv_writer_kwds)
     if isinstance(writer, DictWriter):
         writer.writeheader()
     writer.writerows(data_lst)  # type: ignore
@@ -108,7 +108,7 @@ def load_csv(
     header: bool = True,
     comment_start: Optional[str] = None,
     strip_content: bool = False,
-    **csv_reader_kwargs,
+    **csv_reader_kwds,
 ) -> Dict[str, List[Any]]:
     ...
 
@@ -122,7 +122,7 @@ def load_csv(
     header: bool = True,
     comment_start: Optional[str] = None,
     strip_content: bool = False,
-    **csv_reader_kwargs,
+    **csv_reader_kwds,
 ) -> List[Dict[str, Any]]:
     ...
 
@@ -135,7 +135,7 @@ def load_csv(
     header: bool = True,
     comment_start: Optional[str] = None,
     strip_content: bool = False,
-    **csv_reader_kwargs,
+    **csv_reader_kwds,
 ) -> Union[List[Dict[str, Any]], Dict[str, List[Any]]]:
     """Load content from csv filepath."""
     if header:
@@ -144,25 +144,24 @@ def load_csv(
         reader_cls = csv.reader
 
     with open(fpath, "r") as file:
-        reader = reader_cls(file, **csv_reader_kwargs)
-        data_lst = list(reader)
+        reader = reader_cls(file, **csv_reader_kwds)
+        raw_data_lst = list(reader)
 
-        if comment_start is None:
-            pass
-        elif header:
-            data_lst = [
-                line
-                for line in data_lst
-                if not next(iter(line.values())).startswith(comment_start)
-            ]
-        else:
-            data_lst = [
-                line for line in data_lst if not line[0].startswith(comment_start)
-            ]
-
-    if not header:
+    data_lst: list[dict[str, Any]]
+    if header:
+        data_lst = raw_data_lst  # type: ignore
+    else:
         data_lst = [
-            {str(j): data_ij for j, data_ij in enumerate(data_i)} for data_i in data_lst
+            {str(j): data_ij for j, data_ij in enumerate(data_i)}
+            for data_i in raw_data_lst
+        ]
+    del raw_data_lst
+
+    if comment_start is not None:
+        data_lst = [
+            line
+            for line in data_lst
+            if not next(iter(line.values())).startswith(comment_start)
         ]
 
     if strip_content:
@@ -175,14 +174,13 @@ def load_csv(
     elif orient == "list":
         result = data_lst
     else:
-        raise ValueError(
-            f"Invalid argument {orient=}. (expected one of {ORIENT_VALUES})"
-        )
+        msg = f"Invalid argument {orient=}. (expected one of {ORIENT_VALUES})"
+        raise ValueError(msg)
 
     return result  # type: ignore
 
 
-def _stringify(x: T) -> T:
+def _stringify(x: Any) -> Any:
     if isinstance(x, str):
         return x
     elif isinstance(x, dict):

@@ -17,7 +17,7 @@ def to_csv(
     to_builtins: bool = False,
     make_parents: bool = True,
     header: bool = True,
-    **csv_writer_kwargs,
+    **csv_writer_kwds,
 ) -> str:
     """Dump content to csv format."""
     if to_builtins:
@@ -29,5 +29,5 @@ def to_csv(
         overwrite=overwrite,
         make_parents=make_parents,
         header=header,
-        **csv_writer_kwargs,
+        **csv_writer_kwds,
     )

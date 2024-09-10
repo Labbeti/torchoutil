@@ -130,21 +130,33 @@ class PackedDataset(Generic[T, U], DatasetSlicer[U]):
         return item  # type: ignore
 
     @override
-    def get_items_indices(self, indices: Iterable[int] | Tensor1D, *args) -> List[U]:
+    def get_items_indices(
+        self,
+        indices: Union[Iterable[int], Tensor1D],
+        *args,
+    ) -> List[U]:
         if self.content_mode == "column":
             return self._load_item_from_columns(indices)
         else:
             return super().get_items_indices(indices, *args)
 
     @override
-    def get_items_mask(self, mask: Iterable[bool] | Tensor1D, *args) -> List[U]:
+    def get_items_mask(
+        self,
+        mask: Union[Iterable[bool], Tensor1D],
+        *args,
+    ) -> List[U]:
         if self.content_mode == "column":
             return self._load_item_from_columns(mask)
         else:
             return super().get_items_mask(mask, *args)
 
     @override
-    def get_items_slice(self, slice_: slice, *args) -> List[U]:
+    def get_items_slice(
+        self,
+        slice_: slice,
+        *args,
+    ) -> List[U]:
         if self.content_mode == "column":
             return self._load_item_from_columns(slice_)
         else:

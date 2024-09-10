@@ -73,7 +73,7 @@ def to_yaml(
     width: Union[int, None] = 1000,
     encoding: Optional[str] = "utf-8",
     allow_unicode: bool = True,
-    **yaml_dump_kwargs,
+    **yaml_dump_kwds,
 ) -> str:
     """Dump content to yaml format."""
     if not _OMEGACONF_AVAILABLE and resolve:
@@ -102,7 +102,7 @@ def to_yaml(
         indent=indent,
         width=width,
         allow_unicode=allow_unicode,
-        **yaml_dump_kwargs,
+        **yaml_dump_kwds,
     )
     if fpath is not None:
         fpath.write_text(content, encoding=encoding)

@@ -112,7 +112,7 @@ def pack_to_hdf(
             If "auto", it will be set to `len(os.sched_getaffinity(0))`. defaults to "auto".
         shape_suffix: Shape column suffix in HDF file. defaults to "_shape".
         open_hdf: If True, opens the output HDF dataset. defaults to True.
-        file_kwargs: Options given to h5py file object. defaults to None.
+        file_kwds: Options given to h5py file object. defaults to None.
 
     Returns:
         hdf_dataset: The target HDF dataset object.
@@ -332,7 +332,7 @@ def pack_to_hdf(
             "item_type": item_type,
             "added_columns": added_columns,
             "shape_suffix": shape_suffix,
-            "file_kwargs": json.dumps(file_kwds),
+            "file_kwds": json.dumps(file_kwds),
             "load_as_complex": json.dumps(load_as_complex),
             "version": str(to.__version__),
         }

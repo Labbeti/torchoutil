@@ -30,5 +30,5 @@ class HDFDatasetAttributes(TypedDict):
     item_type: HDFItemType
     added_columns: List[str]
     shape_suffix: str
-    file_kwargs: str
+    file_kwds: str
     load_as_complex: str
