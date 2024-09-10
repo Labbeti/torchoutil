@@ -27,7 +27,7 @@ class TestDType(TestCase):
             np.float64,
         ]
 
-        for args, expected in zip(args_lst, expected_lst, strict=True):
+        for args, expected in zip(args_lst, expected_lst):
             result = merge_numpy_dtypes(args)
             assert result == expected, f"{result=}; {expected=}"
 
