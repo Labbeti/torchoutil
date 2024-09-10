@@ -16,13 +16,13 @@ class TestDType(TestCase):
 
         args_lst = [
             [np.int16, np.int32, np.int64],
-            [np.complex64, np.float16, np.float128],
+            [np.complex64, np.float16, np.float64],
             [],
             [np.int64, np.float16],
         ]
         expected_lst = [
             np.int64,
-            np.complex256,
+            np.complex128,
             None,
             np.float64,
         ]
