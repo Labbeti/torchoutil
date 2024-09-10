@@ -13,6 +13,7 @@ from torch.types import Device
 
 from torchoutil.nn.functional.get import get_device
 from torchoutil.nn.functional.others import item
+from torchoutil.pyoutil.logging import warn_once
 from torchoutil.types import is_number_like
 
 T = TypeVar("T")
@@ -79,9 +80,12 @@ def index_to_name(
         elif isinstance(x, Iterable):
             return [index_to_name_impl(xi) for xi in x]
         else:
-            raise ValueError(
-                f"Invalid argument {x=}. (not present in idx_to_name and not an iterable type)"
-            )
+            msg = f"Invalid argument {x=}. (not present in idx_to_name and not an iterable type)"
+            raise ValueError(msg)
+
+    if isinstance(index, Tensor) and index.nelement() == 0 and index.ndim > 1:
+        msg = f"Found 0 elements in {index=} but {index.ndim=} > 1, which means that we will lose information about shape when converting to names."
+        warn_once(msg, __name__)
 
     name = index_to_name_impl(index)
     return name  # type: ignore
