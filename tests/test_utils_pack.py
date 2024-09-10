@@ -4,6 +4,7 @@
 import os
 import time
 import unittest
+from pathlib import Path
 from unittest import TestCase
 
 import torch
@@ -13,18 +14,27 @@ from torchvision.datasets import CIFAR10
 
 from torchoutil.nn import ESequential, IndexToOnehot, ToList, ToNumpy
 from torchoutil.types import np
-from torchoutil.utils.pack import pack_dataset
+from torchoutil.utils.pack.pack import pack_dataset, pack_dataset_per_column
 
 
 class TestPackCIFAR10(TestCase):
-    def test_cifar10_pack_per_item(self) -> None:
+    @classmethod
+    def setUpClass(cls) -> None:
+        tmpdir = Path(os.getenv("TORCHOUTIL_TMPDIR", "/tmp/torchoutil_tests"))
         dataset = CIFAR10(
-            "/tmp",
+            tmpdir,
             train=False,
             transform=ToNumpy(),
             target_transform=ESequential(IndexToOnehot(10), ToList()),
             download=True,
         )
+        cls.dataset = dataset
+        cls.tmpdir = tmpdir
+
+    def test_cifar10_pack_per_item(self) -> None:
+        cls = self.__class__
+        dataset = cls.dataset
+        tmpdir = cls.tmpdir
 
         seed = int(torch.randint(0, 10000, ()).item())
         generator = Generator().manual_seed(seed)
@@ -38,7 +48,7 @@ class TestPackCIFAR10(TestCase):
             ).tolist(),
         )
 
-        path = "/tmp/test_cifar10"
+        path = tmpdir.joinpath("test_cifar10")
         pkl_dataset = pack_dataset(
             dataset,
             path,
@@ -56,13 +66,9 @@ class TestPackCIFAR10(TestCase):
         assert np.equal(image0, image1).all()
 
     def test_cifar10_pack_per_batch(self) -> None:
-        dataset = CIFAR10(
-            "/tmp",
-            train=False,
-            transform=ToNumpy(),
-            target_transform=ESequential(IndexToOnehot(10), ToList()),
-            download=True,
-        )
+        cls = self.__class__
+        dataset = cls.dataset
+        tmpdir = cls.tmpdir
 
         seed = int(torch.randint(0, 10000, ()).item())
         generator = Generator().manual_seed(seed)
@@ -76,7 +82,7 @@ class TestPackCIFAR10(TestCase):
             ).tolist(),
         )
 
-        path = "/tmp/test_cifar10_batch"
+        path = tmpdir.joinpath("test_cifar10_batch")
         pkl_dataset = pack_dataset(
             dataset,
             path,
@@ -95,13 +101,9 @@ class TestPackCIFAR10(TestCase):
         assert np.equal(image0, image1).all()
 
     def test_cifar10_pack_subdir(self) -> None:
-        dataset = CIFAR10(
-            "/tmp",
-            train=False,
-            transform=ToNumpy(),
-            target_transform=ESequential(IndexToOnehot(10), ToList()),
-            download=True,
-        )
+        cls = self.__class__
+        dataset = cls.dataset
+        tmpdir = cls.tmpdir
 
         seed = int(torch.randint(0, 10000, ()).item())
         generator = Generator().manual_seed(seed)
@@ -115,7 +117,7 @@ class TestPackCIFAR10(TestCase):
             ).tolist(),
         )
 
-        path = "/tmp/test_cifar10_subdir"
+        path = tmpdir.joinpath("test_cifar10_subdir")
         pkl_dataset = pack_dataset(
             dataset,
             path,
@@ -134,6 +136,28 @@ class TestPackCIFAR10(TestCase):
         assert label0 == label1, f"{label0=}, {label1=}"
         assert np.equal(image0, image1).all()
 
+    def test_cifar10_pack_columns(self) -> None:
+        cls = self.__class__
+        dataset = cls.dataset
+        tmpdir = cls.tmpdir
+
+        path = tmpdir.joinpath("test_cifar10_columns")
+        packed = pack_dataset_per_column(
+            dataset,
+            path,
+            exists="overwrite",
+            save_fn=lambda obj, file: np.save(file, obj),
+            ds_kwds=dict(load_fn=np.load),
+        )
+
+        assert len(dataset) == len(packed)
+        for i in range(len(dataset)):
+            sample_i, label_i = dataset[i]
+            psample_i, plabel_i = packed[i]
+
+            assert np.all(sample_i == psample_i)
+            assert np.all(label_i == plabel_i)
+
 
 class TestPackSpeechCommands(TestCase):
     def test_example_1(self) -> None:
@@ -143,8 +167,8 @@ class TestPackSpeechCommands(TestCase):
 
         from torchoutil.utils.pack import pack_dataset
 
-        speech_commands_root = "/tmp/speech_commands"
-        packed_root = "/tmp/packed_speech_commands"
+        speech_commands_root = "/tmp/torchoutil_tests/speech_commands"
+        packed_root = "/tmp/torchoutil_tests/packed_speech_commands"
 
         os.makedirs(speech_commands_root, exist_ok=True)
         os.makedirs(packed_root, exist_ok=True)
@@ -179,7 +203,7 @@ class TestPackSpeechCommands(TestCase):
         # Read from pickle
         from torchoutil.utils.pack import PackedDataset
 
-        packed_root = "/tmp/packed_speech_commands"
+        packed_root = "/tmp/torchoutil_tests/packed_speech_commands"
         pack = PackedDataset(packed_root)
         pack[0]  # first transformed item
 
