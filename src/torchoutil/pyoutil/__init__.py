@@ -38,6 +38,7 @@ from .functools import Compose, compose, identity
 from .hashlib import hash_file
 from .importlib import package_is_available, reimport_modules
 from .inspect import get_current_fn_name, get_fullname
+from .io import open_close_wrap
 from .logging import (
     VERBOSE_DEBUG,
     VERBOSE_ERROR,
