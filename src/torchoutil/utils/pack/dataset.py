@@ -3,21 +3,27 @@
 
 import json
 import logging
+import pickle
 import sys
+from io import BufferedReader
 from pathlib import Path
-from typing import Any, Callable, Dict, Generic, List, Optional, TypeVar, Union
+from typing import Any, Callable, Generic, Iterable, List, Optional, TypeVar, Union
 
-import torch
+from typing_extensions import override
 
+from torchoutil.types.tensor_typing import Tensor1D
 from torchoutil.utils.data import DatasetSlicer
 from torchoutil.utils.pack.common import (
     ATTRS_FNAME,
     ContentMode,
+    ItemType,
     PackedDatasetAttributes,
+    _dict_to_tuple,
 )
 
 T = TypeVar("T")
 U = TypeVar("U")
+LoadFn = Callable[[BufferedReader], T]
 
 pylog = logging.getLogger(__name__)
 
@@ -28,8 +34,7 @@ class PackedDataset(Generic[T, U], DatasetSlicer[U]):
         root: Union[str, Path],
         transform: Optional[Callable[[T], U]] = None,
         *,
-        load_fn: Callable[..., Union[T, List[T]]] = torch.load,
-        load_kwds: Optional[Dict[str, Any]] = None,
+        load_fn: LoadFn[Union[T, List[T]]] = pickle.load,
     ) -> None:
         """
 
@@ -41,19 +46,16 @@ class PackedDataset(Generic[T, U], DatasetSlicer[U]):
             use_cache: If True, cache each item or batch in memory. defaults to False.
         """
         root = Path(root)
-        if load_kwds is None:
-            load_kwds = {}
 
         super().__init__()
         self._root = root
         self._transform = transform
         self._load_fn = load_fn
-        self._load_kwds = load_kwds
 
         self._attrs = {}
         self._fpaths = []
         self._loaded = {}
-        self._reload_data()
+        self._reload_data(root, load_fn)
 
     @property
     def attrs(self) -> PackedDatasetAttributes:
@@ -64,23 +66,25 @@ class PackedDataset(Generic[T, U], DatasetSlicer[U]):
         return self._attrs.get("content_mode")
 
     @property
+    def item_type(self) -> ItemType:
+        return self._attrs.get("item_type", "raw")
+
+    @property
     def batch_size(self) -> int:
         return self._attrs["batch_size"]
 
+    @override
     def __len__(self) -> int:
         return self._attrs["length"]
 
+    @override
     def get_item(self, idx: int) -> Union[T, U]:
-        item = self._load_item(idx)
-        if self._transform is not None:
-            item = self._transform(item)
-        return item  # type: ignore
-
-    def _load_item(self, idx: int) -> T:
         if self.content_mode == "column":
-            return {k: v[idx] for k, v in self._loaded.items()}  # type: ignore
-
-        if self.content_mode == "item":
+            item = self._load_item_from_columns(idx)
+            if self._transform is not None:
+                item = self._transform(item)  # type: ignore
+            return item
+        elif self.content_mode == "item":
             batch_size = 1
         elif self.content_mode == "batch":
             batch_size = self.batch_size
@@ -90,7 +94,8 @@ class PackedDataset(Generic[T, U], DatasetSlicer[U]):
 
         target_idx = idx // batch_size
         path = self._fpaths[target_idx]
-        item_or_batch = self._load_fn(path, **self._load_kwds)
+        with open(path, "rb") as file:
+            item_or_batch = self._load_fn(file)
 
         if self.content_mode == "item":
             item: T = item_or_batch  # type: ignore
@@ -99,10 +104,46 @@ class PackedDataset(Generic[T, U], DatasetSlicer[U]):
             local_idx = idx % batch_size
             item = batch[local_idx]
 
+        if self._transform is not None:
+            item = self._transform(item)  # type: ignore
+        return item  # type: ignore
+
+    @override
+    def get_items_indices(self, indices: Iterable[int] | Tensor1D, *args) -> List[U]:
+        if self.content_mode == "column":
+            return self._load_item_from_columns(indices)
+        else:
+            return super().get_items_indices(indices, *args)
+
+    @override
+    def get_items_mask(self, mask: Iterable[bool] | Tensor1D, *args) -> List[U]:
+        if self.content_mode == "column":
+            return self._load_item_from_columns(mask)
+        else:
+            return super().get_items_mask(mask, *args)
+
+    @override
+    def get_items_slice(self, slice_: slice, *args) -> List[U]:
+        if self.content_mode == "column":
+            return self._load_item_from_columns(slice_)
+        else:
+            return super().get_items_slice(slice_, *args)
+
+    def _load_item_from_columns(
+        self,
+        idx: Union[int, Iterable[int], Iterable[bool], Tensor1D, slice],
+    ) -> Any:
+        item = {k: v[idx] for k, v in self._loaded.items()}  # type: ignore
+        if self.item_type == "tuple":
+            item = _dict_to_tuple(item)  # type: ignore
         return item
 
-    def _reload_data(self) -> None:
-        attrs_fpath = self._root.joinpath(ATTRS_FNAME)
+    def _reload_data(
+        self,
+        root: Path,
+        load_fn: LoadFn[Union[T, List[T]]],
+    ) -> None:
+        attrs_fpath = root.joinpath(ATTRS_FNAME)
 
         if not attrs_fpath.is_file():
             raise FileNotFoundError(f"Cannot find attribute file '{str(attrs_fpath)}'.")
@@ -121,22 +162,24 @@ class PackedDataset(Generic[T, U], DatasetSlicer[U]):
             )
 
         if len(missing) > 0:
-            raise RuntimeError(
-                f"Missing {len(missing)} keys in attribute file. (with {missing=})"
-            )
+            msg = f"Missing {len(missing)} keys in attribute file. (with {missing=} in {attrs_fpath=})"
+            raise RuntimeError(msg)
 
         content_dname = attrs["content_dname"]
-        content_dpath = self._root.joinpath(content_dname)
+        content_dpath = root.joinpath(content_dname)
 
         fnames = attrs["files"]
         fpaths = [content_dpath.joinpath(fname) for fname in fnames]
 
-        content_mode = self._attrs.get("content_mode")
+        content_mode = attrs.get("content_mode")
+        loaded = {}
         if content_mode == "column":
-            loaded = {fpath.stem: self._load_fn(fpath) for fpath in fpaths}
-        else:
-            loaded = {}
+            for fpath in fpaths:
+                with open(fpath, "rb") as file:
+                    loaded[fpath.stem] = load_fn(file)
 
+        self._root = root
+        self._load_fn = load_fn
         self._attrs = attrs
         self._fpaths = fpaths
         self._loaded = loaded

@@ -44,8 +44,9 @@ from torchoutil.utils.hdf.common import (
     HDF_VOID_DTYPE,
     SHAPE_SUFFIX,
     HDFDatasetAttributes,
-    _dict_to_tuple,
+    HDFItemType,
 )
+from torchoutil.utils.pack.common import _dict_to_tuple
 
 T = TypeVar("T")
 U = TypeVar("U")
@@ -162,9 +163,9 @@ class HDFDataset(Generic[T, U], DatasetSlicer[U]):
         return json.loads(self._hdf_file.attrs.get("info", "{}"))
 
     @property
-    def item_type(self) -> str:
+    def item_type(self) -> HDFItemType:
         """Return the global dataset info."""
-        return str(self._hdf_file.attrs.get("item_type", "dict"))
+        return self._hdf_file.attrs.get("item_type", "dict")
 
     @property
     def num_columns(self) -> int:

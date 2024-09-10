@@ -47,10 +47,10 @@ from torchoutil.utils.hdf.common import (
     HDF_STRING_DTYPE,
     HDF_VOID_DTYPE,
     SHAPE_SUFFIX,
-    ItemType,
-    _tuple_to_dict,
+    HDFItemType,
 )
 from torchoutil.utils.hdf.dataset import HDFDataset
+from torchoutil.utils.pack.common import _tuple_to_dict
 
 T = TypeVar("T", covariant=True)
 T_DictOrTuple = TypeVar("T_DictOrTuple", tuple, dict, covariant=True)
@@ -364,7 +364,7 @@ def _scan_dataset(
     verbose: int,
 ) -> Tuple[
     Callable[[T], Dict[str, Any]],
-    ItemType,
+    HDFItemType,
     Dict[str, Tuple[int, ...]],
     Dict[str, HDFDType],
     Dict[str, bool],

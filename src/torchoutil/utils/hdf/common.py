@@ -1,13 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from typing import Dict, List, Literal, Tuple, TypedDict, TypeVar
+from typing import List, Literal, TypedDict
 
 import h5py
 import numpy as np
-
-T = TypeVar("T")
-
 
 # Force this encoding
 HDF_ENCODING = "utf-8"
@@ -19,15 +16,7 @@ HDF_STRING_DTYPE: np.dtype = h5py.string_dtype(HDF_ENCODING, None)
 HDF_VOID_DTYPE: np.dtype = h5py.opaque_dtype("V1")
 
 
-def _tuple_to_dict(x: Tuple[T, ...]) -> Dict[str, T]:
-    return dict(zip(map(str, range(len(x))), x))
-
-
-def _dict_to_tuple(x: Dict[str, T]) -> Tuple[T, ...]:
-    return tuple(x.values())
-
-
-ItemType = Literal["dict", "tuple"]
+HDFItemType = Literal["dict", "tuple"]
 
 
 class HDFDatasetAttributes(TypedDict):
@@ -38,7 +27,7 @@ class HDFDatasetAttributes(TypedDict):
     encoding: str
     info: str
     global_hash_value: int
-    item_type: str
+    item_type: HDFItemType
     added_columns: List[str]
     shape_suffix: str
     file_kwargs: str

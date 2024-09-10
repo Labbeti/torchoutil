@@ -4,9 +4,11 @@
 import json
 import logging
 import math
+import pickle
 import shutil
+from io import BufferedWriter
 from pathlib import Path
-from typing import Any, Callable, Dict, Literal, Optional, Tuple, TypeVar, Union
+from typing import Any, Callable, Dict, List, Literal, Optional, Tuple, TypeVar, Union
 
 import torch
 from torch import Tensor
@@ -26,8 +28,12 @@ from torchoutil.utils.data.dtype import (
     numpy_dtype_to_fill_value,
     scan_shape_dtypes,
 )
-from torchoutil.utils.hdf.common import _tuple_to_dict
-from torchoutil.utils.pack.common import ATTRS_FNAME, CONTENT_DNAME, ContentMode
+from torchoutil.utils.pack.common import (
+    ATTRS_FNAME,
+    CONTENT_DNAME,
+    ContentMode,
+    _tuple_to_dict,
+)
 from torchoutil.utils.pack.dataset import PackedDataset
 from torchoutil.utils.packaging import _NUMPY_AVAILABLE, _TQDM_AVAILABLE
 from torchoutil.utils.saving.common import to_builtin
@@ -41,6 +47,7 @@ if _NUMPY_AVAILABLE:
 T = TypeVar("T", covariant=True)
 U = TypeVar("U", covariant=True)
 T_DictOrTuple = TypeVar("T_DictOrTuple", tuple, dict, covariant=True)
+SaveFn = Callable[[T, BufferedWriter], None]
 
 
 ExistsMode = Literal["overwrite", "skip", "error"]
@@ -63,9 +70,10 @@ def pack_dataset(
     exists: ExistsMode = "error",
     content_mode: ContentMode = "item",
     custom_file_fmt: Union[None, str, Callable[[int], str]] = None,
-    save_fn: Callable[..., None] = torch.save,  # type: ignore
+    save_fn: SaveFn[Union[U, List[U]]] = pickle.dump,
     subdir_size: Optional[int] = 100,
     transform_in_worker: bool = True,
+    ds_kwds: Optional[Dict[str, Any]] = None,
     verbose: int = 0,
 ) -> PackedDataset[U, U]:
     """Pack a dataset to pickle files.
@@ -112,9 +120,8 @@ def pack_dataset(
     """
     # Check inputs
     if not isinstance(dataset, SizedDatasetLike):
-        raise TypeError(
-            f"Cannot pack to hdf a non-sized-dataset '{dataset.__class__.__name__}'."
-        )
+        msg = f"Cannot pack to hdf a non-sized-dataset '{dataset.__class__.__name__}'."
+        raise TypeError(msg)
     if len(dataset) == 0:
         raise ValueError("Cannot pack to hdf an empty dataset.")
     if transform_in_worker and isinstance(dataset, SizedIterableDatasetLike):
@@ -186,7 +193,11 @@ def pack_dataset(
             parent.mkdir(parents=True, exist_ok=True)
 
     if _TQDM_AVAILABLE and verbose >= 1:
-        loader = tqdm.tqdm(loader, desc=f"Packing {len(fnames)} items...")
+        loader = tqdm.tqdm(
+            loader,
+            total=len(loader),
+            desc=f"Packing {len(fnames)} items...",
+        )
 
     i = 0
     for batch_lst in loader:
@@ -196,12 +207,14 @@ def pack_dataset(
         if content_mode == "item":
             for item in batch_lst:
                 fpath = fpaths[i]
-                save_fn(item, fpath)
+                with open(fpath, "wb") as file:
+                    save_fn(item, file)
                 i += 1
 
         elif content_mode == "batch":
             fpath = fpaths[i]
-            save_fn(batch_lst, fpath)
+            with open(fpath, "wb") as file:
+                save_fn(batch_lst, file)
             i += 1
 
         else:
@@ -231,13 +244,16 @@ def pack_dataset(
         "num_files": len(fnames),
         "files": fnames,
         "subdir_size": subdir_size,
+        "item_type": "raw",
     }
 
     attrs_fpath = root.joinpath(ATTRS_FNAME)
     with open(attrs_fpath, "w") as file:
         json.dump(attributes, file, indent="\t")
 
-    packed = PackedDataset(root)
+    if ds_kwds is None:
+        ds_kwds = {}
+    packed = PackedDataset(root, **ds_kwds)
     return packed
 
 
@@ -249,14 +265,13 @@ def pack_dataset_per_column(
     batch_size: int = 32,
     num_workers: Union[int, Literal["auto"]] = "auto",
     exists: ExistsMode = "error",
-    save_fn: Callable[[Path, Any], None] = np.save,
+    save_fn: SaveFn[np.ndarray] = pickle.dump,
     ds_kwds: Optional[Dict[str, Any]] = None,
     verbose: int = 0,
 ) -> PackedDataset[T_DictOrTuple, T_DictOrTuple]:
     if not isinstance(dataset, SizedDatasetLike):
-        raise TypeError(
-            f"Cannot pack to hdf a non-sized-dataset '{dataset.__class__.__name__}'."
-        )
+        msg = f"Cannot pack to hdf a non-sized-dataset '{dataset.__class__.__name__}'."
+        raise TypeError(msg)
     if len(dataset) == 0:
         raise ValueError("Cannot pack to hdf an empty dataset.")
 
@@ -389,7 +404,7 @@ def pack_dataset_dict(
     root: Union[str, Path],
     *,
     exists: ExistsMode = "error",
-    save_fn: Callable[[Path, Any], None] = np.save,
+    save_fn: SaveFn[np.ndarray] = pickle.dump,
     ds_kwds: Optional[Dict[str, Any]] = None,
 ) -> PackedDataset:
     if not po.all_eq(map(len, data_dict.values())):
@@ -402,7 +417,7 @@ def pack_dataset_dict(
     attributes = {
         "source_dataset": data_dict.__class__.__name__,
         "batch_size": len(next(iter(data_dict.values()))),
-        "item_type": "batch",
+        "item_type": "dict",
         "info": {},
         "source_attrs": {},
         "subdir_size": None,
@@ -422,7 +437,7 @@ def _pack_dataset_dict(
     root: Path,
     content_dpath: Path,
     attributes: Dict[str, Any],
-    save_fn: Callable[[Path, Any], None] = np.save,
+    save_fn: SaveFn[np.ndarray] = pickle.dump,
     ds_kwds: Optional[Dict[str, Any]] = None,
 ) -> PackedDataset:
     fnames = []
@@ -430,11 +445,12 @@ def _pack_dataset_dict(
         fname = f"{name}.npy"
         fpath = content_dpath.joinpath(fname)
         values = to.to_numpy(values)
-        save_fn(fpath, values)
+        with open(fpath, "wb") as file:
+            save_fn(values, file)
         fnames.append(fname)
 
     attributes = {
-        "length": len(data_dict),
+        "length": len(next(iter(data_dict.values()))),
         "creation_date": po.now_iso(),
         "content_mode": "column",
         "content_dname": CONTENT_DNAME,
