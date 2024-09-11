@@ -5,6 +5,7 @@ import itertools
 import math
 import struct
 import zlib
+from dataclasses import asdict
 from typing import Any, Callable, Iterable, Mapping, Union
 
 import torch
@@ -12,7 +13,13 @@ from torch import Tensor, nn
 
 from torchoutil.nn.functional.others import is_complex, is_floating_point, nelement
 from torchoutil.pyoutil.inspect import get_fullname
-from torchoutil.pyoutil.typing import BuiltinNumber, BuiltinScalar, NoneType
+from torchoutil.pyoutil.typing import (
+    BuiltinNumber,
+    BuiltinScalar,
+    DataclassInstance,
+    NamedTupleInstance,
+    NoneType,
+)
 from torchoutil.types import np
 from torchoutil.utils.packaging import _NUMPY_AVAILABLE
 
@@ -55,6 +62,10 @@ def checksum_any(x: Any, **kwargs) -> int:
         return checksum_tensor(x, **kwargs)
     elif isinstance(x, (np.ndarray, np.generic)):
         return checksum_ndarray(x, **kwargs)
+    elif isinstance(x, NamedTupleInstance):
+        return checksum_namedtuple(x, **kwargs)
+    elif isinstance(x, DataclassInstance):
+        return checksum_dataclass(x, **kwargs)
     elif isinstance(x, Mapping):
         return checksum_mapping(x, **kwargs)
     elif isinstance(x, Iterable):
@@ -64,9 +75,14 @@ def checksum_any(x: Any, **kwargs) -> int:
         raise TypeError(msg)
 
 
+def checksum_dataclass(x: DataclassInstance, **kwargs) -> int:
+    accumulator = kwargs.pop("accumulator", 0) + checksum_str(get_fullname(x), **kwargs)
+    kwargs["accumulator"] = accumulator
+    return checksum_mapping(asdict(x), **kwargs)
+
+
 def checksum_iterable(x: Iterable[Any], **kwargs) -> int:
-    accumulator = kwargs.pop("accumulator", 0)
-    accumulator += checksum_str(get_fullname(x), **kwargs)
+    accumulator = kwargs.pop("accumulator", 0) + checksum_str(get_fullname(x), **kwargs)
     csum = sum(
         checksum_any(xi, accumulator=accumulator + (i + 1), **kwargs) * (i + 1)
         for i, xi in enumerate(x)
@@ -116,6 +132,12 @@ def checksum_module(
     csum = checksum_iterable(iterator, **kwargs)
     x.train(training)
     return csum
+
+
+def checksum_namedtuple(x: NamedTupleInstance, **kwargs) -> int:
+    accumulator = kwargs.pop("accumulator", 0) + checksum_str(get_fullname(x), **kwargs)
+    kwargs["accumulator"] = accumulator
+    return checksum_mapping(x._asdict(), **kwargs)
 
 
 # Intermediate functions
