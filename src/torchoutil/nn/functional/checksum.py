@@ -35,6 +35,8 @@ CHECKSUM_TYPES = (
     "torch.Tensor",
     "numpy.ndarray",
     "numpy.generic",
+    "NamedTuple",
+    "Dataclass",
     "Mapping",
     "Iterable",
 )
@@ -47,7 +49,7 @@ def checksum(x: Any, **kwargs) -> int:
 
 
 def checksum_any(x: Any, **kwargs) -> int:
-    """Compute checksum of a single arbitrary python object."""
+    """Compute checksum of an arbitrary python object."""
     if isinstance(x, (int, bool, complex, float)):
         return checksum_builtin_number(x, **kwargs)
     elif isinstance(x, bytes):
