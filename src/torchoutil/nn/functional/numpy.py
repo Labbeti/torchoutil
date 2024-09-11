@@ -57,3 +57,29 @@ def numpy_to_tensor(
     """Convert numpy array to PyTorch tensor."""
     device = get_device(device)
     return torch.from_numpy(x).to(dtype=dtype, device=device)
+
+
+def numpy_view_as_real(x: np.ndarray) -> np.ndarray:
+    if x.dtype == np.complex64:
+        float_dtype = np.float32
+    elif x.dtype == np.complex128:
+        float_dtype = np.float64
+    elif x.dtype == np.complex256:
+        float_dtype = np.float128
+    else:
+        DTYPES = (np.complex64, np.complex128, np.complex256)
+        raise ValueError(f"Unexpected dtype {x.dtype}. (expected one of {DTYPES})")
+
+    return x.view(float_dtype).reshape(*x.shape, 2)
+
+
+def numpy_view_as_complex(x: np.ndarray) -> np.ndarray:
+    return x[..., 0] + x[..., 1] * 1j
+
+
+def numpy_is_floating_point(x: Union[np.ndarray, np.generic]) -> bool:
+    return isinstance(x, np.floating)
+
+
+def numpy_is_complex(x: Union[np.ndarray, np.generic]) -> bool:
+    return np.iscomplexobj(x)

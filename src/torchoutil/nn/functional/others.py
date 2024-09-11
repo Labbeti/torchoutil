@@ -23,6 +23,12 @@ from torch import LongTensor, Tensor, nn
 from typing_extensions import TypeGuard
 
 from torchoutil.nn.functional.get import get_device
+from torchoutil.nn.functional.numpy import (
+    numpy_is_complex,
+    numpy_is_floating_point,
+    numpy_view_as_complex,
+    numpy_view_as_real,
+)
 from torchoutil.pyoutil.collections import all_eq
 from torchoutil.pyoutil.collections import prod as builtin_prod
 from torchoutil.pyoutil.functools import identity
@@ -376,6 +382,21 @@ def __can_be_converted_to_tensor_nested(x: Any) -> bool:
         return False
 
 
+@overload
+def view_as_real(x: Tensor) -> Tensor:
+    ...
+
+
+@overload
+def view_as_real(x: np.ndarray) -> np.ndarray:
+    ...
+
+
+@overload
+def view_as_real(x: complex) -> Tuple[float, float]:
+    ...
+
+
 def view_as_real(
     x: Union[Tensor, np.ndarray, complex]
 ) -> Union[Tensor, np.ndarray, Tuple[float, float]]:
@@ -383,28 +404,33 @@ def view_as_real(
         return torch.view_as_real(x)
 
     elif isinstance(x, np.ndarray):
-        if x.dtype == np.complex64:
-            float_dtype = np.float32
-        elif x.dtype == np.complex128:
-            float_dtype = np.float64
-        elif x.dtype == np.complex256:
-            float_dtype = np.float128
-        else:
-            DTYPES = (np.complex64, np.complex128, np.complex256)
-            raise ValueError(f"Unexpected dtype {x.dtype}. (expected one of {DTYPES})")
-
-        return x.view(float_dtype).reshape(*x.shape, 2)
+        return numpy_view_as_real(x)
     else:
         return x.real, x.imag
 
 
+@overload
+def view_as_complex(x: Tensor) -> Tensor:
+    ...
+
+
+@overload
+def view_as_complex(x: np.ndarray) -> np.ndarray:
+    ...
+
+
+@overload
+def view_as_complex(x: Tuple[float, float]) -> complex:
+    ...
+
+
 def view_as_complex(
-    x: Union[Tensor, np.ndarray, Sequence[float]]
+    x: Union[Tensor, np.ndarray, Tuple[float, float]]
 ) -> Union[Tensor, np.ndarray, complex]:
     if isinstance(x, Tensor):
         return torch.view_as_complex(x)
     elif isinstance(x, np.ndarray):
-        return x[..., 0] + x[..., 1] * 1j
+        return numpy_view_as_complex(x)
     elif (
         isinstance(x, Sequence)
         and len(x) == 2
@@ -444,6 +470,8 @@ def prod(
 ) -> Union[Tensor, T_BuiltinNumber]:
     if isinstance(x, Tensor):
         return torch.prod(x, dim=dim)
+    elif isinstance(x, np.ndarray):
+        return np.prod(x, axis=dim)
     elif isinstance(x, Iterable):
         return builtin_prod(x, start=start)  # type: ignore
     else:
@@ -455,7 +483,7 @@ def is_floating_point(x: Any) -> bool:
     if isinstance(x, Tensor):
         return x.is_floating_point()
     elif isinstance(x, (np.ndarray, np.generic)):
-        return isinstance(x, np.floating)
+        return numpy_is_floating_point(x)
     else:
         return isinstance(x, float)
 
@@ -464,6 +492,6 @@ def is_complex(x: Any) -> bool:
     if isinstance(x, Tensor):
         return x.is_complex()
     elif isinstance(x, (np.ndarray, np.generic)):
-        return np.iscomplexobj(x)
+        return numpy_is_complex(x)
     else:
         return isinstance(x, complex)
