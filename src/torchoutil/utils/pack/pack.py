@@ -267,6 +267,7 @@ def pack_dataset_per_column(
     exists: ExistsMode = "error",
     save_fn: SaveFn[np.ndarray] = pickle.dump,
     ds_kwds: Optional[Dict[str, Any]] = None,
+    user_attrs: Optional[Dict[str, Any]] = None,
     verbose: int = 0,
 ) -> PackedDataset[T_DictOrTuple, T_DictOrTuple]:
     if not isinstance(dataset, SizedDatasetLike):
@@ -347,7 +348,6 @@ def pack_dataset_per_column(
     fill_values = {
         name: numpy_dtype_to_fill_value(np_dtype) for name, np_dtype in dtypes.items()
     }
-
     data_dict = {
         name: np.full(
             (len(dataset),) + shape,
@@ -366,7 +366,10 @@ def pack_dataset_per_column(
         batch = [dict_pre_transform(item) for item in batch]
         for item in batch:
             for k, v in item.items():
-                data_dict[k][i] = to.to_numpy(v)
+                v = to.to_numpy(v)
+                slices = [slice(dim_i) for dim_i in v.shape]
+                slices = (i,) + tuple(slices)
+                data_dict[k][slices] = v
             i += 1
 
     if hasattr(dataset, "info"):
@@ -381,21 +384,23 @@ def pack_dataset_per_column(
     else:
         source_attrs = {}
 
-    attributes = {
+    src_attrs = {
         "source_dataset": src_dataset_name,
         "batch_size": len(dataset),
         "item_type": item_type,
         "info": info,
         "source_attrs": source_attrs,
         "subdir_size": None,
+        "user_attrs": user_attrs,
     }
     return _pack_dataset_dict(
         data_dict=data_dict,  # type: ignore
         root=root,
         content_dpath=content_dpath,
-        attributes=attributes,
+        src_attrs=src_attrs,
         save_fn=save_fn,
         ds_kwds=ds_kwds,
+        verbose=verbose,
     )
 
 
@@ -406,6 +411,8 @@ def pack_dataset_dict(
     exists: ExistsMode = "error",
     save_fn: SaveFn[np.ndarray] = pickle.dump,
     ds_kwds: Optional[Dict[str, Any]] = None,
+    user_attrs: Optional[Dict[str, Any]] = None,
+    verbose: int = 0,
 ) -> PackedDataset:
     if not po.all_eq(map(len, data_dict.values())):
         raise ValueError
@@ -414,21 +421,23 @@ def pack_dataset_dict(
     if packed is not None:
         return packed
 
-    attributes = {
+    src_attrs = {
         "source_dataset": data_dict.__class__.__name__,
         "batch_size": len(next(iter(data_dict.values()))),
         "item_type": "dict",
         "info": {},
         "source_attrs": {},
         "subdir_size": None,
+        "user_attrs": user_attrs,
     }
     return _pack_dataset_dict(
         data_dict=data_dict,
         root=root,
         content_dpath=content_dpath,
-        attributes=attributes,
+        src_attrs=src_attrs,
         save_fn=save_fn,
         ds_kwds=ds_kwds,
+        verbose=verbose,
     )
 
 
@@ -436,12 +445,13 @@ def _pack_dataset_dict(
     data_dict: Dict[str, Union[np.ndarray, Tensor]],
     root: Path,
     content_dpath: Path,
-    attributes: Dict[str, Any],
     save_fn: SaveFn[np.ndarray] = pickle.dump,
     ds_kwds: Optional[Dict[str, Any]] = None,
+    src_attrs: Optional[Dict[str, Any]] = None,
+    verbose: int = 0,
 ) -> PackedDataset:
     fnames = []
-    for name, values in data_dict.items():
+    for name, values in tqdm.tqdm(data_dict.items(), disable=verbose < 1):
         fname = f"{name}.bin"
         fpath = content_dpath.joinpath(fname)
         values = to.to_numpy(values)
@@ -457,7 +467,8 @@ def _pack_dataset_dict(
         "num_files": len(fnames),
         "files": fnames,
     }
-    attrs.update(attributes)
+    if src_attrs is not None:
+        attrs.update(src_attrs)
 
     attrs_fpath = root.joinpath(ATTRS_FNAME)
     with open(attrs_fpath, "w") as file:
