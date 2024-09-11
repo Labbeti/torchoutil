@@ -428,7 +428,7 @@ def pack_dataset_dict(
         "info": {},
         "source_attrs": {},
         "subdir_size": None,
-        "user_attrs": user_attrs,
+        "user_attrs": to_builtin(user_attrs),
     }
     return _pack_dataset_dict(
         data_dict=data_dict,
