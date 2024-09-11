@@ -14,7 +14,7 @@ from torchvision.datasets import CIFAR10
 
 from torchoutil.nn import ESequential, IndexToOnehot, ToList, ToNumpy
 from torchoutil.types import np
-from torchoutil.utils.pack.pack import pack_dataset, pack_dataset_per_column
+from torchoutil.utils.pack.pack import pack_dataset, pack_dataset_to_columns
 
 
 class TestPackCIFAR10(TestCase):
@@ -142,7 +142,7 @@ class TestPackCIFAR10(TestCase):
         tmpdir = cls.tmpdir
 
         path = tmpdir.joinpath("test_cifar10_columns")
-        packed = pack_dataset_per_column(
+        packed = pack_dataset_to_columns(
             dataset,
             path,
             exists="overwrite",

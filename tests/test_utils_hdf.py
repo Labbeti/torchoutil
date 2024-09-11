@@ -123,11 +123,11 @@ class TestHDF(TestCase):
         path = tmpdir.joinpath("test_slice.hdf")
         pack_to_hdf(ds_list, path, exists="overwrite", ds_kwds=dict(open_hdf=False))
 
-        hdf_dataset = HDFDataset(path, numpy_to_torch=False)
+        hdf_dataset = HDFDataset(path, cast="to_builtin")
 
         assert len(hdf_dataset) == len(ds_list)
         assert hdf_dataset[:, "a"] == ds_dict["a"]
-        assert (hdf_dataset[:, "b"] == ds_dict["b"].numpy()).all()
+        assert hdf_dataset[:, "b"] == ds_dict["b"].tolist()
 
         indices = torch.randperm(len(hdf_dataset))
 
@@ -139,21 +139,41 @@ class TestHDF(TestCase):
         tmpdir = cls.tmpdir
 
         ds_dict = {
-            "i": list(range(10)),
-            "s": ["".join(map(str, range(random.randint(10, 100)))) for _ in range(10)],
-            "ls": [[], ["aa", "bbb"], [], ["cccc"], ["dd"], ["e", "ff"]] + [[]] * 4,
-            "l": [[]] * 10,
+            "int": list(range(10)),
+            "string": [
+                "".join(map(str, range(random.randint(10, 100)))) for _ in range(10)
+            ],
+            "list_string": [
+                [],
+                ["aa", "bbb"],
+                [],
+                ["cccc"],
+                [""],
+                ["dd", "", "e", "ff", "gggggg"],
+                ["éééé", "û", "é"],
+            ]
+            + [[]] * 3,
+            "empty_lists": [[]] * 10,
         }
         ds_list = dict_list_to_list_dict(ds_dict, "same")
 
         path = tmpdir.joinpath("test_string.hdf")
-        hdf_dataset = pack_to_hdf(ds_list, path, exists="overwrite")
+        hdf_dataset = pack_to_hdf(
+            ds_list,
+            path,
+            exists="overwrite",
+            ds_kwds=dict(cast="to_builtin"),
+        )
+
+        idx = torch.randint(0, len(hdf_dataset), ()).item()
+        col = random.choice(list(ds_dict.keys()))
+        assert hdf_dataset[idx, col] == ds_dict[col][idx]
 
         assert len(hdf_dataset) == len(ds_list)
         for k in ds_dict.keys():
             assert (
                 hdf_dataset[:, k] == ds_dict[k]
-            ), f"{hdf_dataset[:, k]=} != {ds_dict[k]=}"
+            ), f"{k=}, {hdf_dataset[:, k]=} != {ds_dict[k]=}"
 
 
 if __name__ == "__main__":
