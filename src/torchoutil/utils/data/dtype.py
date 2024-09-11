@@ -68,7 +68,7 @@ def scan_torch_dtype(
         torch_dtype = numpy_dtype_to_torch_dtype(x.dtype, invalid=invalid)
         return torch_dtype
 
-    if isinstance(x, str):
+    if isinstance(x, (str, bytes)):
         return invalid
 
     if isinstance(x, (list, tuple)):
@@ -100,7 +100,7 @@ def scan_numpy_dtype(
         numpy_dtype = x.dtype
         return numpy_dtype
 
-    if isinstance(x, str):
+    if isinstance(x, (str, bytes)):
         numpy_dtype = np.array(x).dtype
         return numpy_dtype
 
