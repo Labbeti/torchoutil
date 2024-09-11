@@ -31,7 +31,9 @@ from torchoutil.utils.data.dtype import (
 from torchoutil.utils.pack.common import (
     ATTRS_FNAME,
     CONTENT_DNAME,
+    EXISTS_MODES,
     ContentMode,
+    ExistsMode,
     _tuple_to_dict,
 )
 from torchoutil.utils.pack.dataset import PackedDataset
@@ -48,12 +50,6 @@ T = TypeVar("T", covariant=True)
 U = TypeVar("U", covariant=True)
 T_DictOrTuple = TypeVar("T_DictOrTuple", tuple, dict, covariant=True)
 SaveFn = Callable[[T, BufferedWriter], None]
-
-
-ExistsMode = Literal["overwrite", "skip", "error"]
-SaveMode = Literal["numpy"]
-EXISTS_MODES = ("overwrite", "skip", "error")
-SAVE_MODES = ("numpy",)
 
 
 pylog = logging.getLogger(__name__)
@@ -125,14 +121,8 @@ def pack_dataset(
     if len(dataset) == 0:
         raise ValueError("Cannot pack to hdf an empty dataset.")
     if transform_in_worker and isinstance(dataset, SizedIterableDatasetLike):
-        raise NotImplementedError(
-            "Cannot apply transform in worker with an iterable dataset kind."
-        )
-
-    root = Path(root).resolve()
-    if root.exists() and not root.is_dir():
-        raise RuntimeError(f"Item {root=} exists but it is not a file.")
-    content_dpath = root.joinpath(CONTENT_DNAME)
+        msg = "Cannot apply transform in worker with an iterable dataset kind."
+        raise NotImplementedError(msg)
 
     if num_workers == "auto":
         num_workers = get_auto_num_cpus()
@@ -245,6 +235,7 @@ def pack_dataset(
         "files": fnames,
         "subdir_size": subdir_size,
         "item_type": "raw",
+        "column_to_fname": {},
     }
 
     attrs_fpath = root.joinpath(ATTRS_FNAME)
@@ -257,7 +248,7 @@ def pack_dataset(
     return packed
 
 
-def pack_dataset_per_column(
+def pack_dataset_to_columns(
     dataset: SizedDatasetLike[T],
     root: Union[str, Path],
     pre_transform: Optional[Callable[[T], T_DictOrTuple]] = None,
@@ -442,7 +433,7 @@ def pack_dataset_dict(
 
 
 def _pack_dataset_dict(
-    data_dict: Dict[str, Union[np.ndarray, Tensor]],
+    data_dict: Dict[str, Any],
     root: Path,
     content_dpath: Path,
     save_fn: SaveFn[np.ndarray] = pickle.dump,
@@ -450,15 +441,17 @@ def _pack_dataset_dict(
     src_attrs: Optional[Dict[str, Any]] = None,
     verbose: int = 0,
 ) -> PackedDataset:
-    fnames = []
-    for name, values in tqdm.tqdm(data_dict.items(), disable=verbose < 1):
-        fname = f"{name}.bin"
+    data_dict = {k: to.to_numpy(v) for k, v in data_dict.items()}
+
+    column_to_fname = {}
+    for column, values in tqdm.tqdm(data_dict.items(), disable=verbose < 1):
+        fname = f"{column}.bin"
+        column_to_fname[column] = fname
         fpath = content_dpath.joinpath(fname)
-        values = to.to_numpy(values)
         with open(fpath, "wb") as file:
             save_fn(values, file)
-        fnames.append(fname)
 
+    fnames = list(dict.fromkeys(column_to_fname.values()))
     attrs = {
         "length": len(next(iter(data_dict.values()))),
         "creation_date": po.now_iso(),
@@ -466,6 +459,7 @@ def _pack_dataset_dict(
         "content_dname": CONTENT_DNAME,
         "num_files": len(fnames),
         "files": fnames,
+        "column_to_fname": column_to_fname,
     }
     if src_attrs is not None:
         attrs.update(src_attrs)

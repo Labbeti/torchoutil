@@ -7,6 +7,9 @@ T = TypeVar("T", covariant=True)
 
 ContentMode = Literal["item", "batch", "column"]
 ItemType = Literal["dict", "tuple", "raw"]
+ExistsMode = Literal["overwrite", "skip", "error"]
+
+EXISTS_MODES = ("overwrite", "skip", "error")
 
 CONTENT_DNAME = "data"
 ATTRS_FNAME = "attributes.json"

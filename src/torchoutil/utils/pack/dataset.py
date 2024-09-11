@@ -22,6 +22,7 @@ from typing import (
 
 from typing_extensions import override
 
+from torchoutil.pyoutil import is_iterable_str, open_close_wrap
 from torchoutil.types.tensor_typing import Tensor1D
 from torchoutil.utils.data import DatasetSlicer
 from torchoutil.utils.pack.common import (
@@ -64,8 +65,8 @@ class PackedDataset(Generic[T, U], DatasetSlicer[U]):
         self._load_fn = load_fn
 
         self._attrs = {}
-        self._fpaths = []
-        self._loaded = {}
+        self._fpaths: list[Path] = []
+        self._column_to_fname: Dict[str, str] = {}
         self._reload_data(root, load_fn)
 
     @property
@@ -94,7 +95,7 @@ class PackedDataset(Generic[T, U], DatasetSlicer[U]):
             raise ValueError(msg)
 
         if self.content_mode == "column":
-            return self._loaded
+            return self._load_item_from_columns(slice(None), None)
         else:
             return self[:]  # type: ignore
 
@@ -165,8 +166,25 @@ class PackedDataset(Generic[T, U], DatasetSlicer[U]):
     def _load_item_from_columns(
         self,
         idx: Union[int, Iterable[int], Iterable[bool], Tensor1D, slice],
+        column: Union[str, Iterable[str], None] = None,
     ) -> Any:
-        item = {k: v[idx] for k, v in self._loaded.items()}  # type: ignore
+        if isinstance(column, str):
+            columns = [column]
+        elif is_iterable_str(column):
+            columns = column
+        elif column is None:
+            columns = self._column_to_fname.keys()
+
+        fnames = dict.fromkeys(self._column_to_fname[column_i] for column_i in columns)
+        fpaths = [
+            fpath for fname in fnames for fpath in self._fpaths if fpath.name == fname
+        ]
+        loaded = {fpath.name: open_close_wrap(self._load_fn, fpath) for fpath in fpaths}
+        fname_to_column = {
+            fname: column for column, fname in self._column_to_fname.items()
+        }
+
+        item = {fname_to_column[fname]: v[idx] for fname, v in loaded.items()}  # type: ignore
         if self.item_type == "tuple":
             item = _dict_to_tuple(item)  # type: ignore
         return item
@@ -203,19 +221,13 @@ class PackedDataset(Generic[T, U], DatasetSlicer[U]):
 
         fnames = attrs["files"]
         fpaths = [content_dpath.joinpath(fname) for fname in fnames]
-
-        content_mode = attrs.get("content_mode")
-        loaded = {}
-        if content_mode == "column":
-            for fpath in fpaths:
-                with open(fpath, "rb") as file:
-                    loaded[fpath.stem] = load_fn(file)
+        column_to_fname = attrs.get("column_to_fname", {})
 
         self._root = root
         self._load_fn = load_fn
         self._attrs = attrs
         self._fpaths = fpaths
-        self._loaded = loaded
+        self._column_to_fname = column_to_fname
 
     @classmethod
     def is_pickle_root(cls, root: Union[str, Path]) -> bool:
