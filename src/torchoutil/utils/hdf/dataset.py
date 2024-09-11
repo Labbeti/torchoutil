@@ -15,6 +15,7 @@ from typing import (
     Generic,
     Iterable,
     List,
+    Literal,
     Optional,
     Tuple,
     TypeVar,
@@ -41,7 +42,6 @@ from torchoutil.utils.data import DatasetSlicer
 from torchoutil.utils.hdf.common import (
     HDF_ENCODING,
     HDF_STRING_DTYPE,
-    HDF_VOID_DTYPE,
     SHAPE_SUFFIX,
     HDFDatasetAttributes,
     HDFItemType,
@@ -66,7 +66,9 @@ class HDFDataset(Generic[T, U], DatasetSlicer[U]):
         return_added_columns: bool = False,
         open_hdf: bool = True,
         auto_open: bool = False,
-        numpy_to_torch: bool = True,
+        cast: Literal[
+            "to_torch_or_builtin", "to_torch_or_numpy", "to_builtin", "none"
+        ] = "to_torch_or_builtin",
         file_kwds: Optional[Dict[str, Any]] = None,
     ) -> None:
         """HDFDataset to read an packed hdf file.
@@ -109,7 +111,7 @@ class HDFDataset(Generic[T, U], DatasetSlicer[U]):
         self._keep_padding = keep_padding
         self._return_added_columns = return_added_columns
         self._auto_open = auto_open
-        self._numpy_to_torch = numpy_to_torch
+        self._cast = cast
         self._file_kwds = file_kwds
 
         self._hdf_file: Any = None
@@ -133,10 +135,6 @@ class HDFDataset(Generic[T, U], DatasetSlicer[U]):
         return dict(self._hdf_file.attrs)  # type: ignore
 
     @property
-    def metadata(self) -> str:
-        return self.attrs.get("metadata", "")
-
-    @property
     def column_names(self) -> List[str]:
         """The name of each column of the dataset."""
         column_names = self.all_columns
@@ -146,16 +144,6 @@ class HDFDataset(Generic[T, U], DatasetSlicer[U]):
             if self._return_added_columns or name not in self.added_columns
         ]
         return column_names
-
-    @property
-    def shape(self) -> Tuple[int, ...]:
-        """The shape of the Clotho dataset."""
-        return len(self), len(self.column_names)
-
-    @property
-    def shape_suffix(self) -> str:
-        """Return the tensor shape suffix in column names."""
-        return self._hdf_file.attrs.get("shape_suffix", SHAPE_SUFFIX)
 
     @cached_property
     def info(self) -> Dict[str, Any]:
@@ -168,6 +156,18 @@ class HDFDataset(Generic[T, U], DatasetSlicer[U]):
         return self._hdf_file.attrs.get("item_type", "dict")
 
     @property
+    def keep_padding(self) -> List[str]:
+        return self._keep_padding
+
+    @keep_padding.setter
+    def keep_padding(self, new_value: Iterable[str]) -> None:
+        self._keep_padding = list(new_value)
+
+    @property
+    def metadata(self) -> str:
+        return self.user_attrs
+
+    @property
     def num_columns(self) -> int:
         return len(self.column_names)
 
@@ -176,8 +176,29 @@ class HDFDataset(Generic[T, U], DatasetSlicer[U]):
         return len(self)
 
     @property
+    def shape(self) -> Tuple[int, ...]:
+        """The shape of the Clotho dataset."""
+        return len(self), len(self.column_names)
+
+    @property
+    def shape_suffix(self) -> str:
+        """Return the tensor shape suffix in column names."""
+        return self._hdf_file.attrs.get("shape_suffix", SHAPE_SUFFIX)
+
+    @property
     def transform(self) -> Optional[Callable[[T], U]]:
         return self._transform
+
+    @cached_property
+    def user_attrs(self) -> Any:
+        if "user_attrs" in self.attrs:
+            return json.loads(self.attrs.get("user_attrs", "null"))
+        else:
+            return self.attrs.get("metadata", "")
+
+    @property
+    def _encoding(self) -> str:
+        return self.attrs.get("encoding", HDF_ENCODING)
 
     @cached_property
     def _load_as_complex(self) -> Dict[str, bool]:
@@ -218,9 +239,8 @@ class HDFDataset(Generic[T, U], DatasetSlicer[U]):
             if self._auto_open:
                 self.open()
             else:
-                raise RuntimeError(
-                    f"Cannot get_raw value with closed HDF file. ({self._hdf_file is not None=} and {bool(self._hdf_file)=})"
-                )
+                msg = f"Cannot get_raw value with closed HDF file. ({self._hdf_file is not None=} and {bool(self._hdf_file)=})"
+                raise RuntimeError(msg)
 
         if index is None:
             index = slice(None)
@@ -233,17 +253,15 @@ class HDFDataset(Generic[T, U], DatasetSlicer[U]):
             return {column_i: self.get_item(index, column_i) for column_i in column}
 
         if column not in self.all_columns:
-            raise ValueError(
-                f"Invalid argument {column=}. (expected one of {tuple(self.all_columns)})"
-            )
+            msg = f"Invalid argument {column=}. (expected one of {tuple(self.all_columns)})"
+            raise ValueError(msg)
 
         if isinstance(index, slice) or is_iterable_int(index):
             is_mult = True
         elif isinstance(index, int):
             if not (-len(self) <= index < len(self)):
-                raise IndexError(
-                    f"Invalid argument {index=}. (expected int in range [{-len(self)}, {len(self)-1}])"
-                )
+                msg = f"Invalid argument {index=}. (expected int in range [{-len(self)}, {len(self)-1}])"
+                raise IndexError(msg)
             is_mult = False
         else:
             raise TypeError(f"Invalid argument type {type(index)=}.")
@@ -255,7 +273,7 @@ class HDFDataset(Generic[T, U], DatasetSlicer[U]):
         if is_mult:
             hdf_values = hdf_value
         else:
-            hdf_values = [hdf_value]
+            hdf_values = hdf_value[None]
         del hdf_value
 
         shape_name = f"{column}{self.shape_suffix}"
@@ -263,12 +281,12 @@ class HDFDataset(Generic[T, U], DatasetSlicer[U]):
             shape_name in self._hdf_file.keys() and column not in self._keep_padding
         )
         hdf_ds: HDFRawDataset = self._hdf_file[column]
-        hdf_dtype = hdf_ds.dtype
+        hdf_dtype: np.dtype = hdf_ds.dtype
 
         if must_remove_padding:
             shapes = self._raw_get_item(index, shape_name)
             if not is_mult:
-                shapes = [shapes]
+                shapes = shapes[None]
             slices_lst = [
                 tuple(slice(shape_i) for shape_i in shape) for shape in shapes
             ]
@@ -277,25 +295,29 @@ class HDFDataset(Generic[T, U], DatasetSlicer[U]):
 
         outputs = []
 
+        if hdf_dtype == HDF_STRING_DTYPE or hdf_dtype.kind == "S":
+            hdf_values = np.char.decode(hdf_values, encoding=self._encoding)
+
         for hdf_value, slices in zip(hdf_values, slices_lst):
             # Remove the padding part
             if slices is not None:
                 hdf_value = hdf_value[slices]
 
-            # Decode all bytes to string
-            if hdf_dtype == HDF_STRING_DTYPE:
-                hdf_value = _decode_rec(hdf_value, HDF_ENCODING)
-            # Convert numpy.array to torch.Tensor
-            elif isinstance(hdf_value, np.ndarray):
-                if not self._numpy_to_torch:
-                    pass
-                elif hdf_dtype != HDF_VOID_DTYPE:
-                    hdf_value = torch.from_numpy(hdf_value)
+            if self._cast == "none":
+                continue
+
+            elif self._cast == "to_torch_or_builtin":
+                if hdf_dtype.kind not in ("V", "S", "O"):
+                    hdf_value = to.numpy_to_tensor(hdf_value)
                 else:
                     hdf_value = hdf_value.tolist()
-            # Convert numpy scalars
-            elif np.isscalar(hdf_value) and hasattr(hdf_value, "item"):
-                hdf_value = hdf_value.item()  # type: ignore
+
+            elif self._cast == "to_torch_or_numpy":
+                if hdf_dtype.kind not in ("V", "S", "O"):
+                    hdf_value = to.numpy_to_tensor(hdf_value)
+
+            elif self._cast == "to_builtin":
+                hdf_value = hdf_value.tolist()
 
             outputs.append(hdf_value)
 
@@ -409,7 +431,7 @@ class HDFDataset(Generic[T, U], DatasetSlicer[U]):
             "keep_padding": self._keep_padding,
             "return_added_columns": self._return_added_columns,
             "auto_open": self._auto_open,
-            "numpy_to_torch": self._numpy_to_torch,
+            "cast": self._cast,
             "file_kwds": self._file_kwds,
             "is_open": self.is_open(),
         }
@@ -463,7 +485,7 @@ class HDFDataset(Generic[T, U], DatasetSlicer[U]):
         self._keep_padding = data["keep_padding"]
         self._return_added_columns = data["return_added_columns"]
         self._auto_open = data["auto_open"]
-        self._numpy_to_torch = data["numpy_to_torch"]
+        self._cast = data["cast"]
         self._file_kwds = data["file_kwds"]
 
         self._hdf_file = None
@@ -476,12 +498,12 @@ class HDFDataset(Generic[T, U], DatasetSlicer[U]):
         self,
         index: Union[int, Iterable[int], slice],
         column: str,
-    ) -> Any:
+    ) -> np.ndarray:
         if isinstance(index, Iterable):
             sorted_idxs, local_idxs = torch.as_tensor(index).sort(dim=-1)
             sorted_idxs = sorted_idxs.numpy()
             hdf_value: Any = self._hdf_file[column][sorted_idxs]
-            inv_local_idxs = get_inverse_perm(local_idxs)
+            inv_local_idxs = get_inverse_perm(local_idxs).numpy()
             # TODO: rm
             # hdf_value = [hdf_value[local_idx] for local_idx in inv_local_idxs]
             hdf_value = hdf_value[inv_local_idxs]
@@ -491,6 +513,8 @@ class HDFDataset(Generic[T, U], DatasetSlicer[U]):
             hdf_value: Any = self._hdf_file[column][index]
             if self._load_as_complex.get(column, False):
                 hdf_value = to.view_as_complex(hdf_value)
+
+            hdf_value = np.array(hdf_value)
         return hdf_value
 
     def _sanity_check(self) -> None:
@@ -517,21 +541,27 @@ class HDFDataset(Generic[T, U], DatasetSlicer[U]):
             del self.info
         if hasattr(self, "_load_as_complex"):
             del self._load_as_complex
+        if hasattr(self, "user_attrs"):
+            del self.user_attrs
 
 
 def _decode_rec(
-    value: Union[bytes, np.ndarray, Iterable],
+    encoded: Union[bytes, np.ndarray, Iterable],
     encoding: str,
+    to_builtin: bool = False,
 ) -> Union[str, np.ndarray, list]:
     """Decode bytes to str with the specified encoding. Works recursively on list of bytes, list of list of bytes, etc."""
-    if isinstance(value, bytes):
-        return value.decode(encoding=encoding)
-    elif isinstance(value, np.ndarray) and value.dtype.kind in ("S", "U"):
-        return np.char.decode(value, encoding=encoding)
-    elif is_iterable_bytes_or_list(value):
-        return [_decode_rec(elt, encoding) for elt in value]
+    if isinstance(encoded, bytes):
+        return encoded.decode(encoding=encoding)
+    elif isinstance(encoded, np.ndarray) and encoded.dtype.kind in ("S",):
+        decoded = np.char.decode(encoded, encoding=encoding)
+        if to_builtin:
+            decoded = decoded.tolist()
+        return decoded
+    elif is_iterable_bytes_or_list(encoded):
+        return [_decode_rec(elt, encoding, to_builtin=to_builtin) for elt in encoded]
     else:
-        msg = f"Invalid argument type {type(value)}. (expected bytes or Iterable)"
+        msg = f"Invalid argument type {type(encoded)}. (expected bytes, np array or Iterable)"
         raise TypeError(msg)
 
 
