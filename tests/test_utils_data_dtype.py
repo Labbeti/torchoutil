@@ -14,6 +14,7 @@ class TestDType(TestCase):
         if not _NUMPY_AVAILABLE:
             return None
 
+        empty = None
         args_lst = [
             [np.int16, np.int32, np.int64],
             [np.complex64, np.float16, np.float64],
@@ -23,12 +24,12 @@ class TestDType(TestCase):
         expected_lst = [
             np.int64,
             np.complex128,
-            None,
+            empty,
             np.float64,
         ]
 
         for args, expected in zip(args_lst, expected_lst):
-            result = merge_numpy_dtypes(args)
+            result = merge_numpy_dtypes(args, empty=empty)
             assert result == expected, f"{result=}; {expected=}"
 
 

@@ -146,8 +146,8 @@ class TestPackCIFAR10(TestCase):
             dataset,
             path,
             exists="overwrite",
-            save_fn=lambda obj, file: np.save(file, obj),
-            ds_kwds=dict(load_fn=np.load),
+            save_fn="numpy",
+            ds_kwds=dict(load_fn="numpy"),
         )
 
         assert len(dataset) == len(packed)

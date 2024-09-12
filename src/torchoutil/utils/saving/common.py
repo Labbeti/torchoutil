@@ -44,7 +44,7 @@ UNK_MODES = ("identity", "error")
 def to_builtin(
     x: Enum,
     *,
-    unk_mode: UnkMode = "identity",
+    unk_mode: UnkMode = "error",
 ) -> str:
     ...
 
@@ -53,7 +53,7 @@ def to_builtin(
 def to_builtin(
     x: Path,
     *,
-    unk_mode: UnkMode = "identity",
+    unk_mode: UnkMode = "error",
 ) -> str:
     ...
 
@@ -62,7 +62,7 @@ def to_builtin(
 def to_builtin(
     x: Pattern,
     *,
-    unk_mode: UnkMode = "identity",
+    unk_mode: UnkMode = "error",
 ) -> str:
     ...
 
@@ -71,7 +71,7 @@ def to_builtin(
 def to_builtin(
     x: Namespace,
     *,
-    unk_mode: UnkMode = "identity",
+    unk_mode: UnkMode = "error",
 ) -> Dict[str, Any]:
     ...
 
@@ -80,7 +80,7 @@ def to_builtin(
 def to_builtin(
     x: Tensor,
     *,
-    unk_mode: UnkMode = "identity",
+    unk_mode: UnkMode = "error",
 ) -> Union[List, BuiltinNumber]:
     ...
 
@@ -89,7 +89,7 @@ def to_builtin(
 def to_builtin(
     x: Mapping[K, V],
     *,
-    unk_mode: UnkMode = "identity",
+    unk_mode: UnkMode = "error",
 ) -> Dict[K, V]:
     ...
 
@@ -98,7 +98,7 @@ def to_builtin(
 def to_builtin(
     x: T,
     *,
-    unk_mode: UnkMode = "identity",
+    unk_mode: UnkMode = "error",
 ) -> T:
     ...
 
@@ -106,7 +106,7 @@ def to_builtin(
 def to_builtin(
     x: Any,
     *,
-    unk_mode: UnkMode = "identity",
+    unk_mode: UnkMode = "error",
 ) -> Any:
     """Helper function to sanitize data before saving to YAML or CSV file.
 
@@ -129,7 +129,7 @@ def to_builtin(
         return x.tolist()
     elif _NUMPY_AVAILABLE and isinstance(x, np.generic):
         return x.item()
-    # Non-terminal cases
+    # Non-terminal cases (iterables and mappings)
     elif _OMEGACONF_AVAILABLE and isinstance(x, (DictConfig, ListConfig)):
         return to_builtin(OmegaConf.to_container(x, resolve=False, enum_to_str=True))
     elif _PANDAS_AVAILABLE and isinstance(x, DataFrame):

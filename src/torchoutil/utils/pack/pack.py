@@ -4,9 +4,7 @@
 import json
 import logging
 import math
-import pickle
 import shutil
-from io import BufferedWriter
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Literal, Optional, Tuple, TypeVar, Union
 
@@ -39,6 +37,7 @@ from torchoutil.utils.pack.common import (
 from torchoutil.utils.pack.dataset import PackedDataset
 from torchoutil.utils.packaging import _NUMPY_AVAILABLE, _TQDM_AVAILABLE
 from torchoutil.utils.saving.common import to_builtin
+from torchoutil.utils.saving.save_fn import SAVE_EXTENSIONS, SAVE_FNS, SaveFnLike
 
 if _TQDM_AVAILABLE:
     import tqdm
@@ -49,8 +48,6 @@ if _NUMPY_AVAILABLE:
 T = TypeVar("T", covariant=True)
 U = TypeVar("U", covariant=True)
 T_DictOrTuple = TypeVar("T_DictOrTuple", tuple, dict, covariant=True)
-SaveFn = Callable[[T, BufferedWriter], None]
-
 
 pylog = logging.getLogger(__name__)
 
@@ -62,14 +59,15 @@ def pack_dataset(
     pre_transform: Optional[Callable[[T], U]] = None,
     *,
     batch_size: int = 32,
-    num_workers: Union[int, Literal["auto"]] = "auto",
-    exists: ExistsMode = "error",
     content_mode: ContentMode = "item",
     custom_file_fmt: Union[None, str, Callable[[int], str]] = None,
-    save_fn: SaveFn[Union[U, List[U]]] = pickle.dump,
-    subdir_size: Optional[int] = 100,
-    transform_in_worker: bool = True,
     ds_kwds: Optional[Dict[str, Any]] = None,
+    exists: ExistsMode = "error",
+    save_fn: SaveFnLike[Union[U, List[U]]] = "pickle",
+    subdir_size: Optional[int] = 100,
+    num_workers: Union[int, Literal["auto"]] = "auto",
+    transform_in_worker: bool = True,
+    user_attrs: Optional[Dict[str, Any]] = None,
     verbose: int = 0,
 ) -> PackedDataset[U, U]:
     """Pack a dataset to pickle files.
@@ -114,6 +112,28 @@ def pack_dataset(
         transform_in_worker: If True, appoly transform in parallel with workers' Dataloader.
         verbose: Verbose level during packing. Higher value means more messages. defaults to 0.
     """
+    if content_mode == "column":
+        if custom_file_fmt is None:
+            custom_file_fmt = "{column}.{ext}"
+        if not isinstance(custom_file_fmt, str):
+            raise ValueError(
+                f"Invalid argument type {type(custom_file_fmt)=} with {content_mode=}."
+            )
+
+        return pack_dataset_to_columns(
+            dataset=dataset,
+            root=root,
+            pre_transform=pre_transform,
+            batch_size=batch_size,
+            ds_kwds=ds_kwds,
+            exists=exists,
+            fname_fmt=custom_file_fmt,
+            num_workers=num_workers,
+            save_fn=save_fn,
+            user_attrs=user_attrs,
+            verbose=verbose,
+        )
+
     # Check inputs
     if not isinstance(dataset, SizedDatasetLike):
         msg = f"Cannot pack to hdf a non-sized-dataset '{dataset.__class__.__name__}'."
@@ -126,6 +146,12 @@ def pack_dataset(
 
     if num_workers == "auto":
         num_workers = get_auto_num_cpus()
+
+    if isinstance(save_fn, str):
+        ext = SAVE_EXTENSIONS[save_fn]
+        save_fn = SAVE_FNS[save_fn]
+    else:
+        ext = "bin"
 
     packed, root, content_dpath = _setup_args(root, exists)
     if packed is not None:
@@ -157,7 +183,7 @@ def pack_dataset(
 
     if custom_file_fmt is None:
         num_digits = math.ceil(math.log10(num_files))
-        file_fmt = f"{{:0{num_digits}d}}.pt".format
+        file_fmt = f"{{:0{num_digits}d}}.{ext}".format
     elif isinstance(custom_file_fmt, str):
         file_fmt = custom_file_fmt.format
     else:
@@ -197,14 +223,12 @@ def pack_dataset(
         if content_mode == "item":
             for item in batch_lst:
                 fpath = fpaths[i]
-                with open(fpath, "wb") as file:
-                    save_fn(item, file)
+                save_fn(item, fpath)
                 i += 1
 
         elif content_mode == "batch":
             fpath = fpaths[i]
-            with open(fpath, "wb") as file:
-                save_fn(batch_lst, file)
+            save_fn(batch_lst, fpath)
             i += 1
 
         else:
@@ -236,8 +260,8 @@ def pack_dataset(
         "subdir_size": subdir_size,
         "item_type": "raw",
         "column_to_fname": {},
+        "user_attrs": to_builtin(user_attrs),
     }
-
     attrs_fpath = root.joinpath(ATTRS_FNAME)
     with open(attrs_fpath, "w") as file:
         json.dump(attributes, file, indent="\t")
@@ -254,10 +278,11 @@ def pack_dataset_to_columns(
     pre_transform: Optional[Callable[[T], T_DictOrTuple]] = None,
     *,
     batch_size: int = 32,
-    num_workers: Union[int, Literal["auto"]] = "auto",
-    exists: ExistsMode = "error",
-    save_fn: SaveFn[np.ndarray] = pickle.dump,
     ds_kwds: Optional[Dict[str, Any]] = None,
+    exists: ExistsMode = "error",
+    fname_fmt: str = "{column}.{ext}",
+    num_workers: Union[int, Literal["auto"]] = "auto",
+    save_fn: SaveFnLike[np.ndarray] = "pickle",
     user_attrs: Optional[Dict[str, Any]] = None,
     verbose: int = 0,
 ) -> PackedDataset[T_DictOrTuple, T_DictOrTuple]:
@@ -391,6 +416,7 @@ def pack_dataset_to_columns(
         src_attrs=src_attrs,
         save_fn=save_fn,
         ds_kwds=ds_kwds,
+        fname_fmt=fname_fmt,
         verbose=verbose,
     )
 
@@ -399,9 +425,10 @@ def pack_dataset_dict(
     data_dict: Dict[str, Union[np.ndarray, Tensor]],
     root: Union[str, Path],
     *,
-    exists: ExistsMode = "error",
-    save_fn: SaveFn[np.ndarray] = pickle.dump,
     ds_kwds: Optional[Dict[str, Any]] = None,
+    exists: ExistsMode = "error",
+    fname_fmt: str = "{column}.{ext}",
+    save_fn: SaveFnLike[np.ndarray] = "pickle",
     user_attrs: Optional[Dict[str, Any]] = None,
     verbose: int = 0,
 ) -> PackedDataset:
@@ -425,9 +452,10 @@ def pack_dataset_dict(
         data_dict=data_dict,
         root=root,
         content_dpath=content_dpath,
-        src_attrs=src_attrs,
-        save_fn=save_fn,
         ds_kwds=ds_kwds,
+        fname_fmt=fname_fmt,
+        save_fn=save_fn,
+        src_attrs=src_attrs,
         verbose=verbose,
     )
 
@@ -436,20 +464,26 @@ def _pack_dataset_dict(
     data_dict: Dict[str, Any],
     root: Path,
     content_dpath: Path,
-    save_fn: SaveFn[np.ndarray] = pickle.dump,
     ds_kwds: Optional[Dict[str, Any]] = None,
+    fname_fmt: str = "{column}.{ext}",
+    save_fn: SaveFnLike[np.ndarray] = "pickle",
     src_attrs: Optional[Dict[str, Any]] = None,
     verbose: int = 0,
 ) -> PackedDataset:
+    if isinstance(save_fn, str):
+        ext = SAVE_EXTENSIONS[save_fn]
+        save_fn = SAVE_FNS[save_fn]
+    else:
+        ext = "bin"
+
     data_dict = {k: to.to_numpy(v) for k, v in data_dict.items()}
 
     column_to_fname = {}
     for column, values in tqdm.tqdm(data_dict.items(), disable=verbose < 1):
-        fname = f"{column}.bin"
+        fname = fname_fmt.format(column=column, ext=ext)
         column_to_fname[column] = fname
         fpath = content_dpath.joinpath(fname)
-        with open(fpath, "wb") as file:
-            save_fn(values, file)
+        save_fn(values, fpath)
 
     fnames = list(dict.fromkeys(column_to_fname.values()))
     attrs = {

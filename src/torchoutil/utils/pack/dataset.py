@@ -3,9 +3,7 @@
 
 import json
 import logging
-import pickle
 import sys
-from io import BufferedReader
 from pathlib import Path
 from typing import (
     Any,
@@ -22,7 +20,7 @@ from typing import (
 
 from typing_extensions import override
 
-from torchoutil.pyoutil import is_iterable_str, open_close_wrap
+from torchoutil.pyoutil import is_iterable_str
 from torchoutil.types.tensor_typing import Tensor1D
 from torchoutil.utils.data import DatasetSlicer
 from torchoutil.utils.pack.common import (
@@ -32,10 +30,10 @@ from torchoutil.utils.pack.common import (
     PackedDatasetAttributes,
     _dict_to_tuple,
 )
+from torchoutil.utils.saving.load_fn import LOAD_FNS, LoadFn, LoadFnLike
 
 T = TypeVar("T")
 U = TypeVar("U")
-LoadFn = Callable[[BufferedReader], T]
 
 pylog = logging.getLogger(__name__)
 
@@ -46,7 +44,7 @@ class PackedDataset(Generic[T, U], DatasetSlicer[U]):
         root: Union[str, Path],
         transform: Optional[Callable[[T], U]] = None,
         *,
-        load_fn: LoadFn[Union[T, List[T]]] = pickle.load,
+        load_fn: LoadFnLike[Union[T, List[T]]] = "pickle",
     ) -> None:
         """
 
@@ -58,6 +56,8 @@ class PackedDataset(Generic[T, U], DatasetSlicer[U]):
             use_cache: If True, cache each item or batch in memory. defaults to False.
         """
         root = Path(root)
+        if isinstance(load_fn, str):
+            load_fn = LOAD_FNS[load_fn]
 
         super().__init__()
         self._root = root
@@ -115,9 +115,8 @@ class PackedDataset(Generic[T, U], DatasetSlicer[U]):
             raise RuntimeError(msg)
 
         target_idx = idx // batch_size
-        path = self._fpaths[target_idx]
-        with open(path, "rb") as file:
-            item_or_batch = self._load_fn(file)
+        fpath = self._fpaths[target_idx]
+        item_or_batch = self._load_fn(fpath)
 
         if self.content_mode == "item":
             item: T = item_or_batch  # type: ignore
@@ -179,7 +178,7 @@ class PackedDataset(Generic[T, U], DatasetSlicer[U]):
         fpaths = [
             fpath for fname in fnames for fpath in self._fpaths if fpath.name == fname
         ]
-        loaded = {fpath.name: open_close_wrap(self._load_fn, fpath) for fpath in fpaths}
+        loaded = {fpath.name: self._load_fn(fpath) for fpath in fpaths}
         fname_to_column = {
             fname: column for column, fname in self._column_to_fname.items()
         }
