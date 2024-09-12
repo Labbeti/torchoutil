@@ -162,6 +162,7 @@ def pack_to_hdf(
         hdf_dtypes,
         all_eq_shapes,
         load_as_complex,
+        is_unicode,
     ) = _scan_dataset(
         dataset,
         pre_transform,
@@ -331,6 +332,7 @@ def pack_to_hdf(
             "load_as_complex": json.dumps(load_as_complex),
             "version": str(to.__version__),
             "user_attrs": json.dumps(to_builtin(user_attrs)),
+            "is_unicode": json.dumps(is_unicode),
         }
         if verbose >= 2:
             dumped_attributes = json.dumps(attributes, indent="\t")
@@ -366,54 +368,40 @@ def _scan_dataset(
     Dict[str, HDFDType],
     Dict[str, bool],
     Dict[str, bool],
+    Dict[str, bool],
 ]:
-    shapes_0 = {}
-    hdf_dtypes_0 = {}
     if isinstance(dataset, IterableDataset):
         item_0 = next(iter(dataset))
     else:
         item_0 = dataset[0]
 
-    dict_pre_transform: Callable[[T], Dict[str, Any]]
-
-    def convert_to_numpy(x: dict[str, Any]) -> dict[str, Any]:
-        x = {k: to.to_numpy(v) for k, v in x.items()}
-        if not use_vlen_str:
-            x = {
-                k: (
-                    np.char.encode(v, encoding=HDF_ENCODING)
-                    if v.dtype.kind == "U"
-                    else v
-                )
-                for k, v in x.items()
-            }
-        x = {k: v.tolist() if v.dtype.kind == "S" else v for k, v in x.items()}
+    def encode_array(x: np.ndarray) -> Any:
+        if x.dtype.kind == "U":
+            x = np.char.encode(x, encoding=HDF_ENCODING)
+        if x.dtype.kind == "S":
+            x = x.tolist()
         return x
+
+    def encode_dict_array(x: dict[str, np.ndarray]) -> dict[str, Any]:
+        return {k: encode_array(to.to_numpy(v)) for k, v in x.items()}
+
+    to_dict_fn: Callable[[T], dict[str, Any]]
 
     if is_dict_str(item_0):
         item_type = "dict"
-        dict_pre_transform = Compose(pre_transform, convert_to_numpy)  # type: ignore
+        to_dict_fn = to.identity  # type: ignore
     elif isinstance(item_0, tuple):
         item_type = "tuple"
-        dict_pre_transform = Compose(pre_transform, _tuple_to_dict, convert_to_numpy)
+        to_dict_fn = _tuple_to_dict  # type: ignore
     else:
         msg = f"Invalid item type for {dataset.__class__.__name__}. (expected dict[str, Any] or tuple but found {type(item_0)})"
         raise ValueError(msg)
+    del item_0
 
-    item_0_dict = dict_pre_transform(item_0)
-    del pre_transform, item_0
-
-    for attr_name, value in item_0_dict.items():
-        # info = _scan_shape_dtype(value)
-        info = scan_shape_dtypes(value)
-        shapes_0[attr_name] = info.shape
-        hdf_dtypes_0[attr_name] = numpy_dtype_to_hdf_dtype(info.numpy_dtype)
-
-    max_shapes: Dict[str, Tuple[int, ...]] = shapes_0
-    hdf_dtypes: Dict[str, HDFDType] = hdf_dtypes_0
-    all_eq_shapes: Dict[str, bool] = {
-        attr_name: True for attr_name in item_0_dict.keys()
-    }
+    encode_dict_fn = to.identity if use_vlen_str else encode_dict_array
+    dict_pre_transform: Callable[[T], Dict[str, Any]] = Compose(
+        pre_transform, to_dict_fn, encode_dict_fn
+    )
 
     loader = DataLoader(
         dataset,  # type: ignore
@@ -424,39 +412,68 @@ def _scan_dataset(
         drop_last=False,
         pin_memory=False,
     )
-    infos_dict: dict[str, set[ShapeDTypeInfo]] = {
-        name: set() for name in max_shapes.keys()
-    }
+
+    infos_dict: dict[str, set[ShapeDTypeInfo]] = {}
+    src_kinds: dict[str, set[str]] = {}
 
     for batch in tqdm.tqdm(
         loader,
         desc="Pre compute shapes...",
         disable=verbose <= 0,
     ):
-        batch = [dict_pre_transform(item) for item in batch]
+        batch = [pre_transform(item) for item in batch]
+        batch = [to_dict_fn(item) for item in batch]  # type: ignore
+
         for item in batch:
             for attr_name, value in item.items():
                 info = scan_shape_dtypes(value)
-                infos_dict[attr_name].add(info)
+                if attr_name in src_kinds:
+                    src_kinds[attr_name].add(info.kind)
+                else:
+                    src_kinds[attr_name] = {info.kind}
+
+                value = to.to_numpy(value)
+                if info.kind == "U" and not use_vlen_str:
+                    value = encode_array(value)
+                    info = scan_shape_dtypes(value)
+
+                if attr_name in infos_dict:
+                    infos_dict[attr_name].add(info)
+                else:
+                    infos_dict[attr_name] = {info}
+
+    is_unicode = {
+        name: kinds == {"V", "U"} or kinds == {"U"} for name, kinds in src_kinds.items()
+    }
+
+    max_shapes: Dict[str, Tuple[int, ...]] = {}
+    hdf_dtypes: Dict[str, HDFDType] = {}
+    all_eq_shapes: Dict[str, bool] = {}
 
     for attr_name, infos in infos_dict.items():
         shapes = [info.shape for info in infos]
-
-        if not all_eq(map(len, shapes)):
-            raise ValueError(f"Invalid ndim for attribute {attr_name}.")
+        ndims = list(map(len, shapes))
+        if not all_eq(ndims):
+            msg = f"Invalid ndim for attribute {attr_name}. (found multiple ndims: {tuple(set(ndims))})"
+            raise ValueError(msg)
 
         np_dtypes = [info.numpy_dtype for info in infos]
         np_dtype = merge_numpy_dtypes(np_dtypes)
         hdf_dtype = numpy_dtype_to_hdf_dtype(np_dtype)
 
-        if verbose >= 2 and np_dtype not in (
-            None,
-            str,
-            bool,
-            np.int32,
-            np.int8,
-            np.float32,
-            np.dtype("|S1"),
+        if (
+            verbose >= 2
+            and np_dtype
+            not in (
+                None,
+                str,
+                bool,
+                np.int32,
+                np.int8,
+                np.float32,
+                np.dtype("|S1"),
+            )
+            and np_dtype.kind != "S"
         ):
             expected_np_dtype = hdf_dtype_to_numpy_dtype(hdf_dtype)
             msg = f"Found input dtype {np_dtype} which is not compatible with HDF. It will be cast to {expected_np_dtype}. (from {hdf_dtype=})"
@@ -502,6 +519,7 @@ def _scan_dataset(
         hdf_dtypes,
         all_eq_shapes,
         load_as_complex,
+        is_unicode,
     )
 
 

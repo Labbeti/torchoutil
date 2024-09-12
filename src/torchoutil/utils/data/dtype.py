@@ -13,6 +13,8 @@ from torchoutil.types import ACCEPTED_NUMPY_DTYPES, BuiltinScalar, np
 
 T_Invalid = TypeVar("T_Invalid")
 T_Empty = TypeVar("T_Empty")
+T_EmptyNp = TypeVar("T_EmptyNp")
+T_EmptyTorch = TypeVar("T_EmptyTorch")
 
 
 # return type for torch_dtype when an invalid data is passed as argument, like str
@@ -22,10 +24,10 @@ class InvalidTorchDType(metaclass=po.Singleton):
 
 
 @dataclass(frozen=True)
-class ShapeDTypeInfo(Generic[T_Invalid, T_Empty]):
+class ShapeDTypeInfo(Generic[T_Invalid, T_EmptyNp, T_EmptyTorch]):
     shape: Tuple[int, ...]
-    torch_dtype: Union[torch.dtype, T_Invalid, T_Empty]
-    numpy_dtype: Union[np.dtype, T_Empty]
+    torch_dtype: Union[torch.dtype, T_Invalid, T_EmptyTorch]
+    numpy_dtype: Union[np.dtype, T_EmptyNp]
 
     @property
     def fill_value(self) -> BuiltinScalar:
@@ -35,17 +37,28 @@ class ShapeDTypeInfo(Generic[T_Invalid, T_Empty]):
     def ndim(self) -> int:
         return len(self.shape)
 
+    @property
+    def kind(self) -> str:
+        if isinstance(self.numpy_dtype, np.dtype):
+            return self.numpy_dtype.kind
+        else:
+            return "V"
+
 
 def get_default_numpy_dtype() -> np.dtype:
     return np.empty((0,)).dtype
 
 
-def scan_shape_dtypes(x: Any) -> ShapeDTypeInfo[InvalidTorchDType, None]:
+def scan_shape_dtypes(x: Any) -> ShapeDTypeInfo[InvalidTorchDType, np.dtype, None]:
     """Returns the shape and the hdf_dtype for an input."""
     shape = to.shape(x)
-    torch_dtype = scan_torch_dtype(x, invalid=InvalidTorchDType(), empty=None)
-    numpy_dtype = scan_numpy_dtype(x, empty=None)
-    info = ShapeDTypeInfo[InvalidTorchDType, None](shape, torch_dtype, numpy_dtype)
+    torch_dtype = scan_torch_dtype(x)
+    numpy_dtype = scan_numpy_dtype(x)
+    info = ShapeDTypeInfo[InvalidTorchDType, np.dtype, None](
+        shape,
+        torch_dtype,
+        numpy_dtype,
+    )
     return info
 
 
@@ -53,8 +66,8 @@ def scan_torch_dtype(
     x: Any,
     *,
     invalid: T_Invalid = InvalidTorchDType(),
-    empty: T_Empty = None,
-) -> Union[torch.dtype, T_Invalid, T_Empty]:
+    empty: T_EmptyNp = None,
+) -> Union[torch.dtype, T_Invalid, T_EmptyNp]:
     """Returns torch dtype of an arbitrary object. Works recursively on tuples and lists. An instance of InvalidTorchDType can be returned if a str is passed."""
     if isinstance(x, (int, float, bool, complex)):
         torch_dtype = torch.as_tensor(x).dtype
@@ -86,8 +99,8 @@ def scan_torch_dtype(
 def scan_numpy_dtype(
     x: Any,
     *,
-    empty: T_Empty = None,
-) -> Union[np.dtype, T_Empty]:
+    empty: T_EmptyNp = np.dtype("V"),
+) -> Union[np.dtype, T_EmptyNp]:
     if isinstance(x, (int, float, bool, complex)):
         numpy_dtype = np.array(x).dtype
         return numpy_dtype
@@ -117,11 +130,11 @@ def scan_numpy_dtype(
 
 
 def merge_torch_dtypes(
-    dtypes: Iterable[Union[torch.dtype, T_Invalid, T_Empty]],
+    dtypes: Iterable[Union[torch.dtype, T_Invalid, T_EmptyNp]],
     *,
     invalid: T_Invalid = InvalidTorchDType(),
-    empty: T_Empty = None,
-) -> Union[torch.dtype, T_Invalid, T_Empty]:
+    empty: T_EmptyNp = None,
+) -> Union[torch.dtype, T_Invalid, T_EmptyNp]:
     dtypes = list(dict.fromkeys(dtypes))
     dtypes = [dtype for dtype in dtypes if dtype != empty]
     if len(dtypes) == 0:
@@ -135,10 +148,10 @@ def merge_torch_dtypes(
 
 
 def merge_numpy_dtypes(
-    dtypes: Iterable[Union[np.dtype, T_Empty]],
+    dtypes: Iterable[Union[np.dtype, T_EmptyNp]],
     *,
-    empty: T_Empty = None,
-) -> Union[np.dtype, T_Empty]:
+    empty: T_EmptyNp = np.dtype("V"),
+) -> Union[np.dtype, T_EmptyNp]:
     dtypes = list(dict.fromkeys(dtypes))
     dtypes = [dtype for dtype in dtypes if dtype != empty]
     if len(dtypes) == 0:

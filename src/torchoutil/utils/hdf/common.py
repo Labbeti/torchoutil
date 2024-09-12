@@ -31,4 +31,6 @@ class HDFDatasetAttributes(TypedDict):
     added_columns: List[str]
     shape_suffix: str
     file_kwds: str
+    user_attrs: str
     load_as_complex: str
+    is_unicode: str

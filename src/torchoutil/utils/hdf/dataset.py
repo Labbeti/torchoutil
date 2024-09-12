@@ -130,9 +130,10 @@ class HDFDataset(Generic[T, U], DatasetSlicer[U]):
         """The name of all columns of the dataset."""
         return list(self.get_hdf_keys())
 
-    @property
+    @cached_property
     def attrs(self) -> HDFDatasetAttributes:
-        return dict(self._hdf_file.attrs)  # type: ignore
+        attrs = dict(self._hdf_file.attrs)
+        return attrs  # type: ignore
 
     @property
     def column_names(self) -> List[str]:
@@ -192,13 +193,17 @@ class HDFDataset(Generic[T, U], DatasetSlicer[U]):
     @cached_property
     def user_attrs(self) -> Any:
         if "user_attrs" in self.attrs:
-            return json.loads(self.attrs.get("user_attrs", "null"))
+            return json.loads(self._hdf_file.attrs.get("user_attrs", "null"))
         else:
-            return self.attrs.get("metadata", "")
+            return self._hdf_file.attrs.get("metadata", "")
 
     @property
     def _encoding(self) -> str:
         return self.attrs.get("encoding", HDF_ENCODING)
+
+    @cached_property
+    def _is_unicode(self) -> Dict[str, bool]:
+        return json.loads(self._hdf_file.attrs.get("is_unicode", "{}"))
 
     @cached_property
     def _load_as_complex(self) -> Dict[str, bool]:
@@ -295,7 +300,7 @@ class HDFDataset(Generic[T, U], DatasetSlicer[U]):
 
         outputs = []
 
-        if hdf_dtype == HDF_STRING_DTYPE or hdf_dtype.kind == "S":
+        if self._is_unicode.get(column, False) or hdf_dtype == HDF_STRING_DTYPE:
             hdf_values = np.char.decode(hdf_values, encoding=self._encoding)
 
         for hdf_value, slices in zip(hdf_values, slices_lst):
@@ -539,10 +544,12 @@ class HDFDataset(Generic[T, U], DatasetSlicer[U]):
     def _clear_caches(self) -> None:
         if hasattr(self, "info"):
             del self.info
-        if hasattr(self, "_load_as_complex"):
-            del self._load_as_complex
         if hasattr(self, "user_attrs"):
             del self.user_attrs
+        if hasattr(self, "_is_unicode"):
+            del self._is_unicode
+        if hasattr(self, "_load_as_complex"):
+            del self._load_as_complex
 
 
 def _decode_rec(

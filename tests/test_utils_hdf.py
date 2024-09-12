@@ -22,6 +22,7 @@ class TestHDF(TestCase):
     @classmethod
     def setUpClass(cls) -> None:
         tmpdir = Path(os.getenv("TORCHOUTIL_TMPDIR", "/tmp/torchoutil_tests"))
+        tmpdir.mkdir(parents=True, exist_ok=True)
         cls.tmpdir = tmpdir
 
     def test_cifar10_pack_to_hdf(self) -> None:
@@ -154,6 +155,7 @@ class TestHDF(TestCase):
             ]
             + [[]] * 3,
             "empty_lists": [[]] * 10,
+            "bytes": [b""] * 6 + [b"a2", b"dnqzu1dhqz", b"0djqizjdz", b"du12qzd"],
         }
         ds_list = dict_list_to_list_dict(ds_dict, "same")
 
@@ -165,9 +167,17 @@ class TestHDF(TestCase):
             ds_kwds=dict(cast="to_builtin"),
         )
 
+        assert hdf_dataset._is_unicode == {
+            "int": False,
+            "string": True,
+            "list_string": True,
+            "empty_lists": False,
+            "bytes": False,
+        }
+
         idx = torch.randint(0, len(hdf_dataset), ()).item()
         col = random.choice(list(ds_dict.keys()))
-        assert hdf_dataset[idx, col] == ds_dict[col][idx]
+        assert hdf_dataset[idx, col] == ds_dict[col][idx], f"{idx=}; {col=}"
 
         assert len(hdf_dataset) == len(ds_list)
         for k in ds_dict.keys():
