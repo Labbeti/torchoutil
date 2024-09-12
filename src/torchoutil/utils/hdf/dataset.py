@@ -300,10 +300,12 @@ class HDFDataset(Generic[T, U], DatasetSlicer[U]):
 
         outputs = []
 
-        if self._is_unicode.get(column, False) or hdf_dtype == HDF_STRING_DTYPE:
+        if self._is_unicode.get(column, False):
             hdf_values = np.char.decode(hdf_values, encoding=self._encoding)
+        elif hdf_dtype == HDF_STRING_DTYPE:  # old supports vlen_str
+            hdf_values = _decode_rec(hdf_values, encoding=self._encoding)
 
-        for hdf_value, slices in zip(hdf_values, slices_lst):
+        for hdf_value, slices in zip(hdf_values, slices_lst, strict=True):
             # Remove the padding part
             if slices is not None:
                 hdf_value = hdf_value[slices]
