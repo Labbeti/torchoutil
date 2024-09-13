@@ -461,7 +461,9 @@ def _scan_dataset(
         shapes = [info.shape for info in infos]
         ndims = list(map(len, shapes))
         if not all_eq(ndims):
-            msg = f"Invalid ndim for attribute {attr_name}. (found multiple ndims: {tuple(set(ndims))})"
+            ndims_set = tuple(set(ndims))
+            indices = [ndims.index(ndim) for ndim in ndims_set]
+            msg = f"Invalid ndim for attribute {attr_name}. (found multiple ndims: {ndims_set} at {indices=})"
             raise ValueError(msg)
 
         np_dtypes = [info.numpy_dtype for info in infos]
@@ -483,7 +485,7 @@ def _scan_dataset(
             and np_dtype.kind != "S"
         ):
             expected_np_dtype = hdf_dtype_to_numpy_dtype(hdf_dtype)
-            msg = f"Found input dtype {np_dtype} which is not compatible with HDF. It will be cast to {expected_np_dtype}. (from {hdf_dtype=})"
+            msg = f"Found input dtype {np_dtype} which is not compatible with HDF. It will be cast to {expected_np_dtype}. (with {hdf_dtype=})"
             warn_once(msg, __name__)
 
         all_eq_shapes[attr_name] = all_eq(shapes)
