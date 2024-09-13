@@ -16,20 +16,15 @@ __version__ = "0.4.0"
 from torch import *  # type: ignore
 
 # Re-import for language servers
+from . import core as core
+from . import extras as extras
 from . import hub as hub
 from . import nn as nn
 from . import optim as optim
 from . import utils as utils
+from .core.get import CUDA_IF_AVAILABLE, DeviceLike, DTypeLike, GeneratorLike
 from .nn.functional import *
-from .types.classes import (
-    CUDA_IF_AVAILABLE,
-    Device,
-    DeviceLike,
-    DTypeLike,
-    GeneratorLike,
-)
-from .types.dtype_typing import DTypeEnum
-from .types.tensor_typing import (
+from .types.tensor_subclasses import (
     BoolTensor,
     BoolTensor0D,
     BoolTensor1D,

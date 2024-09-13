@@ -31,6 +31,12 @@ from torch import Tensor
 from typing_extensions import TypeGuard
 
 import torchoutil as to
+from torchoutil.extras.hdf.common import (
+    HDF_ENCODING,
+    SHAPE_SUFFIX,
+    HDFDatasetAttributes,
+    HDFItemType,
+)
 from torchoutil.nn.functional.indices import get_inverse_perm
 from torchoutil.pyoutil.collections import all_eq
 from torchoutil.pyoutil.typing import (
@@ -39,12 +45,6 @@ from torchoutil.pyoutil.typing import (
     is_iterable_str,
 )
 from torchoutil.utils.data import DatasetSlicer
-from torchoutil.utils.hdf.common import (
-    HDF_ENCODING,
-    SHAPE_SUFFIX,
-    HDFDatasetAttributes,
-    HDFItemType,
-)
 from torchoutil.utils.pack.common import _dict_to_tuple
 from torchoutil.utils.saving import to_builtin
 

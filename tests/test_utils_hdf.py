@@ -13,9 +13,9 @@ from torch import Tensor
 from torch.utils.data.dataset import Subset
 from torchvision.datasets import CIFAR10
 
+from torchoutil.extras.hdf import HDFDataset, pack_to_hdf
 from torchoutil.nn import ESequential, IndexToOnehot, ToList, ToNumpy
 from torchoutil.pyoutil import dict_list_to_list_dict
-from torchoutil.utils.hdf import HDFDataset, pack_to_hdf
 
 
 class TestHDF(TestCase):

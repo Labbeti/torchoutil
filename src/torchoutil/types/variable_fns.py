@@ -7,8 +7,7 @@ import torch
 
 from torchoutil.nn.functional.get import get_device, get_dtype
 from torchoutil.pyoutil.typing import BuiltinNumber
-from torchoutil.types.classes import DeviceLike, DTypeLike
-from torchoutil.types.tensor_typing import (
+from torchoutil.types import (
     BoolTensor0D,
     BoolTensor1D,
     BoolTensor2D,
@@ -17,6 +16,8 @@ from torchoutil.types.tensor_typing import (
     CFloatTensor1D,
     CFloatTensor2D,
     CFloatTensor3D,
+    DeviceLike,
+    DTypeLike,
     FloatTensor0D,
     FloatTensor1D,
     FloatTensor2D,
@@ -30,6 +31,15 @@ from torchoutil.types.tensor_typing import (
     Tensor2D,
     Tensor3D,
 )
+
+__all__ = [
+    "as_tensor",
+    "zeros",
+    "ones",
+    "full",
+    "empty",
+    "rand",
+]
 
 
 @overload

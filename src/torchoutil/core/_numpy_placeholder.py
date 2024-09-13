@@ -32,12 +32,10 @@ class ndarray:
 
 
 def array(x: Any, *args, **kwargs) -> Never:
-    raise NotImplementedError(
-        "Cannot call function 'array' because optional dependancy 'numpy' is not installed. Please install it using 'pip install torchoutil[extras]'"
-    )
+    msg = "Cannot call function 'array' because optional dependancy 'numpy' is not installed. Please install it using 'pip install torchoutil[extras]'"
+    raise NotImplementedError(msg)
 
 
 def asarray(x: Any, *args, **kwargs) -> Never:
-    raise NotImplementedError(
-        "Cannot call function 'asarray' because optional dependancy 'numpy' is not installed. Please install it using 'pip install torchoutil[extras]'"
-    )
+    msg = "Cannot call function 'asarray' because optional dependancy 'numpy' is not installed. Please install it using 'pip install torchoutil[extras]'"
+    raise NotImplementedError(msg)

@@ -8,7 +8,7 @@ from typing import Any, Callable, Dict, Literal, TypeVar, Union
 
 import torch
 
-from torchoutil.types import np
+from torchoutil.types._typing import np
 from torchoutil.utils.saving.csv_io import to_csv
 from torchoutil.utils.saving.yaml_io import to_yaml
 
@@ -21,7 +21,7 @@ SaveFnLike = Union[
 
 
 def json_save_fn(obj: Any, fpath: Path) -> None:
-    fpath.write_text(json.dump(obj))
+    fpath.write_text(json.dumps(obj))
 
 
 def numpy_save_fn(obj: Any, fpath: Path) -> None:
@@ -32,7 +32,7 @@ def pickle_save_fn(obj: Any, fpath: Path) -> None:
     fpath.write_bytes(pickle.dumps(obj))
 
 
-SAVE_FNS: Dict[str, SaveFn[Any]] = {
+SAVE_FNS: Dict[str, SaveFn[Any]] = {  # type: ignore
     "csv": to_csv,
     "json": json_save_fn,
     "numpy": numpy_save_fn,

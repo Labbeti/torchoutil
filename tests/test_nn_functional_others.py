@@ -2,17 +2,18 @@
 # -*- coding: utf-8 -*-
 
 import unittest
+import warnings
 from unittest import TestCase
 
 import torch
 
+from torchoutil.core.packaging import _NUMPY_AVAILABLE
 from torchoutil.nn.functional.others import (
     can_be_converted_to_tensor,
     can_be_stacked,
     ndim,
     shape,
 )
-from torchoutil.utils.packaging import _NUMPY_AVAILABLE
 
 if _NUMPY_AVAILABLE:
     import numpy as np
@@ -40,6 +41,7 @@ class TestCanBeConvertedToTensor(TestCase):
         ]
 
         if _NUMPY_AVAILABLE:
+            warnings.filterwarnings("ignore", category=UserWarning)
             examples += [
                 np.float64(42),
                 [[np.float64(42)], np.array([2])],

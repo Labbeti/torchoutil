@@ -11,26 +11,26 @@ from torchoutil.pyoutil.functools import identity
 from torchoutil.pyoutil.importlib import package_is_available
 
 _EXTRAS_PACKAGES = (
-    "numpy",
-    "tensorboard",
+    "colorlog",
     "h5py",
+    "numpy",
     "omegaconf",
+    "pandas",
+    "tensorboard",
     "tqdm",
     "yaml",
-    "pandas",
-    "colorlog",
 )
 _EXTRA_AVAILABLE = {name: package_is_available(name) for name in _EXTRAS_PACKAGES}
 
 
-_NUMPY_AVAILABLE: Final[bool] = _EXTRA_AVAILABLE["numpy"]
-_TENSORBOARD_AVAILABLE: Final[bool] = _EXTRA_AVAILABLE["tensorboard"]
+_COLORLOG_AVAILABLE: Final[bool] = _EXTRA_AVAILABLE["colorlog"]
 _H5PY_AVAILABLE: Final[bool] = _EXTRA_AVAILABLE["h5py"]
+_NUMPY_AVAILABLE: Final[bool] = _EXTRA_AVAILABLE["numpy"]
 _OMEGACONF_AVAILABLE: Final[bool] = _EXTRA_AVAILABLE["omegaconf"]
+_PANDAS_AVAILABLE: Final[bool] = _EXTRA_AVAILABLE["pandas"]
+_TENSORBOARD_AVAILABLE: Final[bool] = _EXTRA_AVAILABLE["tensorboard"]
 _TQDM_AVAILABLE: Final[bool] = _EXTRA_AVAILABLE["tqdm"]
 _YAML_AVAILABLE: Final[bool] = _EXTRA_AVAILABLE["yaml"]
-_PANDAS_AVAILABLE: Final[bool] = _EXTRA_AVAILABLE["pandas"]
-_COLORLOG_AVAILABLE: Final[bool] = _EXTRA_AVAILABLE["colorlog"]
 
 _VERSION_PATTERN = r"^(?P<major>\d+)\.(?P<minor>\d+)(\.(?P<micro>\d+)(.*)|)$"
 

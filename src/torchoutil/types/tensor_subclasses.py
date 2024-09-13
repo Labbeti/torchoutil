@@ -13,9 +13,9 @@ from typing import (
     Generic,
     List,
     Literal,
+    NamedTuple,
     Optional,
     Sequence,
-    Tuple,
     Type,
     TypeVar,
     Union,
@@ -25,10 +25,10 @@ from typing import (
 import torch
 from torch._C import _TensorMeta
 
+from torchoutil.core.dtype_enum import DTypeEnum
+from torchoutil.core.get import DeviceLike, DTypeLike, get_device, get_dtype
 from torchoutil.nn import functional as F
 from torchoutil.pyoutil import BuiltinNumber, T_BuiltinNumber
-from torchoutil.types.classes import DeviceLike, DTypeLike
-from torchoutil.types.dtype_typing import DTypeEnum
 
 T_Tensor = TypeVar("T_Tensor", bound=torch.Tensor)
 T_DType = TypeVar("T_DType", "DTypeEnum", None)
@@ -60,17 +60,27 @@ _TORCH_BASE_CLASSES: Final[Dict[str, Type]] = {
 }
 
 
+class _GenericsValues(NamedTuple):
+    dtype: Optional[torch.dtype] = None
+    ndim: Optional[int] = None
+    floating_point: Optional[bool] = None
+    complex: Optional[bool] = None
+    signed: Optional[bool] = None
+
+
 def _get_generics(
     cls: Union[Type["_TensorNDMeta"], Type["_TensorNDBase"]],
-) -> Tuple[Optional[torch.dtype], Optional[int]]:
+) -> _GenericsValues:
     if not hasattr(cls, "__orig_class__"):
-        return None, None
+        return _GenericsValues()
+
     orig = cls.__orig_class__  # type: ignore
     if orig.__origin__ is not _TensorNDMeta:
-        return None, None
+        return _GenericsValues()
 
     generic_args = orig.__args__  # type: ignore
-    assert len(generic_args) >= 2
+    generic_args = generic_args[0:2]  # currently only check dtype and ndim
+    assert len(generic_args) == 2
 
     t_dtype = generic_args[0]
     if t_dtype is not _DEFAULT_T_DTYPE:
@@ -85,7 +95,7 @@ def _get_generics(
     else:
         ndim = None
 
-    return dtype, ndim
+    return _GenericsValues(dtype, ndim)
 
 
 class _TensorNDMeta(Generic[T_DType, T_NDim, T_BuiltinNumber], _TensorMeta):
@@ -94,27 +104,34 @@ class _TensorNDMeta(Generic[T_DType, T_NDim, T_BuiltinNumber], _TensorMeta):
         if not isinstance(instance, torch.Tensor):
             return False
 
-        dtype, ndim = _get_generics(cls)
+        gen = _get_generics(cls)
 
-        if dtype is not None and dtype != instance.dtype:
+        if gen.dtype is not None and gen.dtype != instance.dtype:
             return False
-        if ndim is not None and ndim != instance.ndim:
+        if gen.ndim is not None and gen.ndim != instance.ndim:
+            return False
+        if (
+            gen.floating_point is not None
+            and gen.floating_point != instance.is_floating_point()
+        ):
+            return False
+        if gen.complex is not None and gen.complex != instance.is_complex():
+            return False
+        if gen.signed is not None and gen.signed != instance.is_signed():
             return False
 
         return True
 
     def __subclasscheck__(cls, subclass: Any) -> bool:
         """Called method to check issubclass(subclass, cls)"""
-        self_dtype, self_ndim = _get_generics(cls)
-        other_dtype, other_ndim = _get_generics(subclass)
+        self_generics = _get_generics(cls)
+        other_generics = _get_generics(subclass)
 
-        if self_dtype is not None and (
-            other_dtype is None or self_dtype != other_dtype
-        ):
-            return False
-
-        if self_ndim is not None and (other_ndim is None or self_ndim != other_ndim):
-            return False
+        for self_attr, other_attr in zip(self_generics, other_generics):
+            if self_attr is not None and (
+                other_attr is None or self_attr != other_attr
+            ):
+                return False
 
         return True
 
@@ -156,9 +173,12 @@ class _TensorNDBase(Generic[T_DType, T_NDim, T_BuiltinNumber], torch.Tensor):
         pin_memory: Union[bool, None] = False,
         requires_grad: Union[bool, None] = False,
     ) -> T_Tensor:
-        dtype = F.get_dtype(dtype)
-        device = F.get_device(device)
-        cls_dtype, cls_ndim = _get_generics(cls)  # type: ignore
+        dtype = get_dtype(dtype)
+        device = get_device(device)
+
+        generics = _get_generics(cls)  # type: ignore
+        cls_dtype = generics.dtype
+        cls_ndim = generics.ndim
 
         if cls_dtype is None:
             pass
@@ -271,13 +291,13 @@ class _TensorNDBase(Generic[T_DType, T_NDim, T_BuiltinNumber], torch.Tensor):
     ) -> None:
         ...
 
-    ndim: T_NDim
+    ndim: T_NDim  # type: ignore
 
     def item(self) -> T_BuiltinNumber:
-        ...
+        ...  # type: ignore
 
     def tolist(self) -> Union[list, T_BuiltinNumber]:
-        ...
+        ...  # type: ignore
 
     item = torch.Tensor.item  # noqa: F811  # type: ignore
     tolist = torch.Tensor.tolist  # noqa: F811

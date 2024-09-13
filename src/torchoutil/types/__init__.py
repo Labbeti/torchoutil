@@ -3,17 +3,17 @@
 
 from torch.types import *
 
-from torchoutil.pyoutil.typing import *
-
-from .classes import (
-    ACCEPTED_NUMPY_DTYPES,
+from torchoutil.core.get import (
     CUDA_IF_AVAILABLE,
     DeviceLike,
     DTypeLike,
     GeneratorLike,
-    np,
-    numpy,
+    get_device,
+    get_dtype,
+    get_generator,
 )
+from torchoutil.pyoutil.typing import *
+
 from .guards import (
     is_bool_tensor,
     is_bool_tensor1d,
@@ -31,7 +31,7 @@ from .guards import (
     is_tensor0d,
     is_tuple_tensor,
 )
-from .tensor_typing import (
+from .tensor_subclasses import (
     BoolTensor,
     BoolTensor0D,
     BoolTensor1D,

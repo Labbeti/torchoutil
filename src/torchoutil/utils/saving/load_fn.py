@@ -8,7 +8,7 @@ from typing import Any, Callable, Dict, Literal, TypeVar, Union
 
 import torch
 
-from torchoutil.types import np
+from torchoutil.types._typing import np
 from torchoutil.utils.saving.csv_io import load_csv
 from torchoutil.utils.saving.yaml_io import load_yaml
 

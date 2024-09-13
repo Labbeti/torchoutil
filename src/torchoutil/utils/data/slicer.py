@@ -11,7 +11,7 @@ from torch.utils.data.dataset import Dataset
 from torchoutil.pyoutil.typing import is_iterable_bool, is_iterable_int
 from torchoutil.pyoutil.typing.classes import SupportsLenAndGetItem
 from torchoutil.types import is_bool_tensor1d, is_integer_tensor1d
-from torchoutil.types._hints import BoolTensor, Tensor1D
+from torchoutil.types._typing import BoolTensor, Tensor1D
 from torchoutil.utils.data.dataset import Wrapper
 
 T = TypeVar("T", covariant=False)
@@ -108,9 +108,8 @@ class DatasetSlicer(Generic[T], ABC, Dataset[T]):
             if not isinstance(mask, Tensor):
                 mask = torch.as_tensor(list(mask), dtype=torch.bool)  # type: ignore
             if len(mask) > 0 and len(mask) != len(self):  # type: ignore
-                raise ValueError(
-                    f"Invalid mask size {len(mask)}. (expected {len(self)})"  # type: ignore
-                )
+                msg = f"Invalid mask size {len(mask)}. (expected {len(self)})"
+                raise ValueError(msg)
             indices = _where_1d(mask)
             return self.get_items_indices(indices, *args)
         else:

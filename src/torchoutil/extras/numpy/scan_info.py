@@ -9,7 +9,8 @@ from torch import Tensor
 
 import pyoutil as po
 import torchoutil as to
-from torchoutil.types import ACCEPTED_NUMPY_DTYPES, BuiltinScalar, np
+from torchoutil.extras.numpy.functional import ACCEPTED_NUMPY_DTYPES, np
+from torchoutil.pyoutil import BuiltinScalar
 
 T_Invalid = TypeVar("T_Invalid")
 T_Empty = TypeVar("T_Empty")
@@ -43,10 +44,6 @@ class ShapeDTypeInfo(Generic[T_Invalid, T_EmptyNp, T_EmptyTorch]):
             return self.numpy_dtype.kind
         else:
             return "V"
-
-
-def get_default_numpy_dtype() -> np.dtype:
-    return np.empty((0,)).dtype
 
 
 def scan_shape_dtypes(x: Any) -> ShapeDTypeInfo[InvalidTorchDType, np.dtype, None]:
@@ -129,39 +126,6 @@ def scan_numpy_dtype(
     raise TypeError(msg)
 
 
-def merge_torch_dtypes(
-    dtypes: Iterable[Union[torch.dtype, T_Invalid, T_EmptyNp]],
-    *,
-    invalid: T_Invalid = InvalidTorchDType(),
-    empty: T_EmptyNp = None,
-) -> Union[torch.dtype, T_Invalid, T_EmptyNp]:
-    dtypes = list(dict.fromkeys(dtypes))
-    dtypes = [dtype for dtype in dtypes if dtype != empty]
-    if len(dtypes) == 0:
-        return empty
-    if any(dtype == invalid for dtype in dtypes):
-        return invalid
-
-    dummy_tensors = [torch.empty((0,), dtype=dtype) for dtype in dtypes]  # type: ignore
-    dtype = torch.stack(dummy_tensors).dtype
-    return dtype
-
-
-def merge_numpy_dtypes(
-    dtypes: Iterable[Union[np.dtype, T_EmptyNp]],
-    *,
-    empty: T_EmptyNp = np.dtype("V"),
-) -> Union[np.dtype, T_EmptyNp]:
-    dtypes = list(dict.fromkeys(dtypes))
-    dtypes = [dtype for dtype in dtypes if dtype != empty]
-    if len(dtypes) == 0:
-        return empty
-
-    dummy_arrays = [np.empty((0,), dtype=dtype) for dtype in dtypes]  # type: ignore
-    dtype = np.stack(dummy_arrays).dtype
-    return dtype
-
-
 def torch_dtype_to_numpy_dtype(dtype: torch.dtype) -> np.dtype:
     x = torch.empty((0,), dtype=dtype)
     x = to.tensor_to_numpy(x)
@@ -197,4 +161,43 @@ def numpy_dtype_to_fill_value(dtype: Any) -> BuiltinScalar:
     elif kind in ("U", "S"):
         return ""
     else:
-        raise ValueError(f"Invalid argument {dtype=}.")
+        KINDS = ("b", "u", "i", "f", "c", "U", "S")
+        msg = f"Invalid argument {dtype=}. (expected dtype.kind in {KINDS})"
+        raise ValueError(msg)
+
+
+def merge_numpy_dtypes(
+    dtypes: Iterable[Union[np.dtype, T_EmptyNp]],
+    *,
+    empty: T_EmptyNp = np.dtype("V"),
+) -> Union[np.dtype, T_EmptyNp]:
+    dtypes = list(dict.fromkeys(dtypes))
+    dtypes = [dtype for dtype in dtypes if dtype != empty]
+    if len(dtypes) == 0:
+        return empty
+
+    dummy_arrays = [np.empty((0,), dtype=dtype) for dtype in dtypes]  # type: ignore
+    dtype = np.stack(dummy_arrays).dtype
+    return dtype
+
+
+def merge_torch_dtypes(
+    dtypes: Iterable[Union[torch.dtype, T_Invalid, T_EmptyNp]],
+    *,
+    invalid: T_Invalid = InvalidTorchDType(),
+    empty: T_EmptyNp = None,
+) -> Union[torch.dtype, T_Invalid, T_EmptyNp]:
+    dtypes = list(dict.fromkeys(dtypes))
+    dtypes = [dtype for dtype in dtypes if dtype != empty]
+    if len(dtypes) == 0:
+        return empty
+    if any(dtype == invalid for dtype in dtypes):
+        return invalid
+
+    dummy_tensors = [torch.empty((0,), dtype=dtype) for dtype in dtypes]  # type: ignore
+    dtype = torch.stack(dummy_tensors).dtype
+    return dtype
+
+
+def get_default_numpy_dtype() -> np.dtype:
+    return np.empty((0,)).dtype

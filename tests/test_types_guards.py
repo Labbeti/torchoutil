@@ -8,6 +8,8 @@ from unittest import TestCase
 
 import torch
 
+from torchoutil.core.packaging import _NUMPY_AVAILABLE
+from torchoutil.extras.numpy import np
 from torchoutil.nn import functional as F
 from torchoutil.pyoutil.typing import is_builtin_number, is_builtin_scalar
 from torchoutil.types import (
@@ -15,9 +17,7 @@ from torchoutil.types import (
     is_numpy_number_like,
     is_scalar_like,
     is_tensor0d,
-    np,
 )
-from torchoutil.utils.packaging import _NUMPY_AVAILABLE
 
 
 class TestIsNumber(TestCase):

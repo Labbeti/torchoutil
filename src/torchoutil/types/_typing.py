@@ -1,11 +1,18 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+
 from typing import Union
 
+from torchoutil.nn.functional.numpy import (  # noqa: F401
+    NumpyNumberLike,
+    NumpyScalarLike,
+    np,
+    numpy,
+)
 from torchoutil.pyoutil.typing import BuiltinNumber, BuiltinScalar
-from torchoutil.types.classes import np
-from torchoutil.types.tensor_typing import (  # noqa: F401
+
+from .tensor_subclasses import (  # noqa: F401
     BoolTensor,
     BoolTensor0D,
     BoolTensor1D,
@@ -61,11 +68,8 @@ from torchoutil.types.tensor_typing import (  # noqa: F401
     Tensor3D,
 )
 
-r"""/!\ The following type hints meants for type annotation only, not for runtime checks.
+r"""/!\ The following type hints are meant for type annotation only, not for runtime checks.
 """
-
-NumpyNumberLike = Union[np.ndarray, np.number]
-NumpyScalarLike = Union[np.ndarray, np.generic]
 
 NumberLike = Union[BuiltinNumber, NumpyNumberLike, Tensor0D]
 ScalarLike = Union[BuiltinScalar, NumpyScalarLike, Tensor0D]

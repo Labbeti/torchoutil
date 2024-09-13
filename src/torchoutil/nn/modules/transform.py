@@ -33,7 +33,8 @@ from torchoutil.nn.functional.transform import (
     transform_drop,
 )
 from torchoutil.pyoutil.collections import dump_dict
-from torchoutil.types import DeviceLike, DTypeLike, np
+from torchoutil.types import DeviceLike, DTypeLike
+from torchoutil.types._typing import np
 
 T = TypeVar("T")
 

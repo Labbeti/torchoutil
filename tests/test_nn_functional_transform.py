@@ -7,13 +7,13 @@ from unittest import TestCase
 import torch
 
 import pyoutil as po
+from torchoutil.core.packaging import _NUMPY_AVAILABLE
 from torchoutil.nn.functional.transform import (
     flatten,
     repeat_interleave_nd,
     resample_nearest_rates,
 )
-from torchoutil.types import np
-from torchoutil.utils.packaging import _NUMPY_AVAILABLE
+from torchoutil.types._typing import np
 
 
 class TestRepeat(TestCase):

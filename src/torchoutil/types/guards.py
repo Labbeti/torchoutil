@@ -7,33 +7,15 @@ import torch
 from torch import BoolTensor, Tensor
 from typing_extensions import TypeGuard
 
+from torchoutil.nn.functional.numpy import is_numpy_number_like, is_numpy_scalar_like
 from torchoutil.pyoutil.typing import is_builtin_number, is_builtin_scalar
-from torchoutil.types._hints import (
+from torchoutil.types._typing import (
     BoolTensor1D,
     NumberLike,
-    NumpyNumberLike,
-    NumpyScalarLike,
     ScalarLike,
     Tensor0D,
     Tensor1D,
 )
-from torchoutil.types.classes import np
-
-
-def is_numpy_number_like(x: Any) -> TypeGuard[NumpyNumberLike]:
-    """Returns True if x is an instance of a numpy number type or a zero-dimensional numpy array.
-    If numpy is not installed, this function always returns False.
-    """
-    return isinstance(x, (np.number, np.bool_)) or (
-        isinstance(x, np.ndarray) and x.ndim == 0
-    )
-
-
-def is_numpy_scalar_like(x: Any) -> TypeGuard[NumpyScalarLike]:
-    """Returns True if x is an instance of a numpy number type or a zero-dimensional numpy array.
-    If numpy is not installed, this function always returns False.
-    """
-    return isinstance(x, np.generic) or (isinstance(x, np.ndarray) and x.ndim == 0)
 
 
 def is_tensor0d(x: Any) -> TypeGuard[Tensor0D]:

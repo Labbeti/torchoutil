@@ -13,6 +13,7 @@ from typing import (
     Literal,
     Mapping,
     Optional,
+    Set,
     Tuple,
     TypeVar,
     Union,
@@ -27,6 +28,15 @@ from torch.utils.data.dataloader import DataLoader
 
 import torchoutil as to
 from torchoutil import nn
+from torchoutil.extras.hdf.common import (
+    HDF_ENCODING,
+    HDF_STRING_DTYPE,
+    HDF_VOID_DTYPE,
+    SHAPE_SUFFIX,
+    HDFItemType,
+)
+from torchoutil.extras.hdf.dataset import HDFDataset
+from torchoutil.extras.numpy.scan_info import merge_numpy_dtypes, scan_numpy_dtype
 from torchoutil.nn.functional.checksum import checksum
 from torchoutil.pyoutil.collections import all_eq
 from torchoutil.pyoutil.functools import Compose
@@ -35,19 +45,6 @@ from torchoutil.pyoutil.typing import is_dataclass_instance, is_dict_str
 from torchoutil.types import BuiltinScalar
 from torchoutil.utils.data.dataloader import get_auto_num_cpus
 from torchoutil.utils.data.dataset import IterableDataset, SizedDatasetLike
-from torchoutil.utils.data.dtype import (
-    ShapeDTypeInfo,
-    merge_numpy_dtypes,
-    scan_shape_dtypes,
-)
-from torchoutil.utils.hdf.common import (
-    HDF_ENCODING,
-    HDF_STRING_DTYPE,
-    HDF_VOID_DTYPE,
-    SHAPE_SUFFIX,
-    HDFItemType,
-)
-from torchoutil.utils.hdf.dataset import HDFDataset
 from torchoutil.utils.pack.common import EXISTS_MODES, ExistsMode, _tuple_to_dict
 from torchoutil.utils.saving import to_builtin
 
@@ -261,8 +258,7 @@ def pack_to_hdf(
                     if load_as_complex.get(attr_name, False):
                         value = to.view_as_real(value)
 
-                    info = scan_shape_dtypes(value)
-                    shape = info.shape
+                    shape = to.shape(value)
 
                     # Check every shape
                     if len(shape) != hdf_dset.ndim - 1:
@@ -278,16 +274,6 @@ def pack_to_hdf(
                         pylog.error(msg)
                         msg = "INTERNAL ERROR: Cannot resize dataset when pre-computing shapes."
                         raise RuntimeError(msg)
-
-                    # TODO: rm old code
-                    # if isinstance(value, Tensor) and value.is_cuda:  # type: ignore
-                    #     value = value.cpu()  # type: ignore
-
-                    # # If the value is a sequence but not an array or tensor
-                    # if hdf_dtype in ("i", "f", "c") and not isinstance(
-                    #     value, (Tensor, np.ndarray)
-                    # ):
-                    #     value = np.array(value)
 
                     # Note: "hdf_dset[slices]" is a generic version of "hdf_dset[i, :shape_0, :shape_1]"
                     slices = (i,) + tuple(slice(shape_i) for shape_i in shape)
@@ -420,8 +406,8 @@ def _scan_dataset(
         pin_memory=False,
     )
 
-    infos_dict: Dict[str, set[ShapeDTypeInfo]] = {}
-    src_kinds: Dict[str, set[str]] = {}
+    infos_dict: Dict[str, Set[Tuple[Tuple[int, ...], np.dtype]]] = {}
+    src_kinds: Dict[str, Set[str]] = {}
 
     for batch in tqdm.tqdm(
         loader,
@@ -433,21 +419,26 @@ def _scan_dataset(
 
         for item in batch:
             for attr_name, value in item.items():
-                info = scan_shape_dtypes(value)
+                shape = to.shape(value)
+                np_dtype = scan_numpy_dtype(value)
+                kind = np_dtype.kind
+
                 if attr_name in src_kinds:
-                    src_kinds[attr_name].add(info.kind)
+                    src_kinds[attr_name].add(kind)
                 else:
-                    src_kinds[attr_name] = {info.kind}
+                    src_kinds[attr_name] = {kind}
 
                 value = to.to_numpy(value)
-                if info.kind == "U" and not use_vlen_str:
+                if kind == "U" and not use_vlen_str:
                     value = encode_array(value)
-                    info = scan_shape_dtypes(value)
+                    # update shape and np_dtype after encoding
+                    shape = to.shape(value)
+                    np_dtype = scan_numpy_dtype(value)
 
                 if attr_name in infos_dict:
-                    infos_dict[attr_name].add(info)
+                    infos_dict[attr_name].add((shape, np_dtype))
                 else:
-                    infos_dict[attr_name] = {info}
+                    infos_dict[attr_name] = {(shape, np_dtype)}
 
     is_unicode = {
         name: kinds == {"V", "U"} or kinds == {"U"} for name, kinds in src_kinds.items()
@@ -457,8 +448,8 @@ def _scan_dataset(
     hdf_dtypes: Dict[str, HDFDType] = {}
     all_eq_shapes: Dict[str, bool] = {}
 
-    for attr_name, infos in infos_dict.items():
-        shapes = [info.shape for info in infos]
+    for attr_name, info in infos_dict.items():
+        shapes = [shape for shape, _ in info]
         ndims = list(map(len, shapes))
         if not all_eq(ndims):
             ndims_set = tuple(set(ndims))
@@ -466,7 +457,7 @@ def _scan_dataset(
             msg = f"Invalid ndim for attribute {attr_name}. (found multiple ndims: {ndims_set} at {indices=})"
             raise ValueError(msg)
 
-        np_dtypes = [info.numpy_dtype for info in infos]
+        np_dtypes = [np_dtype for _, np_dtype in info]
         np_dtype = merge_numpy_dtypes(np_dtypes)
         hdf_dtype = numpy_dtype_to_hdf_dtype(np_dtype)
 

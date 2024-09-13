@@ -7,7 +7,7 @@ from unittest import TestCase
 
 import torch
 
-from torchoutil.types.tensor_typing import (
+from torchoutil.types.tensor_subclasses import (
     DoubleTensor,
     FloatTensor,
     FloatTensor0D,

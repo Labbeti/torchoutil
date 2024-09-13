@@ -21,7 +21,7 @@ from typing import (
 from typing_extensions import override
 
 from torchoutil.pyoutil import is_iterable_str
-from torchoutil.types.tensor_typing import Tensor1D
+from torchoutil.types.tensor_subclasses import Tensor1D
 from torchoutil.utils.data import DatasetSlicer
 from torchoutil.utils.pack.common import (
     ATTRS_FNAME,

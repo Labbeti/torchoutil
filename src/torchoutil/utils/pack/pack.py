@@ -15,16 +15,17 @@ from torch.utils.data.dataloader import DataLoader
 import pyoutil as po
 import torchoutil as to
 from torchoutil import nn
+from torchoutil.core.packaging import _NUMPY_AVAILABLE, _TQDM_AVAILABLE
+from torchoutil.extras.numpy.scan_info import (
+    merge_numpy_dtypes,
+    numpy_dtype_to_fill_value,
+    scan_shape_dtypes,
+)
 from torchoutil.utils.data.dataloader import get_auto_num_cpus
 from torchoutil.utils.data.dataset import (
     SizedDatasetLike,
     SizedIterableDatasetLike,
     TransformWrapper,
-)
-from torchoutil.utils.data.dtype import (
-    merge_numpy_dtypes,
-    numpy_dtype_to_fill_value,
-    scan_shape_dtypes,
 )
 from torchoutil.utils.pack.common import (
     ATTRS_FNAME,
@@ -35,7 +36,6 @@ from torchoutil.utils.pack.common import (
     _tuple_to_dict,
 )
 from torchoutil.utils.pack.dataset import PackedDataset
-from torchoutil.utils.packaging import _NUMPY_AVAILABLE, _TQDM_AVAILABLE
 from torchoutil.utils.saving.common import to_builtin
 from torchoutil.utils.saving.save_fn import SAVE_EXTENSIONS, SAVE_FNS, SaveFnLike
 
@@ -123,13 +123,13 @@ def pack_dataset(
         return pack_dataset_to_columns(
             dataset=dataset,
             root=root,
-            pre_transform=pre_transform,
+            pre_transform=pre_transform,  # type: ignore
             batch_size=batch_size,
             ds_kwds=ds_kwds,
             exists=exists,
             fname_fmt=custom_file_fmt,
             num_workers=num_workers,
-            save_fn=save_fn,
+            save_fn=save_fn,  # type: ignore
             user_attrs=user_attrs,
             verbose=verbose,
         )

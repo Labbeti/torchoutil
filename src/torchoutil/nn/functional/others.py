@@ -22,13 +22,15 @@ import torch
 from torch import LongTensor, Tensor, nn
 from typing_extensions import TypeGuard
 
-from torchoutil.nn.functional.get import get_device
-from torchoutil.nn.functional.numpy import (
+from torchoutil.extras.numpy import (
+    ACCEPTED_NUMPY_DTYPES,
+    np,
     numpy_is_complex,
     numpy_is_floating_point,
     numpy_view_as_complex,
     numpy_view_as_real,
 )
+from torchoutil.nn.functional.get import get_device
 from torchoutil.pyoutil.collections import all_eq
 from torchoutil.pyoutil.collections import prod as builtin_prod
 from torchoutil.pyoutil.functools import identity
@@ -39,14 +41,8 @@ from torchoutil.pyoutil.typing import (
     is_builtin_number,
     is_builtin_scalar,
 )
-from torchoutil.types import (
-    ACCEPTED_NUMPY_DTYPES,
-    is_list_tensor,
-    is_scalar_like,
-    is_tuple_tensor,
-    np,
-)
-from torchoutil.types._hints import ScalarLike
+from torchoutil.types._typing import ScalarLike
+from torchoutil.types.guards import is_list_tensor, is_scalar_like, is_tuple_tensor
 from torchoutil.utils import return_types
 
 T = TypeVar("T")
@@ -82,9 +78,9 @@ def find(
 ) -> LongTensor:
     """Return the index of the first occurrence of value in a tensor."""
     if x.ndim == 0:
-        raise ValueError(
-            f"Function find does not supports 0-d tensors. (found {x.ndim=} == 0)"
-        )
+        msg = f"Function find does not supports 0-d tensors. (found {x.ndim=} == 0)"
+        raise ValueError(msg)
+
     mask = x.eq(value)
     contains = mask.any(dim=dim)
     indices = mask.long().argmax(dim=dim)
@@ -229,9 +225,8 @@ def ndim(
     if valid:
         return ndim
     else:
-        raise ValueError(
-            f"Invalid argument {x}. (cannot compute ndim for heterogeneous data)"
-        )
+        msg = f"Invalid argument {x}. (cannot compute ndim for heterogeneous data)"
+        raise ValueError(msg)
 
 
 @overload

@@ -13,7 +13,7 @@ from torch.utils.data.dataset import Subset
 from torchvision.datasets import CIFAR10
 
 from torchoutil.nn import ESequential, IndexToOnehot, ToList, ToNumpy
-from torchoutil.types import np
+from torchoutil.types._typing import np
 from torchoutil.utils.pack.pack import pack_dataset, pack_dataset_to_columns
 
 

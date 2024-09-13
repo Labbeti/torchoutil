@@ -25,8 +25,8 @@ from torchoutil.pyoutil.collections import flatten as builtin_flatten
 from torchoutil.pyoutil.collections import prod as builtin_prod
 from torchoutil.pyoutil.functools import identity  # noqa: F401
 from torchoutil.pyoutil.typing import T_BuiltinScalar
-from torchoutil.types import DeviceLike, DTypeLike, is_number_like, is_scalar_like, np
-from torchoutil.types._hints import Tensor1D
+from torchoutil.types import DeviceLike, DTypeLike, is_number_like, is_scalar_like
+from torchoutil.types._typing import Tensor1D, np
 
 T = TypeVar("T")
 U = TypeVar("U")
