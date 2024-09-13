@@ -76,7 +76,7 @@ def list_dict_to_dict_list(
     if key_mode == "same":
         invalids = [list(item.keys()) for item in lst[1:] if keys != set(item.keys())]
         if len(invalids) > 0:
-            msg = f"Invalid dict keys for conversion from list[dict] to dict[list]. (with {key_mode=}, {keys=} and {invalids=})"
+            msg = f"Invalid dict keys for conversion from List[dict] to Dict[list]. (with {key_mode=}, {keys=} and {invalids=})"
             raise ValueError(msg)
 
     elif key_mode == "intersect":

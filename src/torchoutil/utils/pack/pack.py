@@ -322,7 +322,7 @@ def pack_dataset_to_columns(
         item_0 = _tuple_to_dict(item_0)
 
     else:
-        msg = f"Invalid item type for {dataset.__class__.__name__}. (expected dict[str, Any] or tuple but found {type(item_0)})"
+        msg = f"Invalid item type for {dataset.__class__.__name__}. (expected Dict[str, Any] or tuple but found {type(item_0)})"
         raise ValueError(msg)
 
     infos_0 = {name: scan_shape_dtypes(value) for name, value in item_0.items()}

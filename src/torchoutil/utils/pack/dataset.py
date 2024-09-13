@@ -64,13 +64,13 @@ class PackedDataset(Generic[T, U], DatasetSlicer[U]):
         self._transform = transform
         self._load_fn = load_fn
 
-        self._attrs = {}
-        self._fpaths: list[Path] = []
+        self._attrs: PackedDatasetAttributes = {}  # type: ignore
+        self._fpaths: List[Path] = []
         self._column_to_fname: Dict[str, str] = {}
         self._reload_data(root, load_fn)
 
     @property
-    def attrs(self) -> PackedDatasetAttributes:
+    def attrs(self) -> Optional[PackedDatasetAttributes]:
         return self._attrs  # type: ignore
 
     @property

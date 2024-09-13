@@ -195,16 +195,23 @@ def pack_to_hdf(
             if fill_value is not None:
                 kwargs["fillvalue"] = fill_value
 
-            if verbose >= 2:
-                msg = f"Build hdf dset '{attr_name}' with shape={(len(dataset),) + shape}."
-                pylog.debug(msg)
-
             hdf_dsets[attr_name] = hdf_file.create_dataset(
                 attr_name,
                 (len(dataset),) + shape,
                 hdf_dtype,
                 **kwargs,
             )
+
+        if verbose >= 2:
+            num_scalars = sum(len(hdf_ds.shape) == 1 for hdf_ds in hdf_dsets.values())
+            msg = f"{num_scalars}/{len(hdf_dsets)} column dsets contains a single dim."
+            pylog.debug(msg)
+
+            for attr_name, hdf_ds in hdf_dsets.items():
+                if len(hdf_ds.shape) == 1:
+                    continue
+                msg = f"HDF column dset multidim '{attr_name}' with (shape={hdf_ds.shape}, dtype={hdf_ds.dtype}) has been built."
+                pylog.debug(msg)
 
         # Create sub-datasets for shape data
         for attr_name, shape in max_shapes.items():
@@ -382,10 +389,10 @@ def _scan_dataset(
             x = x.tolist()
         return x
 
-    def encode_dict_array(x: dict[str, np.ndarray]) -> dict[str, Any]:
+    def encode_dict_array(x: Dict[str, np.ndarray]) -> Dict[str, Any]:
         return {k: encode_array(to.to_numpy(v)) for k, v in x.items()}
 
-    to_dict_fn: Callable[[T], dict[str, Any]]
+    to_dict_fn: Callable[[T], Dict[str, Any]]
 
     if is_dict_str(item_0):
         item_type = "dict"
@@ -394,7 +401,7 @@ def _scan_dataset(
         item_type = "tuple"
         to_dict_fn = _tuple_to_dict  # type: ignore
     else:
-        msg = f"Invalid item type for {dataset.__class__.__name__}. (expected dict[str, Any] or tuple but found {type(item_0)})"
+        msg = f"Invalid item type for {dataset.__class__.__name__}. (expected Dict[str, Any] or tuple but found {type(item_0)})"
         raise ValueError(msg)
     del item_0
 
@@ -413,8 +420,8 @@ def _scan_dataset(
         pin_memory=False,
     )
 
-    infos_dict: dict[str, set[ShapeDTypeInfo]] = {}
-    src_kinds: dict[str, set[str]] = {}
+    infos_dict: Dict[str, set[ShapeDTypeInfo]] = {}
+    src_kinds: Dict[str, set[str]] = {}
 
     for batch in tqdm.tqdm(
         loader,

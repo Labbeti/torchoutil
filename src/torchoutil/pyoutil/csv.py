@@ -147,7 +147,7 @@ def load_csv(
         reader = reader_cls(file, **csv_reader_kwds)
         raw_data_lst = list(reader)
 
-    data_lst: list[dict[str, Any]]
+    data_lst: List[Dict[str, Any]]
     if header:
         data_lst = raw_data_lst  # type: ignore
     else:

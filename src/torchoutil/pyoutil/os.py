@@ -9,6 +9,7 @@ from pathlib import Path
 from re import Pattern
 from typing import Any, Generator, Iterable, List, Union
 
+from torchoutil.pyoutil.logging import warn_once
 from torchoutil.pyoutil.re import PatternLike, compile_patterns, match_patterns
 
 pylog = logging.getLogger(__name__)
@@ -23,6 +24,9 @@ def get_num_cpus_available() -> int:
     try:
         num_cpus = len(os.sched_getaffinity(0))
     except AttributeError:
+        msg = "Cannot detect number of CPUs available for the current process. This function will just returns the number of CPUs."
+        warn_once(msg, __name__)
+
         num_cpus = os.cpu_count()
         if num_cpus is None:
             num_cpus = 0
