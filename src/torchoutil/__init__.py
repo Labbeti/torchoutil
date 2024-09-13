@@ -22,7 +22,6 @@ from . import hub as hub
 from . import nn as nn
 from . import optim as optim
 from . import utils as utils
-from .core.get import CUDA_IF_AVAILABLE, DeviceLike, DTypeLike, GeneratorLike
 from .nn.functional import *
 from .types.tensor_subclasses import (
     BoolTensor,

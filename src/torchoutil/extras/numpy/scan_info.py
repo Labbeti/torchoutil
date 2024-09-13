@@ -7,8 +7,8 @@ from typing import Any, Generic, Iterable, Tuple, TypeVar, Union
 import torch
 from torch import Tensor
 
-import pyoutil as po
 import torchoutil as to
+from torchoutil import pyoutil as po
 from torchoutil.extras.numpy.functional import ACCEPTED_NUMPY_DTYPES, np
 from torchoutil.pyoutil import BuiltinScalar
 
