@@ -41,12 +41,12 @@ from torchoutil.pyoutil.typing import (
 from torchoutil.utils.data import DatasetSlicer
 from torchoutil.utils.hdf.common import (
     HDF_ENCODING,
-    HDF_STRING_DTYPE,
     SHAPE_SUFFIX,
     HDFDatasetAttributes,
     HDFItemType,
 )
 from torchoutil.utils.pack.common import _dict_to_tuple
+from torchoutil.utils.saving import to_builtin
 
 T = TypeVar("T")
 U = TypeVar("U")
@@ -302,29 +302,41 @@ class HDFDataset(Generic[T, U], DatasetSlicer[U]):
 
         if self._is_unicode.get(column, False):
             hdf_values = np.char.decode(hdf_values, encoding=self._encoding)
-        elif hdf_dtype == HDF_STRING_DTYPE:  # old supports vlen_str
+        elif h5py.check_vlen_dtype(hdf_dtype):  # old supports vlen_str
             hdf_values = _decode_rec(hdf_values, encoding=self._encoding)
 
-        for hdf_value, slices in zip(hdf_values, slices_lst, strict=True):
+        for hdf_value, slices in zip(hdf_values, slices_lst):
             # Remove the padding part
             if slices is not None:
+                assert isinstance(hdf_value, np.ndarray) and not isinstance(
+                    hdf_value, str
+                )
                 hdf_value = hdf_value[slices]
 
             if self._cast == "none":
                 continue
 
             elif self._cast == "to_torch_or_builtin":
-                if hdf_dtype.kind not in ("V", "S", "O"):
-                    hdf_value = to.numpy_to_tensor(hdf_value)
-                else:
+                valid = to.shape(hdf_value, return_valid=True).valid
+                if valid and hdf_dtype.kind not in ("V", "S", "O"):
+                    hdf_value = to.to_tensor(hdf_value)
+                elif isinstance(hdf_value, np.ndarray):
                     hdf_value = hdf_value.tolist()
+                else:
+                    hdf_value = to_builtin(hdf_value)
 
             elif self._cast == "to_torch_or_numpy":
-                if hdf_dtype.kind not in ("V", "S", "O"):
-                    hdf_value = to.numpy_to_tensor(hdf_value)
+                valid = to.shape(hdf_value, return_valid=True).valid
+                if valid and hdf_dtype.kind not in ("V", "S", "O"):
+                    hdf_value = to.to_tensor(hdf_value)
+                else:
+                    hdf_value = np.array(hdf_value)
 
             elif self._cast == "to_builtin":
-                hdf_value = hdf_value.tolist()
+                if isinstance(hdf_value, np.ndarray):
+                    hdf_value = hdf_value.tolist()
+                else:
+                    hdf_value = to_builtin(hdf_value)
 
             outputs.append(hdf_value)
 
