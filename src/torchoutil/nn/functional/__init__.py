@@ -70,6 +70,7 @@ from .others import (
     view_as_real,
 )
 from .pad import cat_padded_batch, pad_and_stack_rec, pad_dim, pad_dims
+from .powerset import multilabel_to_powerset, powerset_to_multilabel
 from .transform import (
     flatten,
     identity,

@@ -4,7 +4,7 @@
 
 from typing import Union
 
-from torchoutil.nn.functional.numpy import (  # noqa: F401
+from torchoutil.extras.numpy import (  # noqa: F401
     NumpyNumberLike,
     NumpyScalarLike,
     np,

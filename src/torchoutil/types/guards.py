@@ -7,7 +7,7 @@ import torch
 from torch import BoolTensor, Tensor
 from typing_extensions import TypeGuard
 
-from torchoutil.nn.functional.numpy import is_numpy_number_like, is_numpy_scalar_like
+from torchoutil.extras.numpy import is_numpy_number_like, is_numpy_scalar_like
 from torchoutil.pyoutil.typing import is_builtin_number, is_builtin_scalar
 from torchoutil.types._typing import (
     BoolTensor1D,

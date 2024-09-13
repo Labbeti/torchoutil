@@ -32,6 +32,7 @@ from .multilabel import (
 )
 from .numpy import NumpyToTensor, TensorToNumpy, ToNumpy
 from .pad import PadAndStackRec, PadDim, PadDims
+from .powerset import MultilabelToPowerset, PowersetToMultilabel
 from .tensor import (
     FFT,
     IFFT,
