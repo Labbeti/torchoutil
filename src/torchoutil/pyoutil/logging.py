@@ -12,9 +12,10 @@ from typing import IO, List, Literal, Optional, Sequence, TypeVar, Union
 
 T = TypeVar("T", covariant=True)
 
-PackageOrLogger = Union[str, ModuleType, None, Logger, Literal["file"]]
+PackageOrLogger = Union[str, ModuleType, None, Logger, Literal["__parent_file__"]]
 PackageOrLoggerList = Union[PackageOrLogger, Sequence[PackageOrLogger]]
 
+_PARENT_FILE_KEY = "__parent_file__"
 DEFAULT_FMT = "[%(asctime)s][%(name)s][%(levelname)s] - %(message)s"
 VERBOSE_DEBUG = 2
 VERBOSE_INFO = 1
@@ -27,7 +28,7 @@ pylog = logging.getLogger(__name__)
 @lru_cache(maxsize=None)
 def warn_once(
     msg: str,
-    logger: PackageOrLoggerList = "file",
+    logger: PackageOrLoggerList = _PARENT_FILE_KEY,
     *,
     level: int = logging.WARNING,
 ) -> None:
@@ -152,26 +153,31 @@ def get_null_logger() -> Logger:
     return logger
 
 
-def _get_loggers(package_or_logger: PackageOrLoggerList) -> List[Logger]:
-    if package_or_logger == "file":
-        return [get_current_file_logger(parent_deep=2)]
-
-    if package_or_logger is None or isinstance(
-        package_or_logger, (str, Logger, ModuleType)
+def _get_loggers(pkg_name_log_arg: PackageOrLoggerList) -> List[Logger]:
+    if pkg_name_log_arg is None or isinstance(
+        pkg_name_log_arg, (str, Logger, ModuleType)
     ):
-        package_or_logger_lst = [package_or_logger]
+        pkg_name_log_lst = [pkg_name_log_arg]
     else:
-        package_or_logger_lst = list(package_or_logger)
+        pkg_name_log_lst = list(pkg_name_log_arg)
 
-    name_or_logger_lst = [
-        pkg.__name__ if isinstance(pkg, ModuleType) else pkg
-        for pkg in package_or_logger_lst
-    ]
-    logger_lst = [
-        logging.getLogger(pkg_i) if not isinstance(pkg_i, Logger) else pkg_i
-        for pkg_i in name_or_logger_lst
-    ]
-    return logger_lst
+    loggers: List[Logger] = []
+    for pkg_name_log in pkg_name_log_lst:
+        if isinstance(pkg_name_log, ModuleType):
+            logger = logging.getLogger(pkg_name_log.__name__)
+
+        elif pkg_name_log == _PARENT_FILE_KEY:
+            logger = get_current_file_logger(parent_deep=2)
+
+        elif isinstance(pkg_name_log, (type(None), str)):
+            logger = logging.getLogger(pkg_name_log)
+
+        else:
+            logger = pkg_name_log
+
+        loggers.append(logger)
+
+    return loggers
 
 
 class MkdirFileHandler(FileHandler):
