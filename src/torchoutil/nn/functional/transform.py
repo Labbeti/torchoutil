@@ -54,9 +54,8 @@ def repeat_interleave_nd(x: Tensor, repeats: int, dim: int = 0) -> Tensor:
                 [4, 5, 6, 7]])
     """
     if x.ndim == 0:
-        raise ValueError(
-            f"Function repeat_interleave_nd does not supports 0-d tensors. (found {x.ndim=} == 0)"
-        )
+        msg = f"Function repeat_interleave_nd does not supports 0-d tensors. (found {x.ndim=} == 0)"
+        raise ValueError(msg)
 
     dim = dim % x.ndim
     x = x.unsqueeze(dim=dim + 1)

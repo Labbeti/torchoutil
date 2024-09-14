@@ -22,6 +22,8 @@ from . import hub as hub
 from . import nn as nn
 from . import optim as optim
 from . import utils as utils
+
+from .core.dtype_enum import DTypeEnum as dtype_enum
 from .nn.functional import *
 from .types.tensor_subclasses import (
     BoolTensor,
@@ -78,5 +80,5 @@ from .types.tensor_subclasses import (
     Tensor2D,
     Tensor3D,
 )
-from .types.variable_fns import as_tensor
+from .types.variable_fns import as_tensor, zeros, ones, rand, full, empty
 from .utils.saving.csv_io import load_csv, to_csv

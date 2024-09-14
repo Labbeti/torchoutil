@@ -220,9 +220,8 @@ def tensor_to_lengths(
 
     """
     if (pad_value is None) == (end_value is None):
-        raise ValueError(
-            "Invalid arguments. Please provide only one of the arguments: end_value, pad_value."
-        )
+        msg = "Invalid arguments. Please provide only one of the arguments: end_value, pad_value."
+        raise ValueError(msg)
 
     if pad_value is not None:
         non_pad_mask = tensor != pad_value
@@ -234,9 +233,8 @@ def tensor_to_lengths(
         lengths = torch.where(contains_eos, indices_eos, tensor.shape[dim])
 
     else:
-        raise ValueError(
-            "Invalid arguments. Please provide only one of the arguments : end_value, pad_value."
-        )
+        msg = "Invalid arguments. Please provide only one of the arguments : end_value, pad_value."
+        raise ValueError(msg)
 
     return lengths  # type: ignore
 
@@ -268,9 +266,8 @@ def tensor_to_non_pad_mask(
         tensor([True, True, True, False, False, False])
     """
     if (pad_value is None) == (end_value is None):
-        raise ValueError(
-            "Invalid arguments. Please provide only one of the arguments: end_value, pad_value."
-        )
+        msg = "Invalid arguments. Please provide only one of the arguments: end_value, pad_value."
+        raise ValueError(msg)
 
     if pad_value is not None:
         non_pad_mask = tensor.ne(pad_value)
@@ -278,18 +275,16 @@ def tensor_to_non_pad_mask(
 
     elif end_value is not None:
         if tensor.ndim > 2:
-            raise ValueError(
-                f"Cannot compute non_pad_mask for with more than 2 dimensions with {end_value=}. (found {tensor.ndim=})"
-            )
+            msg = f"Cannot compute non_pad_mask for with more than 2 dimensions with {end_value=}. (found {tensor.ndim=})"
+            raise ValueError(msg)
         lengths = tensor_to_lengths(tensor, end_value=end_value, dim=-1)
         non_pad_mask = lengths_to_non_pad_mask(
             lengths, tensor.shape[-1], include_end, dtype=dtype
         )
 
     else:
-        raise ValueError(
-            "Invalid arguments. Please provide only one of the arguments : end_value, pad_value."
-        )
+        msg = "Invalid arguments. Please provide only one of the arguments : end_value, pad_value."
+        raise ValueError(msg)
 
     return non_pad_mask
 
@@ -373,9 +368,8 @@ def tensor_to_tensors_list(
         tensors = [tensor[slices] for slices in slices_lst]
 
     else:
-        raise ValueError(
-            "Invalid arguments. Please provide only one of the arguments : end_value, pad_value, non_pad_mask or lengths."
-        )
+        msg = "Invalid arguments. Please provide only one of the arguments : end_value, pad_value, non_pad_mask or lengths."
+        raise ValueError(msg)
 
     return tensors
 

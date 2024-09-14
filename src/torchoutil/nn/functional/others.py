@@ -274,9 +274,8 @@ def shape(
         shape = output_type(shape)
         return shape
     else:
-        raise ValueError(
-            f"Invalid argument {x}. (cannot compute shape for heterogeneous data)"
-        )
+        msg = f"Invalid argument {x}. (cannot compute shape for heterogeneous data)"
+        raise ValueError(msg)
 
 
 def item(x: Union[ScalarLike, Tensor, np.ndarray, SizedIterable]) -> BuiltinScalar:
@@ -288,9 +287,8 @@ def item(x: Union[ScalarLike, Tensor, np.ndarray, SizedIterable]) -> BuiltinScal
     elif isinstance(x, SizedIterable) and len(x) == 1:
         return item(next(iter(x)))
     else:
-        raise TypeError(
-            f"Invalid argument type {type(x)=}. (expected scalar-like object)"
-        )
+        msg = f"Invalid argument type {type(x)=}. (expected scalar-like object)"
+        raise TypeError(msg)
 
 
 def ranks(x: Tensor, dim: int = -1, descending: bool = False) -> Tensor:

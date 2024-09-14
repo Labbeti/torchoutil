@@ -102,9 +102,8 @@ def indices_to_names(
                 if padding_idx is None or not is_number_like(xi) or xi != padding_idx
             ]
         else:
-            raise ValueError(
-                f"Invalid argument {x=}. (not present in idx_to_name and not an iterable type)"
-            )
+            msg = f"Invalid argument {x=}. (not present in idx_to_name and not an iterable type)"
+            raise ValueError(msg)
 
     if not isinstance(indices, Iterable):
         raise TypeError(f"Invalid argument {indices=}. (not an iterable)")
@@ -126,9 +125,8 @@ def multihot_to_indices(
     if is_number_like(multihot) or (
         isinstance(multihot, Tensor) and not _is_valid_indices(multihot)
     ):
-        raise ValueError(
-            f"Invalid argument shape {multihot=}. (expected at least 1 dimension and the first axis should be > 0)"
-        )
+        msg = f"Invalid argument shape {multihot=}. (expected at least 1 dimension and the first axis should be > 0)"
+        raise ValueError(msg)
 
     def _multihot_to_indices_impl(
         x: Union[Tensor, Sequence],
@@ -145,9 +143,8 @@ def multihot_to_indices(
             return preds
 
         else:
-            raise ValueError(
-                f"Invalid argument {x=}. (not present in idx_to_name and not an iterable type)"
-            )
+            msg = f"Invalid argument {x=}. (not present in idx_to_name and not an iterable type)"
+            raise ValueError(msg)
 
     return _multihot_to_indices_impl(multihot)
 
@@ -186,9 +183,8 @@ def names_to_indices(
         elif isinstance(x, Iterable):
             return [_names_to_indices_impl(xi) for xi in x]
         else:
-            raise ValueError(
-                f"Invalid argument {x=}. (not present in idx_to_name and not an iterable type)"
-            )
+            msg = f"Invalid argument {x=}. (not present in idx_to_name and not an iterable type)"
+            raise ValueError(msg)
 
     indices = _names_to_indices_impl(names)
     return indices  # type: ignore
@@ -252,9 +248,8 @@ def probs_to_multihot(
         dtype: PyTorch DType of the output tensor.
     """
     if probs.ndim != 2:
-        raise ValueError(
-            "Invalid argument probs. (expected a batch of probabilities of shape (N, n_classes))."
-        )
+        msg = "Invalid argument probs. (expected a batch of probabilities of shape (N, n_classes))."
+        raise ValueError(msg)
 
     num_classes = probs.shape[-1]
     if device is None:
@@ -271,13 +266,11 @@ def probs_to_multihot(
         threshold = threshold.repeat(num_classes)
     elif threshold.ndim == 1:
         if threshold.shape[0] != num_classes:
-            raise ValueError(
-                f"Invalid argument threshold. (number of thresholds is {threshold.shape[0]} but found {num_classes} classes)"
-            )
+            msg = f"Invalid argument threshold. (number of thresholds is {threshold.shape[0]} but found {num_classes} classes)"
+            raise ValueError(msg)
     else:
-        raise ValueError(
-            f"Invalid number of dimensions in input threshold. (found {threshold.shape=} but expected 0-d or 1-d tensor)"
-        )
+        msg = f"Invalid number of dimensions in input threshold. (found {threshold.shape=} but expected 0-d or 1-d tensor)"
+        raise ValueError(msg)
 
     multihot = probs >= threshold
     multihot = multihot.to(dtype=dtype)

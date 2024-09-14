@@ -75,13 +75,11 @@ class Max(nn.Module):
         if return_indices is None:
             return_indices = dim is not None
         if not return_values and not return_indices:
-            raise ValueError(
-                f"Invalid combinaison of arguments {return_values=} and {return_indices=}. (at least one of them must be True)"
-            )
+            msg = f"Invalid combinaison of arguments {return_values=} and {return_indices=}. (at least one of them must be True)"
+            raise ValueError(msg)
         if dim is None and keepdim:
-            raise ValueError(
-                f"Invalid combinaison of arguments {dim=} and {keepdim=}. (expected dim is not None or keepdim=False)"
-            )
+            msg = f"Invalid combinaison of arguments {dim=} and {keepdim=}. (expected dim is not None or keepdim=False)"
+            raise ValueError(msg)
 
         super().__init__()
         self.dim = dim
@@ -103,9 +101,8 @@ class Max(nn.Module):
         elif self.return_indices:
             return values_indices.indices
         else:
-            raise ValueError(
-                f"Invalid combinaison of arguments {self.return_values=} and {self.return_indices=}. (at least one of them must be True)"
-            )
+            msg = f"Invalid combinaison of arguments {self.return_values=} and {self.return_indices=}. (at least one of them must be True)"
+            raise ValueError(msg)
 
     def extra_repr(self) -> str:
         return dump_dict(
@@ -133,13 +130,11 @@ class Min(nn.Module):
         if return_indices is None:
             return_indices = dim is not None
         if not return_values and not return_indices:
-            raise ValueError(
-                f"Invalid combinaison of arguments {return_values=} and {return_indices=}. (at least one of them must be True)"
-            )
+            msg = f"Invalid combinaison of arguments {return_values=} and {return_indices=}. (at least one of them must be True)"
+            raise ValueError(msg)
         if dim is None and keepdim:
-            raise ValueError(
-                f"Invalid combinaison of arguments {dim=} and {keepdim=}. (expected dim is not None or keepdim=False)"
-            )
+            msg = f"Invalid combinaison of arguments {dim=} and {keepdim=}. (expected dim is not None or keepdim=False)"
+            raise ValueError(msg)
 
         super().__init__()
         self.dim = dim
@@ -161,9 +156,8 @@ class Min(nn.Module):
         elif self.return_indices:
             return values_indices.indices
         else:
-            raise ValueError(
-                f"Invalid combinaison of arguments {self.return_values=} and {self.return_indices=}. (at least one of them must be True)"
-            )
+            msg = f"Invalid combinaison of arguments {self.return_values=} and {self.return_indices=}. (at least one of them must be True)"
+            raise ValueError(msg)
 
     def extra_repr(self) -> str:
         return dump_dict(

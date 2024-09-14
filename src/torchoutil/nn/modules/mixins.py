@@ -84,9 +84,8 @@ class ProxyDeviceModule(nn.Module):
         device_detect_mode: DeviceDetectMode = _DEFAULT_DEVICE_DETECT_MODE,
     ) -> None:
         if device_detect_mode not in DEVICE_DETECT_MODES:
-            raise ValueError(
-                f"Invalid argument {device_detect_mode=}. (expected one of {DEVICE_DETECT_MODES})"
-            )
+            msg = f"Invalid argument {device_detect_mode=}. (expected one of {DEVICE_DETECT_MODES})"
+            raise ValueError(msg)
 
         super().__init__()
         self.__device_detect_mode: DeviceDetectMode = device_detect_mode

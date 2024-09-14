@@ -1,18 +1,20 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from typing import Any, Sequence, TypeGuard, Union
+from typing import Any, Sequence, Union
 
 import torch
 from torch import Tensor
+from typing_extensions import TypeGuard
 
 from torchoutil.core.get import DeviceLike, DTypeLike, get_device, get_dtype
 from torchoutil.core.packaging import _NUMPY_AVAILABLE, torch_version_ge_1_13
 from torchoutil.pyoutil import get_current_fn_name
 
+
 if _NUMPY_AVAILABLE:
-    import numpy  # noqa: F401
-    import numpy as np
+    import numpy  # noqa: F401  # type: ignore
+    import numpy as np  # type: ignore
 
     # Numpy dtypes that can be converted to tensor
     ACCEPTED_NUMPY_DTYPES = (
@@ -50,7 +52,7 @@ def to_numpy(
     if isinstance(x, Tensor):
         return tensor_to_numpy(x, dtype=dtype, force=force)
     else:
-        return np.asarray(x, dtype=dtype)
+        return np.asarray(x, dtype=dtype)  # type: ignore
 
 
 def tensor_to_numpy(
@@ -65,13 +67,12 @@ def tensor_to_numpy(
     elif not force:
         kwargs = dict()
     else:
-        raise ValueError(
-            f"Invalid argument {force=} for {get_current_fn_name()}. (expected True because torrch version is below 1.13)"
-        )
+        msg = f"Invalid argument {force=} for {get_current_fn_name()}. (expected True because torch version is below 1.13)"
+        raise ValueError(msg)
 
     x_arr: np.ndarray = x.cpu().numpy(**kwargs)
     if dtype is not None:  # supports older numpy version
-        x_arr = x_arr.astype(dtype=dtype)
+        x_arr = x_arr.astype(dtype=dtype)  # type: ignore
     return x_arr
 
 
@@ -110,7 +111,7 @@ def numpy_is_floating_point(x: Union[np.ndarray, np.generic]) -> bool:
 
 
 def numpy_is_complex(x: Union[np.ndarray, np.generic]) -> bool:
-    return np.iscomplexobj(x)
+    return np.iscomplexobj(x)  # type: ignore
 
 
 def is_numpy_number_like(x: Any) -> TypeGuard[NumpyNumberLike]:

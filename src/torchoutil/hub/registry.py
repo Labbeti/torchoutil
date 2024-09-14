@@ -82,9 +82,8 @@ class RegistryHub(Generic[T]):
 
     def get_path(self, name: T) -> Path:
         if name not in self.names:
-            raise ValueError(
-                f"Invalid argument {name=}. (expected one of {self.names})"
-            )
+            msg = f"Invalid argument {name=}. (expected one of {self.names})"
+            raise ValueError(msg)
 
         fname = self._infos[name]["fname"]
         fpath = self.register_root.joinpath(fname)
@@ -132,15 +131,13 @@ class RegistryHub(Generic[T]):
             try:
                 path = self.get_path(name_or_path)  # type: ignore
             except ValueError:
-                raise ValueError(
-                    f"Invalid argument {name_or_path=}. (expected a path to a checkpoint file or a model name in {self.names})"
-                )
+                msg = f"Invalid argument {name_or_path=}. (expected a path to a checkpoint file or a model name in {self.names})"
+                raise ValueError(msg)
 
             if not osp.isfile(path):
                 if offline:
-                    raise FileNotFoundError(
-                        f"Cannot find checkpoint model file in '{path}' for model '{name_or_path}' with mode {offline=}."
-                    )
+                    msg = f"Cannot find checkpoint model file in '{path}' for model '{name_or_path}' with mode {offline=}."
+                    raise FileNotFoundError(msg)
                 else:
                     self.download_file(name_or_path, verbose=verbose)  # type: ignore
 

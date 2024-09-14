@@ -50,9 +50,8 @@ def index_to_onehot(
         if padding_idx is None
         else num_classes + 1
     ):
-        raise ValueError(
-            f"Invalid argument {index=}. (expected 0 <= {index.min()} <= {index.max()} < {num_classes})"
-        )
+        msg = f"Invalid argument {index=}. (expected 0 <= {index.min()} <= {index.max()} < {num_classes})"
+        raise ValueError(msg)
 
     onehot: Tensor = F.one_hot(index, num_classes)
     onehot = onehot.to(dtype=dtype)

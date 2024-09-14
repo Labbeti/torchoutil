@@ -58,19 +58,16 @@ def pad_dims(
     dims = list(dims)
 
     if len(dims) == 0:
-        raise ValueError(
-            f"Invalid argument {dims=}. (cannot use an empty list of dimensions)"
-        )
+        msg = f"Invalid argument {dims=}. (cannot use an empty list of dimensions)"
+        raise ValueError(msg)
 
     if len(target_lengths) != len(dims):
-        raise ValueError(
-            f"Invalid number of targets lengths ({len(target_lengths)}) with the number of dimensions ({len(dims)})."
-        )
+        msg = f"Invalid number of targets lengths ({len(target_lengths)}) with the number of dimensions ({len(dims)})."
+        raise ValueError(msg)
 
     if len(aligns) != len(dims):
-        raise ValueError(
-            f"Invalid number of aligns ({len(aligns)}) with the number of dimensions ({len(dims)})."
-        )
+        msg = f"Invalid number of aligns ({len(aligns)}) with the number of dimensions ({len(dims)})."
+        raise ValueError(msg)
 
     if isinstance(pad_value, Callable):
         pad_value = pad_value(x)
@@ -130,9 +127,8 @@ def pad_and_stack_rec(
         shape0 = shapes[0]
 
         if not all(len(shape) == len(shape0) for shape in shapes):
-            raise ValueError(
-                f"Cannot pad sequence of tensors of differents number of dims. (with {shapes=})"
-            )
+            msg = f"Cannot pad sequence of tensors of differents number of dims. (with {shapes=})"
+            raise ValueError(msg)
 
         max_lens = [max(shape[i] for shape in shapes) for i in range(len(shape0))]
         sequence = [
@@ -149,9 +145,8 @@ def pad_and_stack_rec(
         return result
 
     else:
-        raise TypeError(
-            f"Invalid type {type(sequence)}. (expected Tensor, int, float, list or tuple)"
-        )
+        msg = f"Invalid type {type(sequence)}. (expected Tensor, int, float, list or tuple)"
+        raise TypeError(msg)
 
 
 def cat_padded_batch(
@@ -232,9 +227,8 @@ def __generate_pad_seq(
             )
             missing_right = missing - missing_left
         else:
-            raise ValueError(
-                f"Invalid argument {align=}. (expected one of {PAD_ALIGNS})"
-            )
+            msg = f"Invalid argument {align=}. (expected one of {PAD_ALIGNS})"
+            raise ValueError(msg)
 
         # Note: pad_seq : [pad_left_dim_-1, pad_right_dim_-1, pad_left_dim_-2, pad_right_dim_-2, ...)
         idx = len(x_shape) - (dim % len(x_shape)) - 1
@@ -260,9 +254,8 @@ def _check_cat_padded_batch(
 
     batch_size = x1.shape[batch_dim]
     if not (x1_lens.shape == x2_lens.shape == Size((batch_size,))):
-        raise ValueError(
-            f"Invalid arguments shape. (with {x1_lens.shape=} and {x2_lens.shape=})"
-        )
+        msg = f"Invalid arguments shape. (with {x1_lens.shape=} and {x2_lens.shape=})"
+        raise ValueError(msg)
 
     x1_shape = torch.as_tensor(x1.shape)
     x2_shape = torch.as_tensor(x2.shape)

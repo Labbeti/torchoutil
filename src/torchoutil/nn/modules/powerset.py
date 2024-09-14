@@ -5,6 +5,7 @@ from typing import Optional
 
 from torch import Tensor, nn
 
+from torchoutil.types import Tensor2D, Tensor3D
 from torchoutil.nn.functional.powerset import (
     build_mapping,
     multilabel_to_powerset,
@@ -20,7 +21,7 @@ class MultilabelToPowerset(nn.Module):
         self._max_set_size = max_set_size
 
         self.register_buffer("_mapping", mapping, persistent=False)
-        self._mapping: Tensor
+        self._mapping: Tensor2D
 
     def forward(self, multilabel: Tensor) -> Tensor:
         return multilabel_to_powerset(multilabel, mapping=self._mapping)
@@ -47,9 +48,9 @@ class PowersetToMultilabel(nn.Module):
         self._soft = soft
 
         self.register_buffer("_mapping", mapping, persistent=False)
-        self._mapping: Tensor
+        self._mapping: Tensor2D
 
-    def forward(self, powerset: Tensor, soft: Optional[bool] = None) -> Tensor:
+    def forward(self, powerset: Tensor, soft: Optional[bool] = None) -> Tensor3D:
         if soft is None:
             soft = self._soft
         return powerset_to_multilabel(powerset, soft=soft, mapping=self._mapping)
@@ -65,3 +66,7 @@ class PowersetToMultilabel(nn.Module):
     @property
     def num_classes(self) -> int:
         return self._mapping.shape[1]
+
+    @property
+    def soft(self) -> bool:
+        return self._soft

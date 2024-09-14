@@ -122,9 +122,8 @@ def remove_at_indices(
 ) -> Tensor:
     """Remove value(s) in vector at specified indices."""
     if x.ndim != 1:
-        raise ValueError(
-            f"Invalid argument number of dims. (found {x.ndim=} but expected 1)"
-        )
+        msg = f"Invalid argument number of dims. (found {x.ndim=} but expected 1)"
+        raise ValueError(msg)
 
     device = x.device
     if isinstance(indices, (int, float, bool)):

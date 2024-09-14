@@ -129,6 +129,8 @@ def to_builtin(
         return x.tolist()
     elif _NUMPY_AVAILABLE and isinstance(x, np.generic):
         return x.item()
+    elif _NUMPY_AVAILABLE and isinstance(x, np.dtype):
+        return str(x)
     # Non-terminal cases (iterables and mappings)
     elif _OMEGACONF_AVAILABLE and isinstance(x, (DictConfig, ListConfig)):
         return to_builtin(OmegaConf.to_container(x, resolve=False, enum_to_str=True))

@@ -57,14 +57,12 @@ def crop_dims(
     generator = get_generator(generator)
 
     if len(target_lengths) != len(dims):
-        raise ValueError(
-            f"Invalid number of targets lengths ({len(target_lengths)}) with the number of dimensions ({len(dims)})."
-        )
+        msg = f"Invalid number of targets lengths ({len(target_lengths)}) with the number of dimensions ({len(dims)})."
+        raise ValueError(msg)
 
     if len(aligns_lst) != len(dims):
-        raise ValueError(
-            f"Invalid number of aligns ({len(aligns_lst)}) with the number of dimensions ({len(dims)})."
-        )
+        msg = f"Invalid number of aligns ({len(aligns_lst)}) with the number of dimensions ({len(dims)})."
+        raise ValueError(msg)
 
     slices = [slice(None)] * len(x.shape)
 
@@ -87,9 +85,8 @@ def crop_dims(
             start = torch.randint(low=0, high=diff, size=(), generator=generator).item()
             end = start + target_length
         else:
-            raise ValueError(
-                f"Invalid argument {align=}. (expected one of {CROP_ALIGNS})"
-            )
+            msg = f"Invalid argument {align=}. (expected one of {CROP_ALIGNS})"
+            raise ValueError(msg)
 
         slices[dim] = slice(start, end)
 

@@ -20,10 +20,11 @@ U = TypeVar("U", covariant=True)
 SizedDatasetLike = SupportsLenAndGetItem
 SizedIterableDatasetLike = SupportsLenAndGetItemAndIter
 
-T_SizedDatasetLike = TypeVar("T_SizedDatasetLike", bound=SupportsLenAndGetItem)
 T_Dataset = TypeVar("T_Dataset", bound=Dataset)
+T_SizedDatasetLike = TypeVar("T_SizedDatasetLike", bound=SupportsLenAndGetItem)
 T_SizedIterableDataset = TypeVar(
-    "T_SizedIterableDataset", bound=SupportsLenAndGetItemAndIter
+    "T_SizedIterableDataset",
+    bound=SupportsLenAndGetItemAndIter,
 )
 
 

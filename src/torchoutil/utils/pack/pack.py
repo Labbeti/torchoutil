@@ -116,9 +116,10 @@ def pack_dataset(
         if custom_file_fmt is None:
             custom_file_fmt = "{column}.{ext}"
         if not isinstance(custom_file_fmt, str):
-            raise ValueError(
+            msg = (
                 f"Invalid argument type {type(custom_file_fmt)=} with {content_mode=}."
             )
+            raise ValueError(msg)
 
         return pack_dataset_to_columns(
             dataset=dataset,
