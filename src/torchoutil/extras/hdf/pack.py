@@ -124,9 +124,7 @@ def pack_to_hdf(
     if ds_kwds is None:
         ds_kwds = {}
 
-    if not hdf_fpath.is_file():
-        pass
-    elif exists == "overwrite":
+    if not hdf_fpath.is_file() or exists == "overwrite":
         pass
     elif exists == "error":
         msg = f"Cannot overwrite file {hdf_fpath}. Please remove it or use exists='overwrite' or exists='skip' option."
@@ -159,7 +157,7 @@ def pack_to_hdf(
         hdf_dtypes,
         all_eq_shapes,
         load_as_complex,
-        is_unicode,
+        src_np_dtypes,
     ) = _scan_dataset(
         dataset,
         pre_transform,
@@ -311,6 +309,10 @@ def pack_to_hdf(
             else:
                 info = {}
 
+        src_np_dtypes_dumped = {
+            name: str(merge_numpy_dtypes(np_dtypes))
+            for name, np_dtypes in src_np_dtypes.items()
+        }
         attributes = {
             "creation_date": creation_date,
             "source_dataset": dataset.__class__.__name__,
@@ -325,7 +327,7 @@ def pack_to_hdf(
             "load_as_complex": json.dumps(load_as_complex),
             "version": str(to.__version__),
             "user_attrs": json.dumps(to_builtin(user_attrs)),
-            "is_unicode": json.dumps(is_unicode),
+            "src_np_dtypes": json.dumps(src_np_dtypes_dumped),
         }
         if verbose >= 2:
             dumped_attributes = json.dumps(attributes, indent="\t")
@@ -361,7 +363,7 @@ def _scan_dataset(
     Dict[str, HDFDType],
     Dict[str, bool],
     Dict[str, bool],
-    Dict[str, bool],
+    Dict[str, Set[np.dtype]],
 ]:
     if isinstance(dataset, IterableDataset):
         item_0 = next(iter(dataset))
@@ -407,7 +409,7 @@ def _scan_dataset(
     )
 
     infos_dict: Dict[str, Set[Tuple[Tuple[int, ...], np.dtype]]] = {}
-    src_kinds: Dict[str, Set[str]] = {}
+    src_np_dtypes: Dict[str, Set[np.dtype]] = {}
 
     for batch in tqdm.tqdm(
         loader,
@@ -423,10 +425,10 @@ def _scan_dataset(
                 np_dtype = scan_numpy_dtype(value)
                 kind = np_dtype.kind
 
-                if attr_name in src_kinds:
-                    src_kinds[attr_name].add(kind)
+                if attr_name in src_np_dtypes:
+                    src_np_dtypes[attr_name].add(np_dtype)
                 else:
-                    src_kinds[attr_name] = {kind}
+                    src_np_dtypes[attr_name] = {np_dtype}
 
                 value = to.to_numpy(value)
                 if kind == "U" and not use_vlen_str:
@@ -439,10 +441,6 @@ def _scan_dataset(
                     infos_dict[attr_name].add((shape, np_dtype))
                 else:
                     infos_dict[attr_name] = {(shape, np_dtype)}
-
-    is_unicode = {
-        name: kinds == {"V", "U"} or kinds == {"U"} for name, kinds in src_kinds.items()
-    }
 
     max_shapes: Dict[str, Tuple[int, ...]] = {}
     hdf_dtypes: Dict[str, HDFDType] = {}
@@ -519,7 +517,7 @@ def _scan_dataset(
         hdf_dtypes,
         all_eq_shapes,
         load_as_complex,
-        is_unicode,
+        src_np_dtypes,
     )
 
 

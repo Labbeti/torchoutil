@@ -34,3 +34,4 @@ class HDFDatasetAttributes(TypedDict):
     user_attrs: str
     load_as_complex: str
     is_unicode: str
+    src_np_dtypes: str

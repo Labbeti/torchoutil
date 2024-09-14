@@ -28,7 +28,7 @@ import numpy as np
 import torch
 from h5py import Dataset as HDFRawDataset
 from torch import Tensor
-from typing_extensions import TypeGuard
+from typing_extensions import TypeGuard, override
 
 import torchoutil as to
 from torchoutil.extras.hdf.common import (
@@ -48,8 +48,8 @@ from torchoutil.utils.data import DatasetSlicer
 from torchoutil.utils.pack.common import _dict_to_tuple
 from torchoutil.utils.saving import to_builtin
 
-T = TypeVar("T")
-U = TypeVar("U")
+T = TypeVar("T", covariant=True)
+U = TypeVar("U", covariant=False)
 
 IndexLike = Union[int, Iterable[int], Tensor, slice, None]
 ColumnLike = Union[str, Iterable[str], None]
@@ -65,7 +65,6 @@ class HDFDataset(Generic[T, U], DatasetSlicer[U]):
         keep_padding: Iterable[str] = (),
         return_added_columns: bool = False,
         open_hdf: bool = True,
-        auto_open: bool = False,
         cast: Literal[
             "to_torch_or_builtin", "to_torch_or_numpy", "to_builtin", "none"
         ] = "to_torch_or_builtin",
@@ -82,7 +81,6 @@ class HDFDataset(Generic[T, U], DatasetSlicer[U]):
             keep_padding: Keys to keep padding values. defaults to ().
             return_added_columns: Returns the columns added by pack_to_hdf(.) function.
             open_hdf: If True, open the HDF file at start. defaults to True.
-            auto_open: If True and open_hdf=False, it will open HDF file only when __getitem__ or __len__ is called. defaults to False.
             numpy_to_torch: If True, converts numpy array to PyTorch tensors. defaults to True.
             file_kwds: Options given to h5py file object. defaults to None.
         """
@@ -110,7 +108,6 @@ class HDFDataset(Generic[T, U], DatasetSlicer[U]):
         self._transform = transform
         self._keep_padding = keep_padding
         self._return_added_columns = return_added_columns
-        self._auto_open = auto_open
         self._cast = cast
         self._file_kwds = file_kwds
 
@@ -203,7 +200,13 @@ class HDFDataset(Generic[T, U], DatasetSlicer[U]):
 
     @cached_property
     def _is_unicode(self) -> Dict[str, bool]:
-        return json.loads(self._hdf_file.attrs.get("is_unicode", "{}"))
+        if "src_np_dtypes" in self.attrs:
+            np_dtypes_str = json.loads(self._hdf_file.attrs["src_np_dtypes"])
+            np_dtypes = {name: np.dtype(s) for name, s in np_dtypes_str.items()}
+            is_unicode = {name: dt.kind == "U" for name, dt in np_dtypes.items()}
+            return is_unicode
+        else:
+            return json.loads(self._hdf_file.attrs.get("is_unicode", "{}"))
 
     @cached_property
     def _load_as_complex(self) -> Dict[str, bool]:
@@ -211,41 +214,48 @@ class HDFDataset(Generic[T, U], DatasetSlicer[U]):
 
     # Public methods
     @overload
-    def get_item(self, index: int) -> T:
-        ...
-
-    @overload
-    def get_item(self, index: Union[Iterable[int], slice, None], column: str) -> List:
-        ...
-
-    @overload
-    def get_item(self, index: Union[Iterable[int], slice, None]) -> Dict[str, List]:
+    def get_item(
+        self,
+        index: int,
+        column: None = None,
+    ) -> T:
         ...
 
     @overload
     def get_item(
         self,
         index: Union[Iterable[int], slice, None],
-        column: Union[Iterable[str], None],
+        column: str,
+    ) -> List:
+        ...
+
+    @overload
+    def get_item(
+        self,
+        index: Union[Iterable[int], slice, None],
+        column: Union[List[str], None] = None,
     ) -> Dict[str, List]:
         ...
 
     @overload
-    def get_item(self, index: Any, column: Any) -> Any:
-        ...
-
     def get_item(
         self,
-        index: IndexLike = None,
+        index: Any,
+        column: Any,
+        raw: bool = False,
+    ) -> Any:
+        ...
+
+    @override
+    def get_item(
+        self,
+        index: IndexLike,
         column: ColumnLike = None,
         raw: bool = False,
     ) -> Any:
         if self.is_closed():
-            if self._auto_open:
-                self.open()
-            else:
-                msg = f"Cannot get_raw value with closed HDF file. ({self._hdf_file is not None=} and {bool(self._hdf_file)=})"
-                raise RuntimeError(msg)
+            msg = f"Cannot get_raw value with closed HDF file. ({self._hdf_file is not None=} and {bool(self._hdf_file)=})"
+            raise RuntimeError(msg)
 
         if index is None:
             index = slice(None)
@@ -255,7 +265,17 @@ class HDFDataset(Generic[T, U], DatasetSlicer[U]):
             column = self.column_names
 
         if is_iterable_str(column, accept_str=False):
-            return {column_i: self.get_item(index, column_i) for column_i in column}
+            result_dict = {
+                column_i: self.get_item(index, column_i) for column_i in column
+            }
+            if self.item_type == "tuple":
+                result = _dict_to_tuple(result_dict)
+            else:
+                result = result_dict
+
+            if isinstance(index, int) and self._transform is not None:
+                result = self._transform(result)  # type: ignore
+            return result  # type: ignore
 
         if column not in self.all_columns:
             msg = f"Invalid argument {column=}. (expected one of {tuple(self.all_columns)})"
@@ -344,34 +364,36 @@ class HDFDataset(Generic[T, U], DatasetSlicer[U]):
             outputs = outputs[0]
         return outputs
 
-    def close(self, ignore_if_closed: bool = False) -> None:
-        if not self.is_open():
-            if ignore_if_closed:
-                return None
-            else:
-                raise RuntimeError("Cannot close the HDF file twice.")
+    def close(self, ignore_if_closed: bool = False, remove_file: bool = False) -> None:
+        if self.is_closed() and not ignore_if_closed:
+            raise RuntimeError("Cannot close the HDF file twice.")
 
-        self._hdf_file.close()
+        if not ignore_if_closed:
+            self._hdf_file.close()
+        if remove_file:
+            os.remove(self._hdf_fpath)
+
         self._hdf_file = None
         self._clear_caches()
 
-    def get_attrs(self) -> Dict[str, Any]:
-        return self._hdf_file.attrs
+    def get_attrs(self) -> HDFDatasetAttributes:
+        return self.attrs
 
     def get_hdf_fpath(self) -> Path:
         return self._hdf_fpath
 
     def get_hdf_keys(self) -> Tuple[str, ...]:
-        if self.is_open():
-            return tuple(self._hdf_file.keys())
-        else:
+        if self.is_closed():
             raise RuntimeError("Cannot get keys from a closed HDF file.")
+        else:
+            return tuple(self._hdf_file.keys())
 
     def get_column_shape(self, column_name: str) -> Tuple[int, ...]:
-        if not self.is_open():
+        if self.is_closed():
             msg = f"Cannot get max_shape with a closed HDF file. ({self._hdf_file is not None=} and {bool(self._hdf_file)=})"
             raise RuntimeError(msg)
-        return tuple(self._hdf_file[column_name].shape)
+        else:
+            return tuple(self._hdf_file[column_name].shape)
 
     def is_closed(self) -> bool:
         return not self.is_open()
@@ -398,50 +420,47 @@ class HDFDataset(Generic[T, U], DatasetSlicer[U]):
         if self.is_open():
             self.close()
 
-    @overload
-    def __getitem__(self, index: int) -> U:
-        ...
+    # @overload
+    # def __getitem__(self, index: int) -> U: ...
 
-    @overload
-    def __getitem__(
-        self,
-        index: Union[Iterable[int], slice, None],
-    ) -> Dict[str, list]:
-        ...
+    # @overload
+    # def __getitem__(
+    #     self,
+    #     index: Union[Iterable[int], slice, None],
+    # ) -> Dict[str, list]: ...
 
-    @overload
-    def __getitem__(self, index: Any) -> Any:
-        ...
+    # @overload
+    # def __getitem__(self, index: Any) -> Any: ...
 
-    def __getitem__(
-        self,
-        index: Union[IndexLike, Tuple[IndexLike, ColumnLike]],
-    ) -> Any:
-        if (
-            isinstance(index, tuple)
-            and len(index) == 2
-            and _is_index(index[0])
-            and _is_column(index[1])
-        ):
-            index, column = index
-        else:
-            column = None
+    # def __getitem__(
+    #     self,
+    #     index: Union[IndexLike, Tuple[IndexLike, ColumnLike]],
+    # ) -> Any:
+    #     if (
+    #         isinstance(index, tuple)
+    #         and len(index) == 2
+    #         and _is_index(index[0])
+    #         and _is_column(index[1])
+    #     ):
+    #         index, column = index
+    #     else:
+    #         column = None
 
-        item = self.get_item(index, column)  # type: ignore
+    #     item = self.get_item(index, column)  # type: ignore
 
-        if isinstance(index, int) and (
-            column is None
-            or (
-                isinstance(column, Iterable)
-                and not isinstance(column, str)
-                and set(column) == set(self.column_names)
-            )
-        ):
-            if self.item_type == "tuple":
-                item = _dict_to_tuple(item)
-            if self._transform is not None:
-                item = self._transform(item)  # type: ignore
-        return item
+    #     if isinstance(index, int) and (
+    #         column is None
+    #         or (
+    #             isinstance(column, Iterable)
+    #             and not isinstance(column, str)
+    #             and set(column) == set(self.column_names)
+    #         )
+    #     ):
+    #         if self.item_type == "tuple":
+    #             item = _dict_to_tuple(item)
+    #         if self._transform is not None:
+    #             item = self._transform(item)  # type: ignore
+    #     return item
 
     def __getstate__(self) -> Dict[str, Any]:
         return {
@@ -449,7 +468,6 @@ class HDFDataset(Generic[T, U], DatasetSlicer[U]):
             "transform": self._transform,
             "keep_padding": self._keep_padding,
             "return_added_columns": self._return_added_columns,
-            "auto_open": self._auto_open,
             "cast": self._cast,
             "file_kwds": self._file_kwds,
             "is_open": self.is_open(),
@@ -458,21 +476,16 @@ class HDFDataset(Generic[T, U], DatasetSlicer[U]):
     def __hash__(self) -> int:
         hash_value = 0
         if self.is_open():
-            hash_value += self._hdf_file.attrs["global_hash_value"]
+            hash_value += self.attrs["global_hash_value"]
         if self._transform is not None:
             hash_value += hash(self._transform)
         hash_value += sum(map(hash, self._keep_padding))
         return hash_value
 
     def __len__(self) -> int:
-        auto_close = False
         if self.is_closed():
-            if self._auto_open:
-                self.open()
-                auto_close = True
-            else:
-                msg = f"Cannot length of a closed HDF file. ({self._hdf_file is not None=} and {bool(self._hdf_file)=})"
-                raise RuntimeError(msg)
+            msg = f"Cannot length of a closed HDF file. ({self._hdf_file is not None=} and {bool(self._hdf_file)=})"
+            raise RuntimeError(msg)
 
         if "length" in self._hdf_file.attrs:
             length = self._hdf_file.attrs["length"]
@@ -482,14 +495,12 @@ class HDFDataset(Generic[T, U], DatasetSlicer[U]):
         else:
             length = 0
 
-        if auto_close:
-            self.close()
         return length
 
     def __repr__(self) -> str:
         repr_hparams = {"file": osp.basename(self._hdf_fpath), "size": len(self)}
         repr_ = ", ".join(f"{k}={v}" for k, v in repr_hparams.items())
-        return f"HDFDataset({repr_})"
+        return f"{HDFDataset.__name__}({repr_})"
 
     def __setstate__(self, data: Dict[str, Any]) -> None:
         is_init = hasattr(self, "_hdf_fpath") and hasattr(self, "_hdf_file")
@@ -503,7 +514,6 @@ class HDFDataset(Generic[T, U], DatasetSlicer[U]):
         self._transform = data["transform"]
         self._keep_padding = data["keep_padding"]
         self._return_added_columns = data["return_added_columns"]
-        self._auto_open = data["auto_open"]
         self._cast = data["cast"]
         self._file_kwds = data["file_kwds"]
 
@@ -539,9 +549,10 @@ class HDFDataset(Generic[T, U], DatasetSlicer[U]):
     def _sanity_check(self) -> None:
         lens = [dset.shape[0] for dset in self._hdf_file.values()]
         if not all_eq(lens) or lens[0] != len(self):
-            pylog.error(
+            msg = (
                 f"Incorrect length stored in HDF file. (found {lens=} and {len(self)=})"
             )
+            pylog.error(msg)
 
         if not hasattr(self, "__orig_class__"):
             return None
@@ -551,9 +562,8 @@ class HDFDataset(Generic[T, U], DatasetSlicer[U]):
             (issubclass(t_type, dict) and self.item_type != "dict")
             or (issubclass(t_type, tuple) and self.item_type != "tuple")
         ):
-            raise TypeError(
-                f"Invalid HDFDataset typing. (found specified type '{t_type.__name__}' but the internal dataset contains type '{self.item_type}')"
-            )
+            msg = f"Invalid HDFDataset typing. (found specified type '{t_type.__name__}' but the internal dataset contains type '{self.item_type}')"
+            raise TypeError(msg)
 
     def _clear_caches(self) -> None:
         if hasattr(self, "info"):
