@@ -22,7 +22,9 @@ from torchoutil.pyoutil import dict_list_to_list_dict
 class TestHDF(TestCase):
     @classmethod
     def setUpClass(cls) -> None:
-        tmpdir = Path(os.getenv("TORCHOUTIL_TMPDIR", tempfile.gettempdir()))
+        tmpdir = Path(os.getenv("TORCHOUTIL_TMPDIR", tempfile.gettempdir())).joinpath(
+            "torchoutil_tests"
+        )
         tmpdir.mkdir(parents=True, exist_ok=True)
         cls.tmpdir = tmpdir
 

@@ -21,7 +21,9 @@ from torchoutil.utils.pack.pack import pack_dataset, pack_dataset_to_columns
 class TestPackCIFAR10(TestCase):
     @classmethod
     def setUpClass(cls) -> None:
-        tmpdir = Path(os.getenv("TORCHOUTIL_TMPDIR", tempfile.gettempdir()))
+        tmpdir = Path(os.getenv("TORCHOUTIL_TMPDIR", tempfile.gettempdir())).joinpath(
+            "torchoutil_tests"
+        )
         dataset = CIFAR10(
             tmpdir,
             train=False,
@@ -163,7 +165,9 @@ class TestPackCIFAR10(TestCase):
 class TestPackSpeechCommands(TestCase):
     @classmethod
     def setUpClass(cls) -> None:
-        tmpdir = Path(os.getenv("TORCHOUTIL_TMPDIR", tempfile.gettempdir()))
+        tmpdir = Path(os.getenv("TORCHOUTIL_TMPDIR", tempfile.gettempdir())).joinpath(
+            "torchoutil_tests"
+        )
         tmpdir.mkdir(parents=True, exist_ok=True)
         cls.tmpdir = tmpdir
 

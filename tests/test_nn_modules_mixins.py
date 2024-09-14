@@ -43,7 +43,9 @@ class MyModule(nn.EModule[Tensor, Tensor]):
 class TestInheritEModule(TestCase):
     @classmethod
     def setUpClass(cls) -> None:
-        tmpdir = Path(os.getenv("TORCHOUTIL_TMPDIR", tempfile.gettempdir()))
+        tmpdir = Path(os.getenv("TORCHOUTIL_TMPDIR", tempfile.gettempdir())).joinpath(
+            "torchoutil_tests"
+        )
         cls.tmpdir = tmpdir
 
     def test_multiple(self) -> None:
