@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from functools import cache
+import math
+from functools import lru_cache
 from itertools import combinations
 from typing import Optional, overload
 
-import scipy.special
 import torch
 from torch import Tensor
 from torch.nn import functional as F
@@ -116,7 +116,7 @@ def powerset_to_multilabel(
     return multilabel  # type: ignore
 
 
-@cache
+@lru_cache(maxsize=None)
 def build_mapping(num_classes: int, max_set_size: int) -> Tensor2D:
     """Build powerset mapping matrix of shape (num_powerset_classes, num_classes)."""
     num_powerset_classes = get_num_powerset_classes(num_classes, max_set_size)
@@ -131,9 +131,7 @@ def build_mapping(num_classes: int, max_set_size: int) -> Tensor2D:
     return mapping  # type: ignore
 
 
-@cache
+@lru_cache(maxsize=None)
 def get_num_powerset_classes(num_classes: int, max_set_size: int) -> int:
-    binom_coefficients = (
-        scipy.special.binom(num_classes, i) for i in range(0, max_set_size + 1)
-    )
+    binom_coefficients = (math.comb(num_classes, i) for i in range(0, max_set_size + 1))
     return int(sum(binom_coefficients))
