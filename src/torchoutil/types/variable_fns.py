@@ -1,9 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from typing import Any, Literal, Sequence, Union, overload
+from typing import Any, Literal, Sequence, Union, overload, Tuple
 
 import torch
+from typing_extensions import Never
 
 from torchoutil.nn.functional.get import get_device, get_dtype
 from torchoutil.pyoutil.typing import BuiltinNumber
@@ -42,6 +43,35 @@ __all__ = [
 ]
 
 
+# Empty lists
+@overload
+def as_tensor(
+    data: Sequence[Never],
+    dtype: Literal[None] = None,
+    device: DeviceLike = None,
+) -> Tensor1D:
+    ...
+
+
+@overload
+def as_tensor(
+    data: Sequence[Sequence[Never]],
+    dtype: Literal[None] = None,
+    device: DeviceLike = None,
+) -> Tensor2D:
+    ...
+
+
+@overload
+def as_tensor(
+    data: Sequence[Sequence[Sequence[Never]]],
+    dtype: Literal[None] = None,
+    device: DeviceLike = None,
+) -> Tensor3D:
+    ...
+
+
+# bool
 @overload
 def as_tensor(
     data: bool,
@@ -78,6 +108,7 @@ def as_tensor(
     ...
 
 
+# int
 @overload
 def as_tensor(
     data: int,
@@ -114,6 +145,7 @@ def as_tensor(
     ...
 
 
+# float
 @overload
 def as_tensor(
     data: float,
@@ -150,6 +182,7 @@ def as_tensor(
     ...
 
 
+# complex
 @overload
 def as_tensor(
     data: complex,
@@ -186,6 +219,7 @@ def as_tensor(
     ...
 
 
+# BuiltinNumber
 @overload
 def as_tensor(
     data: BuiltinNumber,
@@ -232,8 +266,116 @@ def as_tensor(
     return torch.as_tensor(data, dtype=dtype, device=device)
 
 
+@overload
 def zeros(
-    *data: Any,
+    size: Sequence[Never],
+    /,
+    *,
+    dtype: DTypeLike = None,
+    device: DeviceLike = None,
+    out: Union[torch.Tensor, None] = None,
+    layout: Union[torch.layout, None] = None,
+    pin_memory: Union[bool, None] = False,
+    requires_grad: Union[bool, None] = False,
+) -> Tensor0D:
+    ...
+
+
+@overload
+def zeros(
+    size: Tuple[int],
+    /,
+    *,
+    dtype: DTypeLike = None,
+    device: DeviceLike = None,
+    out: Union[torch.Tensor, None] = None,
+    layout: Union[torch.layout, None] = None,
+    pin_memory: Union[bool, None] = False,
+    requires_grad: Union[bool, None] = False,
+) -> Tensor1D:
+    ...
+
+
+@overload
+def zeros(
+    size: Tuple[int, int],
+    /,
+    *,
+    dtype: DTypeLike = None,
+    device: DeviceLike = None,
+    out: Union[torch.Tensor, None] = None,
+    layout: Union[torch.layout, None] = None,
+    pin_memory: Union[bool, None] = False,
+    requires_grad: Union[bool, None] = False,
+) -> Tensor2D:
+    ...
+
+
+@overload
+def zeros(
+    size: Tuple[int, int, int],
+    /,
+    *,
+    dtype: DTypeLike = None,
+    device: DeviceLike = None,
+    out: Union[torch.Tensor, None] = None,
+    layout: Union[torch.layout, None] = None,
+    pin_memory: Union[bool, None] = False,
+    requires_grad: Union[bool, None] = False,
+) -> Tensor3D:
+    ...
+
+
+@overload
+def zeros(
+    size0: int,
+    /,
+    *,
+    dtype: DTypeLike = None,
+    device: DeviceLike = None,
+    out: Union[torch.Tensor, None] = None,
+    layout: Union[torch.layout, None] = None,
+    pin_memory: Union[bool, None] = False,
+    requires_grad: Union[bool, None] = False,
+) -> Tensor1D:
+    ...
+
+
+@overload
+def zeros(
+    size0: int,
+    size1: int,
+    /,
+    *,
+    dtype: DTypeLike = None,
+    device: DeviceLike = None,
+    out: Union[torch.Tensor, None] = None,
+    layout: Union[torch.layout, None] = None,
+    pin_memory: Union[bool, None] = False,
+    requires_grad: Union[bool, None] = False,
+) -> Tensor2D:
+    ...
+
+
+@overload
+def zeros(
+    size0: int,
+    size1: int,
+    size2: int,
+    /,
+    *,
+    dtype: DTypeLike = None,
+    device: DeviceLike = None,
+    out: Union[torch.Tensor, None] = None,
+    layout: Union[torch.layout, None] = None,
+    pin_memory: Union[bool, None] = False,
+    requires_grad: Union[bool, None] = False,
+) -> Tensor3D:
+    ...
+
+
+def zeros(
+    *data,
     dtype: DTypeLike = None,
     device: DeviceLike = None,
     out: Union[torch.Tensor, None] = None,
@@ -254,9 +396,116 @@ def zeros(
     )
 
 
+@overload
 def ones(
-    data: Sequence[int],
+    size: Sequence[Never],
+    /,
     *,
+    dtype: DTypeLike = None,
+    device: DeviceLike = None,
+    out: Union[torch.Tensor, None] = None,
+    layout: Union[torch.layout, None] = None,
+    pin_memory: Union[bool, None] = False,
+    requires_grad: Union[bool, None] = False,
+) -> Tensor0D:
+    ...
+
+
+@overload
+def ones(
+    size: Tuple[int],
+    /,
+    *,
+    dtype: DTypeLike = None,
+    device: DeviceLike = None,
+    out: Union[torch.Tensor, None] = None,
+    layout: Union[torch.layout, None] = None,
+    pin_memory: Union[bool, None] = False,
+    requires_grad: Union[bool, None] = False,
+) -> Tensor1D:
+    ...
+
+
+@overload
+def ones(
+    size: Tuple[int, int],
+    /,
+    *,
+    dtype: DTypeLike = None,
+    device: DeviceLike = None,
+    out: Union[torch.Tensor, None] = None,
+    layout: Union[torch.layout, None] = None,
+    pin_memory: Union[bool, None] = False,
+    requires_grad: Union[bool, None] = False,
+) -> Tensor2D:
+    ...
+
+
+@overload
+def ones(
+    size: Tuple[int, int, int],
+    /,
+    *,
+    dtype: DTypeLike = None,
+    device: DeviceLike = None,
+    out: Union[torch.Tensor, None] = None,
+    layout: Union[torch.layout, None] = None,
+    pin_memory: Union[bool, None] = False,
+    requires_grad: Union[bool, None] = False,
+) -> Tensor3D:
+    ...
+
+
+@overload
+def ones(
+    size0: int,
+    /,
+    *,
+    dtype: DTypeLike = None,
+    device: DeviceLike = None,
+    out: Union[torch.Tensor, None] = None,
+    layout: Union[torch.layout, None] = None,
+    pin_memory: Union[bool, None] = False,
+    requires_grad: Union[bool, None] = False,
+) -> Tensor1D:
+    ...
+
+
+@overload
+def ones(
+    size0: int,
+    size1: int,
+    /,
+    *,
+    dtype: DTypeLike = None,
+    device: DeviceLike = None,
+    out: Union[torch.Tensor, None] = None,
+    layout: Union[torch.layout, None] = None,
+    pin_memory: Union[bool, None] = False,
+    requires_grad: Union[bool, None] = False,
+) -> Tensor2D:
+    ...
+
+
+@overload
+def ones(
+    size0: int,
+    size1: int,
+    size2: int,
+    /,
+    *,
+    dtype: DTypeLike = None,
+    device: DeviceLike = None,
+    out: Union[torch.Tensor, None] = None,
+    layout: Union[torch.layout, None] = None,
+    pin_memory: Union[bool, None] = False,
+    requires_grad: Union[bool, None] = False,
+) -> Tensor3D:
+    ...
+
+
+def ones(
+    *data,
     dtype: DTypeLike = None,
     device: DeviceLike = None,
     out: Union[torch.Tensor, None] = None,
@@ -267,7 +516,7 @@ def ones(
     dtype = get_dtype(dtype)
     device = get_device(device)
     return torch.ones(
-        data,
+        *data,
         out=out,
         dtype=dtype,
         layout=layout,
@@ -277,9 +526,116 @@ def ones(
     )
 
 
+@overload
 def empty(
-    data: Sequence[int],
+    size: Sequence[Never],
+    /,
     *,
+    dtype: DTypeLike = None,
+    device: DeviceLike = None,
+    out: Union[torch.Tensor, None] = None,
+    layout: Union[torch.layout, None] = None,
+    pin_memory: Union[bool, None] = False,
+    requires_grad: Union[bool, None] = False,
+) -> Tensor0D:
+    ...
+
+
+@overload
+def empty(
+    size: Tuple[int],
+    /,
+    *,
+    dtype: DTypeLike = None,
+    device: DeviceLike = None,
+    out: Union[torch.Tensor, None] = None,
+    layout: Union[torch.layout, None] = None,
+    pin_memory: Union[bool, None] = False,
+    requires_grad: Union[bool, None] = False,
+) -> Tensor1D:
+    ...
+
+
+@overload
+def empty(
+    size: Tuple[int, int],
+    /,
+    *,
+    dtype: DTypeLike = None,
+    device: DeviceLike = None,
+    out: Union[torch.Tensor, None] = None,
+    layout: Union[torch.layout, None] = None,
+    pin_memory: Union[bool, None] = False,
+    requires_grad: Union[bool, None] = False,
+) -> Tensor2D:
+    ...
+
+
+@overload
+def empty(
+    size: Tuple[int, int, int],
+    /,
+    *,
+    dtype: DTypeLike = None,
+    device: DeviceLike = None,
+    out: Union[torch.Tensor, None] = None,
+    layout: Union[torch.layout, None] = None,
+    pin_memory: Union[bool, None] = False,
+    requires_grad: Union[bool, None] = False,
+) -> Tensor3D:
+    ...
+
+
+@overload
+def empty(
+    size0: int,
+    /,
+    *,
+    dtype: DTypeLike = None,
+    device: DeviceLike = None,
+    out: Union[torch.Tensor, None] = None,
+    layout: Union[torch.layout, None] = None,
+    pin_memory: Union[bool, None] = False,
+    requires_grad: Union[bool, None] = False,
+) -> Tensor1D:
+    ...
+
+
+@overload
+def empty(
+    size0: int,
+    size1: int,
+    /,
+    *,
+    dtype: DTypeLike = None,
+    device: DeviceLike = None,
+    out: Union[torch.Tensor, None] = None,
+    layout: Union[torch.layout, None] = None,
+    pin_memory: Union[bool, None] = False,
+    requires_grad: Union[bool, None] = False,
+) -> Tensor2D:
+    ...
+
+
+@overload
+def empty(
+    size0: int,
+    size1: int,
+    size2: int,
+    /,
+    *,
+    dtype: DTypeLike = None,
+    device: DeviceLike = None,
+    out: Union[torch.Tensor, None] = None,
+    layout: Union[torch.layout, None] = None,
+    pin_memory: Union[bool, None] = False,
+    requires_grad: Union[bool, None] = False,
+) -> Tensor3D:
+    ...
+
+
+def empty(
+    *data,
     dtype: DTypeLike = None,
     device: DeviceLike = None,
     out: Union[torch.Tensor, None] = None,
@@ -290,7 +646,7 @@ def empty(
     dtype = get_dtype(dtype)
     device = get_device(device)
     return torch.empty(
-        data,
+        *data,
         out=out,
         dtype=dtype,
         layout=layout,
@@ -298,6 +654,114 @@ def empty(
         pin_memory=pin_memory,
         requires_grad=requires_grad,
     )
+
+
+@overload
+def rand(
+    size: Sequence[Never],
+    /,
+    *,
+    dtype: DTypeLike = None,
+    device: DeviceLike = None,
+    out: Union[torch.Tensor, None] = None,
+    layout: Union[torch.layout, None] = None,
+    pin_memory: Union[bool, None] = False,
+    requires_grad: Union[bool, None] = False,
+) -> Tensor0D:
+    ...
+
+
+@overload
+def rand(
+    size: Tuple[int],
+    /,
+    *,
+    dtype: DTypeLike = None,
+    device: DeviceLike = None,
+    out: Union[torch.Tensor, None] = None,
+    layout: Union[torch.layout, None] = None,
+    pin_memory: Union[bool, None] = False,
+    requires_grad: Union[bool, None] = False,
+) -> Tensor1D:
+    ...
+
+
+@overload
+def rand(
+    size: Tuple[int, int],
+    /,
+    *,
+    dtype: DTypeLike = None,
+    device: DeviceLike = None,
+    out: Union[torch.Tensor, None] = None,
+    layout: Union[torch.layout, None] = None,
+    pin_memory: Union[bool, None] = False,
+    requires_grad: Union[bool, None] = False,
+) -> Tensor2D:
+    ...
+
+
+@overload
+def rand(
+    size: Tuple[int, int, int],
+    /,
+    *,
+    dtype: DTypeLike = None,
+    device: DeviceLike = None,
+    out: Union[torch.Tensor, None] = None,
+    layout: Union[torch.layout, None] = None,
+    pin_memory: Union[bool, None] = False,
+    requires_grad: Union[bool, None] = False,
+) -> Tensor3D:
+    ...
+
+
+@overload
+def rand(
+    size0: int,
+    /,
+    *,
+    dtype: DTypeLike = None,
+    device: DeviceLike = None,
+    out: Union[torch.Tensor, None] = None,
+    layout: Union[torch.layout, None] = None,
+    pin_memory: Union[bool, None] = False,
+    requires_grad: Union[bool, None] = False,
+) -> Tensor1D:
+    ...
+
+
+@overload
+def rand(
+    size0: int,
+    size1: int,
+    /,
+    *,
+    dtype: DTypeLike = None,
+    device: DeviceLike = None,
+    out: Union[torch.Tensor, None] = None,
+    layout: Union[torch.layout, None] = None,
+    pin_memory: Union[bool, None] = False,
+    requires_grad: Union[bool, None] = False,
+) -> Tensor2D:
+    ...
+
+
+@overload
+def rand(
+    size0: int,
+    size1: int,
+    size2: int,
+    /,
+    *,
+    dtype: DTypeLike = None,
+    device: DeviceLike = None,
+    out: Union[torch.Tensor, None] = None,
+    layout: Union[torch.layout, None] = None,
+    pin_memory: Union[bool, None] = False,
+    requires_grad: Union[bool, None] = False,
+) -> Tensor3D:
+    ...
 
 
 def rand(
@@ -322,8 +786,313 @@ def rand(
     )
 
 
+# bool
+@overload
 def full(
-    data: Sequence[int],
+    size: Sequence[Never],
+    fill_value: bool,
+    *,
+    dtype: Literal[None] = None,
+    device: DeviceLike = None,
+    out: Union[torch.Tensor, None] = None,
+    layout: Union[torch.layout, None] = None,
+    pin_memory: Union[bool, None] = False,
+    requires_grad: Union[bool, None] = False,
+) -> BoolTensor0D:
+    ...
+
+
+@overload
+def full(
+    size: Tuple[int],
+    fill_value: bool,
+    *,
+    dtype: Literal[None] = None,
+    device: DeviceLike = None,
+    out: Union[torch.Tensor, None] = None,
+    layout: Union[torch.layout, None] = None,
+    pin_memory: Union[bool, None] = False,
+    requires_grad: Union[bool, None] = False,
+) -> BoolTensor1D:
+    ...
+
+
+@overload
+def full(
+    size: Tuple[int, int],
+    fill_value: bool,
+    *,
+    dtype: Literal[None] = None,
+    device: DeviceLike = None,
+    out: Union[torch.Tensor, None] = None,
+    layout: Union[torch.layout, None] = None,
+    pin_memory: Union[bool, None] = False,
+    requires_grad: Union[bool, None] = False,
+) -> BoolTensor2D:
+    ...
+
+
+@overload
+def full(
+    size: Tuple[int, int, int],
+    fill_value: bool,
+    *,
+    dtype: Literal[None] = None,
+    device: DeviceLike = None,
+    out: Union[torch.Tensor, None] = None,
+    layout: Union[torch.layout, None] = None,
+    pin_memory: Union[bool, None] = False,
+    requires_grad: Union[bool, None] = False,
+) -> BoolTensor3D:
+    ...
+
+
+# int
+@overload
+def full(
+    size: Sequence[Never],
+    fill_value: int,
+    *,
+    dtype: Literal[None] = None,
+    device: DeviceLike = None,
+    out: Union[torch.Tensor, None] = None,
+    layout: Union[torch.layout, None] = None,
+    pin_memory: Union[bool, None] = False,
+    requires_grad: Union[bool, None] = False,
+) -> BoolTensor0D:
+    ...
+
+
+@overload
+def full(
+    size: Tuple[int],
+    fill_value: int,
+    *,
+    dtype: Literal[None] = None,
+    device: DeviceLike = None,
+    out: Union[torch.Tensor, None] = None,
+    layout: Union[torch.layout, None] = None,
+    pin_memory: Union[bool, None] = False,
+    requires_grad: Union[bool, None] = False,
+) -> BoolTensor1D:
+    ...
+
+
+@overload
+def full(
+    size: Tuple[int, int],
+    fill_value: int,
+    *,
+    dtype: Literal[None] = None,
+    device: DeviceLike = None,
+    out: Union[torch.Tensor, None] = None,
+    layout: Union[torch.layout, None] = None,
+    pin_memory: Union[bool, None] = False,
+    requires_grad: Union[bool, None] = False,
+) -> BoolTensor2D:
+    ...
+
+
+@overload
+def full(
+    size: Tuple[int, int, int],
+    fill_value: int,
+    *,
+    dtype: Literal[None] = None,
+    device: DeviceLike = None,
+    out: Union[torch.Tensor, None] = None,
+    layout: Union[torch.layout, None] = None,
+    pin_memory: Union[bool, None] = False,
+    requires_grad: Union[bool, None] = False,
+) -> BoolTensor3D:
+    ...
+
+
+# float
+@overload
+def full(
+    size: Sequence[Never],
+    fill_value: float,
+    *,
+    dtype: Literal[None] = None,
+    device: DeviceLike = None,
+    out: Union[torch.Tensor, None] = None,
+    layout: Union[torch.layout, None] = None,
+    pin_memory: Union[bool, None] = False,
+    requires_grad: Union[bool, None] = False,
+) -> BoolTensor0D:
+    ...
+
+
+@overload
+def full(
+    size: Tuple[int],
+    fill_value: float,
+    *,
+    dtype: Literal[None] = None,
+    device: DeviceLike = None,
+    out: Union[torch.Tensor, None] = None,
+    layout: Union[torch.layout, None] = None,
+    pin_memory: Union[bool, None] = False,
+    requires_grad: Union[bool, None] = False,
+) -> BoolTensor1D:
+    ...
+
+
+@overload
+def full(
+    size: Tuple[int, int],
+    fill_value: float,
+    *,
+    dtype: Literal[None] = None,
+    device: DeviceLike = None,
+    out: Union[torch.Tensor, None] = None,
+    layout: Union[torch.layout, None] = None,
+    pin_memory: Union[bool, None] = False,
+    requires_grad: Union[bool, None] = False,
+) -> BoolTensor2D:
+    ...
+
+
+@overload
+def full(
+    size: Tuple[int, int, int],
+    fill_value: float,
+    *,
+    dtype: Literal[None] = None,
+    device: DeviceLike = None,
+    out: Union[torch.Tensor, None] = None,
+    layout: Union[torch.layout, None] = None,
+    pin_memory: Union[bool, None] = False,
+    requires_grad: Union[bool, None] = False,
+) -> BoolTensor3D:
+    ...
+
+
+# complex
+@overload
+def full(
+    size: Sequence[Never],
+    fill_value: complex,
+    *,
+    dtype: Literal[None] = None,
+    device: DeviceLike = None,
+    out: Union[torch.Tensor, None] = None,
+    layout: Union[torch.layout, None] = None,
+    pin_memory: Union[bool, None] = False,
+    requires_grad: Union[bool, None] = False,
+) -> BoolTensor0D:
+    ...
+
+
+@overload
+def full(
+    size: Tuple[int],
+    fill_value: complex,
+    *,
+    dtype: Literal[None] = None,
+    device: DeviceLike = None,
+    out: Union[torch.Tensor, None] = None,
+    layout: Union[torch.layout, None] = None,
+    pin_memory: Union[bool, None] = False,
+    requires_grad: Union[bool, None] = False,
+) -> BoolTensor1D:
+    ...
+
+
+@overload
+def full(
+    size: Tuple[int, int],
+    fill_value: complex,
+    *,
+    dtype: Literal[None] = None,
+    device: DeviceLike = None,
+    out: Union[torch.Tensor, None] = None,
+    layout: Union[torch.layout, None] = None,
+    pin_memory: Union[bool, None] = False,
+    requires_grad: Union[bool, None] = False,
+) -> BoolTensor2D:
+    ...
+
+
+@overload
+def full(
+    size: Tuple[int, int, int],
+    fill_value: complex,
+    *,
+    dtype: Literal[None] = None,
+    device: DeviceLike = None,
+    out: Union[torch.Tensor, None] = None,
+    layout: Union[torch.layout, None] = None,
+    pin_memory: Union[bool, None] = False,
+    requires_grad: Union[bool, None] = False,
+) -> BoolTensor3D:
+    ...
+
+
+# BuiltinNumber
+@overload
+def full(
+    size: Sequence[Never],
+    fill_value: BuiltinNumber,
+    *,
+    dtype: DTypeLike = None,
+    device: DeviceLike = None,
+    out: Union[torch.Tensor, None] = None,
+    layout: Union[torch.layout, None] = None,
+    pin_memory: Union[bool, None] = False,
+    requires_grad: Union[bool, None] = False,
+) -> Tensor0D:
+    ...
+
+
+@overload
+def full(
+    size: Tuple[int],
+    fill_value: BuiltinNumber,
+    *,
+    dtype: DTypeLike = None,
+    device: DeviceLike = None,
+    out: Union[torch.Tensor, None] = None,
+    layout: Union[torch.layout, None] = None,
+    pin_memory: Union[bool, None] = False,
+    requires_grad: Union[bool, None] = False,
+) -> Tensor1D:
+    ...
+
+
+@overload
+def full(
+    size: Tuple[int, int],
+    fill_value: BuiltinNumber,
+    *,
+    dtype: DTypeLike = None,
+    device: DeviceLike = None,
+    out: Union[torch.Tensor, None] = None,
+    layout: Union[torch.layout, None] = None,
+    pin_memory: Union[bool, None] = False,
+    requires_grad: Union[bool, None] = False,
+) -> Tensor2D:
+    ...
+
+
+@overload
+def full(
+    size: Tuple[int, int, int],
+    fill_value: BuiltinNumber,
+    *,
+    dtype: DTypeLike = None,
+    device: DeviceLike = None,
+    out: Union[torch.Tensor, None] = None,
+    layout: Union[torch.layout, None] = None,
+    pin_memory: Union[bool, None] = False,
+    requires_grad: Union[bool, None] = False,
+) -> Tensor3D:
+    ...
+
+
+def full(
+    size: Sequence[int],
     fill_value: BuiltinNumber,
     *,
     dtype: DTypeLike = None,
@@ -336,7 +1105,7 @@ def full(
     dtype = get_dtype(dtype)
     device = get_device(device)
     return torch.full(
-        data,
+        size,
         fill_value=fill_value,
         out=out,
         dtype=dtype,
