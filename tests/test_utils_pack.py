@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import os
+import tempfile
 import time
 import unittest
 from pathlib import Path
@@ -20,7 +21,7 @@ from torchoutil.utils.pack.pack import pack_dataset, pack_dataset_to_columns
 class TestPackCIFAR10(TestCase):
     @classmethod
     def setUpClass(cls) -> None:
-        tmpdir = Path(os.getenv("TORCHOUTIL_TMPDIR", "/tmp/torchoutil_tests"))
+        tmpdir = Path(os.getenv("TORCHOUTIL_TMPDIR", tempfile.gettempdir()))
         dataset = CIFAR10(
             tmpdir,
             train=False,
@@ -160,6 +161,12 @@ class TestPackCIFAR10(TestCase):
 
 
 class TestPackSpeechCommands(TestCase):
+    @classmethod
+    def setUpClass(cls) -> None:
+        tmpdir = Path(os.getenv("TORCHOUTIL_TMPDIR", tempfile.gettempdir()))
+        tmpdir.mkdir(parents=True, exist_ok=True)
+        cls.tmpdir = tmpdir
+
     def test_example_1(self) -> None:
         from torch import nn
         from torchaudio.datasets import SPEECHCOMMANDS
@@ -167,8 +174,8 @@ class TestPackSpeechCommands(TestCase):
 
         from torchoutil.utils.pack import pack_dataset
 
-        speech_commands_root = "/tmp/torchoutil_tests/speech_commands"
-        packed_root = "/tmp/torchoutil_tests/packed_speech_commands"
+        speech_commands_root = self.tmpdir.joinpath("speech_commands")
+        packed_root = self.tmpdir.joinpath("packed_speech_commands")
 
         os.makedirs(speech_commands_root, exist_ok=True)
         os.makedirs(packed_root, exist_ok=True)
@@ -203,7 +210,7 @@ class TestPackSpeechCommands(TestCase):
         # Read from pickle
         from torchoutil.utils.pack import PackedDataset
 
-        packed_root = "/tmp/torchoutil_tests/packed_speech_commands"
+        packed_root = self.tmpdir.joinpath("packed_speech_commands")
         pack = PackedDataset(packed_root)
         pack[0]  # first transformed item
 

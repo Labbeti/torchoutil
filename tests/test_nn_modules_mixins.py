@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import os
+import tempfile
 import unittest
 from pathlib import Path
 from unittest import TestCase
@@ -42,7 +43,7 @@ class MyModule(nn.EModule[Tensor, Tensor]):
 class TestInheritEModule(TestCase):
     @classmethod
     def setUpClass(cls) -> None:
-        tmpdir = Path(os.getenv("TORCHOUTIL_TMPDIR", "/tmp/torchoutil_tests"))
+        tmpdir = Path(os.getenv("TORCHOUTIL_TMPDIR", tempfile.gettempdir()))
         cls.tmpdir = tmpdir
 
     def test_multiple(self) -> None:

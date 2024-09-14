@@ -20,12 +20,14 @@ class TestDType(TestCase):
             [np.complex64, np.float16, np.float64],
             [],
             [np.int64, np.float16],
+            [np.dtype("<U2"), np.dtype("<U10"), np.dtype("V")],
         ]
         expected_lst = [
             np.int64,
             np.complex128,
             empty,
             np.float64,
+            np.dtype("<U10"),
         ]
 
         for args, expected in zip(args_lst, expected_lst):

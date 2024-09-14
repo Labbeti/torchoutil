@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import os
+import tempfile
 import random
 import unittest
 from pathlib import Path
@@ -21,7 +22,7 @@ from torchoutil.pyoutil import dict_list_to_list_dict
 class TestHDF(TestCase):
     @classmethod
     def setUpClass(cls) -> None:
-        tmpdir = Path(os.getenv("TORCHOUTIL_TMPDIR", "/tmp/torchoutil_tests"))
+        tmpdir = Path(os.getenv("TORCHOUTIL_TMPDIR", tempfile.gettempdir()))
         tmpdir.mkdir(parents=True, exist_ok=True)
         cls.tmpdir = tmpdir
 
@@ -36,10 +37,8 @@ class TestHDF(TestCase):
             target_transform=ESequential(IndexToOnehot(10), ToList()),
             download=True,
         )
-        dataset = Subset(
-            dataset,
-            torch.randint(0, len(dataset), (max(len(dataset) // 10, 1),)).tolist(),
-        )
+        indices = torch.randint(0, len(dataset), (max(len(dataset) // 10, 1),)).tolist()
+        dataset = Subset(dataset, indices)
 
         path = tmpdir.joinpath("test_cifar10.hdf")
         hdf_dataset = pack_to_hdf(dataset, path, exists="overwrite")
@@ -52,8 +51,7 @@ class TestHDF(TestCase):
         assert np.equal(image0, image1).bool().all()
         assert np.equal(label0, label1).bool().all()
 
-        hdf_dataset.close()
-        os.remove(path)
+        hdf_dataset.close(remove_file=True)
 
     def test_shape_column(self) -> None:
         cls = self.__class__

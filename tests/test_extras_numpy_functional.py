@@ -7,7 +7,7 @@ from unittest import TestCase
 import torch
 
 from torchoutil.core.packaging import _NUMPY_AVAILABLE
-from torchoutil.nn.functional.numpy import numpy_to_tensor, tensor_to_numpy
+from torchoutil.extras.numpy import numpy_to_tensor, tensor_to_numpy
 
 
 class TestNumpyConversions(TestCase):
