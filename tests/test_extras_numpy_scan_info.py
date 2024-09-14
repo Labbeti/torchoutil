@@ -20,7 +20,7 @@ class TestDType(TestCase):
             [np.complex64, np.float16, np.float64],
             [],
             [np.int64, np.float16],
-            [np.dtype("<U2"), np.dtype("<U10"), np.dtype("V")],
+            [np.dtype("<U2"), np.dtype("<U10"), empty],
         ]
         expected_lst = [
             np.int64,
