@@ -21,9 +21,8 @@ class StrEnum(str, Enum):
             ):
                 return cls[member]
 
-        raise ValueError(
-            f"Invalid argument {value=}. (expected one of {tuple(members)})"
-        )
+        msg = f"Invalid argument {value=}. (expected one of {tuple(members)})"
+        raise ValueError(msg)
 
     @staticmethod
     def _generate_next_value_(name, start, count, last_values) -> str:

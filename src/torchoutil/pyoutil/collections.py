@@ -379,9 +379,8 @@ def flat_dict_of_dict(
                 output[k] = v
 
             else:
-                raise ValueError(
-                    f"Ambiguous flatten dict with key '{k}'. (with value '{v}')"
-                )
+                msg = f"Ambiguous flatten dict with key '{k}'. (with value '{v}')"
+                raise ValueError(msg)
         return output
 
     return _flat_dict_of_dict_impl(nested_dic)
@@ -413,9 +412,8 @@ def unflat_dict_of_dict(dic: Mapping[str, Any], *, sep: str = ".") -> Dict[str, 
             if k not in output:
                 output[k] = {}
             elif not isinstance(output[k], Mapping):
-                raise ValueError(
-                    f"Invalid dict argument. (found keys {k} and {k}{sep}{kk})"
-                )
+                msg = f"Invalid dict argument. (found keys {k} and {k}{sep}{kk})"
+                raise ValueError(msg)
 
             output[k][kk] = v
 
@@ -559,9 +557,8 @@ def flatten(
     if end_dim < 0:
         raise ValueError(f"Invalid argument {end_dim=}. (expected positive integer)")
     if start_dim > end_dim:
-        raise ValueError(
-            f"Invalid arguments {start_dim=} and {end_dim=}. (expected start_dim <= end_dim)"
-        )
+        msg = f"Invalid arguments {start_dim=} and {end_dim=}. (expected start_dim <= end_dim)"
+        raise ValueError(msg)
 
     def flatten_impl(x: Any, start_dim: int, end_dim: int) -> List[Any]:
         if is_scalar_fn(x):

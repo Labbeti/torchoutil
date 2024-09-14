@@ -45,9 +45,8 @@ def hash_file(
     elif isinstance(hash_type, Hasher):
         hasher = hash_type
     else:
-        raise ValueError(
-            f"Invalid argument hash_type={hash_type}. (expected one of {HASH_NAMES} or a custom hasher)"
-        )
+        msg = f"Invalid argument hash_type={hash_type}. (expected one of {HASH_NAMES} or a custom hasher)"
+        raise ValueError(msg)
     del hash_type
 
     with open(fpath, "rb") as file:
