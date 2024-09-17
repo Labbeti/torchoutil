@@ -20,6 +20,7 @@ from typing import (
     TypeVar,
     Union,
     overload,
+    ClassVar,
 )
 
 import torch
@@ -30,7 +31,7 @@ from torchoutil.core.get import DeviceLike, DTypeLike, get_device, get_dtype
 from torchoutil.nn import functional as F
 from torchoutil.pyoutil import BuiltinNumber, T_BuiltinNumber
 
-T_Tensor = TypeVar("T_Tensor", bound=torch.Tensor)
+T_Tensor = TypeVar("T_Tensor", bound="_TensorNDBase")
 T_DType = TypeVar("T_DType", "DTypeEnum", None)
 T_NDim = TypeVar("T_NDim", bound=int)
 T_Floating = TypeVar("T_Floating", bound=bool)
@@ -63,9 +64,34 @@ _TORCH_BASE_CLASSES: Final[Dict[str, Type]] = {
 class _GenericsValues(NamedTuple):
     dtype: Optional[torch.dtype] = None
     ndim: Optional[int] = None
-    floating_point: Optional[bool] = None
-    complex: Optional[bool] = None
-    signed: Optional[bool] = None
+    is_floating_point: Optional[bool] = None
+    is_complex: Optional[bool] = None
+    is_signed: Optional[bool] = None
+
+    def is_compatible_with_tensor(self, tensor: torch.Tensor) -> bool:
+        if self.ndim is not None and self.ndim != tensor.ndim:
+            return False
+        else:
+            return self.is_compatible_with_dtype(tensor.dtype)
+
+    def is_compatible_with_dtype(self, dtype: torch.dtype) -> bool:
+        if self.dtype is not None:
+            return self.dtype == dtype
+
+        for self_attr, dtype_attr in zip(
+            self[2:5], (dtype.is_floating_point, dtype.is_complex, dtype.is_signed)
+        ):
+            if self_attr is not None and self_attr != dtype_attr:
+                return False
+        return True
+
+    def is_compatible_with_generic(self, other: "_GenericsValues") -> bool:
+        for self_attr, other_attr in zip(self, other):
+            if self_attr is not None and (
+                other_attr is None or self_attr != other_attr
+            ):
+                return False
+        return True
 
 
 def _get_generics(
@@ -126,41 +152,21 @@ class _TensorNDMeta(
             return False
 
         gen = _get_generics(cls)
-
-        if gen.dtype is not None and gen.dtype != instance.dtype:
-            return False
-        if gen.ndim is not None and gen.ndim != instance.ndim:
-            return False
-        if (
-            gen.floating_point is not None
-            and gen.floating_point != instance.is_floating_point()
-        ):
-            return False
-        if gen.complex is not None and gen.complex != instance.is_complex():
-            return False
-        if gen.signed is not None and gen.signed != instance.is_signed():
-            return False
-
-        return True
+        return gen.is_compatible_with_tensor(instance)
 
     def __subclasscheck__(cls, subclass: Any) -> bool:
         """Called method to check issubclass(subclass, cls)"""
         self_generics = _get_generics(cls)
         other_generics = _get_generics(subclass)
-
-        for self_attr, other_attr in zip(self_generics, other_generics):
-            if self_attr is not None and (
-                other_attr is None or self_attr != other_attr
-            ):
-                return False
-
-        return True
+        return self_generics.is_compatible_with_generic(other_generics)
 
 
 class _TensorNDBase(
     Generic[T_DType, T_NDim, T_BuiltinNumber, T_Floating, T_Complex, T_Signed],
     torch.Tensor,
 ):
+    _DEFAULT_DTYPE: ClassVar[Optional[DTypeEnum]] = None
+
     @overload
     def __new__(
         cls: Type[T_Tensor],
@@ -172,7 +178,8 @@ class _TensorNDBase(
         layout: Union[torch.layout, None] = None,
         pin_memory: Union[bool, None] = False,
         requires_grad: Union[bool, None] = False,
-    ) -> T_Tensor: ...
+    ) -> T_Tensor:
+        ...
 
     @overload
     def __new__(
@@ -182,7 +189,8 @@ class _TensorNDBase(
         *,
         dtype: DTypeLike = None,
         device: DeviceLike = None,
-    ) -> T_Tensor: ...
+    ) -> T_Tensor:
+        ...
 
     def __new__(
         cls: Type[T_Tensor],
@@ -202,17 +210,27 @@ class _TensorNDBase(
         cls_dtype = gen.dtype
         cls_ndim = gen.ndim
 
-        if cls_dtype is None:
+        # Sanity checks for dtype
+        if dtype is None:
+            if cls_dtype is not None:
+                dtype = cls_dtype
+            elif cls._DEFAULT_DTYPE is not None:
+                dtype = cls._DEFAULT_DTYPE.dtype
+
+        elif cls_dtype is None:
+            if not gen.is_compatible_with_dtype(dtype):
+                msg = f"Invalid argument {dtype=} for {cls.__name__}. (expected a dtype with (is_floating_point={gen.is_floating_point}, is_complex={gen.is_complex}, is_signed={gen.is_signed}))"
+                raise ValueError(msg)
+
+        elif dtype == cls_dtype:
             pass
-        elif dtype is None:
-            dtype = cls_dtype
-        elif cls_dtype != dtype:
+        else:
             msg = (
                 f"Invalid argument {dtype=} for {cls.__name__}. (expected {cls_dtype})"
             )
             raise ValueError(msg)
 
-        # Sanity checks
+        # Sanity checks for data and ndim
         is_int_args = all(isinstance(arg, int) for arg in args)
         if cls_ndim is None:
             if len(args) == 0:
@@ -286,7 +304,8 @@ class _TensorNDBase(
         layout: Union[torch.layout, None] = None,
         pin_memory: Union[bool, None] = False,
         requires_grad: Union[bool, None] = False,
-    ) -> None: ...
+    ) -> None:
+        ...
 
     @overload
     def __init__(
@@ -296,7 +315,8 @@ class _TensorNDBase(
         *,
         dtype: DTypeLike = None,
         device: DeviceLike = None,
-    ) -> None: ...
+    ) -> None:
+        ...
 
     def __init__(
         self,
@@ -308,7 +328,8 @@ class _TensorNDBase(
         layout: Union[torch.layout, None] = None,
         pin_memory: Union[bool, None] = False,
         requires_grad: Union[bool, None] = False,
-    ) -> None: ...
+    ) -> None:
+        ...
 
     ndim: T_NDim  # type: ignore
 
@@ -337,31 +358,36 @@ class _TensorNDBase(
 class Tensor(
     _TensorNDBase[Literal[None], int, BuiltinNumber, bool, bool, bool],
     metaclass=_TensorNDMeta[Literal[None], int, BuiltinNumber, bool, bool, bool],
-): ...
+):
+    ...
 
 
 class Tensor0D(
     _TensorNDBase[Literal[None], Literal[0], BuiltinNumber, bool, bool, bool],
     metaclass=_TensorNDMeta[Literal[None], Literal[0], BuiltinNumber, bool, bool, bool],
-): ...
+):
+    ...
 
 
 class Tensor1D(
     _TensorNDBase[Literal[None], Literal[1], BuiltinNumber, bool, bool, bool],
     metaclass=_TensorNDMeta[Literal[None], Literal[1], BuiltinNumber, bool, bool, bool],
-): ...
+):
+    ...
 
 
 class Tensor2D(
     _TensorNDBase[Literal[None], Literal[2], BuiltinNumber, bool, bool, bool],
     metaclass=_TensorNDMeta[Literal[None], Literal[2], BuiltinNumber, bool, bool, bool],
-): ...
+):
+    ...
 
 
 class Tensor3D(
     _TensorNDBase[Literal[None], Literal[3], BuiltinNumber, bool, bool, bool],
     metaclass=_TensorNDMeta[Literal[None], Literal[3], BuiltinNumber, bool, bool, bool],
-): ...
+):
+    ...
 
 
 class BoolTensor(
@@ -381,7 +407,8 @@ class BoolTensor(
         Literal[False],
         Literal[False],
     ],
-): ...
+):
+    ...
 
 
 class BoolTensor0D(
@@ -489,7 +516,8 @@ class ByteTensor(
         Literal[False],
         Literal[False],
     ],
-): ...
+):
+    ...
 
 
 class ByteTensor0D(
@@ -597,7 +625,8 @@ class CharTensor(
         Literal[False],
         Literal[False],
     ],
-): ...
+):
+    ...
 
 
 class CharTensor0D(
@@ -705,7 +734,8 @@ class DoubleTensor(
         Literal[False],
         Literal[True],
     ],
-): ...
+):
+    ...
 
 
 class DoubleTensor0D(
@@ -813,7 +843,8 @@ class FloatTensor(
         Literal[False],
         Literal[True],
     ],
-): ...
+):
+    ...
 
 
 class FloatTensor0D(
@@ -833,7 +864,8 @@ class FloatTensor0D(
         Literal[False],
         Literal[True],
     ],
-): ...
+):
+    ...
 
 
 class FloatTensor1D(
@@ -919,7 +951,8 @@ class HalfTensor(
         Literal[False],
         Literal[True],
     ],
-): ...
+):
+    ...
 
 
 class HalfTensor0D(
@@ -1017,7 +1050,8 @@ class IntTensor(
     metaclass=_TensorNDMeta[
         Literal[DTypeEnum.int], int, int, Literal[False], Literal[False], Literal[True]
     ],
-): ...
+):
+    ...
 
 
 class IntTensor0D(
@@ -1115,7 +1149,8 @@ class LongTensor(
     metaclass=_TensorNDMeta[
         Literal[DTypeEnum.long], int, int, Literal[False], Literal[False], Literal[True]
     ],
-): ...
+):
+    ...
 
 
 class LongTensor0D(
@@ -1223,7 +1258,8 @@ class ShortTensor(
         Literal[False],
         Literal[True],
     ],
-): ...
+):
+    ...
 
 
 class ShortTensor0D(
@@ -1331,7 +1367,8 @@ class CFloatTensor(
         Literal[True],
         Literal[True],
     ],
-): ...
+):
+    ...
 
 
 class CFloatTensor0D(
@@ -1420,3 +1457,554 @@ class CFloatTensor3D(
 ):
     def tolist(self) -> List[List[List[complex]]]:
         return super().tolist()  # type: ignore
+
+
+class CHalfTensor(
+    _TensorNDBase[
+        Literal[DTypeEnum.chalf],
+        int,
+        complex,
+        Literal[False],
+        Literal[True],
+        Literal[True],
+    ],
+    metaclass=_TensorNDMeta[
+        Literal[DTypeEnum.chalf],
+        int,
+        complex,
+        Literal[False],
+        Literal[True],
+        Literal[True],
+    ],
+):
+    ...
+
+
+class CHalfTensor0D(
+    _TensorNDBase[
+        Literal[DTypeEnum.chalf],
+        Literal[0],
+        complex,
+        Literal[False],
+        Literal[True],
+        Literal[True],
+    ],
+    metaclass=_TensorNDMeta[
+        Literal[DTypeEnum.chalf],
+        Literal[0],
+        complex,
+        Literal[False],
+        Literal[True],
+        Literal[True],
+    ],
+):
+    def tolist(self) -> complex:
+        return super().tolist()  # type: ignore
+
+
+class CHalfTensor1D(
+    _TensorNDBase[
+        Literal[DTypeEnum.chalf],
+        Literal[1],
+        complex,
+        Literal[False],
+        Literal[True],
+        Literal[True],
+    ],
+    metaclass=_TensorNDMeta[
+        Literal[DTypeEnum.chalf],
+        Literal[1],
+        complex,
+        Literal[False],
+        Literal[True],
+        Literal[True],
+    ],
+):
+    def tolist(self) -> List[complex]:
+        return super().tolist()  # type: ignore
+
+
+class CHalfTensor2D(
+    _TensorNDBase[
+        Literal[DTypeEnum.chalf],
+        Literal[2],
+        complex,
+        Literal[False],
+        Literal[True],
+        Literal[True],
+    ],
+    metaclass=_TensorNDMeta[
+        Literal[DTypeEnum.chalf],
+        Literal[2],
+        complex,
+        Literal[False],
+        Literal[True],
+        Literal[True],
+    ],
+):
+    def tolist(self) -> List[List[complex]]:
+        return super().tolist()  # type: ignore
+
+
+class CHalfTensor3D(
+    _TensorNDBase[
+        Literal[DTypeEnum.chalf],
+        Literal[3],
+        complex,
+        Literal[False],
+        Literal[True],
+        Literal[True],
+    ],
+    metaclass=_TensorNDMeta[
+        Literal[DTypeEnum.chalf],
+        Literal[3],
+        complex,
+        Literal[False],
+        Literal[True],
+        Literal[True],
+    ],
+):
+    def tolist(self) -> List[List[List[complex]]]:
+        return super().tolist()  # type: ignore
+
+
+class CDoubleTensor(
+    _TensorNDBase[
+        Literal[DTypeEnum.cdouble],
+        int,
+        complex,
+        Literal[False],
+        Literal[True],
+        Literal[True],
+    ],
+    metaclass=_TensorNDMeta[
+        Literal[DTypeEnum.cdouble],
+        int,
+        complex,
+        Literal[False],
+        Literal[True],
+        Literal[True],
+    ],
+):
+    ...
+
+
+class CDoubleTensor0D(
+    _TensorNDBase[
+        Literal[DTypeEnum.cdouble],
+        Literal[0],
+        complex,
+        Literal[False],
+        Literal[True],
+        Literal[True],
+    ],
+    metaclass=_TensorNDMeta[
+        Literal[DTypeEnum.cdouble],
+        Literal[0],
+        complex,
+        Literal[False],
+        Literal[True],
+        Literal[True],
+    ],
+):
+    def tolist(self) -> complex:
+        return super().tolist()  # type: ignore
+
+
+class CDoubleTensor1D(
+    _TensorNDBase[
+        Literal[DTypeEnum.cdouble],
+        Literal[1],
+        complex,
+        Literal[False],
+        Literal[True],
+        Literal[True],
+    ],
+    metaclass=_TensorNDMeta[
+        Literal[DTypeEnum.cdouble],
+        Literal[1],
+        complex,
+        Literal[False],
+        Literal[True],
+        Literal[True],
+    ],
+):
+    def tolist(self) -> List[complex]:
+        return super().tolist()  # type: ignore
+
+
+class CDoubleTensor2D(
+    _TensorNDBase[
+        Literal[DTypeEnum.cdouble],
+        Literal[2],
+        complex,
+        Literal[False],
+        Literal[True],
+        Literal[True],
+    ],
+    metaclass=_TensorNDMeta[
+        Literal[DTypeEnum.cdouble],
+        Literal[2],
+        complex,
+        Literal[False],
+        Literal[True],
+        Literal[True],
+    ],
+):
+    def tolist(self) -> List[List[complex]]:
+        return super().tolist()  # type: ignore
+
+
+class CDoubleTensor3D(
+    _TensorNDBase[
+        Literal[DTypeEnum.cdouble],
+        Literal[3],
+        complex,
+        Literal[False],
+        Literal[True],
+        Literal[True],
+    ],
+    metaclass=_TensorNDMeta[
+        Literal[DTypeEnum.cdouble],
+        Literal[3],
+        complex,
+        Literal[False],
+        Literal[True],
+        Literal[True],
+    ],
+):
+    def tolist(self) -> List[List[List[complex]]]:
+        return super().tolist()  # type: ignore
+
+
+class ComplexTensor(
+    _TensorNDBase[
+        Literal[None],
+        int,
+        complex,
+        Literal[False],
+        Literal[True],
+        Literal[True],
+    ],
+    metaclass=_TensorNDMeta[
+        Literal[None],
+        int,
+        complex,
+        Literal[False],
+        Literal[True],
+        Literal[True],
+    ],
+):
+    """Intermediate class for checking and typing complex-valued tensors.
+    - Concrete subclasses are: CFloatTensor, CHalfTensor, CDoubleTensor.
+    - Properties are: is_floating_point=False, is_complex=True, is_signed=True.
+    - By default, instantiate this class will create a CFloatTensor.
+    """
+
+    _DEFAULT_DTYPE = DTypeEnum.complex64
+
+
+class ComplexTensor0D(
+    _TensorNDBase[
+        Literal[None],
+        Literal[0],
+        complex,
+        Literal[False],
+        Literal[True],
+        Literal[True],
+    ],
+    metaclass=_TensorNDMeta[
+        Literal[None],
+        Literal[0],
+        complex,
+        Literal[False],
+        Literal[True],
+        Literal[True],
+    ],
+):
+    _DEFAULT_DTYPE = DTypeEnum.complex64
+
+
+class ComplexTensor1D(
+    _TensorNDBase[
+        Literal[None],
+        Literal[1],
+        complex,
+        Literal[False],
+        Literal[True],
+        Literal[True],
+    ],
+    metaclass=_TensorNDMeta[
+        Literal[None],
+        Literal[1],
+        complex,
+        Literal[False],
+        Literal[True],
+        Literal[True],
+    ],
+):
+    _DEFAULT_DTYPE = DTypeEnum.complex64
+
+
+class ComplexTensor2D(
+    _TensorNDBase[
+        Literal[None],
+        Literal[2],
+        complex,
+        Literal[False],
+        Literal[True],
+        Literal[True],
+    ],
+    metaclass=_TensorNDMeta[
+        Literal[None],
+        Literal[2],
+        complex,
+        Literal[False],
+        Literal[True],
+        Literal[True],
+    ],
+):
+    _DEFAULT_DTYPE = DTypeEnum.complex64
+
+
+class ComplexTensor3D(
+    _TensorNDBase[
+        Literal[None],
+        Literal[3],
+        complex,
+        Literal[False],
+        Literal[True],
+        Literal[True],
+    ],
+    metaclass=_TensorNDMeta[
+        Literal[None],
+        Literal[3],
+        complex,
+        Literal[False],
+        Literal[True],
+        Literal[True],
+    ],
+):
+    _DEFAULT_DTYPE = DTypeEnum.complex64
+
+
+class FloatingTensor(
+    _TensorNDBase[
+        Literal[None],
+        int,
+        float,
+        Literal[True],
+        Literal[False],
+        Literal[True],
+    ],
+    metaclass=_TensorNDMeta[
+        Literal[None],
+        int,
+        float,
+        Literal[True],
+        Literal[False],
+        Literal[True],
+    ],
+):
+    """Intermediate class for checking and typing floating-point tensors.
+    - Concrete subclasses are: FloatTensor, HalfTensor, DoubleTensor.
+    - Properties are: is_floating_point=True, is_complex=False, is_signed=True.
+    - By default, instantiate this class will create a FloatTensor.
+    """
+
+    _DEFAULT_DTYPE = DTypeEnum.float32
+
+
+class FloatingTensor0D(
+    _TensorNDBase[
+        Literal[None],
+        Literal[0],
+        float,
+        Literal[True],
+        Literal[False],
+        Literal[True],
+    ],
+    metaclass=_TensorNDMeta[
+        Literal[None],
+        Literal[0],
+        float,
+        Literal[True],
+        Literal[False],
+        Literal[True],
+    ],
+):
+    _DEFAULT_DTYPE = DTypeEnum.float32
+
+
+class FloatingTensor1D(
+    _TensorNDBase[
+        Literal[None],
+        Literal[1],
+        float,
+        Literal[True],
+        Literal[False],
+        Literal[True],
+    ],
+    metaclass=_TensorNDMeta[
+        Literal[None],
+        Literal[1],
+        float,
+        Literal[True],
+        Literal[False],
+        Literal[True],
+    ],
+):
+    _DEFAULT_DTYPE = DTypeEnum.float32
+
+
+class FloatingTensor2D(
+    _TensorNDBase[
+        Literal[None],
+        Literal[2],
+        float,
+        Literal[True],
+        Literal[False],
+        Literal[True],
+    ],
+    metaclass=_TensorNDMeta[
+        Literal[None],
+        Literal[2],
+        float,
+        Literal[True],
+        Literal[False],
+        Literal[True],
+    ],
+):
+    _DEFAULT_DTYPE = DTypeEnum.float32
+
+
+class FloatingTensor3D(
+    _TensorNDBase[
+        Literal[None],
+        Literal[3],
+        float,
+        Literal[True],
+        Literal[False],
+        Literal[True],
+    ],
+    metaclass=_TensorNDMeta[
+        Literal[None],
+        Literal[3],
+        float,
+        Literal[True],
+        Literal[False],
+        Literal[True],
+    ],
+):
+    _DEFAULT_DTYPE = DTypeEnum.float32
+
+
+class IntegralTensor(
+    _TensorNDBase[
+        Literal[None],
+        int,
+        int,
+        Literal[False],
+        Literal[False],
+        Literal[True],
+    ],
+    metaclass=_TensorNDMeta[
+        Literal[None],
+        int,
+        int,
+        Literal[False],
+        Literal[False],
+        Literal[True],
+    ],
+):
+    """Intermediate class for checking and typing integral data type (integer-like) tensors.
+    - Concrete subclasses are: IntTensor, LongTensor, ShortTensor.
+    - Properties are: is_floating_point=False, is_complex=False, is_signed=True.
+    - By default, instantiate this class will create an IntTensor.
+    """
+
+    _DEFAULT_DTYPE = DTypeEnum.int32
+
+
+class IntegralTensor0D(
+    _TensorNDBase[
+        Literal[None],
+        Literal[0],
+        int,
+        Literal[False],
+        Literal[False],
+        Literal[True],
+    ],
+    metaclass=_TensorNDMeta[
+        Literal[None],
+        Literal[0],
+        int,
+        Literal[False],
+        Literal[False],
+        Literal[True],
+    ],
+):
+    _DEFAULT_DTYPE = DTypeEnum.int32
+
+
+class IntegralTensor1D(
+    _TensorNDBase[
+        Literal[None],
+        Literal[1],
+        int,
+        Literal[False],
+        Literal[False],
+        Literal[True],
+    ],
+    metaclass=_TensorNDMeta[
+        Literal[None],
+        Literal[1],
+        int,
+        Literal[False],
+        Literal[False],
+        Literal[True],
+    ],
+):
+    _DEFAULT_DTYPE = DTypeEnum.int32
+
+
+class IntegralTensor2D(
+    _TensorNDBase[
+        Literal[None],
+        Literal[2],
+        int,
+        Literal[False],
+        Literal[False],
+        Literal[True],
+    ],
+    metaclass=_TensorNDMeta[
+        Literal[None],
+        Literal[2],
+        int,
+        Literal[False],
+        Literal[False],
+        Literal[True],
+    ],
+):
+    _DEFAULT_DTYPE = DTypeEnum.int32
+
+
+class IntegralTensor3D(
+    _TensorNDBase[
+        Literal[None],
+        Literal[3],
+        int,
+        Literal[False],
+        Literal[False],
+        Literal[True],
+    ],
+    metaclass=_TensorNDMeta[
+        Literal[None],
+        Literal[3],
+        int,
+        Literal[False],
+        Literal[False],
+        Literal[True],
+    ],
+):
+    _DEFAULT_DTYPE = DTypeEnum.int32

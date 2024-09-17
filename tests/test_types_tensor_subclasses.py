@@ -7,6 +7,7 @@ from unittest import TestCase
 
 import torch
 
+from torchoutil.types import tensor_subclasses
 from torchoutil.types.tensor_subclasses import (
     DoubleTensor,
     FloatTensor,
@@ -21,6 +22,19 @@ from torchoutil.types.tensor_subclasses import (
     ShortTensor1D,
     Tensor0D,
     Tensor1D,
+    _TensorNDBase,
+    FloatingTensor,
+    BoolTensor1D,
+    CFloatTensor,
+    IntegralTensor,
+    ComplexTensor,
+    ShortTensor,
+    HalfTensor,
+    CHalfTensor,
+    CDoubleTensor,
+    ComplexTensor1D,
+    FloatingTensor0D,
+    IntegralTensor3D,
 )
 
 
@@ -36,6 +50,8 @@ class TestTensorTyping(TestCase):
         assert not isinstance(x, Tensor1D)
         assert not isinstance(x, IntTensor)
         assert not isinstance(x, IntTensor0D)
+        assert not isinstance(x, str)
+        assert not isinstance(x, float)
 
     def test_subclassing_checks(self) -> None:
         assert issubclass(Tensor0D, torch.Tensor)
@@ -47,6 +63,8 @@ class TestTensorTyping(TestCase):
 
         assert not issubclass(FloatTensor0D, IntTensor0D)
         assert not issubclass(FloatTensor0D, FloatTensor1D)
+        assert not issubclass(FloatTensor0D, str)
+        assert not issubclass(FloatTensor0D, float)
 
         assert not issubclass(torch.Tensor, FloatTensor)
         assert not issubclass(torch.Tensor, Tensor0D)
@@ -108,6 +126,30 @@ class TestTensorTyping(TestCase):
         x = LongTensor1D()
         assert x.dtype == torch.long and x.ndim == 1
 
+        x = ComplexTensor1D()
+        assert (
+            x.ndim == 1
+            and not x.is_floating_point()
+            and x.is_complex()
+            and x.is_signed()
+        )
+
+        x = FloatingTensor0D()
+        assert (
+            x.ndim == 0
+            and x.is_floating_point()
+            and not x.is_complex()
+            and x.is_signed()
+        )
+
+        x = IntegralTensor3D()
+        assert (
+            x.ndim == 3
+            and not x.is_floating_point()
+            and not x.is_complex()
+            and x.is_signed()
+        )
+
     def test_instantiation_with_args(self) -> None:
         args = (1, 2, 3)
         kwargs = dict()
@@ -129,8 +171,109 @@ class TestTensorTyping(TestCase):
         with self.assertRaises(ValueError):
             ShortTensor1D([1, 2], dtype=torch.uint8)
 
+        with self.assertRaises(ValueError):
+            ComplexTensor(dtype=torch.float32)
+
+        with self.assertRaises(ValueError):
+            FloatingTensor(dtype=torch.int32)
+
+        with self.assertRaises(ValueError):
+            IntegralTensor(dtype=torch.complex64)
+
+        with self.assertRaises(ValueError):
+            IntegralTensor(dtype=torch.bool)
+
+        _ = ComplexTensor(dtype=torch.complex128)
+        _ = FloatingTensor(dtype=torch.half)
+        _ = IntegralTensor(dtype=torch.long)
+
         x = Tensor0D(10.0)
         assert x.ndim == 0 and x.dtype == torch.float
+
+    def test_instantiate_all(self) -> None:
+        module = tensor_subclasses
+        for name in dir(module):
+            elem = getattr(module, name)
+            if (
+                not isinstance(elem, type)
+                or not issubclass(elem, _TensorNDBase)
+                or elem is _TensorNDBase
+            ):
+                continue
+
+            tensor_cls = elem
+            tensor = tensor_cls()
+
+            assert isinstance(tensor, torch.Tensor)
+
+    def test_complex_class(self) -> None:
+        cls = ComplexTensor
+        assert not cls().is_floating_point()
+        assert cls().is_complex()
+        assert cls().is_signed()
+        assert isinstance(cls(), cls)
+
+        assert issubclass(CFloatTensor, cls)
+        assert issubclass(CHalfTensor, cls)
+        assert issubclass(CDoubleTensor, cls)
+
+        assert isinstance(torch.rand(10, dtype=torch.complex64), cls)
+        assert isinstance(CFloatTensor(), cls)
+
+        assert not isinstance(torch.rand(10), cls)
+        assert not isinstance(torch.randint(0, 10, (5,)), cls)
+        assert not isinstance(FloatTensor(), cls)
+        assert not isinstance(DoubleTensor(), cls)
+
+        assert not isinstance(LongTensor(), cls)
+
+        assert not isinstance(BoolTensor1D(), cls)
+
+    def test_floating_class(self) -> None:
+        cls = FloatingTensor
+        assert cls().is_floating_point()
+        assert not cls().is_complex()
+        assert cls().is_signed()
+        assert isinstance(cls(), cls)
+
+        assert issubclass(FloatTensor, cls)
+        assert issubclass(HalfTensor, cls)
+        assert issubclass(DoubleTensor, cls)
+
+        assert not isinstance(torch.rand(10, dtype=torch.complex64), cls)
+        assert not isinstance(CFloatTensor(), cls)
+
+        assert isinstance(torch.rand(10), cls)
+        assert isinstance(FloatTensor(), cls)
+        assert isinstance(DoubleTensor(), cls)
+
+        assert not isinstance(torch.randint(0, 10, (5,)), cls)
+        assert not isinstance(LongTensor(), cls)
+
+        assert not isinstance(BoolTensor1D(), cls)
+
+    def test_integral_class(self) -> None:
+        cls = IntegralTensor
+        assert not cls().is_floating_point()
+        assert not cls().is_complex()
+        assert cls().is_signed()
+        assert isinstance(cls(), cls)
+
+        assert issubclass(IntTensor, cls)
+        assert issubclass(ShortTensor, cls)
+        assert issubclass(LongTensor, cls)
+
+        assert not isinstance(torch.rand(10, dtype=torch.complex64), cls)
+        assert not isinstance(CFloatTensor(), cls)
+
+        assert not isinstance(torch.rand(10), cls)
+        assert not isinstance(FloatTensor(), cls)
+        assert not isinstance(DoubleTensor(), cls)
+
+        assert isinstance(torch.randint(0, 10, (5,)), cls)
+        assert isinstance(LongTensor(), cls)
+
+        assert not isinstance(BoolTensor1D(), cls)
 
 
 if __name__ == "__main__":
