@@ -29,6 +29,7 @@ from torch.utils.data.dataloader import DataLoader
 import torchoutil as to
 from torchoutil import nn
 from torchoutil.extras.hdf.common import (
+    DUMPED_JSON_KEYS,
     HDF_ENCODING,
     HDF_STRING_DTYPE,
     HDF_VOID_DTYPE,
@@ -150,6 +151,7 @@ def pack_to_hdf(
         pylog.debug(f"Start packing data into HDF file '{hdf_fpath}'...")
 
     # Step 1: First pass to the dataset to build static HDF dataset shapes (much faster for read the resulting file)
+    encoding = HDF_ENCODING
     (
         dict_pre_transform,
         item_type,
@@ -166,6 +168,7 @@ def pack_to_hdf(
         store_complex_as_real,
         verbose,
         use_vlen_str=use_vlen_str,
+        encoding=encoding,
     )
 
     now = datetime.datetime.now()
@@ -201,6 +204,10 @@ def pack_to_hdf(
             num_scalars = sum(len(hdf_ds.shape) == 1 for hdf_ds in hdf_dsets.values())
             msg = f"{num_scalars}/{len(hdf_dsets)} column dsets contains a single dim."
             pylog.debug(msg)
+
+            if num_scalars < len(hdf_dsets):
+                msg = "Others multidims column dsets are:"
+                pylog.debug(msg)
 
             for attr_name, hdf_ds in hdf_dsets.items():
                 if len(hdf_ds.shape) == 1:
@@ -314,20 +321,23 @@ def pack_to_hdf(
         attributes = {
             "added_columns": added_columns,
             "creation_date": creation_date,
-            "encoding": HDF_ENCODING,
-            "file_kwds": json.dumps(file_kwds),
+            "encoding": encoding,
+            "file_kwds": file_kwds,
             "global_hash_value": global_hash_value,
-            "info": json.dumps(to_builtin(info)),
+            "info": to_builtin(info),
             "item_type": item_type,
             "length": len(dataset),
-            "load_as_complex": json.dumps(load_as_complex),
+            "load_as_complex": load_as_complex,
             "shape_suffix": shape_suffix,
             "source_dataset": dataset.__class__.__name__,
-            "src_np_dtypes": json.dumps(src_np_dtypes_dumped),
+            "src_np_dtypes": src_np_dtypes_dumped,
             "use_vlen_str": use_vlen_str,
-            "user_attrs": json.dumps(to_builtin(user_attrs)),
+            "user_attrs": to_builtin(user_attrs),
             "version": str(to.__version__),
         }
+        for name in DUMPED_JSON_KEYS:
+            attributes[name] = json.dumps(attributes[name])
+
         if verbose >= 2:
             dumped_attributes = json.dumps(attributes, indent="\t")
             pylog.debug(f"Saving attributes in HDF file:\n{dumped_attributes}")
@@ -354,7 +364,8 @@ def _scan_dataset(
     num_workers: int,
     store_complex_as_real: bool,
     verbose: int,
-    use_vlen_str: bool = False,
+    use_vlen_str: bool,
+    encoding: str,
 ) -> Tuple[
     Callable[[T], Dict[str, Any]],
     HDFItemType,
@@ -371,7 +382,7 @@ def _scan_dataset(
 
     def encode_array(x: np.ndarray) -> Any:
         if x.dtype.kind == "U":
-            x = np.char.encode(x, encoding=HDF_ENCODING)
+            x = np.char.encode(x, encoding=encoding)
         if x.dtype.kind == "S":
             x = x.tolist()
         return x
@@ -460,7 +471,7 @@ def _scan_dataset(
 
         np_dtypes = [np_dtype for _, np_dtype in info]
         np_dtype = merge_numpy_dtypes(np_dtypes)
-        hdf_dtype = numpy_dtype_to_hdf_dtype(np_dtype)  # type: ignore
+        hdf_dtype = numpy_dtype_to_hdf_dtype(np_dtype, encoding=encoding)  # type: ignore
 
         if (
             verbose >= 2
@@ -542,7 +553,9 @@ def hdf_dtype_to_fill_value(hdf_dtype: Optional[HDFDType]) -> BuiltinScalar:
         raise ValueError(msg)
 
 
-def numpy_dtype_to_hdf_dtype(dtype: Optional[np.dtype]) -> HDFDType:
+def numpy_dtype_to_hdf_dtype(
+    dtype: Optional[np.dtype], *, encoding: str = HDF_ENCODING
+) -> HDFDType:
     if dtype is None:
         return HDF_VOID_DTYPE
 
@@ -551,9 +564,9 @@ def numpy_dtype_to_hdf_dtype(dtype: Optional[np.dtype]) -> HDFDType:
     if kind == "u":  # uint stored as int
         return "i"
     elif kind == "S":
-        return h5py.string_dtype(HDF_ENCODING, dtype.itemsize)
+        return h5py.string_dtype(encoding, dtype.itemsize)
     elif kind == "U":  # unicode string
-        return HDF_STRING_DTYPE
+        return h5py.string_dtype(encoding, None)
     elif kind == "V":
         return HDF_VOID_DTYPE
     elif kind in ("b", "i", "f", "c"):
