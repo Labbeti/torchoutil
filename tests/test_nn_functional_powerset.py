@@ -17,9 +17,18 @@ class TestPowerset(TestCase):
         multilabel = torch.as_tensor(
             [[0, 0, 0, 1], [1, 0, 1, 0], [0, 1, 1, 0], [1, 0, 0, 0]]
         )[None].float()
-        powerset = multilabel_to_powerset(multilabel, num_classes=4, max_set_size=2)
+        num_classes = multilabel.shape[-1]
+        max_set_size = int(multilabel.view(-1, num_classes).sum(-1).max().int().item())
+
+        powerset = multilabel_to_powerset(
+            multilabel,
+            num_classes=num_classes,
+            max_set_size=max_set_size,
+        )
         multilabel_back = powerset_to_multilabel(
-            powerset, num_classes=4, max_set_size=2
+            powerset,
+            num_classes=num_classes,
+            max_set_size=max_set_size,
         )
         assert torch.equal(multilabel, multilabel_back)
 

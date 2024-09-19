@@ -23,7 +23,7 @@ from typing import (
 
 from typing_extensions import TypeGuard
 
-from torchoutil.pyoutil.typing import is_builtin_scalar, is_mapping_str
+from torchoutil.pyoutil.typing import is_builtin_scalar, is_mapping_str, T_BuiltinScalar
 
 K = TypeVar("K", covariant=True)
 T = TypeVar("T", covariant=True)
@@ -124,6 +124,14 @@ def dict_list_to_list_dict(
     >>> dic = {"a": [1, 2], "b": [3, 4]}
     >>> dict_list_to_list_dict(dic)
     ... [{"a": 1, "b": 3}, {"a": 2, "b": 4}]
+    ```
+
+    Example 2
+    ----------
+    ```
+    >>> dic = {"a": [1, 2, 3], "b": [4], "c": [5, 6]}
+    >>> dict_list_to_list_dict(dic, key_mode="union", default=-1)
+    ... [{"a": 1, "b": 4, "c": 5}, {"a": 2, "b": -1, "c": 6}, {"a": 3, "b": -1, "c": -1}]
     ```
     """
     if len(dic) == 0:
@@ -516,21 +524,19 @@ def sorted_dict(
 
 @overload
 def flatten(
-    x: T,
+    x: T_BuiltinScalar,
     start_dim: int = 0,
     end_dim: Optional[int] = None,
-    is_scalar_fn: Callable[[Any], TypeGuard[T]] = is_builtin_scalar,
-) -> List[T]:
+) -> List[T_BuiltinScalar]:
     ...
 
 
 @overload
 def flatten(
-    x: Iterable[T],
+    x: Iterable[T_BuiltinScalar],
     start_dim: int = 0,
     end_dim: Optional[int] = None,
-    is_scalar_fn: Callable[[Any], TypeGuard[T]] = is_builtin_scalar,
-) -> List[T]:
+) -> List[T_BuiltinScalar]:
     ...
 
 

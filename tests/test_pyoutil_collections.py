@@ -15,9 +15,30 @@ from torchoutil.pyoutil.collections import (
     list_dict_to_dict_list,
     unflat_dict_of_dict,
     unflat_list_of_list,
+    dict_list_to_list_dict,
 )
 from torchoutil.pyoutil.re import get_key_fn
 from torchoutil.pyoutil.typing import is_list_list_str, is_list_str
+
+
+class TestDictListToListDict(TestCase):
+    def test_example_1(self) -> None:
+        x = {"a": [1, 2], "b": [3, 4]}
+        expected = [{"a": 1, "b": 3}, {"a": 2, "b": 4}]
+        result = dict_list_to_list_dict(x)
+
+        assert result == expected
+
+    def test_example_2(self) -> None:
+        x = {"a": [1, 2, 3], "b": [4], "c": [5, 6]}
+        expected = [
+            {"a": 1, "b": 4, "c": 5},
+            {"a": 2, "b": -1, "c": 6},
+            {"a": 3, "b": -1, "c": -1},
+        ]
+        result = dict_list_to_list_dict(x, key_mode="union", default_val=-1)
+
+        assert result == expected
 
 
 class TestFlatDict(TestCase):
@@ -68,7 +89,11 @@ class TestFlatDict(TestCase):
 class TestListDictToDictList(TestCase):
     def test_example_1(self) -> None:
         lst = [{"a": 1, "b": 2}, {"a": 4, "b": 3, "c": 5}]
-        output = list_dict_to_dict_list(lst, default_val=0)
+        output = list_dict_to_dict_list(
+            lst,
+            key_mode="union",
+            default_val=0,
+        )
         expected = {"a": [1, 4], "b": [2, 3], "c": [0, 5]}
         assert output == expected
 

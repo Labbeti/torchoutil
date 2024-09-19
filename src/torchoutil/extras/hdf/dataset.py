@@ -39,6 +39,7 @@ from torchoutil.extras.hdf.common import (
 )
 from torchoutil.nn.functional.indices import get_inverse_perm
 from torchoutil.pyoutil.collections import all_eq
+from torchoutil.pyoutil.inspect import get_current_fn_name
 from torchoutil.pyoutil.typing import (
     is_iterable_bytes_or_list,
     is_iterable_int,
@@ -53,6 +54,7 @@ U = TypeVar("U", covariant=False)
 
 IndexLike = Union[int, Iterable[int], Tensor, slice, None]
 ColumnLike = Union[str, Iterable[str], None]
+CastMode = Literal["to_torch_or_builtin", "to_torch_or_numpy", "to_builtin", "none"]
 
 pylog = logging.getLogger(__name__)
 
@@ -65,9 +67,7 @@ class HDFDataset(Generic[T, U], DatasetSlicer[U]):
         keep_padding: Iterable[str] = (),
         return_added_columns: bool = False,
         open_hdf: bool = True,
-        cast: Literal[
-            "to_torch_or_builtin", "to_torch_or_numpy", "to_builtin", "none"
-        ] = "to_torch_or_builtin",
+        cast: CastMode = "to_torch_or_builtin",
         file_kwds: Optional[Dict[str, Any]] = None,
     ) -> None:
         """HDFDataset to read an packed hdf file.
@@ -108,7 +108,7 @@ class HDFDataset(Generic[T, U], DatasetSlicer[U]):
         self._transform = transform
         self._keep_padding = keep_padding
         self._return_added_columns = return_added_columns
-        self._cast = cast
+        self._cast: CastMode = cast
         self._file_kwds = file_kwds
 
         self._hdf_file: Any = None
@@ -320,10 +320,12 @@ class HDFDataset(Generic[T, U], DatasetSlicer[U]):
 
         outputs = []
 
-        if self._is_unicode.get(column, False):
-            hdf_values = np.char.decode(hdf_values, encoding=self._encoding)
-        elif h5py.check_vlen_dtype(hdf_dtype):  # old supports vlen_str
-            hdf_values = _decode_rec(hdf_values, encoding=self._encoding)
+        if self._is_unicode.get(column, False) or h5py.check_vlen_dtype(hdf_dtype):
+            try:
+                hdf_values = _decode_bytes(hdf_values, encoding=self._encoding)
+            except TypeError as err:
+                breakpoint()
+                raise err
 
         for hdf_value, slices in zip(hdf_values, slices_lst):
             # Remove the padding part
@@ -333,10 +335,7 @@ class HDFDataset(Generic[T, U], DatasetSlicer[U]):
                 )
                 hdf_value = hdf_value[slices]
 
-            if self._cast == "none":
-                continue
-
-            elif self._cast == "to_torch_or_builtin":
+            if self._cast == "to_torch_or_builtin":
                 valid = to.shape(hdf_value, return_valid=True).valid
                 if valid and hdf_dtype.kind not in ("V", "S", "O"):
                     hdf_value = to.to_tensor(hdf_value)
@@ -357,6 +356,9 @@ class HDFDataset(Generic[T, U], DatasetSlicer[U]):
                     hdf_value = hdf_value.tolist()
                 else:
                     hdf_value = to_builtin(hdf_value)
+
+            elif self._cast == "none":
+                continue
 
             outputs.append(hdf_value)
 
@@ -416,10 +418,14 @@ class HDFDataset(Generic[T, U], DatasetSlicer[U]):
     def __eq__(self, __o: object) -> bool:
         return isinstance(__o, HDFDataset) and pickle.dumps(self) == pickle.dumps(__o)
 
+    def __enter__(self) -> "HDFDataset":
+        return self
+
     def __exit__(self) -> None:
         if self.is_open():
             self.close()
 
+    # TODO: rm
     # @overload
     # def __getitem__(self, index: int) -> U: ...
 
@@ -576,23 +582,29 @@ class HDFDataset(Generic[T, U], DatasetSlicer[U]):
             del self._load_as_complex
 
 
-def _decode_rec(
+def _decode_bytes(
     encoded: Union[bytes, np.ndarray, Iterable],
     encoding: str,
-    to_builtin: bool = False,
 ) -> Union[str, np.ndarray, list]:
     """Decode bytes to str with the specified encoding. Works recursively on list of bytes, list of list of bytes, etc."""
     if isinstance(encoded, bytes):
         return encoded.decode(encoding=encoding)
-    elif isinstance(encoded, np.ndarray) and encoded.dtype.kind in ("S",):
-        decoded = np.char.decode(encoded, encoding=encoding)
-        if to_builtin:
-            decoded = decoded.tolist()
-        return decoded
+
+    elif isinstance(encoded, np.ndarray):
+        if encoded.dtype.kind == "S":
+            return np.char.decode(encoded, encoding=encoding)
+        elif encoded.dtype.kind == "O" and encoded.ndim > 0:
+            return [
+                _decode_bytes(encoded_i, encoding=encoding) for encoded_i in encoded
+            ]
+        else:
+            return _decode_bytes(encoded.item(), encoding=encoding)
+
     elif is_iterable_bytes_or_list(encoded):
-        return [_decode_rec(elt, encoding, to_builtin=to_builtin) for elt in encoded]
+        return [_decode_bytes(elt, encoding) for elt in encoded]
+
     else:
-        msg = f"Invalid argument type {type(encoded)}. (expected bytes, np array or Iterable)"
+        msg = f"Invalid argument type {type(encoded)} for {get_current_fn_name()}. (expected bytes, bytes ndarray or Iterable)"
         raise TypeError(msg)
 
 

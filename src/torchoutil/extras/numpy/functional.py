@@ -32,8 +32,8 @@ if _NUMPY_AVAILABLE:
     )
 
 else:
-    from torchoutil.core import _numpy_placeholder as np  # noqa: F401
     from torchoutil.core import _numpy_placeholder as numpy
+    from torchoutil.core import _numpy_placeholder as np  # noqa: F401
 
     ACCEPTED_NUMPY_DTYPES = ()
 

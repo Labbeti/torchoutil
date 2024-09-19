@@ -355,10 +355,10 @@ class TypedSequential(
     def unpack_dict(self) -> bool:
         return self.__unpack_dict
 
-    def __call__(self, x: InType) -> OutType:
+    def __call__(self, x: InType) -> OutType:  # type: ignore
         return nn.Sequential.__call__(self, x)
 
-    def forward(self, x: InType) -> OutType:
+    def forward(self, x: InType) -> OutType:  # type: ignore
         for module in self:
             if self.__unpack_tuple and isinstance(x, tuple):
                 x = module(*x)
@@ -769,17 +769,20 @@ class EModulePartial(
 ):
     def __init__(
         self,
-        callable_: Callable[Concatenate[InType, P], OutType],
+        fn: Callable[Concatenate[InType, P], OutType],
         *args: P.args,
         **kwargs: P.kwargs,
     ) -> None:
         super().__init__()
-        self.callable_ = callable_
+        self.fn = fn
         self.args = args
         self.kwargs = kwargs
 
-    def forward(self, x: InType) -> OutType:
-        return self.callable_(x, *self.args, **self.kwargs)
+    def forward(self, x: InType) -> OutType:  # type: ignore
+        return self.fn(x, *self.args, **self.kwargs)
+
+    def extra_repr(self) -> str:
+        return f"{self.fn.__name__}, {ConfigModule.extra_repr(self)}"
 
 
 def __test_typing_1() -> None:

@@ -36,7 +36,7 @@ from torchoutil.extras.hdf.common import (
     HDFItemType,
 )
 from torchoutil.extras.hdf.dataset import HDFDataset
-from torchoutil.extras.numpy.scan_info import merge_numpy_dtypes, scan_numpy_dtype
+from torchoutil.extras.numpy.scan_info import merge_numpy_dtypes, scan_shape_dtypes
 from torchoutil.nn.functional.checksum import checksum
 from torchoutil.pyoutil.collections import all_eq
 from torchoutil.pyoutil.functools import Compose
@@ -280,8 +280,8 @@ def pack_to_hdf(
                         hdf_dset[slices] = value
                     except (TypeError, ValueError, OSError) as err:
                         # TODO: rm debug
-                        # breakpoint()
-                        msg = f"Cannot set data {value} into {hdf_dset[slices].shape} ({attr_name=}, {i=}, {slices=}, {value.dtype=} {hdf_dset.dtype=})"
+                        breakpoint()
+                        msg = f"Cannot set data {value} into {hdf_dset.shape=} ({attr_name=}, {i=}, {slices=}, {value.dtype=} {hdf_dset.dtype=})"
                         pylog.error(msg)
                         raise err
 
@@ -378,7 +378,7 @@ def _scan_dataset(
         return x
 
     def encode_dict_array(x: Dict[str, np.ndarray]) -> Dict[str, Any]:
-        return {k: encode_array(to.to_numpy(v)) for k, v in x.items()}
+        return {k: encode_array(to.to_numpy(v)) for k, v in x.items()}  # type: ignore
 
     to_dict_fn: Callable[[T], Dict[str, Any]]
 
@@ -395,7 +395,9 @@ def _scan_dataset(
 
     encode_dict_fn = to.identity if use_vlen_str else encode_dict_array
     dict_pre_transform: Callable[[T], Dict[str, Any]] = Compose(
-        pre_transform, to_dict_fn, encode_dict_fn
+        pre_transform,
+        to_dict_fn,
+        encode_dict_fn,
     )
 
     loader = DataLoader(
@@ -421,26 +423,28 @@ def _scan_dataset(
 
         for item in batch:
             for attr_name, value in item.items():
-                shape = to.shape(value)
-                np_dtype = scan_numpy_dtype(value)
+                info = scan_shape_dtypes(value)
+                shape = info.shape
+                np_dtype = info.numpy_dtype
                 kind = np_dtype.kind
 
                 if attr_name in src_np_dtypes:
-                    src_np_dtypes[attr_name].add(np_dtype)
+                    src_np_dtypes[attr_name].add(np_dtype)  # type: ignore
                 else:
-                    src_np_dtypes[attr_name] = {np_dtype}
+                    src_np_dtypes[attr_name] = {np_dtype}  # type: ignore
 
                 value = to.to_numpy(value)
                 if kind == "U" and not use_vlen_str:
-                    value = encode_array(value)
+                    value = encode_array(value)  # type: ignore
                     # update shape and np_dtype after encoding
-                    shape = to.shape(value)
-                    np_dtype = scan_numpy_dtype(value)
+                    info = scan_shape_dtypes(value)
+                    shape = info.shape
+                    np_dtype = info.numpy_dtype
 
                 if attr_name in infos_dict:
-                    infos_dict[attr_name].add((shape, np_dtype))
+                    infos_dict[attr_name].add((shape, np_dtype))  # type: ignore
                 else:
-                    infos_dict[attr_name] = {(shape, np_dtype)}
+                    infos_dict[attr_name] = {(shape, np_dtype)}  # type: ignore
 
     max_shapes: Dict[str, Tuple[int, ...]] = {}
     hdf_dtypes: Dict[str, HDFDType] = {}
@@ -457,7 +461,7 @@ def _scan_dataset(
 
         np_dtypes = [np_dtype for _, np_dtype in info]
         np_dtype = merge_numpy_dtypes(np_dtypes)
-        hdf_dtype = numpy_dtype_to_hdf_dtype(np_dtype)
+        hdf_dtype = numpy_dtype_to_hdf_dtype(np_dtype)  # type: ignore
 
         if (
             verbose >= 2
@@ -469,9 +473,9 @@ def _scan_dataset(
                 np.int32,
                 np.int8,
                 np.float32,
-                np.dtype("|S1"),
             )
             and np_dtype.kind != "S"
+            and (not use_vlen_str and np_dtype.kind == "U")
         ):
             expected_np_dtype = hdf_dtype_to_numpy_dtype(hdf_dtype)
             msg = f"Found input dtype {np_dtype} which is not compatible with HDF. It will be cast to {expected_np_dtype}. (with {hdf_dtype=})"

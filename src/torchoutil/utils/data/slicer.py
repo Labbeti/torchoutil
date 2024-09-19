@@ -38,7 +38,7 @@ class DatasetSlicer(Generic[T], ABC, Dataset[T]):
         raise NotImplementedError
 
     @abstractmethod
-    def get_item(self, idx, /, *args) -> Any:
+    def get_item(self, idx, /, *args, **kwargs) -> Any:
         raise NotImplementedError
 
     @overload

@@ -3,6 +3,7 @@
 
 import os
 import tempfile
+import time
 import random
 import unittest
 from pathlib import Path
@@ -184,6 +185,68 @@ class TestHDF(TestCase):
             assert (
                 hdf_dataset[:, k] == ds_dict[k]
             ), f"{k=}, {hdf_dataset[:, k]=} != {ds_dict[k]=}"
+
+    def test_string_comp(self) -> None:
+        num_data = 10000
+        max_string_len = 100
+        max_sublst = 5
+        seed = 42
+
+        gen = torch.Generator().manual_seed(seed)
+        # note: vlen_str does not support chr(0)
+        strings = [
+            [
+                "".join(
+                    map(
+                        chr,
+                        torch.randint(
+                            1, 256, (max_string_len,), generator=gen
+                        ).tolist(),
+                    )
+                )
+                for _ in range(1, max_sublst + 1)
+            ]
+            for _ in range(num_data)
+        ]
+        ds_dict = {"strings": strings}
+        ds_list = dict_list_to_list_dict(ds_dict, key_mode="same")
+
+        ds_vlen = pack_to_hdf(
+            ds_list,
+            self.tmpdir.joinpath("test_string_comp_vlen.hdf"),
+            exists="overwrite",
+            use_vlen_str=True,
+            verbose=2,
+        )
+        ds_bytes = pack_to_hdf(
+            ds_list,
+            self.tmpdir.joinpath("test_string_comp_bytes.hdf"),
+            exists="overwrite",
+            use_vlen_str=False,
+            verbose=2,
+        )
+
+        n_try = 10
+        duration_ds_vlen_lst = []
+        duration_ds_bytes_lst = []
+
+        for _ in range(n_try):
+            start = time.perf_counter()
+            ds_bytes_data = ds_bytes[:]
+            duration_ds_bytes = time.perf_counter() - start
+
+            start = time.perf_counter()
+            ds_vlen_data = ds_vlen[:]
+            duration_ds_vlen = time.perf_counter() - start
+
+            duration_ds_bytes_lst.append(duration_ds_bytes)
+            duration_ds_vlen_lst.append(duration_ds_vlen)
+            assert ds_bytes_data == ds_vlen_data
+
+        assert np.median(duration_ds_bytes_lst) < np.median(duration_ds_vlen_lst)
+
+        ds_vlen.close(remove_file=True)
+        ds_bytes.close(remove_file=True)
 
 
 if __name__ == "__main__":

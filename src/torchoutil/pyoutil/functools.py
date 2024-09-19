@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import inspect
-from typing import Any, Callable, Generic, List, TypeVar
+from typing import Any, Callable, Generic, List, TypeVar, overload
 
 T = TypeVar("T")
 U = TypeVar("U")
@@ -14,18 +14,77 @@ def identity(x: T) -> T:
 
 
 class Compose(Generic[T, U]):
+    @overload
+    def __init__(self) -> None:
+        ...
+
+    @overload
+    def __init__(
+        self,
+        fn0: Callable[[T], U],
+        /,
+    ) -> None:
+        ...
+
+    @overload
+    def __init__(
+        self,
+        fn0: Callable[[T], Any],
+        fn1: Callable[[Any], U],
+        /,
+    ) -> None:
+        ...
+
+    @overload
+    def __init__(
+        self,
+        fn0: Callable[[T], Any],
+        fn1: Callable[[Any], Any],
+        fn2: Callable[[Any], U],
+        /,
+    ) -> None:
+        ...
+
+    @overload
+    def __init__(
+        self,
+        fn0: Callable[[T], Any],
+        fn1: Callable[[Any], Any],
+        fn2: Callable[[Any], Any],
+        fn3: Callable[[Any], U],
+        /,
+    ) -> None:
+        ...
+
+    @overload
+    def __init__(
+        self,
+        fn0: Callable[[T], Any],
+        fn1: Callable[[Any], Any],
+        fn2: Callable[[Any], Any],
+        fn3: Callable[[Any], Any],
+        fn4: Callable[[Any], U],
+        /,
+    ) -> None:
+        ...
+
     def __init__(self, *fns: Callable[[Any], Any]) -> None:
         super().__init__()
         self.fns = fns
 
-    def __call__(self, x: Any) -> Any:
+    def __call__(self, x: T) -> U:
         for fn in self.fns:
             x = fn(x)
-        return x
+        return x  # type: ignore
+
+    def __getitem__(self, idx: int, /) -> Callable[[Any], Any]:
+        return self.fns[idx]
+
+    def __len__(self) -> int:
+        return len(self.fns)
 
 
-def compose(*fns: Callable[[Any], Any]) -> Callable[[Any], Any]:
-    return Compose(*fns)
+compose = Compose  # type: ignore
 
 
 def get_argnames(fn: Callable) -> List[str]:
@@ -36,7 +95,7 @@ def get_argnames(fn: Callable) -> List[str]:
     elif inspect.isfunction(fn):
         argnames = fn.__code__.co_varnames
     else:
-        argnames = fn.__call__.__code__.co_varnames
+        argnames = fn.__call__.__code__.co_varnames  # type: ignore
 
     argnames = list(argnames)
     return argnames
