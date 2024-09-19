@@ -1,9 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-"""Module used when numpy is not installed."""
+"""Module used for typing when numpy is not installed."""
 
 from typing import Any
+
+from torchoutil.pyoutil.inspect import get_current_fn_name
 
 
 class generic:
@@ -33,17 +35,22 @@ class ndarray:
 
 
 def array(x: Any, *args, **kwargs):
-    msg = "Cannot call function 'array' because optional dependancy 'numpy' is not installed. Please install it using 'pip install torchoutil[extras]'"
+    msg = f"Cannot call function '{get_current_fn_name()}' because optional dependancy 'numpy' is not installed. Please install it using 'pip install torchoutil[extras]'"
     raise NotImplementedError(msg)
 
 
 def asarray(x: Any, *args, **kwargs):
-    msg = "Cannot call function 'asarray' because optional dependancy 'numpy' is not installed. Please install it using 'pip install torchoutil[extras]'"
+    msg = f"Cannot call function '{get_current_fn_name()}' because optional dependancy 'numpy' is not installed. Please install it using 'pip install torchoutil[extras]'"
     raise NotImplementedError(msg)
 
 
 def iscomplexobj(x: Any):
-    msg = "Cannot call function 'iscomplexobj' because optional dependancy 'numpy' is not installed. Please install it using 'pip install torchoutil[extras]'"
+    msg = f"Cannot call function '{get_current_fn_name()}' because optional dependancy 'numpy' is not installed. Please install it using 'pip install torchoutil[extras]'"
+    raise NotImplementedError(msg)
+
+
+def empty(*args, **kwargs):
+    msg = f"Cannot call function '{get_current_fn_name()}' because optional dependancy 'numpy' is not installed. Please install it using 'pip install torchoutil[extras]'"
     raise NotImplementedError(msg)
 
 

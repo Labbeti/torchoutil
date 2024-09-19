@@ -297,7 +297,16 @@ def flatten(
 
 
 def to_tensor(data: Any, dtype: DTypeLike = None, device: DeviceLike = None) -> Tensor:
-    """Convert data to tensor. Unlike torch.as_tensor, it works recursively and stack sequences like List[Tensor]."""
+    """Convert arbitrary data to tensor. Unlike torch.as_tensor, it works recursively and stack sequences like List[Tensor].
+
+    Args:
+        data: Data to convert to tensor. Can be Tensor, np.ndarray, list, tuple or any number-like object.
+        dtype: Target torch dtype.
+        device: Target torch device.
+
+    Returns:
+        PyTorch tensor created from data.
+    """
     if isinstance(data, (Tensor, np.ndarray)) or is_number_like(data):
         dtype = get_dtype(dtype)
         device = get_device(device)

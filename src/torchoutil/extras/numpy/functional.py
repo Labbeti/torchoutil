@@ -8,38 +8,9 @@ from torch import Tensor
 from typing_extensions import TypeGuard
 
 from torchoutil.core.get import DeviceLike, DTypeLike, get_device, get_dtype
-from torchoutil.core.packaging import _NUMPY_AVAILABLE, torch_version_ge_1_13
+from torchoutil.core.packaging import torch_version_ge_1_13
+from torchoutil.extras.numpy.definitions import NumpyNumberLike, NumpyScalarLike, np
 from torchoutil.pyoutil import get_current_fn_name
-
-
-if _NUMPY_AVAILABLE:
-    import numpy  # noqa: F401  # type: ignore
-    import numpy as np  # type: ignore
-
-    # Numpy dtypes that can be converted to tensor
-    ACCEPTED_NUMPY_DTYPES = (
-        np.float64,
-        np.float32,
-        np.float16,
-        np.complex64,
-        np.complex128,
-        np.int64,
-        np.int32,
-        np.int16,
-        np.int8,
-        np.uint8,
-        bool,
-    )
-
-else:
-    from torchoutil.core import _numpy_placeholder as numpy
-    from torchoutil.core import _numpy_placeholder as np  # noqa: F401
-
-    ACCEPTED_NUMPY_DTYPES = ()
-
-
-NumpyNumberLike = Union[np.ndarray, np.number]
-NumpyScalarLike = Union[np.ndarray, np.generic]
 
 
 def to_numpy(

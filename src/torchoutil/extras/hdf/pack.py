@@ -279,8 +279,6 @@ def pack_to_hdf(
                     try:
                         hdf_dset[slices] = value
                     except (TypeError, ValueError, OSError) as err:
-                        # TODO: rm debug
-                        breakpoint()
                         msg = f"Cannot set data {value} into {hdf_dset.shape=} ({attr_name=}, {i=}, {slices=}, {value.dtype=} {hdf_dset.dtype=})"
                         pylog.error(msg)
                         raise err
@@ -314,20 +312,21 @@ def pack_to_hdf(
             for name, np_dtypes in src_np_dtypes.items()
         }
         attributes = {
-            "creation_date": creation_date,
-            "source_dataset": dataset.__class__.__name__,
-            "length": len(dataset),
-            "encoding": HDF_ENCODING,
-            "info": json.dumps(info),
-            "global_hash_value": global_hash_value,
-            "item_type": item_type,
             "added_columns": added_columns,
-            "shape_suffix": shape_suffix,
+            "creation_date": creation_date,
+            "encoding": HDF_ENCODING,
             "file_kwds": json.dumps(file_kwds),
+            "global_hash_value": global_hash_value,
+            "info": json.dumps(to_builtin(info)),
+            "item_type": item_type,
+            "length": len(dataset),
             "load_as_complex": json.dumps(load_as_complex),
-            "version": str(to.__version__),
-            "user_attrs": json.dumps(to_builtin(user_attrs)),
+            "shape_suffix": shape_suffix,
+            "source_dataset": dataset.__class__.__name__,
             "src_np_dtypes": json.dumps(src_np_dtypes_dumped),
+            "use_vlen_str": use_vlen_str,
+            "user_attrs": json.dumps(to_builtin(user_attrs)),
+            "version": str(to.__version__),
         }
         if verbose >= 2:
             dumped_attributes = json.dumps(attributes, indent="\t")

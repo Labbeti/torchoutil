@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import copy
 import json
 import logging
 import os
@@ -32,11 +33,12 @@ from typing_extensions import TypeGuard, override
 
 import torchoutil as to
 from torchoutil.extras.hdf.common import (
-    HDF_ENCODING,
-    SHAPE_SUFFIX,
+    DEFAULTS_HDF_ATTRIBUTES,
+    DUMPED_JSON_KEYS,
     HDFDatasetAttributes,
     HDFItemType,
 )
+from torchoutil.extras.numpy.scan_info import numpy_dtype_to_torch_dtype
 from torchoutil.nn.functional.indices import get_inverse_perm
 from torchoutil.pyoutil.collections import all_eq
 from torchoutil.pyoutil.inspect import get_current_fn_name
@@ -45,6 +47,7 @@ from torchoutil.pyoutil.typing import (
     is_iterable_int,
     is_iterable_str,
 )
+from torchoutil.types._typing import ScalarLike
 from torchoutil.utils.data import DatasetSlicer
 from torchoutil.utils.pack.common import _dict_to_tuple
 from torchoutil.utils.saving import to_builtin
@@ -54,7 +57,22 @@ U = TypeVar("U", covariant=False)
 
 IndexLike = Union[int, Iterable[int], Tensor, slice, None]
 ColumnLike = Union[str, Iterable[str], None]
-CastMode = Literal["to_torch_or_builtin", "to_torch_or_numpy", "to_builtin", "none"]
+CastMode = Literal[
+    "to_torch_or_builtin",
+    "to_torch_or_numpy",
+    "to_builtin",
+    "to_numpy_src",
+    "to_torch_src",
+    "none",
+]
+CAST_MODES = (
+    "to_torch_or_builtin",
+    "to_torch_or_numpy",
+    "to_builtin",
+    "to_numpy_src",
+    "to_torch_src",
+    "none",
+)
 
 pylog = logging.getLogger(__name__)
 
@@ -116,11 +134,11 @@ class HDFDataset(Generic[T, U], DatasetSlicer[U]):
         if open_hdf:
             self.open()
 
-    # Properties
+    # Public properties
     @property
     def added_columns(self) -> List[str]:
         """Return the list of columns added by pack_to_hdf function."""
-        return list(self._hdf_file.attrs.get("added_columns", []))
+        return self.attrs["added_columns"]
 
     @property
     def all_columns(self) -> List[str]:
@@ -129,7 +147,18 @@ class HDFDataset(Generic[T, U], DatasetSlicer[U]):
 
     @cached_property
     def attrs(self) -> HDFDatasetAttributes:
-        attrs = dict(self._hdf_file.attrs)
+        raw_attrs = dict(self._hdf_file.attrs)
+        load_attrs = copy.copy(raw_attrs)
+        for name in DUMPED_JSON_KEYS:
+            load_attrs[name] = json.loads(load_attrs[name])
+
+        load_attrs["added_columns"] = list(load_attrs["added_columns"])
+        load_attrs["src_np_dtypes"] = {
+            k: np.dtype(v) for k, v in load_attrs["src_np_dtypes"].items()
+        }
+
+        attrs = copy.copy(DEFAULTS_HDF_ATTRIBUTES)
+        attrs.update(load_attrs)
         return attrs  # type: ignore
 
     @property
@@ -143,10 +172,10 @@ class HDFDataset(Generic[T, U], DatasetSlicer[U]):
         ]
         return column_names
 
-    @cached_property
+    @property
     def info(self) -> Dict[str, Any]:
         """Return the global dataset info."""
-        return json.loads(self._hdf_file.attrs.get("info", "{}"))
+        return self.attrs["info"]
 
     @property
     def item_type(self) -> HDFItemType:
@@ -162,10 +191,6 @@ class HDFDataset(Generic[T, U], DatasetSlicer[U]):
         self._keep_padding = list(new_value)
 
     @property
-    def metadata(self) -> str:
-        return self.user_attrs
-
-    @property
     def num_columns(self) -> int:
         return len(self.column_names)
 
@@ -179,38 +204,35 @@ class HDFDataset(Generic[T, U], DatasetSlicer[U]):
         return len(self), len(self.column_names)
 
     @property
-    def shape_suffix(self) -> str:
-        """Return the tensor shape suffix in column names."""
-        return self._hdf_file.attrs.get("shape_suffix", SHAPE_SUFFIX)
-
-    @property
     def transform(self) -> Optional[Callable[[T], U]]:
         return self._transform
 
-    @cached_property
+    @property
     def user_attrs(self) -> Any:
-        if "user_attrs" in self.attrs:
-            return json.loads(self._hdf_file.attrs.get("user_attrs", "null"))
-        else:
-            return self._hdf_file.attrs.get("metadata", "")
+        return self.attrs["user_attrs"]
 
+    # Private properties to define internal behaviours
     @property
     def _encoding(self) -> str:
-        return self.attrs.get("encoding", HDF_ENCODING)
+        return self.attrs["encoding"]
+
+    @property
+    def _shape_suffix(self) -> str:
+        """Return the tensor shape suffix in column names."""
+        return self.attrs["shape_suffix"]
+
+    @property
+    def _src_np_dtypes(self) -> Dict[str, np.dtype]:
+        return self.attrs["src_np_dtypes"]
 
     @cached_property
-    def _is_unicode(self) -> Dict[str, bool]:
-        if "src_np_dtypes" in self.attrs:
-            np_dtypes_str = json.loads(self._hdf_file.attrs["src_np_dtypes"])
-            np_dtypes = {name: np.dtype(s) for name, s in np_dtypes_str.items()}
-            is_unicode = {name: dt.kind == "U" for name, dt in np_dtypes.items()}
-            return is_unicode
-        else:
-            return json.loads(self._hdf_file.attrs.get("is_unicode", "{}"))
+    def _src_is_unicode(self) -> Dict[str, bool]:
+        is_unicode = {name: dt.kind == "U" for name, dt in self._src_np_dtypes.items()}
+        return is_unicode
 
-    @cached_property
+    @property
     def _load_as_complex(self) -> Dict[str, bool]:
-        return json.loads(self._hdf_file.attrs.get("load_as_complex", "{}"))
+        return self.attrs["load_as_complex"]
 
     # Public methods
     @overload
@@ -301,15 +323,15 @@ class HDFDataset(Generic[T, U], DatasetSlicer[U]):
             hdf_values = hdf_value[None]
         del hdf_value
 
-        shape_name = f"{column}{self.shape_suffix}"
+        shape_column = f"{column}{self._shape_suffix}"
         must_remove_padding = (
-            shape_name in self._hdf_file.keys() and column not in self._keep_padding
+            shape_column in self._hdf_file.keys() and column not in self._keep_padding
         )
         hdf_ds: HDFRawDataset = self._hdf_file[column]
         hdf_dtype: np.dtype = hdf_ds.dtype
 
         if must_remove_padding:
-            shapes = self._raw_get_item(index, shape_name)
+            shapes = self._raw_get_item(index, shape_column)
             if not is_mult:
                 shapes = shapes[None]
             slices_lst = [
@@ -318,49 +340,26 @@ class HDFDataset(Generic[T, U], DatasetSlicer[U]):
         else:
             slices_lst = [None] * int(hdf_ds.shape[0])
 
-        outputs = []
+        if (
+            self._src_is_unicode.get(column, False)
+            or h5py.check_vlen_dtype(hdf_dtype) is str
+        ):
+            hdf_values = _decode_bytes(hdf_values, encoding=self._encoding)
 
-        if self._is_unicode.get(column, False) or h5py.check_vlen_dtype(hdf_dtype):
-            try:
-                hdf_values = _decode_bytes(hdf_values, encoding=self._encoding)
-            except TypeError as err:
-                breakpoint()
-                raise err
-
-        for hdf_value, slices in zip(hdf_values, slices_lst):
-            # Remove the padding part
-            if slices is not None:
-                assert isinstance(hdf_value, np.ndarray) and not isinstance(
-                    hdf_value, str
-                )
-                hdf_value = hdf_value[slices]
-
-            if self._cast == "to_torch_or_builtin":
-                valid = to.shape(hdf_value, return_valid=True).valid
-                if valid and hdf_dtype.kind not in ("V", "S", "O"):
-                    hdf_value = to.to_tensor(hdf_value)
-                elif isinstance(hdf_value, np.ndarray):
-                    hdf_value = hdf_value.tolist()
-                else:
-                    hdf_value = to_builtin(hdf_value)
-
-            elif self._cast == "to_torch_or_numpy":
-                valid = to.shape(hdf_value, return_valid=True).valid
-                if valid and hdf_dtype.kind not in ("V", "S", "O"):
-                    hdf_value = to.to_tensor(hdf_value)
-                else:
-                    hdf_value = np.array(hdf_value)
-
-            elif self._cast == "to_builtin":
-                if isinstance(hdf_value, np.ndarray):
-                    hdf_value = hdf_value.tolist()
-                else:
-                    hdf_value = to_builtin(hdf_value)
-
-            elif self._cast == "none":
-                continue
-
-            outputs.append(hdf_value)
+        if must_remove_padding:
+            outputs = []
+            for hdf_value, slices in zip(hdf_values, slices_lst):
+                # Remove the padding part
+                if slices is not None:
+                    assert isinstance(hdf_value, np.ndarray) and not isinstance(
+                        hdf_value, str
+                    )
+                    hdf_value = hdf_value[slices]
+                hdf_value = self._cast_values(hdf_value, column, hdf_dtype)
+                outputs.append(hdf_value)
+        else:
+            outputs = self._cast_values(hdf_values, column, hdf_dtype)
+        del hdf_values
 
         if not is_mult:
             outputs = outputs[0]
@@ -425,48 +424,26 @@ class HDFDataset(Generic[T, U], DatasetSlicer[U]):
         if self.is_open():
             self.close()
 
-    # TODO: rm
-    # @overload
-    # def __getitem__(self, index: int) -> U: ...
+    @overload
+    def __getitem__(self, index: int) -> U:
+        ...
 
-    # @overload
-    # def __getitem__(
-    #     self,
-    #     index: Union[Iterable[int], slice, None],
-    # ) -> Dict[str, list]: ...
+    @overload
+    def __getitem__(
+        self,
+        index: Union[Iterable[int], slice, None],
+    ) -> Dict[str, list]:
+        ...
 
-    # @overload
-    # def __getitem__(self, index: Any) -> Any: ...
+    @overload
+    def __getitem__(self, index: Any) -> Any:
+        ...
 
-    # def __getitem__(
-    #     self,
-    #     index: Union[IndexLike, Tuple[IndexLike, ColumnLike]],
-    # ) -> Any:
-    #     if (
-    #         isinstance(index, tuple)
-    #         and len(index) == 2
-    #         and _is_index(index[0])
-    #         and _is_column(index[1])
-    #     ):
-    #         index, column = index
-    #     else:
-    #         column = None
-
-    #     item = self.get_item(index, column)  # type: ignore
-
-    #     if isinstance(index, int) and (
-    #         column is None
-    #         or (
-    #             isinstance(column, Iterable)
-    #             and not isinstance(column, str)
-    #             and set(column) == set(self.column_names)
-    #         )
-    #     ):
-    #         if self.item_type == "tuple":
-    #             item = _dict_to_tuple(item)
-    #         if self._transform is not None:
-    #             item = self._transform(item)  # type: ignore
-    #     return item
+    def __getitem__(
+        self,
+        index: Union[IndexLike, Tuple[IndexLike, ColumnLike]],
+    ) -> Any:
+        return super().__getitem__(index)
 
     def __getstate__(self) -> Dict[str, Any]:
         return {
@@ -572,14 +549,73 @@ class HDFDataset(Generic[T, U], DatasetSlicer[U]):
             raise TypeError(msg)
 
     def _clear_caches(self) -> None:
-        if hasattr(self, "info"):
-            del self.info
-        if hasattr(self, "user_attrs"):
-            del self.user_attrs
+        if hasattr(self, "attrs"):
+            del self.attrs
         if hasattr(self, "_is_unicode"):
-            del self._is_unicode
-        if hasattr(self, "_load_as_complex"):
-            del self._load_as_complex
+            del self._src_is_unicode
+
+    def _cast_values(
+        self,
+        hdf_values: Union[ScalarLike, np.ndarray, List],
+        column: str,
+        hdf_dtype: np.dtype,
+    ) -> Any:
+        if self._cast == "to_torch_or_builtin":
+            valid = to.shape(hdf_values, return_valid=True).valid
+            if valid and hdf_dtype.kind not in ("V", "S", "O"):
+                result = to.to_tensor(hdf_values)
+            elif isinstance(hdf_values, np.ndarray):
+                result = hdf_values.tolist()
+            else:
+                result = to_builtin(hdf_values)
+
+        elif self._cast == "to_torch_or_numpy":
+            valid = to.shape(hdf_values, return_valid=True).valid
+            if valid and hdf_dtype.kind not in ("V", "S", "O"):
+                result = to.to_tensor(hdf_values)
+            else:
+                result = np.array(hdf_values)
+
+        elif self._cast == "to_builtin":
+            if isinstance(hdf_values, np.ndarray):
+                result = hdf_values.tolist()
+            else:
+                result = to_builtin(hdf_values)
+
+        elif self._cast == "to_numpy_src":
+            valid = to.shape(hdf_values, return_valid=True).valid
+            src_np_dtypes = self.attrs["src_np_dtypes"]
+            target_np_dtype = src_np_dtypes.get(column, hdf_values.dtype)
+
+            if isinstance(hdf_values, np.ndarray):
+                result = hdf_values.astype(target_np_dtype)
+            elif valid:
+                result = np.array(hdf_values, dtype=target_np_dtype)
+            else:
+                result = hdf_values
+
+        elif self._cast == "to_torch_src":
+            valid = to.shape(hdf_values, return_valid=True).valid
+            src_np_dtypes = self.attrs["src_np_dtypes"]
+            target_np_dtype = src_np_dtypes.get(column, hdf_values.dtype)
+            target_pt_dtype = numpy_dtype_to_torch_dtype(target_np_dtype, invalid=None)
+
+            if isinstance(hdf_values, np.ndarray):
+                hdf_values = hdf_values.astype(target_np_dtype)
+                result = to.numpy_to_tensor(hdf_values)
+            elif valid:
+                result = to.to_tensor(hdf_values, dtype=target_pt_dtype)
+            else:
+                result = hdf_values
+
+        elif self._cast == "none":
+            result = hdf_values
+
+        else:
+            msg = f"Invalid argument {self._cast=}. (expected one of {CAST_MODES})"
+            raise ValueError(msg)
+
+        return result
 
 
 def _decode_bytes(

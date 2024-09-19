@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from typing import List, Literal, TypedDict
+from typing import Any, Dict, List, Literal, TypedDict
 
 import h5py
 import numpy as np
@@ -20,18 +20,44 @@ HDFItemType = Literal["dict", "tuple"]
 
 
 class HDFDatasetAttributes(TypedDict):
-    creation_date: str
-    source_dataset: str
-    length: int
-    metadata: str
-    encoding: str
-    info: str
-    global_hash_value: int
-    item_type: HDFItemType
     added_columns: List[str]
+    creation_date: str
+    encoding: str
+    file_kwds: Dict[str, Any]
+    global_hash_value: int
+    info: Dict[str, Any]
+    item_type: HDFItemType
+    length: int
+    load_as_complex: Dict[str, bool]
     shape_suffix: str
-    file_kwds: str
-    user_attrs: str
-    load_as_complex: str
-    is_unicode: str
-    src_np_dtypes: str
+    source_dataset: str
+    src_np_dtypes: Dict[str, np.dtype]
+    use_vlen_str: bool
+    user_attrs: Dict[str, Any]
+    version: str
+
+
+DUMPED_JSON_KEYS = (
+    "file_kwds",
+    "info",
+    "load_as_complex",
+    "src_np_dtypes",
+    "user_attrs",
+)
+DEFAULTS_HDF_ATTRIBUTES = {
+    "added_columns": [],
+    "creation_date": "unknown",
+    "encoding": HDF_ENCODING,
+    "file_kwds": {},
+    "global_hash_value": -1,
+    "info": {},
+    "item_type": "dict",
+    "length": 0,
+    "load_as_complex": {},
+    "shape_suffix": SHAPE_SUFFIX,
+    "source_dataset": "unknown",
+    "src_np_dtypes": {},
+    "use_vlen_str": False,
+    "user_attrs": {},
+    "version": "unknown",
+}

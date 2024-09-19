@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 from dataclasses import dataclass
+from functools import lru_cache
 from typing import Any, Generic, Iterable, Tuple, TypeVar, Union
 
 import torch
@@ -9,8 +10,8 @@ from torch import Tensor
 
 import torchoutil as to
 from torchoutil import pyoutil as po
-from torchoutil.extras.numpy.functional import ACCEPTED_NUMPY_DTYPES, np
-from torchoutil.pyoutil import BuiltinScalar
+from torchoutil.extras.numpy.definitions import ACCEPTED_NUMPY_DTYPES, np
+from torchoutil.pyoutil import BuiltinScalar, get_current_fn_name
 
 T_Invalid = TypeVar("T_Invalid")
 T_Empty = TypeVar("T_Empty")
@@ -18,7 +19,7 @@ T_EmptyNp = TypeVar("T_EmptyNp")
 T_EmptyTorch = TypeVar("T_EmptyTorch")
 
 
-# return type for torch_dtype when an invalid data is passed as argument, like str
+# Default return type for torch_dtype when an invalid data is passed as argument, like str
 class InvalidTorchDType(metaclass=po.Singleton):
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}()"
@@ -29,6 +30,7 @@ class ShapeDTypeInfo(Generic[T_Invalid, T_EmptyNp, T_EmptyTorch]):
     shape: Tuple[int, ...]
     torch_dtype: Union[torch.dtype, T_Invalid, T_EmptyTorch]
     numpy_dtype: Union[np.dtype, T_EmptyNp]
+    valid_shape: bool
 
     @property
     def fill_value(self) -> BuiltinScalar:
@@ -46,15 +48,23 @@ class ShapeDTypeInfo(Generic[T_Invalid, T_EmptyNp, T_EmptyTorch]):
             return "V"
 
 
-def scan_shape_dtypes(x: Any) -> ShapeDTypeInfo[InvalidTorchDType, np.dtype, None]:
+def scan_shape_dtypes(
+    x: Any, *, accept_heterogeneous_shape: bool = False
+) -> ShapeDTypeInfo[InvalidTorchDType, np.dtype, None]:
     """Returns the shape and the hdf_dtype for an input."""
-    shape = to.shape(x)
+    valid_shape, shape = to.shape(x, return_valid=True)
+    if not accept_heterogeneous_shape and not valid_shape:
+        msg = f"Invalid argument {x} for {get_current_fn_name()}. (cannot compute shape for heterogeneous data)"
+        raise ValueError(msg)
+
     torch_dtype = scan_torch_dtype(x)
     numpy_dtype = scan_numpy_dtype(x)
+
     info = ShapeDTypeInfo[InvalidTorchDType, np.dtype, None](
         shape,
         torch_dtype,
         numpy_dtype,
+        valid_shape,
     )
     return info
 
@@ -126,23 +136,25 @@ def scan_numpy_dtype(
     raise TypeError(msg)
 
 
+@lru_cache(maxsize=None)
 def torch_dtype_to_numpy_dtype(dtype: torch.dtype) -> np.dtype:
     x = torch.empty((0,), dtype=dtype)
     x = to.tensor_to_numpy(x)
     return x.dtype
 
 
+@lru_cache(maxsize=None)
 def numpy_dtype_to_torch_dtype(
     dtype: np.dtype,
     *,
     invalid: T_Invalid = InvalidTorchDType(),
 ) -> Union[torch.dtype, T_Invalid]:
-    x = np.empty((0,), dtype=dtype)
-    if x.dtype not in ACCEPTED_NUMPY_DTYPES:
-        return invalid
-    else:
+    if dtype in ACCEPTED_NUMPY_DTYPES:
+        x = np.empty((0,), dtype=dtype)
         x = to.numpy_to_tensor(x)
         return x.dtype
+    else:
+        return invalid
 
 
 def numpy_dtype_to_fill_value(dtype: Any) -> BuiltinScalar:

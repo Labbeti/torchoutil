@@ -2,9 +2,9 @@
 # -*- coding: utf-8 -*-
 
 import os
+import random
 import tempfile
 import time
-import random
 import unittest
 from pathlib import Path
 from unittest import TestCase
@@ -79,8 +79,7 @@ class TestHDF(TestCase):
             assert isinstance(data_i, Tensor)
             assert data_i.shape == data_shape[i]
 
-        hdf_dataset.close()
-        os.remove(path)
+        hdf_dataset.close(remove_file=True)
 
     def test_special_floating_dtypes(self) -> None:
         cls = self.__class__
@@ -88,29 +87,34 @@ class TestHDF(TestCase):
 
         ds_dict = {
             "f16": torch.rand(10, 2, 3, dtype=torch.float16),
+            "f32": torch.rand(10, 2, 3, dtype=torch.float32),
+            "f64": torch.rand(10, 2, 3, dtype=torch.float64),
             "c64": torch.rand(10, 2, 3, dtype=torch.complex64),
             "bool": torch.rand(10, 1) > 0.5,
         }
         ds_list = dict_list_to_list_dict(ds_dict, "same")
         keys = set(ds_dict.keys())
 
-        path = tmpdir.joinpath("test_complex.hdf")
-        hdf_dataset = pack_to_hdf(ds_list, path, exists="overwrite")
+        path = tmpdir.joinpath("test_special_floating_dtypes.hdf")
+        hdf_dataset = pack_to_hdf(
+            ds_list, path, exists="overwrite", ds_kwds=dict(cast="to_torch_src")
+        )
 
         assert len(hdf_dataset.added_columns) == 0
         assert len(hdf_dataset) == len(ds_list)
 
-        for i, item in enumerate(iter(hdf_dataset)):
-            assert set(item.keys()) == keys
+        for i, hdf_item in enumerate(iter(hdf_dataset)):
+            assert set(hdf_item.keys()) == keys
             assert set(ds_list[i].keys()) == keys
 
+            src_item = ds_list[i]
             for k in keys:
-                assert torch.equal(
-                    ds_list[i][k], item[k]
-                ), f"{i=}; {k=}; {ds_list[i][k]=}; {item[k]=}"
+                msg = f"Index: {i}; Key: {k}; {src_item[k]=}; {hdf_item[k]=}"
+                src_value = src_item[k]
+                hdf_value = hdf_item[k]
+                assert torch.allclose(src_value, hdf_value), msg
 
-        hdf_dataset.close()
-        os.remove(path)
+        hdf_dataset.close(remove_file=True)
 
     def test_slice(self) -> None:
         cls = self.__class__
@@ -168,7 +172,7 @@ class TestHDF(TestCase):
             ds_kwds=dict(cast="to_builtin"),
         )
 
-        assert hdf_dataset._is_unicode == {
+        assert hdf_dataset._src_is_unicode == {
             "int": False,
             "string": True,
             "list_string": True,

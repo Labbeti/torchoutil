@@ -1,14 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+from .definitions import ACCEPTED_NUMPY_DTYPES, np, numpy
 from .functional import (
-    ACCEPTED_NUMPY_DTYPES,
-    NumpyNumberLike,
-    NumpyScalarLike,
     is_numpy_number_like,
     is_numpy_scalar_like,
-    np,
-    numpy,
     numpy_is_complex,
     numpy_is_floating_point,
     numpy_to_tensor,

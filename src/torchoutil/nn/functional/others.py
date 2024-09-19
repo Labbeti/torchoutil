@@ -259,7 +259,7 @@ def shape(
 
     Args:
         x: Input value to scan.
-        output_type: Output shape type. defaults to torch.Size.
+        output_type: Output shape type. defaults to identity, which returns a tuple of ints.
         return_valid: If True, returns a tuple containing a boolean indicator if the data has an homogeneous shape instead of raising a ValueError.
 
     Raises:
