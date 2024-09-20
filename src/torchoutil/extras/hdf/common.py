@@ -35,7 +35,7 @@ class HDFDatasetAttributes(TypedDict):
     src_np_dtypes: Dict[str, np.dtype]
     use_vlen_str: bool
     user_attrs: Any
-    version: str
+    torchoutil_version: str
 
 
 _DUMPED_JSON_KEYS = (
@@ -45,22 +45,22 @@ _DUMPED_JSON_KEYS = (
     "src_np_dtypes",
     "user_attrs",
 )
-_DEFAULTS_HDF_ATTRIBUTES = {
+_DEFAULTS_RAW_HDF_ATTRIBUTES = {
     "added_columns": [],
     "creation_date": "unknown",
     "encoding": HDF_ENCODING,
-    "file_kwds": {},
+    "file_kwds": "{}",
     "global_hash_value": -1,
-    "info": {},
+    "info": "{}",
     "item_type": "dict",
     "length": 0,
-    "load_as_complex": {},
+    "load_as_complex": "{}",
     "pre_transform": "unknown",
     "shape_suffix": SHAPE_SUFFIX,
     "source_dataset": "unknown",
-    "src_np_dtypes": {},
+    "src_np_dtypes": "{}",
     "store_complex_as_real": False,
     "store_str_as_vlen": False,
-    "user_attrs": None,
+    "user_attrs": "None",
     "torchoutil_version": "unknown",
 }

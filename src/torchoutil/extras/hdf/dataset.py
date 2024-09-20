@@ -8,6 +8,7 @@ import os
 import os.path as osp
 import pickle
 from functools import cached_property
+from json import JSONDecodeError
 from pathlib import Path
 from typing import (
     Any,
@@ -33,7 +34,7 @@ from typing_extensions import TypeGuard, override
 
 import torchoutil as to
 from torchoutil.extras.hdf.common import (
-    _DEFAULTS_HDF_ATTRIBUTES,
+    _DEFAULTS_RAW_HDF_ATTRIBUTES,
     _DUMPED_JSON_KEYS,
     HDFDatasetAttributes,
     HDFItemType,
@@ -147,18 +148,19 @@ class HDFDataset(Generic[T, U], DatasetSlicer[U]):
 
     @cached_property
     def attrs(self) -> HDFDatasetAttributes:
-        raw_attrs = dict(self._hdf_file.attrs)
-        load_attrs = copy.copy(raw_attrs)
+        attrs = copy.copy(_DEFAULTS_RAW_HDF_ATTRIBUTES)
+        attrs.update(self._hdf_file.attrs)
+
         for name in _DUMPED_JSON_KEYS:
-            load_attrs[name] = json.loads(load_attrs[name])
+            try:
+                attrs[name] = json.loads(attrs[name])
+            except JSONDecodeError:
+                pylog.error(f"Cannot load JSON data {attrs[name]=} from {name=}.")
 
-        load_attrs["added_columns"] = list(load_attrs["added_columns"])
-        load_attrs["src_np_dtypes"] = {
-            k: np.dtype(v) for k, v in load_attrs["src_np_dtypes"].items()
+        attrs["added_columns"] = list(attrs["added_columns"])
+        attrs["src_np_dtypes"] = {
+            k: np.dtype(v) for k, v in attrs["src_np_dtypes"].items()
         }
-
-        attrs = copy.copy(_DEFAULTS_HDF_ATTRIBUTES)
-        attrs.update(load_attrs)
         return attrs  # type: ignore
 
     @property

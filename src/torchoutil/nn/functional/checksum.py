@@ -3,9 +3,11 @@
 
 import itertools
 import math
+import pickle
 import struct
 import zlib
 from dataclasses import asdict
+from types import FunctionType, MethodType
 from typing import Any, Callable, Iterable, Mapping, Union
 
 import torch
@@ -39,7 +41,10 @@ CHECKSUM_TYPES = (
     "Dataclass",
     "Mapping",
     "Iterable",
+    "MethodType",
+    "FunctionType",
 )
+UNK_MODES = ("pickle", "error")
 
 
 # Recursive functions
@@ -50,6 +55,7 @@ def checksum(x: Any, **kwargs) -> int:
 
 def checksum_any(x: Any, **kwargs) -> int:
     """Compute checksum of an arbitrary python object."""
+    unk_mode = kwargs.get("unk_mode", "error")
     if isinstance(x, (int, bool, complex, float)):
         return checksum_builtin_number(x, **kwargs)
     elif isinstance(x, bytes):
@@ -72,15 +78,27 @@ def checksum_any(x: Any, **kwargs) -> int:
         return checksum_mapping(x, **kwargs)
     elif isinstance(x, Iterable):
         return checksum_iterable(x, **kwargs)
-    else:
+    elif isinstance(x, MethodType):
+        return checksum_method(x, **kwargs)
+    elif isinstance(x, FunctionType):
+        return checksum_function(x, **kwargs)
+    elif unk_mode == "pickle":
+        return checksum_bytes(pickle.dumps(x), **kwargs)
+    elif unk_mode == "error":
         msg = f"Invalid argument type {type(x)}. (expected one of {CHECKSUM_TYPES})"
         raise TypeError(msg)
+    else:
+        raise ValueError(f"Invalid argument {unk_mode=}. (expected one of {UNK_MODES})")
 
 
 def checksum_dataclass(x: DataclassInstance, **kwargs) -> int:
     accumulator = kwargs.pop("accumulator", 0) + checksum_str(get_fullname(x), **kwargs)
     kwargs["accumulator"] = accumulator
     return checksum_mapping(asdict(x), **kwargs)
+
+
+def checksum_function(x: FunctionType, **kwargs) -> int:
+    return checksum_str(x.__qualname__, **kwargs)
 
 
 def checksum_iterable(x: Iterable[Any], **kwargs) -> int:
@@ -94,6 +112,15 @@ def checksum_iterable(x: Iterable[Any], **kwargs) -> int:
 
 def checksum_mapping(x: Mapping[Any, Any], **kwargs) -> int:
     return checksum_iterable(x.items(), **kwargs)
+
+
+def checksum_method(x: MethodType, **kwargs) -> int:
+    fn = getattr(x.__self__, x.__name__)
+    checksums = [
+        checksum_any(x.__self__, **kwargs),
+        checksum_function(fn, **kwargs),
+    ]
+    return checksum_iterable(checksums, **kwargs)
 
 
 def checksum_module(
@@ -150,6 +177,7 @@ def checksum_tensor(x: Tensor, **kwargs) -> int:
         x,
         nan_to_num_fn=torch.nan_to_num,
         arange_fn=torch.arange,
+        **kwargs,
     )
 
 
@@ -166,6 +194,7 @@ def checksum_ndarray(x: Union[np.ndarray, np.generic], **kwargs) -> int:
         x,
         nan_to_num_fn=np.nan_to_num,
         arange_fn=np.arange,
+        **kwargs,
     )
 
 
