@@ -523,6 +523,8 @@ def _scan_dataset(
         pylog.debug(f"Found max_shapes:\n{max_shapes}")
         pylog.debug(f"Found hdf_dtypes:\n{hdf_dtypes}")
         pylog.debug(f"Found all_eq_shapes:\n{all_eq_shapes}")
+        pylog.debug(f"Found load_as_complex:\n{load_as_complex}")
+        pylog.debug(f"Found src_np_dtypes:\n{src_np_dtypes}")
 
     return (
         dict_pre_transform,
