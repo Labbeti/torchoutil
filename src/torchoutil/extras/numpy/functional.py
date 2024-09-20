@@ -60,20 +60,32 @@ def numpy_to_tensor(
 
 
 def numpy_view_as_real(x: np.ndarray) -> np.ndarray:
-    if x.dtype == np.complex64:
-        float_dtype = np.float32
-    elif x.dtype == np.complex128:
-        float_dtype = np.float64
-    elif x.dtype == np.complex256:
-        float_dtype = np.float128
-    else:
-        DTYPES = (np.complex64, np.complex128, np.complex256)
-        raise ValueError(f"Unexpected dtype {x.dtype}. (expected one of {DTYPES})")
+    """Convert complex array to float array.
 
+    Args:
+        x: The input complex array of any shape (...,)
+    Returns:
+        x_real: The same data in a float array of shape (..., 2)
+    """
+    assert numpy_is_complex(x)
+    float_dtype = numpy_complex_dtype_to_float_dtype(x.dtype)
     return x.view(float_dtype).reshape(*x.shape, 2)
 
 
+def numpy_complex_dtype_to_float_dtype(dtype: np.dtype) -> np.dtype:
+    """Returns the associated float dtype from complex dtype. If input dtype is not complex, it just returns the same dtype."""
+    return np.empty((0,), dtype=dtype).real.dtype
+
+
 def numpy_view_as_complex(x: np.ndarray) -> np.ndarray:
+    """Convert complex array to float array.
+
+    Args:
+        x: The input float array of any shape (..., 2)
+    Returns:
+        x_real: The same data in a complex array of shape (...,)
+    """
+    assert not numpy_is_complex(x)
     return x[..., 0] + x[..., 1] * 1j
 
 
