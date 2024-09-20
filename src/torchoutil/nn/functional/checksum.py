@@ -82,6 +82,8 @@ def checksum_any(x: Any, **kwargs) -> int:
         return checksum_method(x, **kwargs)
     elif isinstance(x, FunctionType):
         return checksum_function(x, **kwargs)
+    elif isinstance(x, type):
+        return checksum_type(x, **kwargs)
     elif unk_mode == "pickle":
         return checksum_bytes(pickle.dumps(x), **kwargs)
     elif unk_mode == "error":
@@ -95,10 +97,6 @@ def checksum_dataclass(x: DataclassInstance, **kwargs) -> int:
     accumulator = kwargs.pop("accumulator", 0) + checksum_str(get_fullname(x), **kwargs)
     kwargs["accumulator"] = accumulator
     return checksum_mapping(asdict(x), **kwargs)
-
-
-def checksum_function(x: FunctionType, **kwargs) -> int:
-    return checksum_str(x.__qualname__, **kwargs)
 
 
 def checksum_iterable(x: Iterable[Any], **kwargs) -> int:
@@ -170,15 +168,41 @@ def checksum_namedtuple(x: NamedTupleInstance, **kwargs) -> int:
 
 
 # Intermediate functions
-@torch.inference_mode()
-def checksum_tensor(x: Tensor, **kwargs) -> int:
-    """Compute a simple checksum of a tensor. Order of values matter for the checksum."""
-    return _checksum_tensor_array_like(
-        x,
-        nan_to_num_fn=torch.nan_to_num,
-        arange_fn=torch.arange,
-        **kwargs,
-    )
+def checksum_builtin_number(x: BuiltinNumber, **kwargs) -> int:
+    """Compute a simple checksum of a builtin scalar number."""
+    if isinstance(x, bool):
+        return checksum_bool(x, **kwargs)
+    elif isinstance(x, int):
+        return checksum_int(x, **kwargs)
+    elif isinstance(x, complex):
+        return checksum_complex(x, **kwargs)
+    elif isinstance(x, float):
+        return checksum_float(x, **kwargs)
+    else:
+        msg = f"Invalid argument type {type(x)}. (expected int, bool, complex or float)"
+        raise TypeError(msg)
+
+
+def checksum_builtin_scalar(x: BuiltinScalar, **kwargs) -> int:
+    if isinstance(x, BuiltinNumber):
+        return checksum_builtin_number(x, **kwargs)
+    elif isinstance(x, bytes):
+        return checksum_bytes(x, **kwargs)
+    elif isinstance(x, NoneType):
+        return checksum_none(x, **kwargs)
+    elif isinstance(x, str):
+        return checksum_str(x, **kwargs)
+    else:
+        msg = f"Invalid argument type {type(x)}. (expected int, bool, complex float, bytes, None, or str)"
+        raise TypeError(msg)
+
+
+def checksum_complex(x: complex, **kwargs) -> int:
+    return checksum_tensor(torch.as_tensor([x.real, x.imag]), **kwargs)
+
+
+def checksum_function(x: FunctionType, **kwargs) -> int:
+    return checksum_str(x.__qualname__, **kwargs)
 
 
 def checksum_ndarray(x: Union[np.ndarray, np.generic], **kwargs) -> int:
@@ -198,41 +222,23 @@ def checksum_ndarray(x: Union[np.ndarray, np.generic], **kwargs) -> int:
     )
 
 
-def checksum_builtin_scalar(x: BuiltinScalar, **kwargs) -> int:
-    if isinstance(x, BuiltinNumber):
-        return checksum_builtin_number(x, **kwargs)
-    elif isinstance(x, bytes):
-        return checksum_bytes(x, **kwargs)
-    elif isinstance(x, NoneType):
-        return checksum_none(x, **kwargs)
-    elif isinstance(x, str):
-        return checksum_str(x, **kwargs)
-    else:
-        msg = f"Invalid argument type {type(x)}. (expected int, bool, complex float, bytes, None, or str)"
-        raise TypeError(msg)
-
-
-def checksum_builtin_number(x: BuiltinNumber, **kwargs) -> int:
-    """Compute a simple checksum of a builtin scalar number."""
-    if isinstance(x, bool):
-        return checksum_bool(x, **kwargs)
-    elif isinstance(x, int):
-        return checksum_int(x, **kwargs)
-    elif isinstance(x, complex):
-        return checksum_complex(x, **kwargs)
-    elif isinstance(x, float):
-        return checksum_float(x, **kwargs)
-    else:
-        msg = f"Invalid argument type {type(x)}. (expected int, bool, complex or float)"
-        raise TypeError(msg)
-
-
 def checksum_str(x: str, **kwargs) -> int:
     return checksum_bytes(x.encode(), **kwargs)
 
 
-def checksum_complex(x: complex, **kwargs) -> int:
-    return checksum_tensor(torch.as_tensor([x.real, x.imag]), **kwargs)
+@torch.inference_mode()
+def checksum_tensor(x: Tensor, **kwargs) -> int:
+    """Compute a simple checksum of a tensor. Order of values matter for the checksum."""
+    return _checksum_tensor_array_like(
+        x,
+        nan_to_num_fn=torch.nan_to_num,
+        arange_fn=torch.arange,
+        **kwargs,
+    )
+
+
+def checksum_type(x: type, **kwargs) -> int:
+    return checksum_str(x.__qualname__, **kwargs)
 
 
 # Terminate functions
