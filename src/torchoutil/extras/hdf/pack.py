@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import datetime
 import json
 import logging
 from dataclasses import asdict
@@ -10,6 +9,7 @@ from typing import (
     Any,
     Callable,
     Dict,
+    List,
     Literal,
     Mapping,
     Optional,
@@ -29,7 +29,7 @@ from torch.utils.data.dataloader import DataLoader
 import torchoutil as to
 from torchoutil import nn
 from torchoutil.extras.hdf.common import (
-    DUMPED_JSON_KEYS,
+    _DUMPED_JSON_KEYS,
     HDF_ENCODING,
     HDF_STRING_DTYPE,
     HDF_VOID_DTYPE,
@@ -37,9 +37,14 @@ from torchoutil.extras.hdf.common import (
     HDFItemType,
 )
 from torchoutil.extras.hdf.dataset import HDFDataset
-from torchoutil.extras.numpy.scan_info import merge_numpy_dtypes, scan_shape_dtypes
+from torchoutil.extras.numpy import (
+    merge_numpy_dtypes,
+    numpy_is_complex_dtype,
+    scan_shape_dtypes,
+)
 from torchoutil.nn.functional.checksum import checksum
 from torchoutil.pyoutil.collections import all_eq
+from torchoutil.pyoutil.datetime import now_iso
 from torchoutil.pyoutil.functools import Compose
 from torchoutil.pyoutil.logging import warn_once
 from torchoutil.pyoutil.typing import is_dataclass_instance, is_dict_str
@@ -52,18 +57,7 @@ from torchoutil.utils.saving import to_builtin
 T = TypeVar("T", covariant=True)
 T_DictOrTuple = TypeVar("T_DictOrTuple", tuple, dict, covariant=True)
 
-HDFDType = Union[Literal["b", "i", "u", "f", "c"], np.dtype]
-
-
-_SUPPORTED_HDF_DTYPES = (
-    "b",  # bool
-    "i",  # int
-    "u",  # uint
-    "f",  # float
-    "c",  # complex
-    HDF_STRING_DTYPE,
-    HDF_VOID_DTYPE,
-)
+HDFDType = Union[np.dtype, Literal["b", "i", "u", "f", "c"]]
 
 
 pylog = logging.getLogger(__name__)
@@ -74,16 +68,17 @@ def pack_to_hdf(
     dataset: SizedDatasetLike[T],
     hdf_fpath: Union[str, Path],
     pre_transform: Optional[Callable[[T], T_DictOrTuple]] = None,
+    *,
     exists: ExistsMode = "error",
     verbose: int = 0,
     batch_size: int = 32,
     num_workers: Union[int, Literal["auto"]] = "auto",
     shape_suffix: str = SHAPE_SUFFIX,
-    store_complex_as_real: bool = True,
-    use_vlen_str: bool = False,
+    store_str_as_vlen: bool = False,
     file_kwds: Optional[Dict[str, Any]] = None,
     ds_kwds: Optional[Dict[str, Any]] = None,
     user_attrs: Any = None,
+    skip_scan: bool = False,
 ) -> HDFDataset[T_DictOrTuple, T_DictOrTuple]:
     """Pack a dataset to HDF file.
 
@@ -103,9 +98,13 @@ def pack_to_hdf(
         num_workers: The number of workers of the dataloader.
             If "auto", it will be set to `len(os.sched_getaffinity(0))`. defaults to "auto".
         shape_suffix: Shape column suffix in HDF file. defaults to "_shape".
-        open_hdf: If True, opens the output HDF dataset. defaults to True.
+        store_str_as_vlen: TODO
         file_kwds: Options given to h5py file object. defaults to None.
+        ds_kwds: TODO
         user_attrs: Additional metadata to add to the hdf file. It must be JSON convertible. defaults to None.
+        skip_scan: If True, the input dataset will be considered as fully homogeneous, which means that all columns values contains the same shape and dtype.
+            It is meant to skip the first step which scans each dataset item once and speed up packing to HDF file.
+            defaults to False.
 
     Returns:
         hdf_dataset: The target HDF dataset object.
@@ -127,11 +126,11 @@ def pack_to_hdf(
 
     if not hdf_fpath.is_file() or exists == "overwrite":
         pass
+    elif exists == "skip":
+        return HDFDataset(hdf_fpath, **ds_kwds)
     elif exists == "error":
         msg = f"Cannot overwrite file {hdf_fpath}. Please remove it or use exists='overwrite' or exists='skip' option."
         raise ValueError(msg)
-    elif exists == "skip":
-        return HDFDataset(hdf_fpath, **ds_kwds)
     else:
         msg = f"Invalid argument {exists=}. (expected one of {EXISTS_MODES})"
         raise ValueError(msg)
@@ -144,9 +143,6 @@ def pack_to_hdf(
         if verbose >= 2:
             pylog.debug(f"Found num_workers=='auto', set to {num_workers}.")
 
-    if pre_transform is None:
-        pre_transform = nn.Identity()
-
     if verbose >= 2:
         pylog.debug(f"Start packing data into HDF file '{hdf_fpath}'...")
 
@@ -158,29 +154,21 @@ def pack_to_hdf(
         max_shapes,
         hdf_dtypes,
         all_eq_shapes,
-        load_as_complex,
         src_np_dtypes,
     ) = _scan_dataset(
-        dataset,
-        pre_transform,
-        batch_size,
-        num_workers,
-        store_complex_as_real,
-        verbose,
-        use_vlen_str=use_vlen_str,
+        dataset=dataset,
+        pre_transform=pre_transform,
+        batch_size=batch_size,
+        num_workers=num_workers,
+        verbose=verbose,
+        store_str_as_vlen=store_str_as_vlen,
         encoding=encoding,
+        skip_scan=skip_scan,
     )
 
-    now = datetime.datetime.now()
-    creation_date = now.strftime("%Y-%m-%d_%H-%M-%S")
+    creation_date = now_iso()
 
-    added_columns = []
-
-    with h5py.File(
-        hdf_fpath,
-        "w",
-        **file_kwds,
-    ) as hdf_file:
+    with h5py.File(hdf_fpath, "w", **file_kwds) as hdf_file:
         # Step 2: Build hdf datasets in file
         hdf_dsets: Dict[str, HDFRawDataset] = {}
 
@@ -193,12 +181,15 @@ def pack_to_hdf(
             if fill_value is not None:
                 kwargs["fillvalue"] = fill_value
 
-            hdf_dsets[attr_name] = hdf_file.create_dataset(
-                attr_name,
-                (len(dataset),) + shape,
-                hdf_dtype,
-                **kwargs,
-            )
+            hdf_ds_shape = (len(dataset),) + shape
+            try:
+                hdf_dsets[attr_name] = hdf_file.create_dataset(
+                    attr_name, hdf_ds_shape, hdf_dtype, **kwargs
+                )
+            except ValueError as err:
+                msg = f"Cannot create hdf dataset {attr_name=} of shape '{hdf_ds_shape}' with dtype '{hdf_dtype}' and {kwargs=}."
+                pylog.error(msg)
+                raise err
 
         if verbose >= 2:
             num_scalars = sum(len(hdf_ds.shape) == 1 for hdf_ds in hdf_dsets.values())
@@ -215,6 +206,8 @@ def pack_to_hdf(
                 msg = f"HDF column dset multidim '{attr_name}' with (shape={hdf_ds.shape}, dtype={hdf_ds.dtype}) has been built."
                 pylog.debug(msg)
 
+        added_columns = []
+
         # Create sub-datasets for shape data
         for attr_name, shape in max_shapes.items():
             if len(shape) == 0 or all_eq_shapes[attr_name]:
@@ -223,16 +216,20 @@ def pack_to_hdf(
             shape_name = f"{attr_name}{shape_suffix}"
             raw_dset_shape = (len(dataset), len(shape))
 
-            if shape_name in hdf_dsets:
-                if hdf_dsets[shape_name].shape != raw_dset_shape:
-                    msg = f"Column {shape_name} already exists in source dataset with a different shape. (found shape={hdf_dsets[shape_name].shape} but expected shape is {raw_dset_shape})"
-                    raise RuntimeError(msg)
-                else:
-                    continue
+            if shape_name not in hdf_dsets:
+                pass
+            elif hdf_dsets[shape_name].shape == raw_dset_shape:
+                continue
+            else:
+                msg = f"Column {shape_name} already exists in source dataset with a different shape. (found shape={hdf_dsets[shape_name].shape} but expected shape is {raw_dset_shape})"
+                raise RuntimeError(msg)
 
             added_columns.append(shape_name)
             hdf_dsets[shape_name] = hdf_file.create_dataset(
-                shape_name, raw_dset_shape, "i", fillvalue=-1
+                shape_name,
+                raw_dset_shape,
+                "i",
+                fillvalue=-1,
             )
 
         # Fill sub-datasets with a second pass through the whole dataset
@@ -249,20 +246,18 @@ def pack_to_hdf(
             pin_memory=False,
         )
 
-        for batch in tqdm.tqdm(
-            loader,
-            desc="Pack data into HDF...",
-            disable=verbose <= 0,
+        for batch_idx, batch in enumerate(
+            tqdm.tqdm(
+                loader,
+                desc="Pack data into HDF...",
+                disable=verbose <= 0,
+            )
         ):
             batch = [dict_pre_transform(item) for item in batch]
 
             for item in batch:
                 for attr_name, value in item.items():
                     hdf_dset = hdf_dsets[attr_name]
-
-                    if load_as_complex.get(attr_name, False):
-                        value = to.view_as_real(value)
-
                     shape = to.shape(value)
 
                     # Check every shape
@@ -315,7 +310,7 @@ def pack_to_hdf(
                 info = {}
 
         src_np_dtypes_dumped = {
-            name: str(merge_numpy_dtypes(np_dtypes))
+            name: str(merge_numpy_dtypes(np_dtypes, empty=HDF_VOID_DTYPE))
             for name, np_dtypes in src_np_dtypes.items()
         }
         attributes = {
@@ -327,28 +322,35 @@ def pack_to_hdf(
             "info": to_builtin(info),
             "item_type": item_type,
             "length": len(dataset),
-            "load_as_complex": load_as_complex,
+            "load_as_complex": {},  # for backward compatibility only
+            "pre_transform": pre_transform.__class__.__name__,
             "shape_suffix": shape_suffix,
             "source_dataset": dataset.__class__.__name__,
             "src_np_dtypes": src_np_dtypes_dumped,
-            "use_vlen_str": use_vlen_str,
+            "store_complex_as_real": False,  # for backward compatibility only
+            "store_str_as_vlen": store_str_as_vlen,
             "user_attrs": to_builtin(user_attrs),
-            "version": str(to.__version__),
+            "torchoutil_version": str(to.__version__),
         }
-        for name in DUMPED_JSON_KEYS:
+        for name in _DUMPED_JSON_KEYS:
             attributes[name] = json.dumps(attributes[name])
 
         if verbose >= 2:
             dumped_attributes = json.dumps(attributes, indent="\t")
             pylog.debug(f"Saving attributes in HDF file:\n{dumped_attributes}")
 
+        attrs_errors: List[TypeError] = []
         for attr_name, attr_val in attributes.items():
             try:
                 hdf_file.attrs[attr_name] = attr_val
             except TypeError as err:
                 msg = f"Cannot store attribute {attr_name=} with value {attr_val=} in HDF."
                 pylog.error(msg)
-                raise err
+                attrs_errors.append(err)
+
+    # Raises attributes errors after closing HDF file
+    for err in attrs_errors:
+        raise err
 
     if verbose >= 2:
         pylog.debug(f"Data has been packed into HDF file '{hdf_fpath}'.")
@@ -359,22 +361,24 @@ def pack_to_hdf(
 
 def _scan_dataset(
     dataset: SizedDatasetLike[T],
-    pre_transform: Callable[[T], T_DictOrTuple],
+    pre_transform: Optional[Callable[[T], T_DictOrTuple]],
     batch_size: int,
     num_workers: int,
-    store_complex_as_real: bool,
+    store_str_as_vlen: bool,
     verbose: int,
-    use_vlen_str: bool,
     encoding: str,
+    skip_scan: bool,
 ) -> Tuple[
     Callable[[T], Dict[str, Any]],
     HDFItemType,
     Dict[str, Tuple[int, ...]],
     Dict[str, HDFDType],
     Dict[str, bool],
-    Dict[str, bool],
     Dict[str, Set[np.dtype]],
 ]:
+    if pre_transform is None:
+        pre_transform = nn.Identity()
+
     if isinstance(dataset, IterableDataset):
         item_0 = next(iter(dataset))
     else:
@@ -403,7 +407,7 @@ def _scan_dataset(
         raise ValueError(msg)
     del item_0
 
-    encode_dict_fn = to.identity if use_vlen_str else encode_dict_array
+    encode_dict_fn = to.identity if store_str_as_vlen else encode_dict_array
     dict_pre_transform: Callable[[T], Dict[str, Any]] = Compose(
         pre_transform,
         to_dict_fn,
@@ -426,14 +430,14 @@ def _scan_dataset(
     for batch in tqdm.tqdm(
         loader,
         desc="Pre compute shapes...",
-        disable=verbose <= 0,
+        disable=verbose <= 0 or skip_scan,
     ):
         batch = [pre_transform(item) for item in batch]
         batch = [to_dict_fn(item) for item in batch]  # type: ignore
 
         for item in batch:
             for attr_name, value in item.items():
-                info = scan_shape_dtypes(value)
+                info = scan_shape_dtypes(value, empty_np=HDF_VOID_DTYPE)
                 shape = info.shape
                 np_dtype = info.numpy_dtype
                 kind = np_dtype.kind
@@ -444,10 +448,10 @@ def _scan_dataset(
                     src_np_dtypes[attr_name] = {np_dtype}  # type: ignore
 
                 value = to.to_numpy(value)
-                if kind == "U" and not use_vlen_str:
+                if kind == "U" and not store_str_as_vlen:
                     value = encode_array(value)  # type: ignore
                     # update shape and np_dtype after encoding
-                    info = scan_shape_dtypes(value)
+                    info = scan_shape_dtypes(value, empty_np=HDF_VOID_DTYPE)
                     shape = info.shape
                     np_dtype = info.numpy_dtype
 
@@ -455,6 +459,9 @@ def _scan_dataset(
                     infos_dict[attr_name].add((shape, np_dtype))  # type: ignore
                 else:
                     infos_dict[attr_name] = {(shape, np_dtype)}  # type: ignore
+
+            if skip_scan:
+                break
 
     max_shapes: Dict[str, Tuple[int, ...]] = {}
     hdf_dtypes: Dict[str, HDFDType] = {}
@@ -470,8 +477,8 @@ def _scan_dataset(
             raise ValueError(msg)
 
         np_dtypes = [np_dtype for _, np_dtype in info]
-        np_dtype = merge_numpy_dtypes(np_dtypes)
-        hdf_dtype = numpy_dtype_to_hdf_dtype(np_dtype, encoding=encoding)  # type: ignore
+        np_dtype = merge_numpy_dtypes(np_dtypes, empty=HDF_VOID_DTYPE)
+        hdf_dtype = numpy_dtype_to_hdf_dtype(np_dtype, encoding=encoding)
 
         if (
             verbose >= 2
@@ -485,7 +492,7 @@ def _scan_dataset(
                 np.float32,
             )
             and np_dtype.kind != "S"
-            and (not use_vlen_str and np_dtype.kind == "U")
+            and (not store_str_as_vlen and np_dtype.kind == "U")
         ):
             expected_np_dtype = hdf_dtype_to_numpy_dtype(hdf_dtype)
             msg = f"Found input dtype {np_dtype} which is not compatible with HDF. It will be cast to {expected_np_dtype}. (with {hdf_dtype=})"
@@ -497,33 +504,10 @@ def _scan_dataset(
 
     del infos_dict
 
-    invalid = {
-        name: hdf_dtype
-        for name, hdf_dtype in hdf_dtypes.items()
-        if hdf_dtype is None
-        or (
-            hdf_dtype not in _SUPPORTED_HDF_DTYPES
-            and not (isinstance(hdf_dtype, np.dtype) and hdf_dtype.kind == "S")
-        )
-    }
-    if len(invalid) > 0:
-        msg = f"Invalid hdf dtype found in item. (found {len(invalid)}/{len(hdf_dtypes)} unsupported dtypes with {invalid=}, but expected dtypes in {_SUPPORTED_HDF_DTYPES})"
-        raise ValueError(msg)
-
-    load_as_complex: Dict[str, bool] = {}
-    if store_complex_as_real:
-        for attr_name in list(hdf_dtypes.keys()):
-            if hdf_dtypes[attr_name] != "c":
-                continue
-            load_as_complex[attr_name] = True
-            hdf_dtypes[attr_name] = "f"
-            max_shapes[attr_name] = max_shapes[attr_name] + (2,)
-
     if verbose >= 2:
         pylog.debug(f"Found max_shapes:\n{max_shapes}")
         pylog.debug(f"Found hdf_dtypes:\n{hdf_dtypes}")
         pylog.debug(f"Found all_eq_shapes:\n{all_eq_shapes}")
-        pylog.debug(f"Found load_as_complex:\n{load_as_complex}")
         pylog.debug(f"Found src_np_dtypes:\n{src_np_dtypes}")
 
     return (
@@ -532,52 +516,73 @@ def _scan_dataset(
         max_shapes,
         hdf_dtypes,
         all_eq_shapes,
-        load_as_complex,
         src_np_dtypes,
     )
 
 
 def hdf_dtype_to_fill_value(hdf_dtype: Optional[HDFDType]) -> BuiltinScalar:
-    if hdf_dtype == "b":
+    if isinstance(hdf_dtype, np.dtype):
+        hdf_dtype = hdf_dtype.type
+
+    if hdf_dtype == "b" or hdf_dtype == np.bool_:
         return False
-    elif hdf_dtype in ("i", "u"):
+    elif hdf_dtype in ("i", "u") or (
+        isinstance(hdf_dtype, type) and issubclass(hdf_dtype, np.integer)
+    ):
         return 0
-    elif hdf_dtype == "f":
+    elif hdf_dtype == "f" or (
+        isinstance(hdf_dtype, type) and issubclass(hdf_dtype, np.floating)
+    ):
         return 0.0
-    elif hdf_dtype == "c" or (
-        isinstance(hdf_dtype, np.dtype) and hdf_dtype.kind in ("V", "O", "S")
+    elif (
+        hdf_dtype == "c"
+        or (
+            isinstance(hdf_dtype, type)
+            and hdf_dtype in (np.void, np.object_, np.bytes_, np.str_)
+        )
+        or numpy_is_complex_dtype(hdf_dtype)
     ):
         return None
     else:
-        msg = (
-            f"Unsupported type {hdf_dtype=}. (expected one of {_SUPPORTED_HDF_DTYPES})"
-        )
+        msg = f"Unsupported type {hdf_dtype=}."
         raise ValueError(msg)
 
 
 def numpy_dtype_to_hdf_dtype(
-    dtype: Optional[np.dtype], *, encoding: str = HDF_ENCODING
-) -> HDFDType:
+    dtype: Optional[np.dtype],
+    *,
+    encoding: str = HDF_ENCODING,
+) -> np.dtype:
     if dtype is None:
         return HDF_VOID_DTYPE
-
-    kind = dtype.kind
-
-    if kind == "u":  # uint stored as int
-        return "i"
-    elif kind == "S":
-        return h5py.string_dtype(encoding, dtype.itemsize)
-    elif kind == "U":  # unicode string
+    elif isinstance(dtype, np.dtype) and dtype.kind == "U":
         return h5py.string_dtype(encoding, None)
-    elif kind == "V":
-        return HDF_VOID_DTYPE
-    elif kind in ("b", "i", "f", "c"):
-        return kind
     else:
-        raise ValueError(f"Unsupported dtype {kind=} for HDF dtype.")
+        return dtype
+
+    # TODO: rm
+    # if not store_complex_as_real:
+    #     return h5py.opaque_dtype(np.dtype(f"|S{dtype.itemsize}"))
+
+    # kind = dtype.kind
+
+    # if kind == "u":  # uint stored as int
+    #     return "i"
+    # if kind == "S":
+    #     return h5py.string_dtype(encoding, dtype.itemsize)
+    # if kind == "U":  # unicode string
+    #     return h5py.string_dtype(encoding, None)
+    # if kind == "V":
+    #     return HDF_VOID_DTYPE
+    # if kind in ("b", "i", "f", "c"):
+    #     return kind
+
+    # raise ValueError(f"Unsupported dtype {kind=} for HDF dtype.")
 
 
 def hdf_dtype_to_numpy_dtype(hdf_dtype: HDFDType) -> np.dtype:
+    if isinstance(hdf_dtype, np.dtype):
+        return hdf_dtype
     if hdf_dtype == HDF_VOID_DTYPE:
         return np.dtype("V")
     if hdf_dtype == HDF_STRING_DTYPE:

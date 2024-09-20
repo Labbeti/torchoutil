@@ -5,7 +5,13 @@ from typing import Union
 
 from torchoutil.core.packaging import _NUMPY_AVAILABLE
 
-if _NUMPY_AVAILABLE:
+if not _NUMPY_AVAILABLE:
+    from torchoutil.extras.numpy import _numpy_placeholder as np  # noqa: F401
+    from torchoutil.extras.numpy import _numpy_placeholder as numpy
+
+    ACCEPTED_NUMPY_DTYPES = ()
+
+else:
     import numpy  # noqa: F401  # type: ignore
     import numpy as np  # type: ignore
 
@@ -23,12 +29,6 @@ if _NUMPY_AVAILABLE:
         np.uint8,
         bool,
     )
-
-else:
-    from torchoutil.extras.numpy import _numpy_placeholder as np  # noqa: F401
-    from torchoutil.extras.numpy import _numpy_placeholder as numpy
-
-    ACCEPTED_NUMPY_DTYPES = ()
 
 
 NumpyNumberLike = Union[np.ndarray, np.number]

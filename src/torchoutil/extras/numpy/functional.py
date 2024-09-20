@@ -69,7 +69,11 @@ def numpy_view_as_real(x: np.ndarray) -> np.ndarray:
     """
     assert numpy_is_complex(x)
     float_dtype = numpy_complex_dtype_to_float_dtype(x.dtype)
-    return x.view(float_dtype).reshape(*x.shape, 2)
+    if x.ndim > 0:
+        return x.view(float_dtype).reshape(*x.shape, 2)
+    else:
+        # note: rebuild array here because view does not work on 0d arrays
+        return np.array([x.real, x.imag], dtype=float_dtype)
 
 
 def numpy_complex_dtype_to_float_dtype(dtype: np.dtype) -> np.dtype:
@@ -94,7 +98,11 @@ def numpy_is_floating_point(x: Union[np.ndarray, np.generic]) -> bool:
 
 
 def numpy_is_complex(x: Union[np.ndarray, np.generic]) -> bool:
-    return np.iscomplexobj(x)  # type: ignore
+    return np.iscomplexobj(x)
+
+
+def numpy_is_complex_dtype(dtype: np.dtype) -> bool:
+    return np.iscomplexobj(np.empty((0,), dtype=dtype))
 
 
 def is_numpy_number_like(x: Any) -> TypeGuard[NumpyNumberLike]:

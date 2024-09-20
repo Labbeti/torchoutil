@@ -33,8 +33,8 @@ from typing_extensions import TypeGuard, override
 
 import torchoutil as to
 from torchoutil.extras.hdf.common import (
-    DEFAULTS_HDF_ATTRIBUTES,
-    DUMPED_JSON_KEYS,
+    _DEFAULTS_HDF_ATTRIBUTES,
+    _DUMPED_JSON_KEYS,
     HDFDatasetAttributes,
     HDFItemType,
 )
@@ -85,7 +85,7 @@ class HDFDataset(Generic[T, U], DatasetSlicer[U]):
         keep_padding: Iterable[str] = (),
         return_added_columns: bool = False,
         open_hdf: bool = True,
-        cast: CastMode = "to_torch_or_builtin",
+        cast: CastMode = "none",
         file_kwds: Optional[Dict[str, Any]] = None,
     ) -> None:
         """HDFDataset to read an packed hdf file.
@@ -149,7 +149,7 @@ class HDFDataset(Generic[T, U], DatasetSlicer[U]):
     def attrs(self) -> HDFDatasetAttributes:
         raw_attrs = dict(self._hdf_file.attrs)
         load_attrs = copy.copy(raw_attrs)
-        for name in DUMPED_JSON_KEYS:
+        for name in _DUMPED_JSON_KEYS:
             load_attrs[name] = json.loads(load_attrs[name])
 
         load_attrs["added_columns"] = list(load_attrs["added_columns"])
@@ -157,7 +157,7 @@ class HDFDataset(Generic[T, U], DatasetSlicer[U]):
             k: np.dtype(v) for k, v in load_attrs["src_np_dtypes"].items()
         }
 
-        attrs = copy.copy(DEFAULTS_HDF_ATTRIBUTES)
+        attrs = copy.copy(_DEFAULTS_HDF_ATTRIBUTES)
         attrs.update(load_attrs)
         return attrs  # type: ignore
 
@@ -313,7 +313,7 @@ class HDFDataset(Generic[T, U], DatasetSlicer[U]):
         else:
             raise TypeError(f"Invalid argument type {type(index)=}.")
 
-        hdf_value = self._raw_get_item(index, column)
+        hdf_value = self._get_raw_item(index, column)
         if raw:
             return hdf_value
 
@@ -331,7 +331,7 @@ class HDFDataset(Generic[T, U], DatasetSlicer[U]):
         hdf_dtype: np.dtype = hdf_ds.dtype
 
         if must_remove_padding:
-            shapes = self._raw_get_item(index, shape_column)
+            shapes = self._get_raw_item(index, shape_column)
             if not is_mult:
                 shapes = shapes[None]
             slices_lst = [
@@ -506,7 +506,7 @@ class HDFDataset(Generic[T, U], DatasetSlicer[U]):
             self.open()
 
     # Private methods
-    def _raw_get_item(
+    def _get_raw_item(
         self,
         index: Union[int, Iterable[int], slice],
         column: str,
@@ -560,7 +560,10 @@ class HDFDataset(Generic[T, U], DatasetSlicer[U]):
         column: str,
         hdf_dtype: np.dtype,
     ) -> Any:
-        if self._cast == "to_torch_or_builtin":
+        if self._cast == "none":
+            return hdf_values
+
+        elif self._cast == "to_torch_or_builtin":
             valid = to.shape(hdf_values, return_valid=True).valid
             if valid and hdf_dtype.kind not in ("V", "S", "O"):
                 result = to.to_tensor(hdf_values)
@@ -601,15 +604,12 @@ class HDFDataset(Generic[T, U], DatasetSlicer[U]):
             target_pt_dtype = numpy_dtype_to_torch_dtype(target_np_dtype, invalid=None)
 
             if isinstance(hdf_values, np.ndarray):
-                hdf_values = hdf_values.astype(target_np_dtype)
+                hdf_values = hdf_values.view(target_np_dtype)
                 result = to.numpy_to_tensor(hdf_values)
             elif valid:
                 result = to.to_tensor(hdf_values, dtype=target_pt_dtype)
             else:
                 result = hdf_values
-
-        elif self._cast == "none":
-            result = hdf_values
 
         else:
             msg = f"Invalid argument {self._cast=}. (expected one of {CAST_MODES})"

@@ -26,7 +26,7 @@ class InvalidTorchDType(metaclass=po.Singleton):
 
 
 @dataclass(frozen=True)
-class ShapeDTypeInfo(Generic[T_Invalid, T_EmptyNp, T_EmptyTorch]):
+class ShapeDTypeInfo(Generic[T_Invalid, T_EmptyTorch, T_EmptyNp]):
     shape: Tuple[int, ...]
     torch_dtype: Union[torch.dtype, T_Invalid, T_EmptyTorch]
     numpy_dtype: Union[np.dtype, T_EmptyNp]
@@ -49,18 +49,22 @@ class ShapeDTypeInfo(Generic[T_Invalid, T_EmptyNp, T_EmptyTorch]):
 
 
 def scan_shape_dtypes(
-    x: Any, *, accept_heterogeneous_shape: bool = False
-) -> ShapeDTypeInfo[InvalidTorchDType, np.dtype, None]:
+    x: Any,
+    *,
+    accept_heterogeneous_shape: bool = False,
+    empty_torch: T_EmptyTorch = None,
+    empty_np: T_EmptyNp = np.dtype("V"),
+) -> ShapeDTypeInfo[InvalidTorchDType, T_EmptyTorch, T_EmptyNp]:
     """Returns the shape and the hdf_dtype for an input."""
     valid_shape, shape = to.shape(x, return_valid=True)
     if not accept_heterogeneous_shape and not valid_shape:
         msg = f"Invalid argument {x} for {get_current_fn_name()}. (cannot compute shape for heterogeneous data)"
         raise ValueError(msg)
 
-    torch_dtype = scan_torch_dtype(x)
-    numpy_dtype = scan_numpy_dtype(x)
+    torch_dtype = scan_torch_dtype(x, empty=empty_torch)
+    numpy_dtype = scan_numpy_dtype(x, empty=empty_np)
 
-    info = ShapeDTypeInfo[InvalidTorchDType, np.dtype, None](
+    info = ShapeDTypeInfo[InvalidTorchDType, T_EmptyTorch, T_EmptyNp](
         shape,
         torch_dtype,
         numpy_dtype,
@@ -73,8 +77,8 @@ def scan_torch_dtype(
     x: Any,
     *,
     invalid: T_Invalid = InvalidTorchDType(),
-    empty: T_EmptyNp = None,
-) -> Union[torch.dtype, T_Invalid, T_EmptyNp]:
+    empty: T_EmptyTorch = None,
+) -> Union[torch.dtype, T_Invalid, T_EmptyTorch]:
     """Returns torch dtype of an arbitrary object. Works recursively on tuples and lists. An instance of InvalidTorchDType can be returned if a str is passed."""
     if isinstance(x, (int, float, bool, complex)):
         torch_dtype = torch.as_tensor(x).dtype

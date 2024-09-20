@@ -51,8 +51,8 @@ class TestHDF(TestCase):
         image1, label1 = hdf_dataset[idx]
 
         assert len(dataset) == len(hdf_dataset)
-        assert np.equal(image0, image1).bool().all()
-        assert np.equal(label0, label1).bool().all()
+        assert np.equal(image0, image1).all()
+        assert np.equal(label0, label1).all()
 
         hdf_dataset.close(remove_file=True)
 
@@ -60,24 +60,33 @@ class TestHDF(TestCase):
         cls = self.__class__
         tmpdir = cls.tmpdir
 
+        shape_suffix = "_added_shape"
         data = [torch.rand(10, 2), torch.rand(10, 5), torch.rand(10, 3)]
         data_shape = [(10, 1), (10, 2), (10, 1)]
-        ds_list = [
-            {"data": data[i], "data_shape": data_shape[i]} for i in range(len(data))
-        ]
+
+        ds_dict = {"data": data, f"data{shape_suffix}": data_shape}
+        ds_list = dict_list_to_list_dict(ds_dict, "same")
 
         path = tmpdir.joinpath("test_shape.hdf")
-        hdf_dataset = pack_to_hdf(ds_list, path, exists="overwrite")
+        hdf_dataset = pack_to_hdf(
+            ds_list,
+            path,
+            exists="overwrite",
+            shape_suffix=shape_suffix,
+            ds_kwds=dict(cast="to_torch_or_builtin"),
+        )
 
         assert len(hdf_dataset.added_columns) == 0
         assert len(hdf_dataset) == len(ds_list)
 
         for i, item in enumerate(iter(hdf_dataset)):
-            assert set(item.keys()) == {"data", "data_shape"}
+            assert set(item.keys()) == set(ds_dict.keys())
 
             data_i = item["data"]
             assert isinstance(data_i, Tensor)
-            assert data_i.shape == data_shape[i]
+            assert (
+                data_i.shape == data_shape[i]
+            ), f"{i=}; {data_i.shape=}; {data_shape[i]=}"
 
         hdf_dataset.close(remove_file=True)
 
@@ -90,20 +99,25 @@ class TestHDF(TestCase):
             "f32": torch.rand(10, 2, 3, dtype=torch.float32),
             "f64": torch.rand(10, 2, 3, dtype=torch.float64),
             "c64": torch.rand(10, 2, 3, dtype=torch.complex64),
+            "c128": torch.rand(10, 2, 3, dtype=torch.complex128),
             "bool": torch.rand(10, 1) > 0.5,
         }
         ds_list = dict_list_to_list_dict(ds_dict, "same")
         keys = set(ds_dict.keys())
 
-        path = tmpdir.joinpath("test_special_floating_dtypes.hdf")
-        hdf_dataset = pack_to_hdf(
-            ds_list, path, exists="overwrite", ds_kwds=dict(cast="to_torch_src")
+        fname = "test_special_floating_dtypes.hdf"
+        fpath = tmpdir.joinpath(fname)
+        hdf_ds = pack_to_hdf(
+            ds_list,
+            fpath,
+            exists="overwrite",
+            ds_kwds=dict(cast="to_torch_src"),
         )
 
-        assert len(hdf_dataset.added_columns) == 0
-        assert len(hdf_dataset) == len(ds_list)
+        assert len(hdf_ds.added_columns) == 0
+        assert len(hdf_ds) == len(ds_list)
 
-        for i, hdf_item in enumerate(iter(hdf_dataset)):
+        for i, hdf_item in enumerate(iter(hdf_ds)):
             assert set(hdf_item.keys()) == keys
             assert set(ds_list[i].keys()) == keys
 
@@ -112,9 +126,9 @@ class TestHDF(TestCase):
                 msg = f"Index: {i}; Key: {k}; {src_item[k]=}; {hdf_item[k]=}"
                 src_value = src_item[k]
                 hdf_value = hdf_item[k]
-                assert torch.allclose(src_value, hdf_value), msg
+                assert torch.equal(src_value, hdf_value), msg
 
-        hdf_dataset.close(remove_file=True)
+        hdf_ds.close(remove_file=True)
 
     def test_slice(self) -> None:
         cls = self.__class__
@@ -199,6 +213,15 @@ class TestHDF(TestCase):
         gen = torch.Generator().manual_seed(seed)
         # note: vlen_str does not support chr(0)
         strings = [
+            "".join(
+                map(
+                    chr,
+                    torch.randint(1, 256, (max_string_len,), generator=gen).tolist(),
+                )
+            )
+            for _ in range(num_data)
+        ]
+        list_strings = [
             [
                 "".join(
                     map(
@@ -212,21 +235,21 @@ class TestHDF(TestCase):
             ]
             for _ in range(num_data)
         ]
-        ds_dict = {"strings": strings}
+        ds_dict = {"strings": strings, "list_strings": list_strings}
         ds_list = dict_list_to_list_dict(ds_dict, key_mode="same")
 
         ds_vlen = pack_to_hdf(
             ds_list,
             self.tmpdir.joinpath("test_string_comp_vlen.hdf"),
             exists="overwrite",
-            use_vlen_str=True,
+            store_str_as_vlen=True,
             verbose=2,
         )
         ds_bytes = pack_to_hdf(
             ds_list,
             self.tmpdir.joinpath("test_string_comp_bytes.hdf"),
             exists="overwrite",
-            use_vlen_str=False,
+            store_str_as_vlen=False,
             verbose=2,
         )
 
@@ -245,7 +268,11 @@ class TestHDF(TestCase):
 
             duration_ds_bytes_lst.append(duration_ds_bytes)
             duration_ds_vlen_lst.append(duration_ds_vlen)
-            assert ds_bytes_data == ds_vlen_data
+            assert ds_bytes_data.keys() == ds_vlen_data.keys()
+            assert all(
+                np.all(ds_bytes_data[k] == ds_vlen_data[k])
+                for k in ds_bytes_data.keys()
+            )
 
         assert np.median(duration_ds_bytes_lst) < np.median(duration_ds_vlen_lst)
 
