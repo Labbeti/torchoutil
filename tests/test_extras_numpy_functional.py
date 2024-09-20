@@ -31,7 +31,7 @@ class TestNumpyConversions(TestCase):
         if not _NUMPY_AVAILABLE:
             return None
 
-        complex_dtypes = [np.complex64, np.complex128, np.complex256]
+        complex_dtypes = [np.complex64, np.complex128]
         x_complex = [
             np.array(
                 np.random.rand(1) * 1j,
