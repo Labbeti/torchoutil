@@ -121,8 +121,10 @@ def to_builtin(
         return x
     elif isinstance(x, Enum):
         return x.name
-    elif isinstance(x, (Path, Pattern)):
+    elif isinstance(x, Path):
         return str(x)
+    elif isinstance(x, Pattern):
+        return x.pattern
     elif isinstance(x, Tensor):
         return x.tolist()
     elif _NUMPY_AVAILABLE and isinstance(x, np.ndarray):
