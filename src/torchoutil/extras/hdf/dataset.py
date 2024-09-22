@@ -475,8 +475,12 @@ class HDFDataset(Generic[T, U], DatasetSlicer[U]):
         if "length" in self._hdf_file.attrs:
             length = self._hdf_file.attrs["length"]
         elif len(self._hdf_file) > 0:
-            dataset: HDFRawDataset = next(iter(self._hdf_file.values()))
-            length = len(dataset)
+            hdf_dsets: List[HDFRawDataset] = list(self._hdf_file.values())
+            hdf_dsets_lens = [len(ds) for ds in hdf_dsets]
+            if not all_eq(hdf_dsets_lens):
+                msg = f"Found an different number of lengths in hdf sub-datasets. (found {set(hdf_dsets_lens)})"
+                raise ValueError(msg)
+            length = len(hdf_dsets_lens[0])
         else:
             length = 0
 
