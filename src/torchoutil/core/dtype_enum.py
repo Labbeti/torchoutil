@@ -151,11 +151,11 @@ class DTypeEnum(StrEnum):
 
 
 def torch_dtype_to_str(dtype: torch.dtype) -> str:
-    return str(dtype).removeprefix("torch.")
+    return _removeprefix(str(dtype), "torch.")
 
 
 def str_to_torch_dtype(dtype: str) -> torch.dtype:
-    return TORCH_DTYPES[dtype.removeprefix("torch.")]
+    return _NAME_TO_DTYPE[_removeprefix(dtype, "torch.")]
 
 
 def torch_dtype_to_enum_dtype(dtype: torch.dtype) -> DTypeEnum:
@@ -172,3 +172,11 @@ def enum_dtype_to_str(dtype: DTypeEnum) -> str:
 
 def enum_dtype_to_torch_dtype(dtype: DTypeEnum) -> torch.dtype:
     return dtype.dtype
+
+
+def _removeprefix(x: str, prefix: str) -> str:
+    # str.removeprefix does not exists in 3.8, so we use this function instead
+    if x.startswith(prefix):
+        return x[len(prefix) :]
+    else:
+        return x
