@@ -2,10 +2,10 @@
 # -*- coding: utf-8 -*-
 
 from enum import auto
-from typing import Dict, Final
+from typing import Any, Dict, Final
 
 import torch
-from torch.types import _bool
+from torch.types import _bool, _int
 
 from torchoutil.pyoutil.enum import StrEnum
 
@@ -50,6 +50,12 @@ if hasattr(torch, "uint32"):
     TORCH_DTYPES["uint32"] = torch.uint32
 if hasattr(torch, "uint64"):
     TORCH_DTYPES["uint64"] = torch.uint64
+
+
+_NAME_TO_DTYPE: Final[Dict[str, torch.dtype]] = TORCH_DTYPES
+_DTYPE_TO_NAME: Final[Dict[torch.dtype, str]] = {
+    dt: name for name, dt in _NAME_TO_DTYPE.items()
+}
 
 
 class DTypeEnum(StrEnum):
@@ -99,14 +105,10 @@ class DTypeEnum(StrEnum):
 
     @classmethod
     def from_dtype(cls, dtype: torch.dtype) -> "DTypeEnum":
-        for name_i, dtype_i in TORCH_DTYPES.items():
-            if dtype_i == dtype:
-                return DTypeEnum.from_str(name_i)
-
-        msg = (
-            f"Invalid argument {dtype=}. (expected one of {tuple(TORCH_DTYPES.keys())})"
-        )
-        raise ValueError(msg)
+        if dtype not in _DTYPE_TO_NAME:
+            msg = f"Invalid argument {dtype=}. (expected one of {tuple(_DTYPE_TO_NAME.keys())})"
+            raise ValueError(msg)
+        return DTypeEnum.from_str(_DTYPE_TO_NAME[dtype])
 
     @property
     def dtype(self) -> torch.dtype:
@@ -124,27 +126,44 @@ class DTypeEnum(StrEnum):
     def is_signed(self) -> _bool:
         return self.dtype.is_signed
 
+    @property
+    def itemsize(self) -> _int:
+        return self.dtype.itemsize
+
     def to_real(self) -> "DTypeEnum":
         return DTypeEnum.from_dtype(self.dtype.to_real())
 
     def to_complex(self) -> "DTypeEnum":
         return DTypeEnum.from_dtype(self.dtype.to_complex())
 
+    def __eq__(self, other: Any) -> _bool:
+        if isinstance(other, DTypeEnum):
+            return self.dtype == other.dtype
+        elif isinstance(other, torch.dtype):
+            return self.dtype == other
+        elif isinstance(other, str):
+            return self.dtype == str_to_torch_dtype(other)
+        else:
+            return False
+
+    def __hash__(self) -> _int:
+        return hash(self.dtype)
+
+
+def torch_dtype_to_str(dtype: torch.dtype) -> str:
+    return str(dtype).removeprefix("torch.")
+
+
+def str_to_torch_dtype(dtype: str) -> torch.dtype:
+    return TORCH_DTYPES[dtype.removeprefix("torch.")]
+
 
 def torch_dtype_to_enum_dtype(dtype: torch.dtype) -> DTypeEnum:
     return DTypeEnum.from_dtype(dtype)
 
 
-def torch_dtype_to_str(dtype: torch.dtype) -> str:
-    return str(dtype)
-
-
 def str_to_enum_dtype(dtype: str) -> DTypeEnum:
     return DTypeEnum.from_str(dtype)
-
-
-def str_to_torch_dtype(dtype: str) -> torch.dtype:
-    return TORCH_DTYPES[dtype]
 
 
 def enum_dtype_to_str(dtype: DTypeEnum) -> str:
