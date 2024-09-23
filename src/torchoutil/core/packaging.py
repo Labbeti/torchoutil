@@ -40,7 +40,7 @@ _VERSION_FORMAT = r"{major}.{minor}.{micro}"
 class VersionDict(TypedDict):
     major: int
     minor: int
-    micro: NotRequired[Optional[int]] = None
+    micro: NotRequired[Optional[int]]
 
 
 @dataclass
@@ -66,7 +66,7 @@ class Version:
         return Version(**version_dict)
 
     def to_dict(self) -> VersionDict:
-        return asdict(self)
+        return asdict(self)  # type: ignore
 
     def to_str(self) -> str:
         version_str = _VERSION_FORMAT.format(**asdict(self))
