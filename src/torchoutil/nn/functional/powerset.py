@@ -53,7 +53,7 @@ def multilabel_to_powerset(
         mapping = build_mapping(num_classes, max_set_size)
         num_powerset_classes, _ = mapping.shape
     else:
-        msg = "Either mapping or (num_classes and max_set_size) must be provided as arguments."
+        msg = "Either mapping or (num_classes and max_set_size) must be provided as arguments, but all of them are None."
         raise ValueError(msg)
 
     powerset = F.one_hot(

@@ -38,7 +38,7 @@ def to_csv(
     align_content: bool = False,
     **csv_writer_kwds,
 ) -> str:
-    """Dump content to csv format."""
+    """Dump content to CSV format."""
     if fpath is not None:
         fpath = Path(fpath).resolve().expanduser()
         if not overwrite and fpath.exists():

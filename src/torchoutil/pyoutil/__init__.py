@@ -39,6 +39,7 @@ from .hashlib import hash_file
 from .importlib import package_is_available, reimport_modules
 from .inspect import get_current_fn_name, get_fullname
 from .io import open_close_wrap
+from .json import load_json, to_json
 from .logging import (
     VERBOSE_DEBUG,
     VERBOSE_ERROR,

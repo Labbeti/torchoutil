@@ -57,7 +57,7 @@ from torchoutil.utils.saving import to_builtin
 T = TypeVar("T", covariant=True)
 T_DictOrTuple = TypeVar("T_DictOrTuple", tuple, dict, covariant=True)
 
-HDFDType = Union[np.dtype, Literal["b", "i", "u", "f", "c"]]
+HDFDType = Union[np.dtype, Literal["b", "i", "u", "f", "c"], type]
 
 
 pylog = logging.getLogger(__name__)
@@ -540,7 +540,7 @@ def hdf_dtype_to_fill_value(hdf_dtype: Optional[HDFDType]) -> BuiltinScalar:
             isinstance(hdf_dtype, type)
             and hdf_dtype in (np.void, np.object_, np.bytes_, np.str_)
         )
-        or numpy_is_complex_dtype(hdf_dtype)
+        or (isinstance(hdf_dtype, np.dtype) and numpy_is_complex_dtype(hdf_dtype))
     ):
         return None
     else:
@@ -559,25 +559,6 @@ def numpy_dtype_to_hdf_dtype(
         return h5py.string_dtype(encoding, None)
     else:
         return dtype
-
-    # TODO: rm
-    # if not store_complex_as_real:
-    #     return h5py.opaque_dtype(np.dtype(f"|S{dtype.itemsize}"))
-
-    # kind = dtype.kind
-
-    # if kind == "u":  # uint stored as int
-    #     return "i"
-    # if kind == "S":
-    #     return h5py.string_dtype(encoding, dtype.itemsize)
-    # if kind == "U":  # unicode string
-    #     return h5py.string_dtype(encoding, None)
-    # if kind == "V":
-    #     return HDF_VOID_DTYPE
-    # if kind in ("b", "i", "f", "c"):
-    #     return kind
-
-    # raise ValueError(f"Unsupported dtype {kind=} for HDF dtype.")
 
 
 def hdf_dtype_to_numpy_dtype(hdf_dtype: HDFDType) -> np.dtype:
