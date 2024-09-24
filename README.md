@@ -28,43 +28,83 @@ Collection of functions and modules to help development in PyTorch.
 pip install torchoutil
 ```
 
-The only requirement is **PyTorch**.
+The only requirement is **[PyTorch](https://pytorch.org/)**.
 
 To check if the package is installed and show the package version, you can use the following command:
 ```bash
 torchoutil-info
 ```
 
-
 ## Examples
 
-### Multilabel conversions
-```python
-import torch
-from torchoutil import probs_to_name
+`torchoutil` functions and modules can be used like `torch` ones. The default acronym for `torchoutil` is `to`.
 
-probs = torch.as_tensor([[0.9, 0.1], [0.4, 0.6]])
-names = probs_to_name(probs, idx_to_name={0: "Cat", 1: "Dog"})
+### Label conversions
+```python
+import torchoutil as to
+
+probs = to.as_tensor([[0.9, 0.1], [0.4, 0.6]])
+names = to.probs_to_name(probs, idx_to_name={0: "Cat", 1: "Dog"})
 # ["Cat", "Dog"]
 ```
 
 ```python
-import torch
-from torchoutil import multihot_to_indices
+import torchoutil as to
 
-multihot = torch.as_tensor([[1, 0, 0], [0, 1, 1], [0, 0, 0]])
-indices = multihot_to_indices(multihot)
+multihot = to.as_tensor([[1, 0, 0], [0, 1, 1], [0, 0, 0]])
+indices = to.multihot_to_indices(multihot)
 # [[0], [1, 2], []]
 ```
 
-### Masked operations
+### Typing
 
 ```python
-import torch
-from torchoutil import lengths_to_non_pad_mask
+from torchoutil import Tensor2D
 
-x = torch.as_tensor([3, 1, 2])
-mask = lengths_to_non_pad_mask(x, max_len=4)
+x1 = torch.as_tensor([1, 2])
+print(isinstance(x1, Tensor2D))  # False
+x2 = torch.as_tensor([[1, 2], [3, 4]])
+print(isinstance(x2, Tensor2D))  # True
+```
+
+```python
+from torchoutil import IntegralTensor
+
+x1 = torch.as_tensor([1, 2], dtype=torch.int)
+print(isinstance(x1, IntegralTensor))  # True
+
+x2 = torch.as_tensor([1, 2], dtype=torch.long)
+print(isinstance(x2, IntegralTensor))  # True
+
+x3 = torch.as_tensor([1, 2], dtype=torch.float)
+print(isinstance(x3, IntegralTensor))  # False
+```
+
+### Padding
+
+```python
+import torchoutil as to
+
+x1 = torch.rand(10, 3, 1)
+x2 = to.pad_dim(x, target_length=5, dim=1, pad_value=-1)
+# x2 has shape (10, 5, 1)
+```
+
+```python
+import torchoutil as to
+
+tensors = [torch.rand(10, 2), torch.rand(5, 3), torch.rand(0, 5)]
+padded = to.pad_and_stack_rec(tensors, pad_value=0)
+# padded has shape (10, 5)
+```
+
+### Masking
+
+```python
+import torchoutil as to
+
+x = to.as_tensor([3, 1, 2])
+mask = to.lengths_to_non_pad_mask(x, max_len=4)
 # Each row i contains x[i] True values for non-padding mask
 # tensor([[True, True, True, False],
 #         [True, False, False, False],
@@ -72,13 +112,34 @@ mask = lengths_to_non_pad_mask(x, max_len=4)
 ```
 
 ```python
-import torch
-from torchoutil import masked_mean
+import torchoutil as to
 
-x = torch.as_tensor([1, 2, 3, 4])
-mask = torch.as_tensor([True, True, False, False])
-result = masked_mean(x, mask)
+x = to.as_tensor([1, 2, 3, 4])
+mask = to.as_tensor([True, True, False, False])
+result = to.masked_mean(x, mask)
 # result contains the mean of the values marked as True: 1.5
+```
+
+### Others tensors manipulations!
+
+```python
+import torchoutil as to
+
+x = to.as_tensor([1, 2, 3, 4])
+result = to.insert_at_indices(x, indices=[0, 2], values=5)
+# result contains tensor with inserted values: tensor([5, 1, 2, 5, 3, 4])
+```
+
+```python
+import torchoutil as to
+
+perm = to.randperm(10)
+inv_perm = to.get_inverse_perm(perm)
+
+x1 = to.rand(10)
+x2 = x1[perm]
+x3 = x2[inv_perm]
+# inv_perm are indices that allow us to get x3 from x2, i.e. x1 == x3 here
 ```
 
 ### Pre-compute datasets to pickle or HDF files
@@ -86,9 +147,9 @@ result = masked_mean(x, mask)
 Here is an example of pre-computing spectrograms of torchaudio `SPEECHCOMMANDS` dataset, using `pack_dataset` function:
 
 ```python
-from torch import nn
 from torchaudio.datasets import SPEECHCOMMANDS
 from torchaudio.transforms import Spectrogram
+from torchoutil import nn
 from torchoutil.utils.pack import pack_dataset
 
 speech_commands_root = "path/to/speech_commands"
@@ -117,30 +178,6 @@ from torchoutil.utils.pack import PackedDataset
 packed_root = "path/to/packed_dataset"
 packed_dataset = PackedDataset(packed_root)
 packed_dataset[0]  # == first transformed item, i.e. transform(dataset[0])
-```
-
-### Other tensors manipulations!
-
-```python
-import torch
-from torchoutil import insert_at_indices
-
-x = torch.as_tensor([1, 2, 3, 4])
-result = insert_at_indices(x, indices=[0, 2], values=5)
-# result contains tensor with inserted values: tensor([5, 1, 2, 5, 3, 4])
-```
-
-```python
-import torch
-from torchoutil import get_inverse_perm
-
-perm = torch.randperm(10)
-inv_perm = get_inverse_perm(perm)
-
-x1 = torch.rand(10)
-x2 = x1[perm]
-x3 = x2[inv_perm]
-# inv_perm are indices that allow us to get x3 from x2, i.e. x1 == x3 here
 ```
 
 <!--
