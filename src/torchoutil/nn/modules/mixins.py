@@ -300,9 +300,6 @@ class TypedModule(Generic[InType, OutType], nn.Module):
     def __call__(self, *args: InType, **kwargs: InType) -> OutType:
         return super().__call__(*args, **kwargs)
 
-    def forward(self, *args: InType, **kwargs: InType) -> OutType:
-        return super().forward(*args, **kwargs)
-
     @overload
     def chain(
         self,
