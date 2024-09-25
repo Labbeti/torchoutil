@@ -283,7 +283,7 @@ class HDFDataset(Generic[T, U], DatasetSlicer[U]):
 
         if index is None:
             index = slice(None)
-        elif isinstance(index, Tensor):
+        elif isinstance(index, (Tensor, np.ndarray, np.generic)):
             index = index.tolist()
         if column is None:
             column = self.column_names
