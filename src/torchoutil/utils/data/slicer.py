@@ -10,7 +10,7 @@ from torch.utils.data.dataset import Dataset
 
 from torchoutil.pyoutil.typing import is_iterable_bool, is_iterable_int
 from torchoutil.pyoutil.typing.classes import SupportsLenAndGetItem
-from torchoutil.types import is_bool_tensor1d, is_integer_tensor1d
+from torchoutil.types import is_bool_tensor1d, is_integer_tensor1d, is_number_like
 from torchoutil.types._typing import BoolTensor, Tensor1D
 from torchoutil.utils.data.dataset import Wrapper
 
@@ -63,7 +63,7 @@ class DatasetSlicer(Generic[T], ABC, Dataset[T]):
         else:
             args = ()
 
-        if isinstance(idx, int) or (isinstance(idx, Tensor) and idx.ndim == 0):
+        if is_number_like(idx):
             return self.get_item(idx, *args)
 
         elif isinstance(idx, slice):
