@@ -8,7 +8,7 @@ import struct
 import zlib
 from dataclasses import asdict
 from types import FunctionType, MethodType
-from typing import Any, Callable, Iterable, Mapping, Union
+from typing import Any, Callable, Iterable, Literal, Mapping, Union
 
 import torch
 from torch import Tensor, nn
@@ -44,18 +44,19 @@ CHECKSUM_TYPES = (
     "MethodType",
     "FunctionType",
 )
+UnkMode = Literal["pickle", "error"]
 UNK_MODES = ("pickle", "error")
 
 
 # Recursive functions
-def checksum(x: Any, **kwargs) -> int:
+def checksum(x: Any, *, unk_mode: UnkMode = "error", **kwargs) -> int:
     """Alias for `torchoutil.checksum_any`."""
-    return checksum_any(x, **kwargs)
+    return checksum_any(x, unk_mode=unk_mode, **kwargs)
 
 
-def checksum_any(x: Any, **kwargs) -> int:
+def checksum_any(x: Any, *, unk_mode: UnkMode = "error", **kwargs) -> int:
     """Compute checksum of an arbitrary python object."""
-    unk_mode = kwargs.get("unk_mode", "error")
+    kwargs["unk_mode"] = unk_mode
     if isinstance(x, (int, bool, complex, float)):
         return checksum_builtin_number(x, **kwargs)
     elif isinstance(x, bytes):
