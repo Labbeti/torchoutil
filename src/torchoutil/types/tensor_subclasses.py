@@ -8,6 +8,7 @@ Note: torchoutil.FloatTensor != torch.FloatTensor but issubclass(torchoutil.Floa
 
 from typing import (
     Any,
+    ClassVar,
     Dict,
     Final,
     Generic,
@@ -20,11 +21,11 @@ from typing import (
     TypeVar,
     Union,
     overload,
-    ClassVar,
 )
 
 import torch
 from torch._C import _TensorMeta
+from torch.types import Device
 
 from torchoutil.core.dtype_enum import DTypeEnum
 from torchoutil.core.get import DeviceLike, DTypeLike, get_device, get_dtype
@@ -331,7 +332,39 @@ class _TensorNDBase(
     ) -> None:
         ...
 
-    ndim: T_NDim  # type: ignore
+    @overload
+    def to(
+        self: T_Tensor,
+        dtype: Optional[torch.dtype] = None,
+        non_blocking: bool = False,
+        copy: bool = False,
+        *,
+        memory_format: Optional[torch.memory_format] = None,
+    ) -> T_Tensor:
+        ...
+
+    @overload
+    def to(
+        self: T_Tensor,
+        device: Device = None,
+        dtype: Optional[torch.dtype] = None,
+        non_blocking: bool = False,
+        copy: bool = False,
+        *,
+        memory_format: Optional[torch.memory_format] = None,
+    ) -> T_Tensor:
+        ...
+
+    @overload
+    def to(
+        self,
+        other: T_Tensor,
+        non_blocking: bool = False,
+        copy: bool = False,
+        *,
+        memory_format: Optional[torch.memory_format] = None,
+    ) -> T_Tensor:
+        ...
 
     def item(self) -> T_BuiltinNumber:  # type: ignore
         ...
@@ -348,6 +381,9 @@ class _TensorNDBase(
     def is_signed(self) -> T_Signed:  # type: ignore
         ...
 
+    ndim: T_NDim  # type: ignore
+
+    to = torch.Tensor.to
     item = torch.Tensor.item  # noqa: F811  # type: ignore
     tolist = torch.Tensor.tolist  # noqa: F811
     is_floating_point = torch.Tensor.is_floating_point  # noqa: F811
