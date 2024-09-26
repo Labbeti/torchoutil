@@ -17,6 +17,7 @@ from typing import (
     NamedTuple,
     Optional,
     Sequence,
+    Tuple,
     Type,
     TypeVar,
     Union,
@@ -332,6 +333,18 @@ class _TensorNDBase(
     ) -> None:
         ...
 
+    def is_complex(self) -> T_Complex:  # type: ignore
+        ...
+
+    def is_floating_point(self) -> T_Floating:  # type: ignore
+        ...
+
+    def is_signed(self) -> T_Signed:  # type: ignore
+        ...
+
+    def item(self) -> T_BuiltinNumber:  # type: ignore
+        ...
+
     @overload
     def to(
         self: T_Tensor,
@@ -366,29 +379,54 @@ class _TensorNDBase(
     ) -> T_Tensor:
         ...
 
-    def item(self) -> T_BuiltinNumber:  # type: ignore
-        ...
-
     def tolist(self) -> Union[list, T_BuiltinNumber]:  # type: ignore
         ...
 
-    def is_floating_point(self) -> T_Floating:  # type: ignore
+    @overload
+    def view(self: T_Tensor, size: Tuple[()]) -> "Tensor0D":
         ...
 
-    def is_complex(self) -> T_Complex:  # type: ignore
+    @overload
+    def view(self: T_Tensor, size: Tuple[int]) -> "Tensor1D":
         ...
 
-    def is_signed(self) -> T_Signed:  # type: ignore
+    @overload
+    def view(self: T_Tensor, size: Tuple[int, int]) -> "Tensor2D":
+        ...
+
+    @overload
+    def view(self: T_Tensor, size: Tuple[int, int, int]) -> "Tensor3D":
+        ...
+
+    @overload
+    def view(self: T_Tensor, size: Tuple[int, ...]) -> "Tensor":
+        ...
+
+    @overload
+    def view(self: T_Tensor, size0: int) -> "Tensor1D":
+        ...
+
+    @overload
+    def view(self: T_Tensor, size0: int, size1: int) -> "Tensor2D":
+        ...
+
+    @overload
+    def view(self: T_Tensor, size0: int, size1: int, size2: int) -> "Tensor3D":
+        ...
+
+    @overload
+    def view(self, dtype: torch.dtype) -> "Tensor":
         ...
 
     ndim: T_NDim  # type: ignore
 
-    to = torch.Tensor.to
-    item = torch.Tensor.item  # noqa: F811  # type: ignore
-    tolist = torch.Tensor.tolist  # noqa: F811
-    is_floating_point = torch.Tensor.is_floating_point  # noqa: F811
     is_complex = torch.Tensor.is_complex  # noqa: F811
+    is_floating_point = torch.Tensor.is_floating_point  # noqa: F811
     is_signed = torch.Tensor.is_signed  # noqa: F811
+    item = torch.Tensor.item  # noqa: F811  # type: ignore
+    to = torch.Tensor.to  # noqa: F811
+    tolist = torch.Tensor.tolist  # noqa: F811
+    view = torch.Tensor.view  # noqa: F811
 
 
 class Tensor(
