@@ -3,6 +3,9 @@
 
 import importlib
 import inspect
+import logging
+import pkgutil
+import sys
 from importlib.util import find_spec
 from types import ModuleType
 from typing import Iterable
@@ -21,6 +24,8 @@ DEFAULT_SKIPPED = (
     "__builtins__",
 )
 
+pylog = logging.getLogger(__name__)
+
 
 def package_is_available(package: str) -> bool:
     """Returns True if package is installed in the current python environment."""
@@ -32,6 +37,47 @@ def package_is_available(package: str) -> bool:
     except (ImportError, ModuleNotFoundError):
         # Python >= 3.7
         return False
+
+
+def search_imported_submodules(
+    root: ModuleType,
+    parent_name: str = "",
+) -> list[ModuleType]:
+    """Return the submodules already imported."""
+    if parent_name != "":
+        parent_name = ".".join([parent_name, root.__name__])
+    else:
+        parent_name = root.__name__
+
+    if hasattr(root, "__path__"):
+        paths = root.__path__
+    elif root.__file__ is not None:
+        paths = [root.__file__]
+    else:
+        raise ValueError
+
+    module_infos = list(pkgutil.iter_modules(paths))
+    candidates = []
+
+    for info in module_infos:
+        if info.name == "__main__":
+            continue
+        fullname = f"{parent_name}.{info.name}"
+        candidate = sys.modules.get(fullname)
+        if candidate is None:
+            continue
+        sub_candidates = search_imported_submodules(candidate, parent_name)
+        candidates += sub_candidates + [candidate]
+
+    return candidates
+
+
+def reload_submodules(root: ModuleType, verbose: int = 0) -> None:
+    candidates = search_imported_submodules(root)
+    for candidate in candidates:
+        if verbose > 0:
+            pylog.info(f"Reload '{candidate}'")
+        importlib.reload(candidate)
 
 
 def reimport_modules(

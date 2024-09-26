@@ -36,7 +36,12 @@ from .datetime import now_iso
 from .enum import StrEnum
 from .functools import Compose, compose, identity
 from .hashlib import hash_file
-from .importlib import package_is_available, reimport_modules
+from .importlib import (
+    package_is_available,
+    reimport_modules,
+    reload_submodules,
+    search_imported_submodules,
+)
 from .inspect import get_current_fn_name, get_fullname
 from .io import open_close_wrap
 from .json import load_json, to_json
