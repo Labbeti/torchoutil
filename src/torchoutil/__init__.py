@@ -18,6 +18,7 @@ from torch import *  # type: ignore
 # Re-import for language servers
 from . import core as core
 from . import extras as extras
+from . import fft as fft
 from . import hub as hub
 from . import nn as nn
 from . import optim as optim
