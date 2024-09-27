@@ -59,6 +59,7 @@ from .others import (
     find,
     is_complex,
     is_floating_point,
+    is_sorted,
     item,
     move_to_rec,
     ndim,

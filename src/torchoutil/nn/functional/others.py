@@ -32,6 +32,7 @@ from torchoutil.extras.numpy import (
 )
 from torchoutil.nn.functional.get import get_device
 from torchoutil.pyoutil.collections import all_eq
+from torchoutil.pyoutil.collections import is_sorted as builtin_is_sorted
 from torchoutil.pyoutil.collections import prod as builtin_prod
 from torchoutil.pyoutil.functools import identity
 from torchoutil.pyoutil.typing import (
@@ -488,3 +489,27 @@ def is_complex(x: Any) -> bool:
         return numpy_is_complex(x)
     else:
         return isinstance(x, complex)
+
+
+def is_sorted(
+    x: Union[Tensor, np.ndarray, Iterable],
+    *,
+    reverse: bool = False,
+    strict: bool = False,
+) -> bool:
+    if isinstance(x, (Tensor, np.ndarray)):
+        assert x.ndim == 1
+        if not reverse and not strict:
+            return (x[:-1] <= x[1:]).all().item()
+        elif not reverse and strict:
+            return (x[:-1] < x[1:]).all().item()
+        elif reverse and not strict:
+            return (x[:-1] >= x[1:]).all().item()
+        else:  # reverse and strict
+            return (x[:-1] > x[1:]).all().item()
+
+    elif isinstance(x, Sequence):
+        return builtin_is_sorted(x, reverse=reverse, strict=strict)
+
+    else:
+        raise TypeError(f"Invalid argument type {type(x)=}.")
