@@ -23,7 +23,7 @@ from typing import (
 
 from typing_extensions import TypeGuard
 
-from torchoutil.pyoutil.typing import is_builtin_scalar, is_mapping_str, T_BuiltinScalar
+from torchoutil.pyoutil.typing import T_BuiltinScalar, is_builtin_scalar, is_mapping_str
 
 K = TypeVar("K", covariant=True)
 T = TypeVar("T", covariant=True)
@@ -48,7 +48,7 @@ def list_dict_to_dict_list(
 @overload
 def list_dict_to_dict_list(
     lst: Sequence[Mapping[K, V]],
-    key_mode: Literal["union"] = "union",
+    key_mode: Literal["union"],
     default_val: W = None,
 ) -> Dict[K, List[Union[V, W]]]:
     ...
@@ -56,7 +56,7 @@ def list_dict_to_dict_list(
 
 def list_dict_to_dict_list(
     lst: Sequence[Mapping[K, V]],
-    key_mode: KeyMode = "union",
+    key_mode: KeyMode,
     default_val: W = None,
 ) -> Dict[K, List[Union[V, W]]]:
     """Convert list of dicts to dict of lists.

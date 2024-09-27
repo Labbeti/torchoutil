@@ -1,8 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-
 from typing import Union
+
+import torch
 
 from torchoutil.extras.numpy.definitions import (  # noqa: F401
     NumpyNumberLike,
@@ -99,3 +100,4 @@ r"""/!\ The following type hints are meant for type annotation only, not for run
 
 NumberLike = Union[BuiltinNumber, NumpyNumberLike, Tensor0D]
 ScalarLike = Union[BuiltinScalar, NumpyScalarLike, Tensor0D]
+TensorLike = Union[torch.Tensor, np.ndarray]
