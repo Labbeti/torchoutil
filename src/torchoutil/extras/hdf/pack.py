@@ -538,7 +538,10 @@ def hdf_dtype_to_fill_value(hdf_dtype: Optional[HDFDType]) -> BuiltinScalar:
         hdf_dtype == "c"
         or (
             isinstance(hdf_dtype, type)
-            and hdf_dtype in (np.void, np.object_, np.bytes_, np.str_)
+            and (
+                hdf_dtype in (np.void, np.object_, np.bytes_, np.str_)
+                or issubclass(hdf_dtype, np.complexfloating)
+            )
         )
         or (isinstance(hdf_dtype, np.dtype) and numpy_is_complex_dtype(hdf_dtype))
     ):
