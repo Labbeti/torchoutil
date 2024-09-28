@@ -8,7 +8,7 @@ import pkgutil
 import sys
 from importlib.util import find_spec
 from types import ModuleType
-from typing import Iterable
+from typing import Iterable, List
 
 DEFAULT_SKIPPED = (
     "reimport_all",
@@ -42,7 +42,7 @@ def package_is_available(package: str) -> bool:
 def search_imported_submodules(
     root: ModuleType,
     parent_name: str = "",
-) -> list[ModuleType]:
+) -> List[ModuleType]:
     """Return the submodules already imported."""
     if parent_name != "":
         parent_name = ".".join([parent_name, root.__name__])
