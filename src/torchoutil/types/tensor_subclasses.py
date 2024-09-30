@@ -19,7 +19,6 @@ from typing import (
     Sequence,
     Tuple,
     Type,
-    TypeVar,
     Union,
     overload,
 )
@@ -27,11 +26,18 @@ from typing import (
 import torch
 from torch._C import _TensorMeta
 from torch.types import Device
+from typing_extensions import TypeVar
 
 from torchoutil.core.dtype_enum import DTypeEnum
 from torchoutil.core.get import DeviceLike, DTypeLike, get_device, get_dtype
 from torchoutil.nn import functional as F
 from torchoutil.pyoutil import BuiltinNumber, T_BuiltinNumber
+
+_DEFAULT_T_DTYPE = Literal[None]
+_DEFAULT_T_NDIM = int
+_DEFAULT_T_FLOATING = bool
+_DEFAULT_T_COMPLEX = bool
+_DEFAULT_T_SIGNED = bool
 
 T_Tensor = TypeVar("T_Tensor", bound="_TensorNDBase")
 T_DType = TypeVar("T_DType", "DTypeEnum", None)
@@ -39,12 +45,6 @@ T_NDim = TypeVar("T_NDim", bound=int)
 T_Floating = TypeVar("T_Floating", bound=bool)
 T_Complex = TypeVar("T_Complex", bound=bool)
 T_Signed = TypeVar("T_Signed", bound=bool)
-
-_DEFAULT_T_DTYPE = Literal[None]
-_DEFAULT_T_NDIM = int
-_DEFAULT_T_FLOATING = bool
-_DEFAULT_T_COMPLEX = bool
-_DEFAULT_T_SIGNED = bool
 
 _TORCH_BASE_CLASSES: Final[Dict[str, Type]] = {
     "float32": torch.FloatTensor,
@@ -1751,7 +1751,7 @@ class CDoubleTensor3D(
         return super().tolist()  # type: ignore
 
 
-class ComplexTensor(
+class ComplexFloatingTensor(
     _TensorNDBase[
         Literal[None],
         int,
@@ -1778,7 +1778,7 @@ class ComplexTensor(
     _DEFAULT_DTYPE = DTypeEnum.complex64
 
 
-class ComplexTensor0D(
+class ComplexFloatingTensor0D(
     _TensorNDBase[
         Literal[None],
         Literal[0],
@@ -1799,7 +1799,7 @@ class ComplexTensor0D(
     _DEFAULT_DTYPE = DTypeEnum.complex64
 
 
-class ComplexTensor1D(
+class ComplexFloatingTensor1D(
     _TensorNDBase[
         Literal[None],
         Literal[1],
@@ -1820,7 +1820,7 @@ class ComplexTensor1D(
     _DEFAULT_DTYPE = DTypeEnum.complex64
 
 
-class ComplexTensor2D(
+class ComplexFloatingTensor2D(
     _TensorNDBase[
         Literal[None],
         Literal[2],
@@ -1841,7 +1841,7 @@ class ComplexTensor2D(
     _DEFAULT_DTYPE = DTypeEnum.complex64
 
 
-class ComplexTensor3D(
+class ComplexFloatingTensor3D(
     _TensorNDBase[
         Literal[None],
         Literal[3],

@@ -20,6 +20,7 @@ from typing import (
 
 from typing_extensions import override
 
+from torchoutil import Tensor
 from torchoutil.pyoutil import is_iterable_str
 from torchoutil.types.tensor_subclasses import Tensor1D
 from torchoutil.utils.data import DatasetSlicer
@@ -52,8 +53,6 @@ class PackedDataset(Generic[T, U], DatasetSlicer[U]):
             root: Root directory containing the info.json and the data files.
             transform: Optional transform to apply to each item. defaults to None.
             load_fn: Load function to load an item or batch. defaults to torch.load.
-            load_kwds: Keywords arguments passed to load_fn. defaults to None.
-            use_cache: If True, cache each item or batch in memory. defaults to False.
         """
         root = Path(root)
         if isinstance(load_fn, str):
@@ -143,11 +142,11 @@ class PackedDataset(Generic[T, U], DatasetSlicer[U]):
     @override
     def get_items_mask(
         self,
-        mask: Union[Iterable[bool], Tensor1D],
+        mask: Union[Iterable[bool], Tensor],
         *args,
     ) -> List[U]:
         if self.content_mode == "column":
-            return self._load_item_from_columns(mask)
+            return self._load_item_from_columns(mask)  # type: ignore
         else:
             return super().get_items_mask(mask, *args)
 
@@ -173,6 +172,8 @@ class PackedDataset(Generic[T, U], DatasetSlicer[U]):
             columns = column
         elif column is None:
             columns = self._column_to_fname.keys()
+        else:
+            raise TypeError(f"Invalid argument type {type(column)=}.")
 
         fnames = dict.fromkeys(self._column_to_fname[column_i] for column_i in columns)
         fpaths = [
@@ -227,12 +228,6 @@ class PackedDataset(Generic[T, U], DatasetSlicer[U]):
         self._attrs = attrs
         self._fpaths = fpaths
         self._column_to_fname = column_to_fname
-
-    @classmethod
-    def is_pickle_root(cls, root: Union[str, Path]) -> bool:
-        msg = "Call classmethod `is_pickle_root` is deprecated. Please use `is_packed_root` instead."
-        pylog.warning(msg)
-        return cls.is_packed_root(root)
 
     @classmethod
     def is_packed_root(cls, root: Union[str, Path]) -> bool:
