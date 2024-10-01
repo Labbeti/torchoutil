@@ -38,7 +38,7 @@ from .functools import Compose, compose, identity
 from .hashlib import hash_file
 from .importlib import (
     package_is_available,
-    reimport_modules,
+    reload_globals_modules,
     reload_submodules,
     search_imported_submodules,
 )

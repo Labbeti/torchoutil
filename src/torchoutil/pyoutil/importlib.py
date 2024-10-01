@@ -72,18 +72,19 @@ def search_imported_submodules(
     return candidates
 
 
-def reload_submodules(root: ModuleType, verbose: int = 0) -> None:
+def reload_submodules(root: ModuleType, verbose: int = 0) -> List[ModuleType]:
     candidates = search_imported_submodules(root)
     for candidate in candidates:
         if verbose > 0:
             pylog.info(f"Reload '{candidate}'")
         importlib.reload(candidate)
+    return candidates
 
 
-def reimport_modules(
+def reload_globals_modules(
     skipped: Iterable[str] = DEFAULT_SKIPPED,
     verbose: int = 0,
-) -> None:
+) -> List[ModuleType]:
     """Re-import modules and functions in the caller context. This function does not work with builtins constants values."""
     skipped = dict.fromkeys(skipped)
 
@@ -92,21 +93,26 @@ def reimport_modules(
     if verbose >= 1:
         print(f"{caller_globals.keys()=}")
 
+    candidates = []
+
     for k, v in caller_globals.items():
         if k in skipped:
             continue
 
         if isinstance(v, ModuleType):
-            importlib.reload(v)
+            candidates += reload_submodules(v, verbose=verbose)
             continue
 
         v = inspect.getmodule(v)
         if v is None or v.__name__ == "__main__":
             continue
 
-        importlib.reload(v)  # type: ignore
+        candidates += reload_submodules(v, verbose=verbose)
+
         try:
             caller_globals[k] = getattr(v, k)
         except AttributeError:
             if verbose >= 1:
                 print(f"Cannot set parent global value '{k}'.")
+
+    return candidates
