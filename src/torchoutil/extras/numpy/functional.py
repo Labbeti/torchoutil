@@ -119,3 +119,25 @@ def is_numpy_scalar_like(x: Any) -> TypeGuard[NumpyScalarLike]:
     If numpy is not installed, this function always returns False.
     """
     return isinstance(x, np.generic) or (isinstance(x, np.ndarray) and x.ndim == 0)
+
+
+def logical_and_lst(
+    arr0: np.ndarray,
+    /,
+    *others: np.ndarray,
+) -> np.ndarray:
+    current = arr0
+    for other in others:
+        current = np.logical_and(current, other)
+    return current
+
+
+def logical_or_lst(
+    arr0: np.ndarray,
+    /,
+    *others: np.ndarray,
+) -> np.ndarray:
+    current = arr0
+    for other in others:
+        current = np.logical_or(current, other)
+    return current

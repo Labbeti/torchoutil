@@ -5,6 +5,8 @@ from .definitions import ACCEPTED_NUMPY_DTYPES, np, numpy
 from .functional import (
     is_numpy_number_like,
     is_numpy_scalar_like,
+    logical_and_lst,
+    logical_or_lst,
     numpy_complex_dtype_to_float_dtype,
     numpy_is_complex,
     numpy_is_complex_dtype,
