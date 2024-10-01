@@ -7,6 +7,7 @@ import logging
 import os
 import os.path as osp
 import pickle
+from difflib import SequenceMatcher
 from functools import cached_property
 from json import JSONDecodeError
 from pathlib import Path
@@ -302,7 +303,7 @@ class HDFDataset(Generic[T, U], DatasetSlicer[U]):
             return result  # type: ignore
 
         if column not in self.all_columns:
-            msg = f"Invalid argument {column=}. (expected one of {tuple(self.all_columns)})"
+            msg = f"Invalid argument {column=}. (did you mean '{_find_closest(column, self.all_columns)}'? Expected one of {tuple(self.all_columns)})"
             raise ValueError(msg)
 
         if isinstance(index, slice) or is_iterable_int(index):
@@ -662,3 +663,10 @@ def _is_index(index: Any) -> TypeGuard[IndexLike]:
 
 def _is_column(column: Any) -> TypeGuard[ColumnLike]:
     return is_iterable_str(column, accept_str=True) or column is None
+
+
+def _find_closest(x: str, expected: list[str]) -> str:
+    assert len(expected) > 0
+    ratios = [SequenceMatcher(None, x, expected_i).ratio() for expected_i in expected]
+    idx = np.argmax(ratios)
+    return expected[idx]
