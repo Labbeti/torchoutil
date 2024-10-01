@@ -9,32 +9,32 @@ import torch
 
 from torchoutil.types import tensor_subclasses
 from torchoutil.types.tensor_subclasses import (
+    BoolTensor1D,
+    CDoubleTensor,
+    CFloatTensor,
+    CHalfTensor,
+    ComplexFloatingTensor,
+    ComplexFloatingTensor1D,
     DoubleTensor,
+    FloatingTensor,
+    FloatingTensor0D,
     FloatTensor,
     FloatTensor0D,
     FloatTensor1D,
     FloatTensor2D,
+    HalfTensor,
+    IntegralTensor,
+    IntegralTensor3D,
     IntTensor,
     IntTensor0D,
     LongTensor,
     LongTensor0D,
     LongTensor1D,
+    ShortTensor,
     ShortTensor1D,
     Tensor0D,
     Tensor1D,
     _TensorNDBase,
-    FloatingTensor,
-    BoolTensor1D,
-    CFloatTensor,
-    IntegralTensor,
-    ComplexTensor,
-    ShortTensor,
-    HalfTensor,
-    CHalfTensor,
-    CDoubleTensor,
-    ComplexTensor1D,
-    FloatingTensor0D,
-    IntegralTensor3D,
 )
 
 
@@ -126,7 +126,7 @@ class TestTensorTyping(TestCase):
         x = LongTensor1D()
         assert x.dtype == torch.long and x.ndim == 1
 
-        x = ComplexTensor1D()
+        x = ComplexFloatingTensor1D()
         assert (
             x.ndim == 1
             and not x.is_floating_point()
@@ -172,7 +172,7 @@ class TestTensorTyping(TestCase):
             ShortTensor1D([1, 2], dtype=torch.uint8)
 
         with self.assertRaises(ValueError):
-            ComplexTensor(dtype=torch.float32)
+            ComplexFloatingTensor(dtype=torch.float32)
 
         with self.assertRaises(ValueError):
             FloatingTensor(dtype=torch.int32)
@@ -183,7 +183,7 @@ class TestTensorTyping(TestCase):
         with self.assertRaises(ValueError):
             IntegralTensor(dtype=torch.bool)
 
-        _ = ComplexTensor(dtype=torch.complex128)
+        _ = ComplexFloatingTensor(dtype=torch.complex128)
         _ = FloatingTensor(dtype=torch.half)
         _ = IntegralTensor(dtype=torch.long)
 
@@ -207,7 +207,7 @@ class TestTensorTyping(TestCase):
             assert isinstance(tensor, torch.Tensor)
 
     def test_complex_class(self) -> None:
-        cls = ComplexTensor
+        cls = ComplexFloatingTensor
         assert not cls().is_floating_point()
         assert cls().is_complex()
         assert cls().is_signed()
