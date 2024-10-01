@@ -665,7 +665,7 @@ def _is_column(column: Any) -> TypeGuard[ColumnLike]:
     return is_iterable_str(column, accept_str=True) or column is None
 
 
-def _find_closest(x: str, expected: list[str]) -> str:
+def _find_closest(x: str, expected: List[str]) -> str:
     assert len(expected) > 0
     ratios = [SequenceMatcher(None, x, expected_i).ratio() for expected_i in expected]
     idx = np.argmax(ratios)
