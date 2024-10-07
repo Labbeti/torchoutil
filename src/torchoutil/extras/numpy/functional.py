@@ -141,3 +141,17 @@ def logical_or_lst(
     for other in others:
         current = np.logical_or(current, other)
     return current
+
+
+def numpy_topk(
+    x: np.ndarray,
+    k: int,
+    dim: int = -1,
+    largest: bool = True,
+    sorted: bool = True,
+) -> tuple[np.ndarray, np.ndarray]:
+    x_pt = numpy_to_tensor(x)
+    values, indices = x_pt.topk(k=k, dim=dim, largest=largest, sorted=sorted)
+    values = tensor_to_numpy(values)
+    indices = tensor_to_numpy(indices)
+    return values, indices

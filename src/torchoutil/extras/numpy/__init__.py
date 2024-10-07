@@ -12,6 +12,7 @@ from .functional import (
     numpy_is_complex_dtype,
     numpy_is_floating_point,
     numpy_to_tensor,
+    numpy_topk,
     numpy_view_as_complex,
     numpy_view_as_real,
     tensor_to_numpy,
