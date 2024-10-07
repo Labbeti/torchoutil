@@ -11,11 +11,13 @@ _MISSING_DEPS = {
 }
 if len(_MISSING_DEPS) > 0:
     if len(_MISSING_DEPS) == 1:
-        deps_msg = f"dependancy '{next(iter(_MISSING_DEPS.keys()))}'"
+        deps_msg = f"dependancy '{next(iter(_MISSING_DEPS.keys()))}' is"
     else:
-        deps_msg = "dependancies " + ", ".join(f"'{k}'" for k in _MISSING_DEPS.keys())
+        deps_msg = (
+            "dependancies " + ", ".join(f"'{k}'" for k in _MISSING_DEPS.keys()) + " are"
+        )
 
-    msg = f"Cannot import hdf objects because optional {deps_msg} is not installed. Please install it using 'pip install torchoutil[extras]'"
+    msg = f"Cannot import hdf objects because optional {deps_msg} not installed. Please install it using 'pip install torchoutil[extras]'"
     raise ImportError(msg)
 
 del _MISSING_DEPS

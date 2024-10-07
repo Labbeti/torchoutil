@@ -634,3 +634,13 @@ def union_dicts(dicts: Iterable[Mapping[K, V]]) -> Dict[K, V]:
     for dic in dicts:
         result.update(dic)
     return result
+
+
+def argmin(x: Iterable) -> int:
+    min_index, _max_value = min(enumerate(x), key=lambda t: t[1])
+    return min_index
+
+
+def argmax(x: Iterable) -> int:
+    max_index, _max_value = max(enumerate(x), key=lambda t: t[1])
+    return max_index

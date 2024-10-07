@@ -12,6 +12,8 @@ from .collections import (
     KeyMode,
     all_eq,
     all_ne,
+    argmax,
+    argmin,
     contained,
     dict_list_to_list_dict,
     dump_dict,
@@ -33,6 +35,7 @@ from .collections import (
 from .csv import load_csv, to_csv
 from .dataclasses import get_defaults_values
 from .datetime import now_iso
+from .difflib import find_closest_in_list, sequence_matcher_ratio
 from .enum import StrEnum
 from .functools import Compose, compose, identity
 from .hashlib import hash_file

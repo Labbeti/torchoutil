@@ -6,8 +6,8 @@ from typing import Union
 from torchoutil.core.packaging import _NUMPY_AVAILABLE
 
 if not _NUMPY_AVAILABLE:
-    from torchoutil.extras.numpy import _numpy_placeholder as np  # noqa: F401
-    from torchoutil.extras.numpy import _numpy_placeholder as numpy
+    from torchoutil.extras.numpy import _numpy_fallback as np  # noqa: F401
+    from torchoutil.extras.numpy import _numpy_fallback as numpy
 
     ACCEPTED_NUMPY_DTYPES = ()
 
