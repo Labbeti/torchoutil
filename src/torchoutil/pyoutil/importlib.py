@@ -73,7 +73,7 @@ def search_imported_submodules(
 
 
 def reload_submodules(root: ModuleType, verbose: int = 0) -> List[ModuleType]:
-    candidates = search_imported_submodules(root)
+    candidates = search_imported_submodules(root) + [root]
     for candidate in candidates:
         if verbose > 0:
             pylog.info(f"Reload '{candidate}'")
