@@ -4,7 +4,7 @@
 from numbers import Number
 from typing import Any, Dict, Iterable, List, Mapping, Sequence, Tuple, Union
 
-from typing_extensions import TypeIs
+from typing_extensions import TypeGuard, TypeIs
 
 from .classes import (
     BuiltinNumber,
@@ -62,7 +62,7 @@ def is_iterable_str(
     x: Any,
     *,
     accept_str: bool = True,
-) -> TypeIs[Iterable[str]]:
+) -> TypeGuard[Iterable[str]]:
     return (accept_str and isinstance(x, str)) or (
         not isinstance(x, str)
         and isinstance(x, Iterable)
@@ -122,7 +122,7 @@ def is_sequence_str(
     x: Any,
     *,
     accept_str: bool = True,
-) -> TypeIs[Sequence[str]]:
+) -> TypeGuard[Sequence[str]]:
     return (accept_str and isinstance(x, str)) or (
         not isinstance(x, str)
         and isinstance(x, Sequence)

@@ -198,7 +198,10 @@ class TestHDF(TestCase):
         }
         idx = torch.randint(0, len(hdf_dataset), ()).item()
         col = random.choice(list(ds_dict.keys()))
-        assert hdf_dataset[idx, col] == ds_dict[col][idx], f"{idx=}; {col=}"
+        eq = hdf_dataset[idx, col] == ds_dict[col][idx]
+        if isinstance(eq, np.ndarray):
+            eq = eq.all()
+        assert eq, f"{idx=}; {col=}"
 
         assert len(hdf_dataset) == len(ds_list)
         for k in ds_dict.keys():
