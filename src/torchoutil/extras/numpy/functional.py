@@ -10,11 +10,11 @@ from typing_extensions import TypeGuard
 from torchoutil.core.get import DeviceLike, DTypeLike, get_device, get_dtype
 from torchoutil.core.packaging import torch_version_ge_1_13
 from torchoutil.extras.numpy.definitions import NumpyNumberLike, NumpyScalarLike, np
-from torchoutil.pyoutil import get_current_fn_name
+from torchoutil.pyoutil import BuiltinScalar, get_current_fn_name
 
 
 def to_numpy(
-    x: Union[Tensor, np.ndarray, Sequence],
+    x: Union[Tensor, np.ndarray, Sequence, BuiltinScalar],
     *,
     dtype: Union[str, np.dtype, None] = None,
     force: bool = False,

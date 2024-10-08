@@ -9,6 +9,7 @@ from typing import (
     Any,
     Callable,
     Dict,
+    Iterable,
     List,
     Literal,
     Mapping,
@@ -46,7 +47,6 @@ from torchoutil.nn.functional.checksum import checksum
 from torchoutil.pyoutil.collections import all_eq
 from torchoutil.pyoutil.datetime import now_iso
 from torchoutil.pyoutil.functools import Compose
-from torchoutil.pyoutil.logging import warn_once
 from torchoutil.pyoutil.typing import is_dataclass_instance, is_dict_str
 from torchoutil.types import BuiltinScalar
 from torchoutil.utils.data.dataloader import get_auto_num_cpus
@@ -98,11 +98,11 @@ def pack_to_hdf(
         num_workers: The number of workers of the dataloader.
             If "auto", it will be set to `len(os.sched_getaffinity(0))`. defaults to "auto".
         shape_suffix: Shape column suffix in HDF file. defaults to "_shape".
-        store_str_as_vlen: TODO
+        store_str_as_vlen: If True, store strings as variable length string dtype. defaults to False.
         file_kwds: Options given to h5py file object. defaults to None.
-        ds_kwds: TODO
+        ds_kwds: Keywords arguments passed to the returned HDFDataset instance if the target file already exists and if exists == "skip".
         user_attrs: Additional metadata to add to the hdf file. It must be JSON convertible. defaults to None.
-        skip_scan: If True, the input dataset will be considered as fully homogeneous, which means that all columns values contains the same shape and dtype.
+        skip_scan: If True, the input dataset will be considered as fully homogeneous, which means that all columns values contains the same shape and dtype, which will be inferred from the first batch.
             It is meant to skip the first step which scans each dataset item once and speed up packing to HDF file.
             defaults to False.
 
@@ -408,6 +408,7 @@ def _scan_dataset(
     del item_0
 
     encode_dict_fn = to.identity if store_str_as_vlen else encode_dict_array
+
     dict_pre_transform: Callable[[T], Dict[str, Any]] = Compose(
         pre_transform,
         to_dict_fn,
@@ -433,7 +434,7 @@ def _scan_dataset(
         disable=verbose <= 0 or skip_scan,
     ):
         batch = [pre_transform(item) for item in batch]
-        batch = [to_dict_fn(item) for item in batch]  # type: ignore
+        batch = [to_dict_fn(item) for item in batch]
 
         for item in batch:
             for attr_name, value in item.items():
@@ -480,23 +481,24 @@ def _scan_dataset(
         np_dtype = merge_numpy_dtypes(np_dtypes, empty=HDF_VOID_DTYPE)
         hdf_dtype = numpy_dtype_to_hdf_dtype(np_dtype, encoding=encoding)
 
-        if (
-            verbose >= 2
-            and np_dtype
-            not in (
-                None,
-                str,
-                bool,
-                np.int32,
-                np.int8,
-                np.float32,
-            )
-            and np_dtype.kind != "S"
-            and (not store_str_as_vlen and np_dtype.kind == "U")
-        ):
-            expected_np_dtype = hdf_dtype_to_numpy_dtype(hdf_dtype)
-            msg = f"Found input dtype {np_dtype} which is not compatible with HDF. It will be cast to {expected_np_dtype}. (with {hdf_dtype=})"
-            warn_once(msg, __name__)
+        # TODO: rm debug
+        # if (
+        #     verbose >= 2
+        #     and np_dtype
+        #     not in (
+        #         None,
+        #         str,
+        #         bool,
+        #         np.int32,
+        #         np.int8,
+        #         np.float32,
+        #     )
+        #     and np_dtype.kind != "S"
+        #     and (not store_str_as_vlen and np_dtype.kind == "U")
+        # ):
+        #     expected_np_dtype = hdf_dtype_to_numpy_dtype(hdf_dtype)
+        #     msg = f"Found input dtype {np_dtype} which is not compatible with HDF. It will be cast to {expected_np_dtype}. (with {hdf_dtype=})"
+        #     warn_once(msg, __name__)
 
         all_eq_shapes[attr_name] = all_eq(shapes)
         max_shapes[attr_name] = tuple(map(max, zip(*shapes)))
@@ -581,3 +583,16 @@ def hdf_dtype_to_numpy_dtype(hdf_dtype: HDFDType) -> np.dtype:
         return np.dtype("|S1")
 
     raise ValueError(f"Unsupported dtype {hdf_dtype=} for numpy dtype.")
+
+
+def bytearray_to_bytes(x: Any) -> Any:
+    if isinstance(x, (str, bytes)):
+        return x
+    if isinstance(x, bytearray):
+        return bytes(x)
+    elif isinstance(x, Mapping):
+        return {bytearray_to_bytes(k): bytearray_to_bytes(v) for k, v in x.items()}
+    elif isinstance(x, Iterable):
+        return type(x)(bytearray_to_bytes(xi) for xi in x)
+    else:
+        return x

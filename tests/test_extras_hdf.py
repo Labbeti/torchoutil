@@ -175,6 +175,7 @@ class TestHDF(TestCase):
             + [[]] * 3,
             "empty_lists": [[]] * 10,
             "bytes": [b""] * 6 + [b"a2", b"dnqzu1dhqz", b"0djqizjdz", b"du12qzd"],
+            # TODO: add support for bytearray ?
             "bytearray": np.array([bytearray(str(i), "utf-8") for i in range(10, 20)]),
         }
         ds_list = dict_list_to_list_dict(ds_dict, "same")
@@ -195,16 +196,18 @@ class TestHDF(TestCase):
             "bytes": False,
             "bytearray": False,
         }
-
         idx = torch.randint(0, len(hdf_dataset), ()).item()
         col = random.choice(list(ds_dict.keys()))
         assert hdf_dataset[idx, col] == ds_dict[col][idx], f"{idx=}; {col=}"
 
         assert len(hdf_dataset) == len(ds_list)
         for k in ds_dict.keys():
-            assert (
-                hdf_dataset[:, k] == ds_dict[k]
-            ), f"{k=}, {hdf_dataset[:, k]=} != {ds_dict[k]=}"
+            hdf_col = hdf_dataset[:, k]
+            ds_col = ds_dict[k]
+            eq = hdf_col == ds_col
+            if isinstance(eq, np.ndarray):
+                eq = eq.all()
+            assert eq, f"{k=}, {hdf_col=} != {ds_col=}"
 
     def test_string_comp(self) -> None:
         num_data = 10000
