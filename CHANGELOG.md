@@ -16,7 +16,7 @@ All notable changes to this project will be documented in this file.
 - Added `DatasetSlicer` class in utils.
 - Tensor typing classes for instance checks like `FloatTensor1D`.
 
-### Changed
+### Modified
 - Rename `is_pickle_root` to `is_packed_root` (old name was kept for backward compatibility).
 - Split python functions into a separate directory called `pyoutil`.
 

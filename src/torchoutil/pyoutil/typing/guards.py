@@ -4,7 +4,7 @@
 from numbers import Number
 from typing import Any, Dict, Iterable, List, Mapping, Sequence, Tuple, Union
 
-from typing_extensions import TypeGuard
+from typing_extensions import TypeIs
 
 from .classes import (
     BuiltinNumber,
@@ -15,41 +15,42 @@ from .classes import (
 )
 
 
-def is_builtin_number(x: Any) -> TypeGuard[BuiltinNumber]:
-    """Returns True if x is a builtin scalar type (int, float, bool, complex)."""
+def is_builtin_number(x: Any) -> TypeIs[BuiltinNumber]:
+    """Returns True if x is a builtin number type (int, float, bool, complex)."""
     return isinstance(x, (int, float, bool, complex))
 
 
-def is_builtin_scalar(x: Any) -> TypeGuard[BuiltinScalar]:
-    """Returns True if x is a builtin scalar type (int, float, bool, complex)."""
-    return isinstance(x, (int, float, bool, complex, str, bytes, NoneType))
+def is_builtin_scalar(x: Any) -> TypeIs[BuiltinScalar]:
+    """Returns True if x is a builtin scalar type (int, float, bool, complex, NoneType, str, bytes)."""
+    return isinstance(x, (int, float, bool, complex, NoneType, str, bytes))
 
 
-def is_dataclass_instance(x: Any) -> TypeGuard[DataclassInstance]:
+def is_dataclass_instance(x: Any) -> TypeIs[DataclassInstance]:
+    """Returns True if argument is a dataclass. Unlike function `dataclasses.is_dataclass`, this function returns False for a dataclass type."""
     return not isinstance(x, type) and isinstance(x, DataclassInstance)
 
 
-def is_dict_str(x: Any) -> TypeGuard[Dict[str, Any]]:
+def is_dict_str(x: Any) -> TypeIs[Dict[str, Any]]:
     return isinstance(x, dict) and all(isinstance(key, str) for key in x.keys())
 
 
-def is_iterable_bool(x: Any) -> TypeGuard[Iterable[bool]]:
+def is_iterable_bool(x: Any) -> TypeIs[Iterable[bool]]:
     return isinstance(x, Iterable) and (all(isinstance(xi, bool) for xi in x))
 
 
-def is_iterable_float(x: Any) -> TypeGuard[Iterable[float]]:
+def is_iterable_float(x: Any) -> TypeIs[Iterable[float]]:
     return isinstance(x, Iterable) and (all(isinstance(xi, float) for xi in x))
 
 
-def is_iterable_bytes_or_list(x: Any) -> TypeGuard[Iterable[Union[bytes, list]]]:
+def is_iterable_bytes_or_list(x: Any) -> TypeIs[Iterable[Union[bytes, list]]]:
     return isinstance(x, Iterable) and all(isinstance(xi, (bytes, list)) for xi in x)
 
 
-def is_iterable_int(x: Any) -> TypeGuard[Iterable[int]]:
+def is_iterable_int(x: Any) -> TypeIs[Iterable[int]]:
     return isinstance(x, Iterable) and (all(isinstance(xi, int) for xi in x))
 
 
-def is_iterable_iterable_int(x: Any) -> TypeGuard[Iterable[Iterable[int]]]:
+def is_iterable_iterable_int(x: Any) -> TypeIs[Iterable[Iterable[int]]]:
     return (
         isinstance(x, Iterable)
         and all(isinstance(xi, Iterable) for xi in x)
@@ -61,7 +62,7 @@ def is_iterable_str(
     x: Any,
     *,
     accept_str: bool = True,
-) -> TypeGuard[Iterable[str]]:
+) -> TypeIs[Iterable[str]]:
     return (accept_str and isinstance(x, str)) or (
         not isinstance(x, str)
         and isinstance(x, Iterable)
@@ -69,11 +70,7 @@ def is_iterable_str(
     )
 
 
-def is_mapping_str(x: Any) -> TypeGuard[Mapping[str, Any]]:
-    return isinstance(x, Mapping) and all(isinstance(key, str) for key in x.keys())
-
-
-def is_list_list_str(x: Any) -> TypeGuard[List[List[str]]]:
+def is_list_list_str(x: Any) -> TypeIs[List[List[str]]]:
     return (
         isinstance(x, list)
         and all(isinstance(xi, list) for xi in x)
@@ -81,39 +78,43 @@ def is_list_list_str(x: Any) -> TypeGuard[List[List[str]]]:
     )
 
 
-def is_list_bool(x: Any) -> TypeGuard[List[bool]]:
+def is_list_bool(x: Any) -> TypeIs[List[bool]]:
     return isinstance(x, list) and all(isinstance(xi, bool) for xi in x)
 
 
-def is_list_float(x: Any) -> TypeGuard[List[float]]:
+def is_list_float(x: Any) -> TypeIs[List[float]]:
     return isinstance(x, list) and (all(isinstance(xi, float) for xi in x))
 
 
-def is_list_int(x: Any) -> TypeGuard[List[int]]:
+def is_list_int(x: Any) -> TypeIs[List[int]]:
     return isinstance(x, list) and all(isinstance(xi, int) for xi in x)
 
 
-def is_list_number(x: Any) -> TypeGuard[List[Number]]:
+def is_list_number(x: Any) -> TypeIs[List[Number]]:
     return isinstance(x, list) and all(isinstance(xi, Number) for xi in x)
 
 
-def is_list_builtin_number(x: Any) -> TypeGuard[List[BuiltinNumber]]:
+def is_list_builtin_number(x: Any) -> TypeIs[List[BuiltinNumber]]:
     return isinstance(x, list) and all(is_builtin_number(xi) for xi in x)
 
 
-def is_list_str(x: Any) -> TypeGuard[List[str]]:
+def is_list_str(x: Any) -> TypeIs[List[str]]:
     return isinstance(x, list) and all(isinstance(xi, str) for xi in x)
 
 
-def is_namedtuple_instance(x: Any) -> TypeGuard[NamedTupleInstance]:
+def is_mapping_str(x: Any) -> TypeIs[Mapping[str, Any]]:
+    return isinstance(x, Mapping) and all(isinstance(key, str) for key in x.keys())
+
+
+def is_namedtuple_instance(x: Any) -> TypeIs[NamedTupleInstance]:
     return not isinstance(x, type) and isinstance(x, NamedTupleInstance)
 
 
-def is_sequence_bool(x: Any) -> TypeGuard[Sequence[bool]]:
+def is_sequence_bool(x: Any) -> TypeIs[Sequence[bool]]:
     return isinstance(x, Sequence) and (all(isinstance(xi, bool) for xi in x))
 
 
-def is_sequence_int(x: Any) -> TypeGuard[Sequence[int]]:
+def is_sequence_int(x: Any) -> TypeIs[Sequence[int]]:
     return isinstance(x, Sequence) and (all(isinstance(xi, int) for xi in x))
 
 
@@ -121,7 +122,7 @@ def is_sequence_str(
     x: Any,
     *,
     accept_str: bool = True,
-) -> TypeGuard[Sequence[str]]:
+) -> TypeIs[Sequence[str]]:
     return (accept_str and isinstance(x, str)) or (
         not isinstance(x, str)
         and isinstance(x, Sequence)
@@ -129,5 +130,5 @@ def is_sequence_str(
     )
 
 
-def is_tuple_str(x: Any) -> TypeGuard[Tuple[str, ...]]:
+def is_tuple_str(x: Any) -> TypeIs[Tuple[str, ...]]:
     return isinstance(x, tuple) and all(isinstance(xi, str) for xi in x)

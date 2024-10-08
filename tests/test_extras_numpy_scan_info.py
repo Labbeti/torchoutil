@@ -34,6 +34,20 @@ class TestDType(TestCase):
             result = merge_numpy_dtypes(args, empty=empty)
             assert result == expected, f"{result=}; {expected=}"
 
+    def test_result_dtype_compat(self) -> None:
+        args_lst = [
+            [np.int16, np.int32, np.int64],
+            [np.complex64, np.float16, np.float64],
+            [np.int64, np.float16],
+            [np.dtype("<U2"), np.dtype("<U10")],
+            [np.int32, np.object_],
+        ]
+
+        for args in args_lst:
+            result = merge_numpy_dtypes(args)
+            expected = np.result_type(*args)
+            assert result == expected
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -630,7 +630,7 @@ def _decode_bytes(
     encoding: str,
 ) -> Union[str, np.ndarray, list]:
     """Decode bytes to str with the specified encoding. Works recursively on list of bytes, list of list of bytes, etc."""
-    if isinstance(encoded, bytes):
+    if isinstance(encoded, (bytes, bytearray)):
         return encoded.decode(encoding=encoding)
 
     elif isinstance(encoded, np.ndarray):

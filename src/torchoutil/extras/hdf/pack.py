@@ -246,7 +246,7 @@ def pack_to_hdf(
             pin_memory=False,
         )
 
-        for batch_idx, batch in enumerate(
+        for _batch_idx, batch in enumerate(
             tqdm.tqdm(
                 loader,
                 desc="Pack data into HDF...",
@@ -262,7 +262,7 @@ def pack_to_hdf(
 
                     # Check every shape
                     if len(shape) != hdf_dset.ndim - 1:
-                        msg = f"Invalid number of dimension in audio (expected {len(shape)}, found {len(shape)})."
+                        msg = f"Invalid number of dimension in audio (expected {len(shape)}, found {hdf_dset.ndim - 1=})."
                         raise ValueError(msg)
 
                     # Check dataset size

@@ -30,9 +30,10 @@ CHECKSUM_TYPES = (
     "bool",
     "complex",
     "float",
-    "bytes",
-    "str",
     "NoneType",
+    "str",
+    "bytes",
+    "bytearray",
     "torch.nn.Module",
     "torch.Tensor",
     "numpy.ndarray",
@@ -59,12 +60,14 @@ def checksum_any(x: Any, *, unk_mode: UnkMode = "error", **kwargs) -> int:
     kwargs["unk_mode"] = unk_mode
     if isinstance(x, (int, bool, complex, float)):
         return checksum_builtin_number(x, **kwargs)
-    elif isinstance(x, bytes):
-        return checksum_bytes(x, **kwargs)
-    elif isinstance(x, str):
-        return checksum_str(x, **kwargs)
     elif x is None:
         return checksum_none(x, **kwargs)
+    elif isinstance(x, str):
+        return checksum_str(x, **kwargs)
+    elif isinstance(x, bytes):
+        return checksum_bytes(x, **kwargs)
+    elif isinstance(x, bytearray):
+        return checksum_bytearray(x, **kwargs)
     elif isinstance(x, nn.Module):
         return checksum_module(x, **kwargs)
     elif isinstance(x, Tensor):
@@ -171,16 +174,20 @@ def checksum_namedtuple(x: NamedTupleInstance, **kwargs) -> int:
 # Intermediate functions
 def checksum_builtin_number(x: BuiltinNumber, **kwargs) -> int:
     """Compute a simple checksum of a builtin scalar number."""
+    # Note: instance check must follow this order: bool, int, float, complex, because isinstance(True, int) returns True !
     if isinstance(x, bool):
         return checksum_bool(x, **kwargs)
     elif isinstance(x, int):
         return checksum_int(x, **kwargs)
-    elif isinstance(x, complex):
-        return checksum_complex(x, **kwargs)
     elif isinstance(x, float):
         return checksum_float(x, **kwargs)
+    elif isinstance(x, complex):
+        return checksum_complex(x, **kwargs)
     else:
-        msg = f"Invalid argument type {type(x)}. (expected int, bool, complex or float)"
+        BUILTIN_NUMBER_TYPES = ("bool", "int", "float", "complex")
+        msg = (
+            f"Invalid argument type {type(x)}. (expected one of {BUILTIN_NUMBER_TYPES})"
+        )
         raise TypeError(msg)
 
 
@@ -196,6 +203,11 @@ def checksum_builtin_scalar(x: BuiltinScalar, **kwargs) -> int:
     else:
         msg = f"Invalid argument type {type(x)}. (expected int, bool, complex float, bytes, None, or str)"
         raise TypeError(msg)
+
+
+def checksum_bytearray(x: bytearray, **kwargs) -> int:
+    accumulator = kwargs.pop("accumulator", 0) + checksum_str(get_fullname(x), **kwargs)
+    return checksum_bytes(x, accumulator=accumulator, **kwargs)
 
 
 def checksum_complex(x: complex, **kwargs) -> int:

@@ -1995,6 +1995,7 @@ class IntegralTensor(
     - Concrete subclasses are: IntTensor, LongTensor, ShortTensor.
     - Properties are: is_floating_point=False, is_complex=False, is_signed=True.
     - By default, instantiate this class will create an IntTensor.
+    - BoolTensor is not a subclass of IntegralTensor because it is not signed.
     """
 
     _DEFAULT_DTYPE = DTypeEnum.int32

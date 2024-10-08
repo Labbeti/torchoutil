@@ -5,15 +5,19 @@ from typing import Optional
 
 from torch import Tensor, nn
 
-from torchoutil.types import Tensor2D, Tensor3D
 from torchoutil.nn.functional.powerset import (
     build_mapping,
     multilabel_to_powerset,
     powerset_to_multilabel,
 )
+from torchoutil.types import Tensor2D, Tensor3D
 
 
 class MultilabelToPowerset(nn.Module):
+    """
+    Module version of :func:`~torchoutil.nn.functional.powerset.multilabel_to_powerset`.
+    """
+
     def __init__(self, num_classes: int, max_set_size: int) -> None:
         mapping = build_mapping(num_classes, max_set_size)
 
@@ -40,6 +44,10 @@ class MultilabelToPowerset(nn.Module):
 
 
 class PowersetToMultilabel(nn.Module):
+    """
+    Module version of :func:`~torchoutil.nn.functional.powerset.powerset_to_multilabel`.
+    """
+
     def __init__(self, num_classes: int, max_set_size: int, soft: bool = False) -> None:
         mapping = build_mapping(num_classes, max_set_size)
 

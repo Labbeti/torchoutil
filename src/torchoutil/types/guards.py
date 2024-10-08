@@ -5,25 +5,59 @@ from typing import Any, Iterable, List, Tuple
 
 import torch
 from torch import BoolTensor, Tensor
-from typing_extensions import TypeGuard
+from typing_extensions import TypeIs
 
 from torchoutil.extras.numpy import is_numpy_number_like, is_numpy_scalar_like
 from torchoutil.pyoutil.typing import is_builtin_number, is_builtin_scalar
 from torchoutil.types._typing import (
     BoolTensor1D,
+    ComplexFloatingTensor,
+    FloatingTensor,
+    IntegralTensor,
+    IntegralTensor1D,
     NumberLike,
     ScalarLike,
     Tensor0D,
-    Tensor1D,
 )
 
 
-def is_tensor0d(x: Any) -> TypeGuard[Tensor0D]:
-    """Returns True if x is a zero-dimensional torch Tensor."""
-    return isinstance(x, Tensor) and x.ndim == 0
+def is_bool_tensor(x: Any) -> TypeIs[BoolTensor]:
+    return isinstance(x, BoolTensor)
 
 
-def is_number_like(x: Any) -> TypeGuard[NumberLike]:
+def is_bool_tensor1d(x: Any) -> TypeIs[BoolTensor1D]:
+    return is_bool_tensor(x) and x.ndim == 1
+
+
+def is_complex_tensor(x: Any) -> TypeIs[ComplexFloatingTensor]:
+    return isinstance(x, Tensor) and x.is_complex()
+
+
+def is_floating_tensor(x: Any) -> TypeIs[FloatingTensor]:
+    return isinstance(x, Tensor) and x.is_floating_point()
+
+
+def is_integral_dtype(dtype: torch.dtype) -> bool:
+    return not dtype.is_floating_point and not dtype.is_complex and dtype.is_signed
+
+
+def is_integral_tensor(x: Any) -> TypeIs[IntegralTensor]:
+    return isinstance(x, Tensor) and is_integral_dtype(x.dtype)
+
+
+def is_integral_tensor1d(x: Any) -> TypeIs[IntegralTensor1D]:
+    return is_integral_tensor(x) and x.ndim == 1
+
+
+def is_iterable_tensor(x: Any) -> TypeIs[Iterable[Tensor]]:
+    return isinstance(x, Iterable) and all(isinstance(xi, Tensor) for xi in x)
+
+
+def is_list_tensor(x: Any) -> TypeIs[List[Tensor]]:
+    return isinstance(x, list) and all(isinstance(xi, Tensor) for xi in x)
+
+
+def is_number_like(x: Any) -> TypeIs[NumberLike]:
     """Returns True if input is a scalar number.
 
     Accepted numbers-like objects are:
@@ -35,11 +69,11 @@ def is_number_like(x: Any) -> TypeGuard[NumberLike]:
     return is_builtin_number(x) or is_numpy_number_like(x) or is_tensor0d(x)
 
 
-def is_scalar_like(x: Any) -> TypeGuard[ScalarLike]:
+def is_scalar_like(x: Any) -> TypeIs[ScalarLike]:
     """Returns True if input is a scalar number.
 
     Accepted scalar-like objects are:
-    - Python scalars like (int, float, bool, complex, str, bytes, None)
+    - Python scalars like (int, float, bool, complex, None, str, bytes)
     - Numpy zero-dimensional arrays
     - Numpy generic
     - PyTorch zero-dimensional tensors
@@ -47,41 +81,10 @@ def is_scalar_like(x: Any) -> TypeGuard[ScalarLike]:
     return is_builtin_scalar(x) or is_numpy_scalar_like(x) or is_tensor0d(x)
 
 
-def is_iterable_tensor(x: Any) -> TypeGuard[Iterable[Tensor]]:
-    return isinstance(x, Iterable) and all(isinstance(xi, Tensor) for xi in x)
+def is_tensor0d(x: Any) -> TypeIs[Tensor0D]:
+    """Returns True if x is a zero-dimensional torch Tensor."""
+    return isinstance(x, Tensor) and x.ndim == 0
 
 
-def is_list_tensor(x: Any) -> TypeGuard[List[Tensor]]:
-    return isinstance(x, list) and all(isinstance(xi, Tensor) for xi in x)
-
-
-def is_tuple_tensor(x: Any) -> TypeGuard[Tuple[Tensor, ...]]:
+def is_tuple_tensor(x: Any) -> TypeIs[Tuple[Tensor, ...]]:
     return isinstance(x, tuple) and all(isinstance(xi, Tensor) for xi in x)
-
-
-def is_integer_dtype(dtype: torch.dtype) -> bool:
-    return not dtype.is_floating_point and not dtype.is_complex and dtype != torch.bool
-
-
-def is_integer_tensor(x: Any) -> TypeGuard[Tensor]:
-    return isinstance(x, Tensor) and is_integer_dtype(x.dtype)
-
-
-def is_integer_tensor1d(x: Any) -> TypeGuard[Tensor1D]:
-    return is_integer_tensor(x) and x.ndim == 1
-
-
-def is_complex_tensor(x: Any) -> TypeGuard[Tensor]:
-    return isinstance(x, Tensor) and x.is_complex()
-
-
-def is_floating_tensor(x: Any) -> TypeGuard[Tensor]:
-    return isinstance(x, Tensor) and x.is_floating_point()
-
-
-def is_bool_tensor(x: Any) -> TypeGuard[BoolTensor]:
-    return isinstance(x, BoolTensor)
-
-
-def is_bool_tensor1d(x: Any) -> TypeGuard[BoolTensor1D]:
-    return is_bool_tensor(x) and x.ndim == 1

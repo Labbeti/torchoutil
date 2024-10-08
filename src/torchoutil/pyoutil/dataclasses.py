@@ -4,6 +4,7 @@
 from typing import Any, Dict
 
 from .typing.classes import DataclassInstance
+from .typing.guards import is_dataclass_instance  # noqa: F401
 
 
 def get_defaults_values(dataclass: DataclassInstance) -> Dict[str, Any]:

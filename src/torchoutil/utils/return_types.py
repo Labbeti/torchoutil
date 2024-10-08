@@ -4,30 +4,31 @@
 """Type used for backward compatibility."""
 
 import sys
-from typing import Generic, NamedTuple
+from typing import Generic, NamedTuple, Sequence
 
 from torch import LongTensor, Tensor, __version__
 from torch.torch_version import TorchVersion
 from typing_extensions import TypeVar
 
 T = TypeVar("T")
-T_Tensor1 = TypeVar("T_Tensor1", bound=Tensor, default=Tensor)
-T_Tensor2 = TypeVar("T_Tensor2", bound=Tensor, default=LongTensor)
 
 
 if __version__ < TorchVersion("2.0.0"):
 
     class namedtuple_values_indices(NamedTuple):
-        values: T_Tensor1
-        indices: T_Tensor2
+        values: Tensor
+        indices: LongTensor
 
-    class min(namedtuple_values_indices, Generic[T_Tensor1, T_Tensor2]):
+        def __init__(self, args: Sequence[Tensor]):
+            super().__init__(*args)
+
+    class min(namedtuple_values_indices):
         ...
 
-    class max(namedtuple_values_indices, Generic[T_Tensor1, T_Tensor2]):
+    class max(namedtuple_values_indices):
         ...
 
-    class topk(namedtuple_values_indices, Generic[T_Tensor1, T_Tensor2]):
+    class topk(namedtuple_values_indices):
         ...
 
 else:

@@ -18,8 +18,8 @@ NoneType = type(None)
 EllipsisType = type(...)
 
 BuiltinCollection = Union[list, tuple, dict, set, frozenset]
-BuiltinNumber = Union[int, float, bool, complex]
-BuiltinScalar = Union[int, float, bool, complex, str, bytes, NoneType]
+BuiltinNumber = Union[bool, int, float, complex]
+BuiltinScalar = Union[bool, int, float, complex, NoneType, str, bytes]
 
 T = TypeVar("T", covariant=True)
 T_BuiltinNumber = TypeVar("T_BuiltinNumber", bound=BuiltinNumber)
@@ -59,22 +59,22 @@ class SizedIterable(Protocol[T]):
 
 @runtime_checkable
 class SupportsLenAndGetItem(Protocol[T]):
-    def __len__(self) -> int:
+    def __getitem__(self, idx, /) -> T:
         ...
 
-    def __getitem__(self, idx, /) -> T:
+    def __len__(self) -> int:
         ...
 
 
 @runtime_checkable
 class SupportsLenAndGetItemAndIter(Protocol[T]):
-    def __len__(self) -> int:
-        ...
-
     def __getitem__(self, idx, /) -> T:
         ...
 
     def __iter__(self) -> Iterator[T]:
+        ...
+
+    def __len__(self) -> int:
         ...
 
 
@@ -84,4 +84,4 @@ class SupportsBool(Protocol):
         ...
 
 
-BoolLike = Union[SupportsBool, Sized]
+BoolLike = Union[bool, int, SupportsBool, Sized]

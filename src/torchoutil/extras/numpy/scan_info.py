@@ -13,14 +13,14 @@ from torchoutil import pyoutil as po
 from torchoutil.extras.numpy.definitions import ACCEPTED_NUMPY_DTYPES, np
 from torchoutil.pyoutil import BuiltinScalar, get_current_fn_name
 
-T_Invalid = TypeVar("T_Invalid")
-T_Empty = TypeVar("T_Empty")
-T_EmptyNp = TypeVar("T_EmptyNp")
-T_EmptyTorch = TypeVar("T_EmptyTorch")
+T_Invalid = TypeVar("T_Invalid", covariant=True)
+T_EmptyNp = TypeVar("T_EmptyNp", covariant=True)
+T_EmptyTorch = TypeVar("T_EmptyTorch", covariant=True)
 
 
-# Default return type for torch_dtype when an invalid data is passed as argument, like str
 class InvalidTorchDType(metaclass=po.Singleton):
+    """Default return type for torch_dtype when an invalid data is passed as argument of scan_torch_dtype function. (like str for example)"""
+
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}()"
 
@@ -92,7 +92,7 @@ def scan_torch_dtype(
         torch_dtype = numpy_dtype_to_torch_dtype(x.dtype, invalid=invalid)
         return torch_dtype
 
-    if isinstance(x, (str, bytes)):
+    if isinstance(x, (str, bytes, bytearray)):
         return invalid
 
     if isinstance(x, (list, tuple)):
@@ -124,7 +124,7 @@ def scan_numpy_dtype(
         numpy_dtype = x.dtype
         return numpy_dtype
 
-    if isinstance(x, (str, bytes)):
+    if isinstance(x, (str, bytes, bytearray)):
         numpy_dtype = np.array(x).dtype
         return numpy_dtype
 
@@ -185,7 +185,7 @@ def numpy_dtype_to_fill_value(dtype: Any) -> BuiltinScalar:
 def merge_numpy_dtypes(
     dtypes: Iterable[Union[np.dtype, T_EmptyNp]],
     *,
-    empty: T_EmptyNp = np.dtype("V"),
+    empty: T_EmptyNp = np.void,
 ) -> Union[np.dtype, T_EmptyNp]:
     dtypes = list(dict.fromkeys(dtypes))
     dtypes = [dtype for dtype in dtypes if dtype != empty]

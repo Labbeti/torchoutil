@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from typing import Any, Sequence, Union
+from typing import Any, Sequence, Tuple, Union
 
 import torch
 from torch import Tensor
@@ -149,7 +149,7 @@ def numpy_topk(
     dim: int = -1,
     largest: bool = True,
     sorted: bool = True,
-) -> tuple[np.ndarray, np.ndarray]:
+) -> Tuple[np.ndarray, np.ndarray]:
     x_pt = numpy_to_tensor(x)
     values, indices = x_pt.topk(k=k, dim=dim, largest=largest, sorted=sorted)
     values = tensor_to_numpy(values)

@@ -10,7 +10,7 @@ from torch.utils.data.dataset import Dataset
 
 from torchoutil.pyoutil.typing import is_iterable_bool, is_iterable_int
 from torchoutil.pyoutil.typing.classes import SupportsLenAndGetItem
-from torchoutil.types import is_bool_tensor1d, is_integer_tensor1d, is_number_like
+from torchoutil.types import is_bool_tensor1d, is_integral_tensor1d, is_number_like
 from torchoutil.types._typing import BoolTensor, Tensor1D
 from torchoutil.utils.data.dataset import Wrapper
 
@@ -27,11 +27,13 @@ class DatasetSlicer(Generic[T], ABC, Dataset[T]):
         add_slice_support: bool = True,
         add_indices_support: bool = True,
         add_mask_support: bool = True,
+        add_none_support: bool = True,
     ) -> None:
         Dataset.__init__(self)
         self._add_slice_support = add_slice_support
         self._add_indices_support = add_indices_support
         self._add_mask_support = add_mask_support
+        self._add_none_support = add_none_support
 
     @abstractmethod
     def __len__(self) -> int:
@@ -72,8 +74,11 @@ class DatasetSlicer(Generic[T], ABC, Dataset[T]):
         elif is_iterable_bool(idx) or is_bool_tensor1d(idx):
             return self.get_items_mask(idx, *args)
 
-        elif is_iterable_int(idx) or is_integer_tensor1d(idx):
+        elif is_iterable_int(idx) or is_integral_tensor1d(idx):
             return self.get_items_indices(idx, *args)
+
+        elif idx is None:
+            return self.get_items_none(idx, *args)
 
         else:
             raise TypeError(f"Invalid argument type {type(idx)=} with {args=}.")
@@ -124,6 +129,16 @@ class DatasetSlicer(Generic[T], ABC, Dataset[T]):
             return self.get_items_indices(range(len(self))[slice_], *args)
         else:
             return self.get_item(slice_, *args)
+
+    def get_items_none(
+        self,
+        none: None,
+        *args,
+    ) -> List[T]:
+        if self._add_none_support:
+            return self.get_items_indices(slice(None), *args)
+        else:
+            return self.get_item(none, *args)
 
 
 class DatasetSlicerWrapper(Generic[T], DatasetSlicer[T], Wrapper[T]):

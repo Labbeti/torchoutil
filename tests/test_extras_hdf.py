@@ -175,6 +175,7 @@ class TestHDF(TestCase):
             + [[]] * 3,
             "empty_lists": [[]] * 10,
             "bytes": [b""] * 6 + [b"a2", b"dnqzu1dhqz", b"0djqizjdz", b"du12qzd"],
+            "bytearray": np.array([bytearray(str(i), "utf-8") for i in range(10, 20)]),
         }
         ds_list = dict_list_to_list_dict(ds_dict, "same")
 
@@ -192,6 +193,7 @@ class TestHDF(TestCase):
             "list_string": True,
             "empty_lists": False,
             "bytes": False,
+            "bytearray": False,
         }
 
         idx = torch.randint(0, len(hdf_dataset), ()).item()
