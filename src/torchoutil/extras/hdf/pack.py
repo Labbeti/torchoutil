@@ -52,7 +52,7 @@ from torchoutil.types import BuiltinScalar
 from torchoutil.utils.data.dataloader import get_auto_num_cpus
 from torchoutil.utils.data.dataset import IterableDataset, SizedDatasetLike
 from torchoutil.utils.pack.common import EXISTS_MODES, ExistsMode, _tuple_to_dict
-from torchoutil.utils.saving import to_builtin
+from torchoutil.utils.saving.common import to_builtin
 
 T = TypeVar("T", covariant=True)
 T_DictOrTuple = TypeVar("T_DictOrTuple", tuple, dict, covariant=True)
@@ -101,7 +101,7 @@ def pack_to_hdf(
         store_str_as_vlen: If True, store strings as variable length string dtype. defaults to False.
         file_kwds: Options given to h5py file object. defaults to None.
         ds_kwds: Keywords arguments passed to the returned HDFDataset instance if the target file already exists and if exists == "skip".
-        user_attrs: Additional metadata to add to the hdf file. It must be JSON convertible. defaults to None.
+        user_attrs: Additional metadata to add to the hdf file. It must be convertible to JSON with `json.dumps`. defaults to None.
         skip_scan: If True, the input dataset will be considered as fully homogeneous, which means that all columns values contains the same shape and dtype, which will be inferred from the first batch.
             It is meant to skip the first step which scans each dataset item once and speed up packing to HDF file.
             defaults to False.
@@ -109,7 +109,6 @@ def pack_to_hdf(
     Returns:
         hdf_dataset: The target HDF dataset object.
     """
-    # Check inputs
     if not isinstance(dataset, SizedDatasetLike):
         msg = f"Cannot pack to hdf a non-sized-dataset '{dataset.__class__.__name__}'."
         raise TypeError(msg)
@@ -119,7 +118,8 @@ def pack_to_hdf(
 
     hdf_fpath = Path(hdf_fpath).resolve()
     if hdf_fpath.exists() and not hdf_fpath.is_file():
-        raise RuntimeError(f"Item {hdf_fpath=} exists but it is not a file.")
+        msg = f"Item {hdf_fpath=} exists but it is not a file."
+        raise RuntimeError(msg)
 
     if ds_kwds is None:
         ds_kwds = {}
