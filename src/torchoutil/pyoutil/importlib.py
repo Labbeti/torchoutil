@@ -44,10 +44,13 @@ def search_imported_submodules(
     parent_name: str = "",
 ) -> List[ModuleType]:
     """Return the submodules already imported."""
+    if root.__package__ is None:
+        raise ValueError(f"Cannot search in module '{root}'. (found __package__=None)")
+
     if parent_name != "":
-        parent_name = ".".join([parent_name, root.__name__])
+        parent_name = ".".join([parent_name, root.__package__])
     else:
-        parent_name = root.__name__
+        parent_name = root.__package__
 
     if hasattr(root, "__path__"):
         paths = root.__path__
