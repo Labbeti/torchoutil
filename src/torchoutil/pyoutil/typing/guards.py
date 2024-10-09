@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 from numbers import Number
-from typing import Any, Dict, Iterable, List, Mapping, Sequence, Tuple, Union
+from typing import Any, Dict, Generator, Iterable, List, Mapping, Sequence, Tuple, Union
 
 from typing_extensions import TypeGuard, TypeIs
 
@@ -62,12 +62,13 @@ def is_iterable_str(
     x: Any,
     *,
     accept_str: bool = True,
+    accept_generator: bool = True,
 ) -> TypeGuard[Iterable[str]]:
-    return (accept_str and isinstance(x, str)) or (
-        not isinstance(x, str)
-        and isinstance(x, Iterable)
-        and all(isinstance(xi, str) for xi in x)
-    )
+    if isinstance(x, str):
+        return accept_str
+    if isinstance(x, Generator):
+        return accept_generator and all(isinstance(xi, str) for xi in x)
+    return isinstance(x, Iterable) and all(isinstance(xi, str) for xi in x)
 
 
 def is_list_list_str(x: Any) -> TypeIs[List[List[str]]]:
