@@ -8,7 +8,8 @@ import torch
 from torch import Tensor
 from torch.utils.data.dataset import Dataset
 
-from torchoutil.pyoutil.typing import is_iterable_bool, is_iterable_int
+from torchoutil.extras.numpy.functional import is_numpy_bool_array
+from torchoutil.pyoutil.typing import is_iterable_bool, is_iterable_integral
 from torchoutil.pyoutil.typing.classes import SupportsLenAndGetItem
 from torchoutil.types import is_bool_tensor1d, is_integral_tensor1d, is_number_like
 from torchoutil.types._typing import BoolTensor, Tensor1D
@@ -71,10 +72,14 @@ class DatasetSlicer(Generic[T], ABC, Dataset[T]):
         elif isinstance(idx, slice):
             return self.get_items_slice(idx, *args)
 
-        elif is_iterable_bool(idx) or is_bool_tensor1d(idx):
+        elif (
+            is_iterable_bool(idx)
+            or is_bool_tensor1d(idx)
+            or (is_numpy_bool_array(idx) and idx.ndim == 1)
+        ):
             return self.get_items_mask(idx, *args)
 
-        elif is_iterable_int(idx) or is_integral_tensor1d(idx):
+        elif is_iterable_integral(idx) or is_integral_tensor1d(idx):
             return self.get_items_indices(idx, *args)
 
         elif idx is None:

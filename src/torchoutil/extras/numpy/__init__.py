@@ -3,6 +3,7 @@
 
 from .definitions import ACCEPTED_NUMPY_DTYPES, np, numpy
 from .functional import (
+    is_numpy_bool_array,
     is_numpy_number_like,
     is_numpy_scalar_like,
     logical_and_lst,

@@ -8,7 +8,7 @@ from torch import Tensor
 from torch.types import Device, Number
 
 from torchoutil.nn.functional.get import CUDA_IF_AVAILABLE, get_device, get_generator
-from torchoutil.types import LongTensor1D, Tensor1D
+from torchoutil.types import LongTensor1D, Tensor1D, is_builtin_number
 
 
 def get_inverse_perm(indices: Tensor, dim: int = -1) -> Tensor:
@@ -76,7 +76,7 @@ def get_perm_indices(x1: Tensor1D, x2: Tensor1D) -> LongTensor1D:
         >>> torch.equal(x1, x2[indices])
         True
     """
-    indices = (x1[..., None, :] == x2[..., :, None]).int().argmax(dim=-2)
+    indices = (x1[..., None, :] == x2[..., :, None]).short().argmax(dim=-2)
     return indices  # type: ignore
 
 
@@ -84,7 +84,7 @@ def insert_at_indices(
     x: Tensor,
     indices: Union[Tensor, List, Number],
     values: Union[Number, Tensor],
-) -> Tensor:
+) -> Tensor1D:
     """Insert value(s) in vector at specified indices.
 
     Example 1::
@@ -100,10 +100,14 @@ def insert_at_indices(
         raise ValueError(msg)
 
     device = x.device
-    if isinstance(indices, (int, float, bool)):
+    if isinstance(indices, Tensor):
+        pass
+    elif is_builtin_number(indices):
         indices = torch.as_tensor([indices], device=device, dtype=torch.long)
     elif isinstance(indices, list):
         indices = torch.as_tensor(indices, device=device, dtype=torch.long)
+    else:
+        raise TypeError(f"Invalid argument type {type(indices)=}.")
 
     out = torch.empty((x.shape[0] + indices.shape[0]), dtype=x.dtype, device=device)
     indices = indices + torch.arange(
@@ -119,17 +123,21 @@ def insert_at_indices(
 def remove_at_indices(
     x: Tensor,
     indices: Union[Tensor, List, Number],
-) -> Tensor:
+) -> Tensor1D:
     """Remove value(s) in vector at specified indices."""
     if x.ndim != 1:
         msg = f"Invalid argument number of dims. (found {x.ndim=} but expected 1)"
         raise ValueError(msg)
 
     device = x.device
-    if isinstance(indices, (int, float, bool)):
+    if isinstance(indices, Tensor):
+        pass
+    elif is_builtin_number(indices):
         indices = torch.as_tensor([indices], device=device, dtype=torch.long)
     elif isinstance(indices, list):
         indices = torch.as_tensor(indices, device=device, dtype=torch.long)
+    else:
+        raise TypeError(f"Invalid argument type {type(indices)=}.")
 
     indices = indices + torch.arange(
         indices.shape[0], device=device, dtype=indices.dtype

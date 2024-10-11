@@ -117,38 +117,40 @@ def to_builtin(
             If unk_mode == "error", a TypeError is raised.
     """
     # Terminal cases
-    if is_builtin_scalar(x):
+    if is_builtin_scalar(x, strict=True):
         return x
-    elif isinstance(x, Enum):
+    if isinstance(x, Enum):
         return x.name
-    elif isinstance(x, Path):
+    if isinstance(x, Path):
         return str(x)
-    elif isinstance(x, Pattern):
+    if isinstance(x, Pattern):
         return x.pattern
-    elif isinstance(x, Tensor):
+    if isinstance(x, Tensor):
         return x.tolist()
-    elif _NUMPY_AVAILABLE and isinstance(x, np.ndarray):
+    if _NUMPY_AVAILABLE and isinstance(x, np.ndarray):
         return x.tolist()
-    elif _NUMPY_AVAILABLE and isinstance(x, np.generic):
+    if _NUMPY_AVAILABLE and isinstance(x, np.generic):
         return x.item()
-    elif _NUMPY_AVAILABLE and isinstance(x, np.dtype):
+    if _NUMPY_AVAILABLE and isinstance(x, np.dtype):
         return str(x)
+
     # Non-terminal cases (iterables and mappings)
-    elif _OMEGACONF_AVAILABLE and isinstance(x, (DictConfig, ListConfig)):
+    if _OMEGACONF_AVAILABLE and isinstance(x, (DictConfig, ListConfig)):
         return to_builtin(OmegaConf.to_container(x, resolve=False, enum_to_str=True))
-    elif _PANDAS_AVAILABLE and isinstance(x, DataFrame):
-        return to_builtin(x.to_dict())
-    elif isinstance(x, Namespace):
+    if _PANDAS_AVAILABLE and isinstance(x, DataFrame):
+        return to_builtin(x.to_dict("list"))
+    if isinstance(x, Namespace):
         return to_builtin(x.__dict__)
-    elif is_dataclass_instance(x):
+    if is_dataclass_instance(x):
         return to_builtin(asdict(x))
-    elif is_namedtuple_instance(x):
+    if is_namedtuple_instance(x):
         return to_builtin(x._asdict())
-    elif isinstance(x, Mapping):
+    if isinstance(x, Mapping):
         return {to_builtin(k): to_builtin(v) for k, v in x.items()}  # type: ignore
-    elif isinstance(x, Iterable):
+    if isinstance(x, Iterable):
         return [to_builtin(xi) for xi in x]  # type: ignore
-    elif unk_mode == "identity":
+
+    if unk_mode == "identity":
         return x
     elif unk_mode == "error":
         raise TypeError(f"Unsupported argument type {type(x)}.")

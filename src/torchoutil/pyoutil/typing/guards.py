@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from numbers import Number
+from numbers import Integral, Number
 from typing import Any, Dict, Generator, Iterable, List, Mapping, Sequence, Tuple, Union
 
 from typing_extensions import TypeGuard, TypeIs
@@ -15,13 +15,17 @@ from .classes import (
 )
 
 
-def is_builtin_number(x: Any) -> TypeIs[BuiltinNumber]:
+def is_builtin_number(x: Any, *, strict: bool = False) -> TypeIs[BuiltinNumber]:
     """Returns True if x is a builtin number type (int, float, bool, complex)."""
+    if strict and x.__class__.__module__ != "builtins":
+        return False
     return isinstance(x, (int, float, bool, complex))
 
 
-def is_builtin_scalar(x: Any) -> TypeIs[BuiltinScalar]:
+def is_builtin_scalar(x: Any, *, strict: bool = False) -> TypeIs[BuiltinScalar]:
     """Returns True if x is a builtin scalar type (int, float, bool, complex, NoneType, str, bytes)."""
+    if strict and x.__class__.__module__ != "builtins":
+        return False
     return isinstance(x, (int, float, bool, complex, NoneType, str, bytes))
 
 
@@ -35,19 +39,25 @@ def is_dict_str(x: Any) -> TypeIs[Dict[str, Any]]:
 
 
 def is_iterable_bool(x: Any) -> TypeIs[Iterable[bool]]:
-    return isinstance(x, Iterable) and (all(isinstance(xi, bool) for xi in x))
+    return isinstance(x, Iterable) and all(isinstance(xi, bool) for xi in x)
 
 
 def is_iterable_float(x: Any) -> TypeIs[Iterable[float]]:
-    return isinstance(x, Iterable) and (all(isinstance(xi, float) for xi in x))
+    return isinstance(x, Iterable) and all(isinstance(xi, float) for xi in x)
 
 
 def is_iterable_bytes_or_list(x: Any) -> TypeIs[Iterable[Union[bytes, list]]]:
     return isinstance(x, Iterable) and all(isinstance(xi, (bytes, list)) for xi in x)
 
 
-def is_iterable_int(x: Any) -> TypeIs[Iterable[int]]:
-    return isinstance(x, Iterable) and (all(isinstance(xi, int) for xi in x))
+def is_iterable_int(x: Any, *, accept_bool: bool = True) -> TypeIs[Iterable[int]]:
+    return isinstance(x, Iterable) and all(
+        isinstance(xi, int) and (accept_bool or not isinstance(xi, bool)) for xi in x
+    )
+
+
+def is_iterable_integral(x: Any) -> TypeIs[Iterable[Integral]]:
+    return isinstance(x, Iterable) and all(isinstance(xi, Integral) for xi in x)
 
 
 def is_iterable_iterable_int(x: Any) -> TypeIs[Iterable[Iterable[int]]]:

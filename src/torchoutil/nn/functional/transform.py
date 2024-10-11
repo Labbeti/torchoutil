@@ -9,6 +9,7 @@ from typing import (
     List,
     Literal,
     Optional,
+    Sequence,
     TypeVar,
     Union,
     overload,
@@ -26,7 +27,14 @@ from torchoutil.pyoutil.collections import prod as builtin_prod
 from torchoutil.pyoutil.functools import identity  # noqa: F401
 from torchoutil.pyoutil.typing import T_BuiltinScalar
 from torchoutil.types import DeviceLike, DTypeLike, is_number_like, is_scalar_like
-from torchoutil.types._typing import Tensor1D, np
+from torchoutil.types._typing import (
+    NumberLike,
+    Tensor0D,
+    Tensor1D,
+    Tensor2D,
+    Tensor3D,
+    np,
+)
 
 T = TypeVar("T")
 U = TypeVar("U")
@@ -296,8 +304,49 @@ def flatten(
         return builtin_flatten(x, start_dim, end_dim, is_scalar_fn=is_scalar_like)
 
 
+@overload
+def to_tensor(
+    data: NumberLike,
+    dtype: DTypeLike = None,
+    device: DeviceLike = None,
+) -> Tensor0D:
+    ...
+
+
+@overload
+def to_tensor(
+    data: Sequence[NumberLike],
+    dtype: DTypeLike = None,
+    device: DeviceLike = None,
+) -> Tensor1D:
+    ...
+
+
+@overload
+def to_tensor(
+    data: Sequence[Sequence[NumberLike]],
+    dtype: DTypeLike = None,
+    device: DeviceLike = None,
+) -> Tensor2D:
+    ...
+
+
+@overload
+def to_tensor(
+    data: Sequence[Sequence[Sequence[NumberLike]]],
+    dtype: DTypeLike = None,
+    device: DeviceLike = None,
+) -> Tensor3D:
+    ...
+
+
+@overload
 def to_tensor(data: Any, dtype: DTypeLike = None, device: DeviceLike = None) -> Tensor:
-    """Convert arbitrary data to tensor. Unlike torch.as_tensor, it works recursively and stack sequences like List[Tensor].
+    ...
+
+
+def to_tensor(data: Any, dtype: DTypeLike = None, device: DeviceLike = None) -> Tensor:
+    """Convert arbitrary data to tensor. Unlike `torch.as_tensor`, it works recursively and stack sequences like List[Tensor].
 
     Args:
         data: Data to convert to tensor. Can be Tensor, np.ndarray, list, tuple or any number-like object.

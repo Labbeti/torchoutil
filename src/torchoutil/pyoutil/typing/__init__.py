@@ -23,6 +23,7 @@ from .guards import (
     is_iterable_bytes_or_list,
     is_iterable_float,
     is_iterable_int,
+    is_iterable_integral,
     is_iterable_iterable_int,
     is_iterable_str,
     is_list_bool,

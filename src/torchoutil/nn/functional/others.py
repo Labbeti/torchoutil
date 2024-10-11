@@ -279,14 +279,14 @@ def shape(
         raise ValueError(msg)
 
 
-def item(x: Union[ScalarLike, Tensor, np.ndarray, SizedIterable]) -> BuiltinScalar:
+def to_item(x: Union[ScalarLike, Tensor, np.ndarray, SizedIterable]) -> BuiltinScalar:
     """Convert scalar value to built-in type."""
-    if is_builtin_scalar(x):
+    if is_builtin_scalar(x, strict=True):
         return x
     elif isinstance(x, (Tensor, np.ndarray, np.generic)) and nelement(x) == 1:
         return x.item()
     elif isinstance(x, SizedIterable) and len(x) == 1:
-        return item(next(iter(x)))
+        return to_item(next(iter(x)))
     else:
         msg = f"Invalid argument type {type(x)=}. (expected scalar-like object)"
         raise TypeError(msg)
