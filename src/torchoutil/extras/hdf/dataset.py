@@ -27,7 +27,6 @@ from typing import (
 
 import h5py
 import numpy as np
-import torch
 from h5py import Dataset as HDFRawDataset
 from torch import Tensor
 from typing_extensions import TypeGuard, override
@@ -50,6 +49,7 @@ from torchoutil.pyoutil.typing import (
     is_iterable_str,
 )
 from torchoutil.types._typing import ScalarLike
+from torchoutil.types.guards import is_scalar_like
 from torchoutil.utils.data import DatasetSlicer
 from torchoutil.utils.pack.common import _dict_to_tuple
 from torchoutil.utils.saving import to_builtin
@@ -284,8 +284,15 @@ class HDFDataset(Generic[T, U], DatasetSlicer[U]):
 
         if index is None:
             index = slice(None)
-        elif isinstance(index, (Tensor, np.ndarray, np.generic)):
-            index = index.tolist()
+        elif is_scalar_like(index):
+            index = to.to_item(index)
+        elif isinstance(index, Iterable):
+            index = to.to_numpy(index)
+        elif isinstance(index, (int, slice)):
+            pass
+        else:
+            raise TypeError(f"Invalid argument type {type(index)=}.")
+
         if column is None:
             column = self.column_names
 
@@ -298,7 +305,11 @@ class HDFDataset(Generic[T, U], DatasetSlicer[U]):
             else:
                 result = result_dict
 
-            if isinstance(index, int) and self._transform is not None:
+            if (
+                isinstance(index, int)
+                and self._transform is not None
+                and set(column) == set(self.column_names)
+            ):
                 result = self._transform(result)  # type: ignore
             return result  # type: ignore
 
@@ -306,8 +317,13 @@ class HDFDataset(Generic[T, U], DatasetSlicer[U]):
             msg = f"Invalid argument {column=}. (did you mean '{find_closest_in_list(column, self.all_columns)}'? Expected one of {tuple(self.all_columns)})"
             raise ValueError(msg)
 
-        if isinstance(index, slice) or is_iterable_int(index):
+        if isinstance(index, slice) or (
+            isinstance(index, np.ndarray)
+            and index.ndim == 1
+            and index.dtype.kind in ("b", "i")
+        ):
             is_mult = True
+
         elif isinstance(index, int):
             if not (-len(self) <= index < len(self)):
                 msg = f"Invalid argument {index=}. (expected int in range [{-len(self)}, {len(self)-1}])"
@@ -515,25 +531,41 @@ class HDFDataset(Generic[T, U], DatasetSlicer[U]):
     # Private methods
     def _get_raw_item(
         self,
-        index: Union[int, Iterable[int], slice],
+        index: Union[int, slice, np.ndarray],
         column: str,
     ) -> np.ndarray:
-        if isinstance(index, Iterable):
-            sorted_idxs, local_idxs = torch.as_tensor(index).sort(dim=-1)
-            sorted_idxs = sorted_idxs.numpy()
-            hdf_value: Any = self._hdf_file[column][sorted_idxs]
-            inv_local_idxs = get_inverse_perm(local_idxs).numpy()
-            # TODO: rm
-            # hdf_value = [hdf_value[local_idx] for local_idx in inv_local_idxs]
-            hdf_value = hdf_value[inv_local_idxs]
-            if self._load_as_complex.get(column, False):
-                hdf_value = [to.view_as_complex(value) for value in hdf_value]
-        else:
+        if isinstance(index, (int, slice)) or (
+            isinstance(index, np.ndarray)
+            and index.ndim == 1
+            and index.dtype.kind == "b"
+        ):
             hdf_value: Any = self._hdf_file[column][index]
             if self._load_as_complex.get(column, False):
                 hdf_value = to.view_as_complex(hdf_value)
-
             hdf_value = np.array(hdf_value)
+
+        elif (
+            isinstance(index, np.ndarray)
+            and index.ndim == 1
+            and index.dtype.kind == "i"
+        ):
+            # Note: slicing with indices required strict sorted list of indices, so we sort + remove duplicates before loading
+            local_idxs = np.argsort(index, axis=-1)
+            sorted_idxs = index[local_idxs]
+            uniq, counts = np.unique(sorted_idxs, return_counts=True)
+
+            hdf_value: Any = self._hdf_file[column][uniq]
+
+            hdf_value = np.repeat(hdf_value, counts, axis=0)
+            inv_local_idxs = get_inverse_perm(to.numpy_to_tensor(local_idxs)).numpy()
+            hdf_value = hdf_value[inv_local_idxs]
+
+            if self._load_as_complex.get(column, False):
+                hdf_value = [to.view_as_complex(value) for value in hdf_value]
+
+        else:
+            raise TypeError(f"Invalid argument type {type(index)=}.")
+
         return hdf_value
 
     def _sanity_check(self) -> None:
