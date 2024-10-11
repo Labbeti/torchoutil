@@ -17,6 +17,7 @@ from torchvision.datasets import CIFAR10
 
 from torchoutil.extras.hdf import HDFDataset, pack_to_hdf
 from torchoutil.nn import ESequential, IndexToOnehot, ToList, ToNumpy
+from torchoutil.nn.functional import to_tensor
 from torchoutil.pyoutil import dict_list_to_list_dict
 
 
@@ -87,6 +88,45 @@ class TestHDF(TestCase):
             assert (
                 data_i.shape == data_shape[i]
             ), f"{i=}; {data_i.shape=}; {data_shape[i]=}"
+
+        hdf_dataset.close(remove_file=True)
+
+    def test_indices_mask(self) -> None:
+        cls = self.__class__
+        tmpdir = cls.tmpdir
+
+        data = np.random.rand(100, 8)
+        ds_dict = {"data": data}
+        ds_list = dict_list_to_list_dict(ds_dict)
+
+        path = tmpdir.joinpath("test_indices_slicing.hdf")
+        hdf_dataset = pack_to_hdf(
+            ds_list,
+            path,
+            exists="overwrite",
+            ds_kwds=dict(cast="none"),
+        )
+
+        # Random indices test
+        # with generate indices with duplicates in random order !
+        indices = np.random.randint(0, len(data), (10,))
+        assert (hdf_dataset[indices, "data"] == data[indices]).all()
+
+        # Random mask test
+        mask = np.random.rand(len(data)) > 0.2
+        indices = np.where(mask)[0]
+
+        expected = hdf_dataset[mask, "data"]
+        for values in (
+            hdf_dataset[indices, "data"],
+            hdf_dataset[mask.tolist(), "data"],
+            hdf_dataset[indices.tolist(), "data"],
+            hdf_dataset[to_tensor(mask), "data"],
+            hdf_dataset[to_tensor(indices), "data"],
+            data[mask],
+            data[indices],
+        ):
+            assert (expected == values).all()
 
         hdf_dataset.close(remove_file=True)
 
