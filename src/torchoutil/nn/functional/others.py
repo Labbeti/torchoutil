@@ -312,7 +312,9 @@ def _search_ndim(
         return True, 0
     elif isinstance(x, (Tensor, np.ndarray, np.generic)):
         return True, x.ndim
-    elif isinstance(x, Iterable):
+    elif isinstance(x, (set, frozenset, dict)):
+        return True, 0
+    elif isinstance(x, (list, tuple)):
         ndims = [_search_ndim(xi)[1] for xi in x]  # type: ignore
         if len(ndims) == 0:
             return True, 1
@@ -331,7 +333,9 @@ def _search_shape(
         return True, ()
     elif isinstance(x, (Tensor, np.ndarray, np.generic)):
         return True, tuple(x.shape)
-    elif isinstance(x, Iterable):
+    elif isinstance(x, (set, frozenset, dict)):
+        return True, ()
+    elif isinstance(x, (list, tuple)):
         shapes = [_search_shape(xi)[1] for xi in x]  # type: ignore
         if len(shapes) == 0:
             return True, (0,)
