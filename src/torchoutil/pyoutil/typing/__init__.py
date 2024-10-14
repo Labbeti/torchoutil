@@ -16,6 +16,7 @@ from .classes import (
 )
 from .guards import (
     is_builtin_number,
+    is_builtin_obj,
     is_builtin_scalar,
     is_dataclass_instance,
     is_dict_str,

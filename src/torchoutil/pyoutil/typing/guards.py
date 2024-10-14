@@ -15,16 +15,34 @@ from .classes import (
 )
 
 
+def is_builtin_obj(x: Any) -> bool:
+    """Returns True if object is an instance of a builtin object.
+
+    Note: If the object is an instance of a custom subtype of a builtin object, this function returns False.
+    """
+    return x.__class__.__module__ == "builtins" and not isinstance(x, type)
+
+
 def is_builtin_number(x: Any, *, strict: bool = False) -> TypeIs[BuiltinNumber]:
-    """Returns True if x is a builtin number type (int, float, bool, complex)."""
-    if strict and x.__class__.__module__ != "builtins":
+    """Returns True if x is an instance of a builtin number type (int, float, bool, complex).
+
+    Args:
+        x: Object to check.
+        strict: If True, it will not consider subtypes of builtins as builtin numbers.
+    """
+    if strict and not is_builtin_obj(x):
         return False
     return isinstance(x, (int, float, bool, complex))
 
 
 def is_builtin_scalar(x: Any, *, strict: bool = False) -> TypeIs[BuiltinScalar]:
-    """Returns True if x is a builtin scalar type (int, float, bool, complex, NoneType, str, bytes)."""
-    if strict and x.__class__.__module__ != "builtins":
+    """Returns True if x is an instance of a builtin scalar type (int, float, bool, complex, NoneType, str, bytes).
+
+    Args:
+        x: Object to check.
+        strict: If True, it will not consider subtypes of builtins as builtin numbers.
+    """
+    if strict and not is_builtin_obj(x):
         return False
     return isinstance(x, (int, float, bool, complex, NoneType, str, bytes))
 
