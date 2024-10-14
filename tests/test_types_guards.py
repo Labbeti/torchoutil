@@ -37,6 +37,7 @@ class TestIsNumber(TestCase):
             (None, False),
             ("", False),
             (b"abc", False),
+            (bytearray(), False),
             ([1, [2]], False),
             ({}, False),
             ({"a": [1, 2], "b": [3, 4]}, False),
@@ -44,6 +45,7 @@ class TestIsNumber(TestCase):
             ((1, 2, 3), False),
             ([1.0], False),
             ([object(), [], "abc"], False),
+            (np.array(["a", "b"])[0], False),
         ]
 
         if _NUMPY_AVAILABLE:
@@ -56,28 +58,45 @@ class TestIsNumber(TestCase):
             ]
 
         for x, expected in tests:
-            result = is_number_like(x)
+            x_is_number = is_number_like(x)
             msg = f"{x=} ({is_builtin_number(x)}, {is_tensor0d(x)}, {is_numpy_number_like(x)})"
-            assert result == expected, msg
+            assert x_is_number == expected, msg
 
             x_is_scalar = is_scalar_like(x)
             assert isinstance(x, Sized) or x_is_scalar
 
-            try:
-                ndim = F.ndim(x)
-                assert x_is_scalar == (ndim == 0), f"{type(x)=} ; {x=}"
+            # Impl: number => scalar
+            assert not x_is_number or x_is_scalar
 
-                shape = F.shape(x)
-                assert x_is_scalar == (len(shape) == 0), f"{type(x)=} ; {x=}"
+            if _NUMPY_AVAILABLE:
+                np_x_is_scalar = np.isscalar(x)
+                # Impl: np_scalar => scalar
+                assert not np_x_is_scalar or x_is_scalar, f"{x=}"
+
+            try:
+                # Impl: scalar => (ndim == 0)
+                ndim = F.ndim(x)  # type: ignore
+                assert not x_is_scalar or (ndim == 0), f"{type(x)=} ; {x=}"
+
+                # Impl: scalar => (len(shape) == 0)
+                shape = F.shape(x)  # type: ignore
+                assert not x_is_scalar or (len(shape) == 0), f"{type(x)=} ; {x=}"
+
                 assert len(shape) == ndim, f"{type(x)=} ; {x=}"
 
-                nelements = F.nelement(x)
+                if _NUMPY_AVAILABLE:
+                    np_x = np.array(x)
+                    assert shape == np_x.shape, f"{x=}"
+
+                # Impl: scalar => (nelements == 1)
+                nelements = F.nelement(x)  # type: ignore
                 assert not x_is_scalar or (nelements == 1), f"{type(x)=} ; {x=}"
 
-                xitem = F.item(x)
+                xitem = F.to_item(x)  # type: ignore
                 assert is_builtin_scalar(xitem), f"{x=}"
-            except (ValueError, RuntimeError, TypeError):
-                assert not x_is_scalar, f"{type(x)=} ; {x=}"
+
+            except (ValueError, RuntimeError, TypeError) as err:
+                assert not x_is_scalar, f"{type(x)=} ; {x=} ; {err=}"
 
 
 if __name__ == "__main__":
