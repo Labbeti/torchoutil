@@ -225,7 +225,7 @@ def checksum_ndarray(x: Union[np.ndarray, np.generic], **kwargs) -> int:
 
     # Supports non-numeric numpy arrays (byte string, unicode string, object, void)
     if x.dtype.kind in ("S", "U", "O", "V"):
-        return checksum_iterable(x.tolist(), **kwargs)
+        return checksum_any(x.tolist(), **kwargs)
 
     return _checksum_tensor_array_like(
         x,
@@ -312,10 +312,21 @@ def _checksum_tensor_array_like(
             posinf=posinf_csum,
         )
 
+    shape = x.shape
     x = x.flatten()
     arange = arange_fn(1, nelement(x) + 1, dtype=range_dtype)
     x = x + arange
     x = x * arange
     x = x.sum()
 
-    return checksum_builtin_number(x.item(), **kwargs)
+    # Ensure that accumulator exists
+    kwargs["accumulator"] = kwargs.get("accumulator", 0)
+    type_csum = checksum_str(get_fullname(x), **kwargs)
+
+    kwargs["accumulator"] += type_csum
+    shape_csum = checksum_iterable(shape, **kwargs)
+
+    kwargs["accumulator"] += shape_csum
+    x_csum = checksum_builtin_number(x.item(), **kwargs)
+
+    return x_csum
