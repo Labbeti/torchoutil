@@ -6,7 +6,7 @@ from typing import Optional
 from torch import Tensor, nn
 
 from torchoutil.nn.functional.powerset import (
-    build_mapping,
+    build_powerset_mapping,
     multilabel_to_powerset,
     powerset_to_multilabel,
 )
@@ -19,7 +19,7 @@ class MultilabelToPowerset(nn.Module):
     """
 
     def __init__(self, num_classes: int, max_set_size: int) -> None:
-        mapping = build_mapping(num_classes, max_set_size)
+        mapping = build_powerset_mapping(num_classes, max_set_size)
 
         super().__init__()
         self._max_set_size = max_set_size
@@ -49,7 +49,7 @@ class PowersetToMultilabel(nn.Module):
     """
 
     def __init__(self, num_classes: int, max_set_size: int, soft: bool = False) -> None:
-        mapping = build_mapping(num_classes, max_set_size)
+        mapping = build_powerset_mapping(num_classes, max_set_size)
 
         super().__init__()
         self._max_set_size = max_set_size
