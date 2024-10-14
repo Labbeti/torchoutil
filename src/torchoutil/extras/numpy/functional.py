@@ -105,7 +105,7 @@ def numpy_is_complex_dtype(dtype: np.dtype) -> bool:
     return np.iscomplexobj(np.empty((0,), dtype=dtype))
 
 
-def is_numpy_bool_array(x: Any) -> TypeIs[Union[np.bool_, np.ndarray[np.bool_]]]:
+def is_numpy_bool_array(x: Any) -> TypeIs[Union[np.bool_, np.ndarray]]:
     return isinstance(x, (np.generic, np.ndarray)) and x.dtype.kind == "b"
 
 
