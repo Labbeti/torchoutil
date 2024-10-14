@@ -21,5 +21,6 @@ Submodules
    torchoutil.nn.modules.multilabel
    torchoutil.nn.modules.numpy
    torchoutil.nn.modules.pad
+   torchoutil.nn.modules.powerset
    torchoutil.nn.modules.tensor
    torchoutil.nn.modules.transform

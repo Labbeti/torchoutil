@@ -12,6 +12,6 @@ Submodules
 .. toctree::
    :maxdepth: 4
 
-   torchoutil.types
-   torchoutil.types.classes
    torchoutil.types.guards
+   torchoutil.types.tensor_subclasses
+   torchoutil.types.variable_fns

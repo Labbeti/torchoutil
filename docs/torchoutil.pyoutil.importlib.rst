@@ -1,7 +1,7 @@
-torchoutil.utils.tensorboard module
+torchoutil.pyoutil.importlib module
 ===================================
 
-.. automodule:: torchoutil.utils.tensorboard
+.. automodule:: torchoutil.pyoutil.importlib
    :members:
    :undoc-members:
    :show-inheritance:

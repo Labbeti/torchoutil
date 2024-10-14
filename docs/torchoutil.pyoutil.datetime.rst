@@ -1,7 +1,7 @@
-torchoutil.utils.hdf.common module
+torchoutil.pyoutil.datetime module
 ==================================
 
-.. automodule:: torchoutil.utils.hdf.common
+.. automodule:: torchoutil.pyoutil.datetime
    :members:
    :undoc-members:
    :show-inheritance:

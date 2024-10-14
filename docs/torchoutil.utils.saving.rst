@@ -14,4 +14,6 @@ Submodules
 
    torchoutil.utils.saving.common
    torchoutil.utils.saving.csv_io
+   torchoutil.utils.saving.load_fn
+   torchoutil.utils.saving.save_fn
    torchoutil.utils.saving.yaml_io

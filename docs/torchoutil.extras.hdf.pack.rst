@@ -1,7 +1,7 @@
-torchoutil.utils.packaging module
+torchoutil.extras.hdf.pack module
 =================================
 
-.. automodule:: torchoutil.utils.packaging
+.. automodule:: torchoutil.extras.hdf.pack
    :members:
    :undoc-members:
    :show-inheritance:

@@ -12,7 +12,6 @@ Submodules
 .. toctree::
    :maxdepth: 4
 
-   torchoutil.utils.data
    torchoutil.utils.data.collate
    torchoutil.utils.data.dataloader
    torchoutil.utils.data.dataset

@@ -1,7 +1,7 @@
-torchoutil.utils.collections module
+torchoutil.extras.hdf.common module
 ===================================
 
-.. automodule:: torchoutil.utils.collections
+.. automodule:: torchoutil.extras.hdf.common
    :members:
    :undoc-members:
    :show-inheritance:

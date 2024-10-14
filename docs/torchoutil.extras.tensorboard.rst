@@ -1,7 +1,7 @@
-torchoutil.utils.type\_checks module
+torchoutil.extras.tensorboard module
 ====================================
 
-.. automodule:: torchoutil.utils.type_checks
+.. automodule:: torchoutil.extras.tensorboard
    :members:
    :undoc-members:
    :show-inheritance:

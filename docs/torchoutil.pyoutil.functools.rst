@@ -1,7 +1,7 @@
-torchoutil.utils.hdf.dataset module
+torchoutil.pyoutil.functools module
 ===================================
 
-.. automodule:: torchoutil.utils.hdf.dataset
+.. automodule:: torchoutil.pyoutil.functools
    :members:
    :undoc-members:
    :show-inheritance:

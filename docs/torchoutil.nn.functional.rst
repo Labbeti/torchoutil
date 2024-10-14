@@ -23,4 +23,5 @@ Submodules
    torchoutil.nn.functional.numpy
    torchoutil.nn.functional.others
    torchoutil.nn.functional.pad
+   torchoutil.nn.functional.powerset
    torchoutil.nn.functional.transform

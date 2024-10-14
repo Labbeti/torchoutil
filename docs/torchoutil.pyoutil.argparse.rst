@@ -1,7 +1,7 @@
-torchoutil.utils.log\_utils module
+torchoutil.pyoutil.argparse module
 ==================================
 
-.. automodule:: torchoutil.utils.log_utils
+.. automodule:: torchoutil.pyoutil.argparse
    :members:
    :undoc-members:
    :show-inheritance:
