@@ -370,4 +370,6 @@ def to_tensor(data: Any, dtype: DTypeLike = None, device: DeviceLike = None) -> 
         return torch.stack(tensors)
 
     else:
-        raise TypeError(f"Invalid argument type '{type(data)}'.")
+        EXPECTED = (Tensor, np.ndarray, NumberLike, list, tuple)
+        msg = f"Invalid argument type '{type(data)}'. (expected one of {EXPECTED})"
+        raise TypeError(msg)
