@@ -42,7 +42,7 @@ from torchoutil.pyoutil.typing import (
     is_builtin_number,
     is_builtin_scalar,
 )
-from torchoutil.types._typing import ScalarLike
+from torchoutil.types._typing import ComplexFloatingTensor, FloatingTensor, ScalarLike
 from torchoutil.types.guards import is_list_tensor, is_scalar_like, is_tuple_tensor
 from torchoutil.utils import return_types
 
@@ -355,19 +355,25 @@ def __can_be_converted_to_tensor_list_tuple(x: Union[List, Tuple]) -> bool:
     if not valid_items:
         return False
 
+    # If all values are scalars-like items
     if all(
         (not isinstance(xi, Sized) or (isinstance(xi, Tensor) and xi.ndim == 0))
         for xi in x
     ):
         return True
+
+    # If all values are sized items with same size
     elif all(isinstance(xi, Sized) for xi in x):
         len0 = len(x[0])
         return all(len(xi) == len0 for xi in x[1:])
+
     else:
         return False
 
 
-def __can_be_converted_to_tensor_nested(x: Any) -> bool:
+def __can_be_converted_to_tensor_nested(
+    x: Any,
+) -> bool:
     if is_builtin_number(x):
         return True
     elif isinstance(x, Tensor) and x.ndim == 0:
@@ -408,7 +414,7 @@ def view_as_real(
 
 
 @overload
-def view_as_complex(x: Tensor) -> Tensor:
+def view_as_complex(x: Tensor) -> ComplexFloatingTensor:
     ...
 
 
@@ -424,7 +430,7 @@ def view_as_complex(x: Tuple[float, float]) -> complex:
 
 def view_as_complex(
     x: Union[Tensor, np.ndarray, Tuple[float, float]]
-) -> Union[Tensor, np.ndarray, complex]:
+) -> Union[ComplexFloatingTensor, np.ndarray, complex]:
     if isinstance(x, Tensor):
         return torch.view_as_complex(x)
     elif isinstance(x, np.ndarray):
@@ -477,7 +483,7 @@ def prod(
         raise TypeError(msg)
 
 
-def is_floating_point(x: Any) -> bool:
+def is_floating_point(x: Any) -> TypeGuard[Union[FloatingTensor, np.ndarray, float]]:
     if isinstance(x, Tensor):
         return x.is_floating_point()
     elif isinstance(x, (np.ndarray, np.generic)):
@@ -486,7 +492,7 @@ def is_floating_point(x: Any) -> bool:
         return isinstance(x, float)
 
 
-def is_complex(x: Any) -> bool:
+def is_complex(x: Any) -> TypeGuard[Union[ComplexFloatingTensor, np.ndarray, complex]]:
     if isinstance(x, Tensor):
         return x.is_complex()
     elif isinstance(x, (np.ndarray, np.generic)):

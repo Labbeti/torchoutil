@@ -98,6 +98,30 @@ class TestIsNumber(TestCase):
             except (ValueError, RuntimeError, TypeError) as err:
                 assert not x_is_scalar, f"{type(x)=} ; {x=} ; {err=}"
 
+    def test_is_builtin_strict(self) -> None:
+        class subint(int):
+            ...
+
+        i1 = 100
+        i2 = subint(100)
+
+        assert is_builtin_scalar(i1, strict=False)
+        assert is_builtin_scalar(i1, strict=True)
+        assert is_builtin_scalar(i2, strict=False)
+        assert not is_builtin_scalar(i2, strict=True)
+
+        if not _NUMPY_AVAILABLE:
+            return None
+
+        s1 = "abc"
+        arr = np.array([s1, s1])
+        s2 = arr[0]
+
+        assert is_builtin_scalar(s1, strict=False)
+        assert is_builtin_scalar(s1, strict=True)
+        assert is_builtin_scalar(s2, strict=False)
+        assert not is_builtin_scalar(s2, strict=True)
+
 
 if __name__ == "__main__":
     unittest.main()
