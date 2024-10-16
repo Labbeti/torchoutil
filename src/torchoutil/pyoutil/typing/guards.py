@@ -56,25 +56,56 @@ def is_dict_str(x: Any) -> TypeIs[Dict[str, Any]]:
     return isinstance(x, dict) and all(isinstance(key, str) for key in x.keys())
 
 
-def is_iterable_bool(x: Any) -> TypeIs[Iterable[bool]]:
+def is_iterable_bool(
+    x: Any,
+    *,
+    accept_generator: bool = True,
+) -> TypeIs[Iterable[bool]]:
+    if not accept_generator and isinstance(x, Generator):
+        return False
     return isinstance(x, Iterable) and all(isinstance(xi, bool) for xi in x)
 
 
-def is_iterable_float(x: Any) -> TypeIs[Iterable[float]]:
-    return isinstance(x, Iterable) and all(isinstance(xi, float) for xi in x)
-
-
-def is_iterable_bytes_or_list(x: Any) -> TypeIs[Iterable[Union[bytes, list]]]:
+def is_iterable_bytes_or_list(
+    x: Any,
+    *,
+    accept_generator: bool = True,
+) -> TypeIs[Iterable[Union[bytes, list]]]:
+    if not accept_generator and isinstance(x, Generator):
+        return False
     return isinstance(x, Iterable) and all(isinstance(xi, (bytes, list)) for xi in x)
 
 
-def is_iterable_int(x: Any, *, accept_bool: bool = True) -> TypeIs[Iterable[int]]:
+def is_iterable_float(
+    x: Any,
+    *,
+    accept_generator: bool = True,
+) -> TypeIs[Iterable[float]]:
+    if not accept_generator and isinstance(x, Generator):
+        return False
+    return isinstance(x, Iterable) and all(isinstance(xi, float) for xi in x)
+
+
+def is_iterable_int(
+    x: Any,
+    *,
+    accept_bool: bool = True,
+    accept_generator: bool = True,
+) -> TypeIs[Iterable[int]]:
+    if not accept_generator and isinstance(x, Generator):
+        return False
     return isinstance(x, Iterable) and all(
         isinstance(xi, int) and (accept_bool or not isinstance(xi, bool)) for xi in x
     )
 
 
-def is_iterable_integral(x: Any) -> TypeIs[Iterable[Integral]]:
+def is_iterable_integral(
+    x: Any,
+    *,
+    accept_generator: bool = True,
+) -> TypeIs[Iterable[Integral]]:
+    if not accept_generator and isinstance(x, Generator):
+        return False
     return isinstance(x, Iterable) and all(isinstance(xi, Integral) for xi in x)
 
 

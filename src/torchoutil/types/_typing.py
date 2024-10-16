@@ -11,7 +11,7 @@ from torchoutil.extras.numpy.definitions import (  # noqa: F401
     np,
     numpy,
 )
-from torchoutil.pyoutil.typing import BuiltinNumber, BuiltinScalar
+from torchoutil.pyoutil.typing.classes import BuiltinNumber, BuiltinScalar
 
 from .tensor_subclasses import (  # noqa: F401
     BoolTensor,

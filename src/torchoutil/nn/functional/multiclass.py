@@ -4,15 +4,27 @@
 """Helper functions for conversion between classes indices, onehot, names and probabilities for multiclass classification.
 """
 
-from typing import Hashable, Iterable, List, Mapping, Optional, Sequence, TypeVar, Union
+from typing import (
+    Any,
+    Callable,
+    Hashable,
+    Iterable,
+    List,
+    Mapping,
+    Optional,
+    Sequence,
+    TypeVar,
+    Union,
+)
 
 import torch
 from torch import Tensor
 from torch.nn import functional as F
 from torch.types import Device
 
+from torchoutil.extras.numpy import np
 from torchoutil.nn.functional.get import get_device
-from torchoutil.nn.functional.others import to_item
+from torchoutil.nn.functional.others import nelement, to_item
 from torchoutil.pyoutil.logging import warn_once
 from torchoutil.types import is_number_like
 
@@ -20,7 +32,7 @@ T = TypeVar("T")
 
 
 def index_to_onehot(
-    index: Union[Sequence[int], Tensor, Sequence],
+    index: Union[Sequence[int], Tensor, Sequence, np.ndarray],
     num_classes: int,
     *,
     padding_idx: Optional[int] = None,
@@ -63,8 +75,10 @@ def index_to_onehot(
 
 
 def index_to_name(
-    index: Union[Sequence[int], Tensor, Sequence],
+    index: Union[Sequence[int], Tensor, Sequence, np.ndarray],
     idx_to_name: Union[Mapping[int, T], Sequence[T]],
+    *,
+    is_number_fn: Callable[[Any], bool] = is_number_like,
 ) -> List[T]:
     """Convert indices of labels to names using a mapping.
 
@@ -74,7 +88,7 @@ def index_to_name(
     """
 
     def index_to_name_impl(x) -> Union[T, list]:
-        if is_number_like(x):
+        if is_number_fn(x):
             return idx_to_name[to_item(x)]  # type: ignore
         elif isinstance(x, Iterable):
             return [index_to_name_impl(xi) for xi in x]
@@ -82,7 +96,11 @@ def index_to_name(
             msg = f"Invalid argument {x=}. (not present in idx_to_name and not an iterable type)"
             raise ValueError(msg)
 
-    if isinstance(index, Tensor) and index.nelement() == 0 and index.ndim > 1:
+    if (
+        isinstance(index, (Tensor, np.ndarray))
+        and nelement(index) == 0
+        and index.ndim > 1
+    ):
         msg = f"Found 0 elements in {index=} but {index.ndim=} > 1, which means that we will lose information about shape when converting to names."
         warn_once(msg, __name__)
 

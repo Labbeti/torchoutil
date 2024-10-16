@@ -3,15 +3,8 @@
 
 from torch.types import *
 
-from torchoutil.core.get import (
-    CUDA_IF_AVAILABLE,
-    DeviceLike,
-    DTypeLike,
-    GeneratorLike,
-    get_device,
-    get_dtype,
-    get_generator,
-)
+from torchoutil.core.dtype_enum import DTypeEnum
+from torchoutil.core.get import DeviceLike, DTypeLike, GeneratorLike
 from torchoutil.pyoutil.typing import *
 
 from .guards import (

@@ -19,7 +19,7 @@ from typing import (
 )
 
 import torch
-from torch import LongTensor, Tensor, nn
+from torch import Tensor, nn
 from typing_extensions import TypeGuard
 
 from torchoutil.extras.numpy import (
@@ -42,7 +42,12 @@ from torchoutil.pyoutil.typing import (
     is_builtin_number,
     is_builtin_scalar,
 )
-from torchoutil.types._typing import ComplexFloatingTensor, FloatingTensor, ScalarLike
+from torchoutil.types._typing import (
+    ComplexFloatingTensor,
+    FloatingTensor,
+    LongTensor,
+    ScalarLike,
+)
 from torchoutil.types.guards import is_list_tensor, is_scalar_like, is_tuple_tensor
 from torchoutil.utils import return_types
 
@@ -432,7 +437,7 @@ def view_as_complex(
     x: Union[Tensor, np.ndarray, Tuple[float, float]]
 ) -> Union[ComplexFloatingTensor, np.ndarray, complex]:
     if isinstance(x, Tensor):
-        return torch.view_as_complex(x)
+        return torch.view_as_complex(x)  # type: ignore
     elif isinstance(x, np.ndarray):
         return numpy_view_as_complex(x)
     elif (
@@ -510,13 +515,14 @@ def is_sorted(
     if isinstance(x, (Tensor, np.ndarray)):
         assert x.ndim == 1
         if not reverse and not strict:
-            return (x[:-1] <= x[1:]).all().item()
+            result = (x[:-1] <= x[1:]).all().item()
         elif not reverse and strict:
-            return (x[:-1] < x[1:]).all().item()
+            result = (x[:-1] < x[1:]).all().item()
         elif reverse and not strict:
-            return (x[:-1] >= x[1:]).all().item()
+            result = (x[:-1] >= x[1:]).all().item()
         else:  # reverse and strict
-            return (x[:-1] > x[1:]).all().item()
+            result = (x[:-1] > x[1:]).all().item()
+        return result  # type: ignore
 
     elif isinstance(x, Sequence):
         return builtin_is_sorted(x, reverse=reverse, strict=strict)
