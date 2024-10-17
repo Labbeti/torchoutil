@@ -9,7 +9,9 @@ import torch
 
 from torchoutil.types import tensor_subclasses
 from torchoutil.types.tensor_subclasses import (
+    BoolTensor,
     BoolTensor1D,
+    ByteTensor,
     CDoubleTensor,
     CFloatTensor,
     CHalfTensor,
@@ -23,8 +25,6 @@ from torchoutil.types.tensor_subclasses import (
     FloatTensor1D,
     FloatTensor2D,
     HalfTensor,
-    IntegralTensor,
-    IntegralTensor3D,
     IntTensor,
     IntTensor0D,
     LongTensor,
@@ -32,8 +32,11 @@ from torchoutil.types.tensor_subclasses import (
     LongTensor1D,
     ShortTensor,
     ShortTensor1D,
+    SignedIntegerTensor,
+    SignedIntegerTensor3D,
     Tensor0D,
     Tensor1D,
+    UnsignedIntegerTensor,
     _TensorNDBase,
 )
 
@@ -70,6 +73,17 @@ class TestTensorTyping(TestCase):
         assert not issubclass(torch.Tensor, Tensor0D)
         assert not issubclass(torch.Tensor, FloatTensor0D)
         assert not issubclass(torch.Tensor, IntTensor)
+
+        assert issubclass(ByteTensor, UnsignedIntegerTensor)
+        assert issubclass(BoolTensor, UnsignedIntegerTensor)
+
+        assert not issubclass(ByteTensor, SignedIntegerTensor)
+        assert not issubclass(ByteTensor, FloatingTensor)
+        assert not issubclass(ByteTensor, ComplexFloatingTensor)
+
+        assert not issubclass(BoolTensor, SignedIntegerTensor)
+        assert not issubclass(BoolTensor, FloatingTensor)
+        assert not issubclass(BoolTensor, ComplexFloatingTensor)
 
     def test_default_dtype(self) -> None:
         x = [random.randint(0, 100) for _ in range(10)]
@@ -142,7 +156,7 @@ class TestTensorTyping(TestCase):
             and x.is_signed()
         )
 
-        x = IntegralTensor3D()
+        x = SignedIntegerTensor3D()
         assert (
             x.ndim == 3
             and not x.is_floating_point()
@@ -178,14 +192,14 @@ class TestTensorTyping(TestCase):
             FloatingTensor(dtype=torch.int32)
 
         with self.assertRaises(ValueError):
-            IntegralTensor(dtype=torch.complex64)
+            SignedIntegerTensor(dtype=torch.complex64)
 
         with self.assertRaises(ValueError):
-            IntegralTensor(dtype=torch.bool)
+            SignedIntegerTensor(dtype=torch.bool)
 
         _ = ComplexFloatingTensor(dtype=torch.complex128)
         _ = FloatingTensor(dtype=torch.half)
-        _ = IntegralTensor(dtype=torch.long)
+        _ = SignedIntegerTensor(dtype=torch.long)
 
         x = Tensor0D(10.0)
         assert x.ndim == 0 and x.dtype == torch.float
@@ -253,7 +267,7 @@ class TestTensorTyping(TestCase):
         assert not isinstance(BoolTensor1D(), cls)
 
     def test_integral_class(self) -> None:
-        cls = IntegralTensor
+        cls = SignedIntegerTensor
         assert not cls().is_floating_point()
         assert not cls().is_complex()
         assert cls().is_signed()
