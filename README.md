@@ -68,16 +68,16 @@ print(isinstance(x2, Tensor2D))  # True
 ```
 
 ```python
-from torchoutil import IntegralTensor
+from torchoutil import SignedIntegerTensor
 
 x1 = torch.as_tensor([1, 2], dtype=torch.int)
-print(isinstance(x1, IntegralTensor))  # True
+print(isinstance(x1, SignedIntegerTensor))  # True
 
 x2 = torch.as_tensor([1, 2], dtype=torch.long)
-print(isinstance(x2, IntegralTensor))  # True
+print(isinstance(x2, SignedIntegerTensor))  # True
 
 x3 = torch.as_tensor([1, 2], dtype=torch.float)
-print(isinstance(x3, IntegralTensor))  # False
+print(isinstance(x3, SignedIntegerTensor))  # False
 ```
 
 ### Padding
