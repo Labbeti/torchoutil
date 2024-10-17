@@ -4,6 +4,18 @@
 """Tensor subclasses for typing and instance checks.
 
 Note: torchoutil.FloatTensor != torch.FloatTensor but issubclass(torchoutil.FloatTensor, torch.FloatTensor) is False because torch.FloatTensor cannot be subclassed
+
+Here is an overview of the valid tensor subclasses tree:
+                                                                            Tensor
+                                                                              |
+                  +--------------------------------------+--------------------+----------------------+-------------------------------------+
+                  |                                      |                                           |                                     |
+        ComplexFloatingTensor                      FloatingTensor                           SignedIntegerTensor                   UnsignedIntegerTensor
+                  |                                      |                                           |                                     |
+     +------------+------------+             +-----------+-----------+             +-----------+-----+-----+-----------+             +-----+-----+
+     |            |            |             |           |           |             |           |           |           |             |           |
+CHalfTensor CFloatTensor CDoubleTensor   HalfTensor FloatTensor DoubleTensor   CharTensor  ShortTensor  IntTensor  LongTensor    ByteTensor  BoolTensor
+   (c32)        (c64)       (c128)         (f16)       (f32)       (f64)          (i8)       (i16)       (i32)       (i64)          (u8)       (bool)
 """
 
 from typing import (
@@ -684,20 +696,20 @@ class ByteTensor3D(
 
 class CharTensor(
     _TensorNDBase[
-        Literal[DTypeEnum.uint8],
+        Literal[DTypeEnum.int8],
         int,
         int,
         Literal[False],
         Literal[False],
-        Literal[False],
+        Literal[True],
     ],
     metaclass=_TensorNDMeta[
-        Literal[DTypeEnum.uint8],
+        Literal[DTypeEnum.int8],
         int,
         int,
         Literal[False],
         Literal[False],
-        Literal[False],
+        Literal[True],
     ],
 ):
     ...
@@ -1973,7 +1985,7 @@ class FloatingTensor3D(
     _DEFAULT_DTYPE = DTypeEnum.float32
 
 
-class IntegralTensor(
+class SignedIntegerTensor(
     _TensorNDBase[
         Literal[None],
         int,
@@ -1991,17 +2003,17 @@ class IntegralTensor(
         Literal[True],
     ],
 ):
-    """Intermediate class for checking and typing integral data type (integer-like) tensors.
+    """Intermediate class for checking and typing signed integer data type (integer-like) tensors.
     - Concrete subclasses are: IntTensor, LongTensor, ShortTensor.
     - Properties are: is_floating_point=False, is_complex=False, is_signed=True.
     - By default, instantiate this class will create an IntTensor.
-    - BoolTensor is not a subclass of IntegralTensor because it is not signed.
+    - BoolTensor is not a subclass of SignedIntegerTensor because it is not signed.
     """
 
     _DEFAULT_DTYPE = DTypeEnum.int32
 
 
-class IntegralTensor0D(
+class SignedIntegerTensor0D(
     _TensorNDBase[
         Literal[None],
         Literal[0],
@@ -2022,7 +2034,7 @@ class IntegralTensor0D(
     _DEFAULT_DTYPE = DTypeEnum.int32
 
 
-class IntegralTensor1D(
+class SignedIntegerTensor1D(
     _TensorNDBase[
         Literal[None],
         Literal[1],
@@ -2043,7 +2055,7 @@ class IntegralTensor1D(
     _DEFAULT_DTYPE = DTypeEnum.int32
 
 
-class IntegralTensor2D(
+class SignedIntegerTensor2D(
     _TensorNDBase[
         Literal[None],
         Literal[2],
@@ -2064,7 +2076,7 @@ class IntegralTensor2D(
     _DEFAULT_DTYPE = DTypeEnum.int32
 
 
-class IntegralTensor3D(
+class SignedIntegerTensor3D(
     _TensorNDBase[
         Literal[None],
         Literal[3],
@@ -2083,3 +2095,115 @@ class IntegralTensor3D(
     ],
 ):
     _DEFAULT_DTYPE = DTypeEnum.int32
+
+
+class UnsignedIntegerTensor(
+    _TensorNDBase[
+        Literal[None],
+        int,
+        int,
+        Literal[False],
+        Literal[False],
+        Literal[False],
+    ],
+    metaclass=_TensorNDMeta[
+        Literal[None],
+        int,
+        int,
+        Literal[False],
+        Literal[False],
+        Literal[False],
+    ],
+):
+    """Intermediate class for checking and typing unsigned integer data type (integer-like) tensors.
+    - Concrete subclasses are: BoolTensor, ByteTensor.
+    - Properties are: is_floating_point=False, is_complex=False, is_signed=False.
+    - By default, instantiate this class will create an ByteTensor.
+    - BoolTensor is a subclass of UnsignedIntegerTensor.
+    """
+
+    _DEFAULT_DTYPE = DTypeEnum.uint8
+
+
+class UnsignedIntegerTensor0D(
+    _TensorNDBase[
+        Literal[None],
+        Literal[0],
+        int,
+        Literal[False],
+        Literal[False],
+        Literal[False],
+    ],
+    metaclass=_TensorNDMeta[
+        Literal[None],
+        Literal[0],
+        int,
+        Literal[False],
+        Literal[False],
+        Literal[False],
+    ],
+):
+    _DEFAULT_DTYPE = DTypeEnum.uint8
+
+
+class UnsignedIntegerTensor1D(
+    _TensorNDBase[
+        Literal[None],
+        Literal[1],
+        int,
+        Literal[False],
+        Literal[False],
+        Literal[False],
+    ],
+    metaclass=_TensorNDMeta[
+        Literal[None],
+        Literal[1],
+        int,
+        Literal[False],
+        Literal[False],
+        Literal[False],
+    ],
+):
+    _DEFAULT_DTYPE = DTypeEnum.uint8
+
+
+class UnsignedIntegerTensor2D(
+    _TensorNDBase[
+        Literal[None],
+        Literal[2],
+        int,
+        Literal[False],
+        Literal[False],
+        Literal[False],
+    ],
+    metaclass=_TensorNDMeta[
+        Literal[None],
+        Literal[2],
+        int,
+        Literal[False],
+        Literal[False],
+        Literal[False],
+    ],
+):
+    _DEFAULT_DTYPE = DTypeEnum.uint8
+
+
+class UnsignedIntegerTensor3D(
+    _TensorNDBase[
+        Literal[None],
+        Literal[3],
+        int,
+        Literal[False],
+        Literal[False],
+        Literal[False],
+    ],
+    metaclass=_TensorNDMeta[
+        Literal[None],
+        Literal[3],
+        int,
+        Literal[False],
+        Literal[False],
+        Literal[False],
+    ],
+):
+    _DEFAULT_DTYPE = DTypeEnum.uint8

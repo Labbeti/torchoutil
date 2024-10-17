@@ -13,10 +13,10 @@ from torchoutil.types._typing import (
     BoolTensor1D,
     ComplexFloatingTensor,
     FloatingTensor,
-    IntegralTensor,
-    IntegralTensor1D,
     NumberLike,
     ScalarLike,
+    SignedIntegerTensor,
+    SignedIntegerTensor1D,
     Tensor0D,
 )
 
@@ -41,11 +41,11 @@ def is_integral_dtype(dtype: torch.dtype) -> bool:
     return not dtype.is_floating_point and not dtype.is_complex and dtype.is_signed
 
 
-def is_integral_tensor(x: Any) -> TypeIs[IntegralTensor]:
+def is_integral_tensor(x: Any) -> TypeIs[SignedIntegerTensor]:
     return isinstance(x, Tensor) and is_integral_dtype(x.dtype)
 
 
-def is_integral_tensor1d(x: Any) -> TypeIs[IntegralTensor1D]:
+def is_integral_tensor1d(x: Any) -> TypeIs[SignedIntegerTensor1D]:
     return is_integral_tensor(x) and x.ndim == 1
 
 
