@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+from typing import Tuple, Union
+
 import torch
 from torch import Tensor
 
@@ -53,7 +55,7 @@ def extract_segments(x: Tensor) -> LongTensor:
 
 def segments_to_list(
     segments: Tensor,
-    maxsize: int | tuple[int, ...] | None,
+    maxsize: Union[int, Tuple[int, ...], None],
 ) -> list:
     if segments.shape[0] == 2:
         starts, ends = segments.tolist()
