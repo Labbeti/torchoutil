@@ -132,10 +132,16 @@ def load_yaml(
 class IgnoreTagLoader(SafeLoader):
     """SafeLoader that ignores yaml tags.
 
-    Usage:
+    Examples
+    ========
 
     ```python
-    >>> content = yaml.load(stream, Loader=IgnoreTagLoader)
+    >>> dumped = "a: !!python/tuple\n- 1\n- 2"
+    >>> yaml.load(dumped, Loader=IgnoreTagLoader)
+    ... {"a": [1, 2]}
+    >>> yaml.load(dumped, Loader=FullLoader)
+    ... {"a": (1, 2)}
+    >>> yaml.load(dumped, Loader=SafeLoader)  # raises ConstructorError
     ```
     """
 

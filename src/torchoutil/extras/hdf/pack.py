@@ -481,25 +481,6 @@ def _scan_dataset(
         np_dtype = merge_numpy_dtypes(np_dtypes, empty=HDF_VOID_DTYPE)
         hdf_dtype = numpy_dtype_to_hdf_dtype(np_dtype, encoding=encoding)
 
-        # TODO: rm debug
-        # if (
-        #     verbose >= 2
-        #     and np_dtype
-        #     not in (
-        #         None,
-        #         str,
-        #         bool,
-        #         np.int32,
-        #         np.int8,
-        #         np.float32,
-        #     )
-        #     and np_dtype.kind != "S"
-        #     and (not store_str_as_vlen and np_dtype.kind == "U")
-        # ):
-        #     expected_np_dtype = hdf_dtype_to_numpy_dtype(hdf_dtype)
-        #     msg = f"Found input dtype {np_dtype} which is not compatible with HDF. It will be cast to {expected_np_dtype}. (with {hdf_dtype=})"
-        #     warn_once(msg, __name__)
-
         all_eq_shapes[attr_name] = all_eq(shapes)
         max_shapes[attr_name] = tuple(map(max, zip(*shapes)))
         hdf_dtypes[attr_name] = hdf_dtype
