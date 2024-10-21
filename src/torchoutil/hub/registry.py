@@ -23,13 +23,12 @@ from typing import (
 
 import torch
 from torch import Tensor
-from torch.types import Device
 from typing_extensions import NotRequired
 
-from torchoutil.nn.functional.get import get_device
+from torchoutil.nn.functional.get import DeviceLike, get_device
 from torchoutil.pyoutil.hashlib import HashName, hash_file
 
-T = TypeVar("T", bound=Hashable)
+T_Hashable = TypeVar("T_Hashable", bound=Hashable)
 
 pylog = logging.getLogger(__name__)
 
@@ -43,10 +42,10 @@ class RegistryEntry(TypedDict):
     architecture: NotRequired[str]
 
 
-class RegistryHub(Generic[T]):
+class RegistryHub(Generic[T_Hashable]):
     def __init__(
         self,
-        infos: Mapping[T, RegistryEntry],
+        infos: Mapping[T_Hashable, RegistryEntry],
         register_root: Union[str, Path, None] = None,
     ) -> None:
         """
@@ -65,7 +64,7 @@ class RegistryHub(Generic[T]):
         self._ckpt_parent_path = register_root
 
     @property
-    def infos(self) -> Dict[T, RegistryEntry]:
+    def infos(self) -> Dict[T_Hashable, RegistryEntry]:
         return self._infos
 
     @property
@@ -73,14 +72,14 @@ class RegistryHub(Generic[T]):
         return self._ckpt_parent_path.resolve()
 
     @property
-    def names(self) -> List[T]:
+    def names(self) -> List[T_Hashable]:
         return list(self._infos.keys())
 
     @property
     def paths(self) -> List[Path]:
         return [self.get_path(model_name) for model_name in self.names]
 
-    def get_path(self, name: T) -> Path:
+    def get_path(self, name: T_Hashable) -> Path:
         if name not in self.names:
             msg = f"Invalid argument {name=}. (expected one of {self.names})"
             raise ValueError(msg)
@@ -91,9 +90,9 @@ class RegistryHub(Generic[T]):
 
     def load_state_dict(
         self,
-        name_or_path: Union[T, str, Path],
+        name_or_path: Union[T_Hashable, str, Path],
         *,
-        device: Device = None,
+        device: DeviceLike = None,
         offline: bool = False,
         load_fn: Callable = torch.load,
         load_kwds: Optional[Dict[str, Any]] = None,
@@ -116,12 +115,16 @@ class RegistryHub(Generic[T]):
             load_kwds = {}
 
         if device is not None:
-            pylog.warning(
-                f"Deprecated argument {device=}. Use `load_kwds=dict(map_location={device})` instead."
-            )
+            src_device = device
             device = get_device(device)
+            msg = f"Deprecated argument device={src_device}. Use `load_kwds=dict(map_location={device})` instead."
+            pylog.warning(msg)
             if device is not None:
                 load_kwds["map_location"] = device
+
+        # Use weights_only=True by default
+        if load_fn is torch.load and "weights_only" not in load_kwds:
+            load_kwds["weights_only"] = True
 
         if isinstance(name_or_path, (str, Path)) and osp.isfile(name_or_path):
             path = name_or_path
@@ -144,7 +147,6 @@ class RegistryHub(Generic[T]):
         del name_or_path
 
         data = load_fn(path, **load_kwds)
-
         info = self._infos.get(name, {})  # type: ignore
         state_dict_key = info.get("state_dict_key", None)
 
@@ -163,7 +165,7 @@ class RegistryHub(Generic[T]):
 
     def download_file(
         self,
-        name: T,
+        name: T_Hashable,
         force: bool = False,
         check_hash: bool = True,
         verbose: int = 0,
@@ -195,13 +197,12 @@ class RegistryHub(Generic[T]):
 
     def is_valid_hash(
         self,
-        name: T,
+        name: T_Hashable,
     ) -> bool:
         info = self.infos[name]
         if "hash_type" not in info or "hash_value" not in info:
-            pylog.warning(
-                f"Cannot check hash for {name}. (cannot find any expected hash value or type)"
-            )
+            msg = f"Cannot check hash for {name}. (cannot find any expected hash value or type)"
+            pylog.warning(msg)
             return True
 
         hash_type = info["hash_type"]
@@ -228,16 +229,13 @@ class RegistryHub(Generic[T]):
             args = json.load(file)
         return RegistryHub(**args)
 
-    def _get_name(self, path: Union[str, Path]) -> Optional[T]:
+    def _get_name(self, path: Union[str, Path]) -> Optional[T_Hashable]:
         path_to_name = {
             path_i.resolve().expanduser(): name_i
             for path_i, name_i in zip(self.paths, self.names)
         }
         path = Path(path).resolve().expanduser()
-        if path in path_to_name:
-            name = path_to_name[path]
-        else:
-            name = None
+        name = path_to_name.get(path, None)
         return name
 
 
