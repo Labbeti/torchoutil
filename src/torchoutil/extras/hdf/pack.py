@@ -5,6 +5,7 @@ import json
 import logging
 from dataclasses import asdict
 from pathlib import Path
+from tempfile import NamedTemporaryFile
 from typing import (
     Any,
     Callable,
@@ -165,6 +166,24 @@ def pack_to_hdf(
         encoding=encoding,
         skip_scan=skip_scan,
     )
+
+    # For debugging purposes
+    data = {
+        "item_type": item_type,
+        "max_shapes": max_shapes,
+        "hdf_dtypes": hdf_dtypes,
+        "all_eq_shapes": all_eq_shapes,
+        "src_np_dtypes": src_np_dtypes,
+    }
+    data = to_builtin(data)
+
+    with NamedTemporaryFile(
+        "w",
+        prefix="HDF_scan_results_",
+        suffix=".json",
+        delete=False,
+    ) as file:
+        json.dump(data, file)
 
     creation_date = now_iso()
 
