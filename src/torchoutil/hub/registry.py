@@ -122,10 +122,6 @@ class RegistryHub(Generic[T_Hashable]):
             if device is not None:
                 load_kwds["map_location"] = device
 
-        # Use weights_only=True by default
-        if load_fn is torch.load and "weights_only" not in load_kwds:
-            load_kwds["weights_only"] = True
-
         if isinstance(name_or_path, (str, Path)) and osp.isfile(name_or_path):
             path = name_or_path
             name = self._get_name(path)
