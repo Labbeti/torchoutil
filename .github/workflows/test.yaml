@@ -75,7 +75,7 @@ jobs:
 
     - name: Show coverage results
       run: |
-        ls
+        ls -lha
         coverage report -m
 
   # build-minimal:
