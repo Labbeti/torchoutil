@@ -135,4 +135,5 @@ jobs:
 
     - name: Show coverage results
       run: |
+        ls -lha
         coverage report -m
