@@ -9,6 +9,8 @@ import torch
 from torchoutil.core.packaging import _NUMPY_AVAILABLE
 from torchoutil.extras.numpy import (
     np,
+    numpy_is_complex,
+    numpy_is_complex_dtype,
     numpy_to_tensor,
     numpy_view_as_complex,
     numpy_view_as_real,
@@ -39,8 +41,16 @@ class TestNumpyConversions(TestCase):
             )
             for _ in range(1000)
         ]
+        assert all(numpy_is_complex(xi) for xi in x_complex)
+        assert all(numpy_is_complex_dtype(xi.dtype) for xi in x_complex)
+
         x_real = [numpy_view_as_real(xi) for xi in x_complex]
+        assert all(not numpy_is_complex(xi) for xi in x_real)
+        assert all(not numpy_is_complex_dtype(xi.dtype) for xi in x_real)
+
         result = [numpy_view_as_complex(xi) for xi in x_real]
+        assert all(numpy_is_complex(xi) for xi in result)
+        assert all(numpy_is_complex_dtype(xi.dtype) for xi in result)
         assert x_complex == result
 
 
