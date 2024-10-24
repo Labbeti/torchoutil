@@ -71,11 +71,10 @@ jobs:
 
     - name: Test with pytest
       run: |
-        coverage run -m pytest -v
+        coverage run --source src -m pytest -v
 
     - name: Show coverage results
       run: |
-        ls -lha
         coverage report -m
 
   # build-minimal:
