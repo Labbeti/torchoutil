@@ -300,7 +300,7 @@ def pack_to_hdf(
                     try:
                         hdf_dset[slices] = value
                     except (TypeError, ValueError, OSError) as err:
-                        msg = f"Cannot set data {value} into {hdf_dset.shape=} ({attr_name=}, {i=}, {slices=}, {value.dtype=} {hdf_dset.dtype=})"
+                        msg = f"Cannot set data {value} of shape {shape} into {hdf_dset.shape=} ({attr_name=}, {i=}, {slices=}, {value.dtype=} {hdf_dset.dtype=})"
                         pylog.error(msg)
                         raise err
 
