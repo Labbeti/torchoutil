@@ -2,7 +2,18 @@
 # -*- coding: utf-8 -*-
 
 from numbers import Integral, Number
-from typing import Any, Dict, Generator, Iterable, List, Mapping, Sequence, Tuple, Union
+from typing import (
+    Any,
+    Dict,
+    Generator,
+    Iterable,
+    List,
+    Mapping,
+    Optional,
+    Sequence,
+    Tuple,
+    Union,
+)
 
 from typing_extensions import TypeGuard, TypeIs
 
@@ -54,6 +65,14 @@ def is_dataclass_instance(x: Any) -> TypeIs[DataclassInstance]:
 
 def is_dict_str(x: Any) -> TypeIs[Dict[str, Any]]:
     return isinstance(x, dict) and all(isinstance(key, str) for key in x.keys())
+
+
+def is_dict_str_optional_int(x: Any) -> TypeIs[Dict[str, Optional[int]]]:
+    return (
+        isinstance(x, dict)
+        and all(isinstance(key, str) for key in x.keys())
+        and all(isinstance(value, (int, NoneType)) for value in x.values())
+    )
 
 
 def is_iterable_bool(
@@ -188,6 +207,14 @@ def is_sequence_str(
         and isinstance(x, Sequence)
         and all(isinstance(xi, str) for xi in x)
     )
+
+
+def is_tuple_optional_int(x: Any) -> TypeIs[Tuple[Optional[int], ...]]:
+    return isinstance(x, tuple) and all(isinstance(xi, (int, NoneType)) for xi in x)
+
+
+def is_tuple_int(x: Any) -> TypeIs[Tuple[int, ...]]:
+    return isinstance(x, tuple) and all(isinstance(xi, int) for xi in x)
 
 
 def is_tuple_str(x: Any) -> TypeIs[Tuple[str, ...]]:

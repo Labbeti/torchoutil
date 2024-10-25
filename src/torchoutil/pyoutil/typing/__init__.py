@@ -20,6 +20,7 @@ from .guards import (
     is_builtin_scalar,
     is_dataclass_instance,
     is_dict_str,
+    is_dict_str_optional_int,
     is_iterable_bool,
     is_iterable_bytes_or_list,
     is_iterable_float,
@@ -39,5 +40,7 @@ from .guards import (
     is_sequence_bool,
     is_sequence_int,
     is_sequence_str,
+    is_tuple_int,
+    is_tuple_optional_int,
     is_tuple_str,
 )
