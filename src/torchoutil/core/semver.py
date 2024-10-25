@@ -8,11 +8,7 @@ from typing import Any, Dict, Tuple, TypedDict, Union, overload
 
 from typing_extensions import NotRequired, TypeIs
 
-from torchoutil.pyoutil.typing import (
-    NoneType,
-    is_dict_str_optional_int,
-    is_tuple_optional_int,
-)
+from torchoutil.pyoutil.typing import NoneType, is_dict_str_optional_int
 
 # Pattern of https://semver.org/
 _VERSION_PATTERN = r"^(?P<major>0|[1-9]\d*)\.(?P<minor>0|[1-9]\d*)\.(?P<patch>0|[1-9]\d*)(?:-(?P<prerelease>(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+(?P<buildmetadata>[0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$"
@@ -96,17 +92,13 @@ class Version:
             version_dict = dict(zip(_VERSION_KEYS, version_tuple))
 
         # Version args/kwargs
-        elif is_tuple_optional_int(args) and is_dict_str_optional_int(kwargs):
+        else:
             args_dict = dict(zip(_VERSION_KEYS, args))
             intersection = set(args_dict.keys()).intersection(kwargs.keys())
             if len(intersection) > 0:
                 msg = f"Duplicated argument(s) {tuple(intersection)}. (with {args=} and {kwargs=})"
                 raise ValueError(msg)
             version_dict = args_dict | kwargs
-
-        else:
-            msg = f"Invalid arguments {args=} and {kwargs=}."
-            raise ValueError(msg)
 
         major = version_dict["major"]
         minor = version_dict["minor"]

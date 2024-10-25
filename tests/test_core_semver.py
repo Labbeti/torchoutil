@@ -4,6 +4,9 @@
 import unittest
 from unittest import TestCase
 
+import torch
+
+import torchoutil as to
 from torchoutil.core.semver import Version
 
 
@@ -41,6 +44,10 @@ class TestVersion(TestCase):
             "patch": 0,
             "buildmetadata": "test",
         }
+
+        # Check if versions can be parsed
+        Version(to.__version__)
+        Version(torch.__version__)
 
     def test_parse_invalid(self) -> None:
         with self.assertRaises(ValueError):
