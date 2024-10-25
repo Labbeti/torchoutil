@@ -56,4 +56,4 @@ pythonVersion = "3.8"
 testpaths = ["tests"]
 
 [tool.coverage.run]
-source = "src"
+source = ["src"]
