@@ -534,6 +534,8 @@ def is_sorted(
 
 def all_eq(x: Union[Tensor, np.ndarray, ScalarLike, Iterable]) -> bool:
     if isinstance(x, Tensor):
+        if x.ndim == 0 or nelement(x) == 0:
+            return True
         x = x.view(-1)
         return (x[0] == x[1:]).all().item()
     elif isinstance(x, (np.ndarray, np.generic)):

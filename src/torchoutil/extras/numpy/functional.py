@@ -180,7 +180,7 @@ def numpy_item(x: Union[np.ndarray, np.generic, BuiltinScalar]) -> np.generic:
 
 
 def numpy_all_eq(x: Union[np.generic, np.ndarray]) -> bool:
-    if x.ndim == 0:
+    if x.ndim == 0 or prod(x.shape) == 0:
         return True
     else:
         return (x.flat[0] == x.flat[1:]).all()
