@@ -228,7 +228,7 @@ def pack_to_hdf(
                 if len(hdf_ds.shape) == 1:
                     continue
                 ratio = max_shapes_ratios[attr_name]
-                msg = f"HDF column dset multidim '{attr_name}' has been built. (with shape={hdf_ds.shape}, nelement_per_item={po.prod(hdf_ds.shape[1:])}, {ratio*100:.1f}, dtype={hdf_ds.dtype})"
+                msg = f"HDF column dset multidim '{attr_name}' has been built. (with shape={hdf_ds.shape}, nelement_per_item={po.prod(hdf_ds.shape[1:])} ({ratio*100:.3f}%), dtype={hdf_ds.dtype})"
                 pylog.debug(msg)
 
         added_columns: List[str] = []
