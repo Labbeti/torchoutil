@@ -345,6 +345,35 @@ class _TensorNDBase(
     ) -> None:
         ...
 
+    def __eq__(self, other: Any) -> "BoolTensor":
+        ...
+
+    @overload
+    def __getitem__(self: "Tensor1D", /, idx: int) -> "Tensor0D":
+        ...
+
+    @overload
+    def __getitem__(self: "Tensor2D", /, idx: int) -> "Tensor1D":
+        ...
+
+    @overload
+    def __getitem__(self: "Tensor3D", /, idx: int) -> "Tensor2D":
+        ...
+
+    @overload
+    def __getitem__(self: T_Tensor, /, sl: slice) -> T_Tensor:
+        ...
+
+    @overload
+    def __getitem__(self, *args) -> "Tensor":
+        ...
+
+    def __ne__(self, other: Any) -> "BoolTensor":
+        ...
+
+    def abs(self: T_Tensor) -> T_Tensor:
+        ...
+
     def is_complex(self) -> T_Complex:  # type: ignore
         ...
 
@@ -355,6 +384,12 @@ class _TensorNDBase(
         ...
 
     def item(self) -> T_BuiltinNumber:  # type: ignore
+        ...
+
+    def mean(self, dim: Optional[int] = None) -> "Tensor":
+        ...
+
+    def squeeze(self, dim: Optional[int] = None) -> "Tensor":
         ...
 
     @overload
@@ -392,6 +427,9 @@ class _TensorNDBase(
         ...
 
     def tolist(self) -> Union[list, T_BuiltinNumber]:  # type: ignore
+        ...
+
+    def unsqueeze(self, dim: Optional[int] = None) -> "Tensor":
         ...
 
     @overload
@@ -432,12 +470,19 @@ class _TensorNDBase(
 
     ndim: T_NDim  # type: ignore
 
+    __eq__ = torch.Tensor.__eq__  # noqa: F811
+    __getitem__ = torch.Tensor.__getitem__  # noqa: F811
+    __ne__ = torch.Tensor.__ne__  # noqa: F811
+    abs = torch.Tensor.abs  # noqa: F811
     is_complex = torch.Tensor.is_complex  # noqa: F811
     is_floating_point = torch.Tensor.is_floating_point  # noqa: F811
     is_signed = torch.Tensor.is_signed  # noqa: F811
     item = torch.Tensor.item  # noqa: F811  # type: ignore
+    mean = torch.Tensor.mean  # noqa: F811
+    squeeze = torch.Tensor.squeeze  # noqa: F811
     to = torch.Tensor.to  # noqa: F811
     tolist = torch.Tensor.tolist  # noqa: F811
+    unsqueeze = torch.Tensor.unsqueeze  # noqa: F811
     view = torch.Tensor.view  # noqa: F811
 
 
