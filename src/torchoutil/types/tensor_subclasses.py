@@ -8,14 +8,14 @@ Note: torchoutil.FloatTensor != torch.FloatTensor but issubclass(torchoutil.Floa
 Here is an overview of the valid tensor subclasses tree:
                                                                             Tensor
                                                                               |
-                  +--------------------------------------+--------------------+----------------------+-------------------------------------+
-                  |                                      |                                           |                                     |
-        ComplexFloatingTensor                      FloatingTensor                           SignedIntegerTensor                   UnsignedIntegerTensor
-                  |                                      |                                           |                                     |
-     +------------+------------+             +-----------+-----------+             +-----------+-----+-----+-----------+             +-----+-----+
-     |            |            |             |           |           |             |           |           |           |             |           |
-CHalfTensor CFloatTensor CDoubleTensor   HalfTensor FloatTensor DoubleTensor   CharTensor  ShortTensor  IntTensor  LongTensor    ByteTensor  BoolTensor
-   (c32)        (c64)       (c128)         (f16)       (f32)       (f64)          (i8)       (i16)       (i32)       (i64)          (u8)       (bool)
+                  +---------------------------------------+-------------------+-----------------------+-------------------------------------+
+                  |                                       |                                           |                                     |
+        ComplexFloatingTensor                       FloatingTensor                            SignedIntegerTensor                  UnsignedIntegerTensor
+                  |                                       |                                           |                                     |
+     +------------+------------+              +-----------+-----------+             +-----------+-----+-----+-----------+             +-----+-----+
+     |            |            |              |           |           |             |           |           |           |             |           |
+CHalfTensor CFloatTensor CDoubleTensor    HalfTensor FloatTensor DoubleTensor   CharTensor  ShortTensor  IntTensor  LongTensor    ByteTensor  BoolTensor
+   (c32)        (c64)       (c128)          (f16)       (f32)       (f64)          (i8)       (i16)       (i32)       (i64)          (u8)       (bool)
 """
 
 from typing import (

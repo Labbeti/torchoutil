@@ -4,12 +4,13 @@
 from typing import Any, Iterable, List, Tuple
 
 import torch
-from torch import BoolTensor, Tensor
+from torch import Tensor
 from typing_extensions import TypeIs
 
 from torchoutil.extras.numpy import is_numpy_number_like, is_numpy_scalar_like
 from torchoutil.pyoutil.typing import is_builtin_number, is_builtin_scalar
 from torchoutil.types._typing import (
+    BoolTensor,
     BoolTensor1D,
     ComplexFloatingTensor,
     FloatingTensor,
