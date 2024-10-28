@@ -93,12 +93,12 @@ class Version:
 
         # Version args/kwargs
         else:
-            args_dict = dict(zip(_VERSION_KEYS, args))
-            intersection = set(args_dict.keys()).intersection(kwargs.keys())
+            version_dict = dict(zip(_VERSION_KEYS, args))
+            intersection = set(version_dict.keys()).intersection(kwargs.keys())
             if len(intersection) > 0:
                 msg = f"Duplicated argument(s) {tuple(intersection)}. (with {args=} and {kwargs=})"
                 raise ValueError(msg)
-            version_dict = args_dict | kwargs
+            version_dict.update(kwargs)  # type: ignore
 
         major = version_dict["major"]
         minor = version_dict["minor"]
