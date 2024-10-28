@@ -25,13 +25,14 @@ from typing_extensions import TypeGuard
 from torchoutil.extras.numpy import (
     ACCEPTED_NUMPY_DTYPES,
     np,
+    numpy_all_eq,
     numpy_is_complex,
     numpy_is_floating_point,
     numpy_view_as_complex,
     numpy_view_as_real,
 )
 from torchoutil.nn.functional.get import get_device
-from torchoutil.pyoutil.collections import all_eq
+from torchoutil.pyoutil.collections import all_eq as builtin_all_eq
 from torchoutil.pyoutil.collections import is_sorted as builtin_is_sorted
 from torchoutil.pyoutil.collections import prod as builtin_prod
 from torchoutil.pyoutil.functools import identity
@@ -323,7 +324,7 @@ def _search_ndim(
         ndims = [_search_ndim(xi)[1] for xi in x]  # type: ignore
         if len(ndims) == 0:
             return True, 1
-        elif all_eq(ndims):
+        elif builtin_all_eq(ndims):
             return True, ndims[0] + 1
         else:
             return False, -1
@@ -344,7 +345,7 @@ def _search_shape(
         shapes = [_search_shape(xi)[1] for xi in x]  # type: ignore
         if len(shapes) == 0:
             return True, (0,)
-        elif all_eq(shapes):
+        elif builtin_all_eq(shapes):
             return True, (len(shapes),) + shapes[0]
         else:
             return False, ()
@@ -527,5 +528,19 @@ def is_sorted(
     elif isinstance(x, Sequence):
         return builtin_is_sorted(x, reverse=reverse, strict=strict)
 
+    else:
+        raise TypeError(f"Invalid argument type {type(x)=}.")
+
+
+def all_eq(x: Union[Tensor, np.ndarray, ScalarLike, Iterable]) -> bool:
+    if isinstance(x, Tensor):
+        x = x.view(-1)
+        return (x[0] == x[1:]).all().item()
+    elif isinstance(x, (np.ndarray, np.generic)):
+        return numpy_all_eq(x)
+    elif is_scalar_like(x):
+        return True
+    elif isinstance(x, Iterable):
+        return builtin_all_eq(x)
     else:
         raise TypeError(f"Invalid argument type {type(x)=}.")
