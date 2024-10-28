@@ -10,7 +10,12 @@ from typing_extensions import TypeIs
 from torchoutil.core.get import DeviceLike, DTypeLike, get_device, get_dtype
 from torchoutil.core.packaging import torch_version_ge_1_13
 from torchoutil.extras.numpy.definitions import NumpyNumberLike, NumpyScalarLike, np
-from torchoutil.pyoutil import BuiltinScalar, get_current_fn_name
+from torchoutil.pyoutil import (
+    BuiltinScalar,
+    get_current_fn_name,
+    is_builtin_scalar,
+    prod,
+)
 
 
 def to_numpy(
@@ -159,3 +164,16 @@ def numpy_topk(
     values = tensor_to_numpy(values)
     indices = tensor_to_numpy(indices)
     return values, indices
+
+
+def numpy_item(x: Union[np.ndarray, np.generic, BuiltinScalar]) -> np.generic:
+    if isinstance(x, np.generic):
+        return x
+    if is_builtin_scalar(x, strict=True):
+        return np.array(x)[()]
+    if prod(x.shape) != 1:
+        msg = f"Invalid argument shape {x.shape=}. (expected nd-array with 1 element)"
+        raise ValueError(msg)
+
+    indices = tuple([0] * x.ndim)
+    return x[indices]

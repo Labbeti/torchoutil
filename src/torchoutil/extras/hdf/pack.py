@@ -28,6 +28,7 @@ import tqdm
 from h5py import Dataset as HDFRawDataset
 from torch.utils.data.dataloader import DataLoader
 
+import pyoutil as po
 import torchoutil as to
 from torchoutil import nn
 from torchoutil.extras.hdf.common import (
@@ -44,7 +45,6 @@ from torchoutil.extras.numpy import (
     numpy_is_complex_dtype,
     scan_shape_dtypes,
 )
-from torchoutil.nn.functional.checksum import checksum
 from torchoutil.pyoutil.collections import all_eq
 from torchoutil.pyoutil.datetime import now_iso
 from torchoutil.pyoutil.functools import Compose
@@ -167,6 +167,11 @@ def pack_to_hdf(
         skip_scan=skip_scan,
     )
 
+    total = sum(po.prod(shape) for shape in max_shapes.values())
+    max_shapes_ratios = {
+        attr_name: po.prod(shape) / total for attr_name, shape in max_shapes.items()
+    }
+
     # For debugging purposes
     data = {
         "item_type": item_type,
@@ -222,10 +227,11 @@ def pack_to_hdf(
             for attr_name, hdf_ds in hdf_dsets.items():
                 if len(hdf_ds.shape) == 1:
                     continue
-                msg = f"HDF column dset multidim '{attr_name}' with (shape={hdf_ds.shape}, dtype={hdf_ds.dtype}) has been built."
+                ratio = max_shapes_ratios[attr_name]
+                msg = f"HDF column dset multidim '{attr_name}' has been built. (with shape={hdf_ds.shape}, nelement_per_item={po.prod(hdf_ds.shape[1:])}, {ratio*100:.1f}, dtype={hdf_ds.dtype})"
                 pylog.debug(msg)
 
-        added_columns = []
+        added_columns: List[str] = []
 
         # Create sub-datasets for shape data
         for attr_name, shape in max_shapes.items():
@@ -233,7 +239,7 @@ def pack_to_hdf(
                 continue
 
             shape_name = f"{attr_name}{shape_suffix}"
-            raw_dset_shape = (len(dataset), len(shape))
+            raw_dset_shape = len(dataset), len(shape)
 
             if shape_name not in hdf_dsets:
                 pass
@@ -243,13 +249,13 @@ def pack_to_hdf(
                 msg = f"Column {shape_name} already exists in source dataset with a different shape. (found shape={hdf_dsets[shape_name].shape} but expected shape is {raw_dset_shape})"
                 raise RuntimeError(msg)
 
-            added_columns.append(shape_name)
             hdf_dsets[shape_name] = hdf_file.create_dataset(
                 shape_name,
                 raw_dset_shape,
-                "i",
+                np.int32,
                 fillvalue=-1,
             )
+            added_columns.append(shape_name)
 
         # Fill sub-datasets with a second pass through the whole dataset
         i = 0
@@ -310,7 +316,7 @@ def pack_to_hdf(
                         hdf_shapes_dset = hdf_dsets[shape_name]
                         hdf_shapes_dset[i] = shape
 
-                    global_hash_value += checksum(value)
+                    global_hash_value += to.checksum(value)
 
                 i += 1
 
