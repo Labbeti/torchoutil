@@ -28,6 +28,7 @@ from torchoutil.pyoutil.functools import identity  # noqa: F401
 from torchoutil.pyoutil.typing import T_BuiltinScalar
 from torchoutil.types import DeviceLike, DTypeLike, is_number_like, is_scalar_like
 from torchoutil.types._typing import (
+    BuiltinNumber,
     NumberLike,
     Tensor0D,
     Tensor1D,
@@ -306,7 +307,7 @@ def flatten(
 
 @overload
 def to_tensor(
-    data: NumberLike,
+    data: BuiltinNumber,
     dtype: DTypeLike = None,
     device: DeviceLike = None,
 ) -> Tensor0D:
@@ -315,7 +316,7 @@ def to_tensor(
 
 @overload
 def to_tensor(
-    data: Sequence[NumberLike],
+    data: Sequence[BuiltinNumber],
     dtype: DTypeLike = None,
     device: DeviceLike = None,
 ) -> Tensor1D:
@@ -324,7 +325,7 @@ def to_tensor(
 
 @overload
 def to_tensor(
-    data: Sequence[Sequence[NumberLike]],
+    data: Sequence[Sequence[BuiltinNumber]],
     dtype: DTypeLike = None,
     device: DeviceLike = None,
 ) -> Tensor2D:
@@ -333,7 +334,7 @@ def to_tensor(
 
 @overload
 def to_tensor(
-    data: Sequence[Sequence[Sequence[NumberLike]]],
+    data: Sequence[Sequence[Sequence[BuiltinNumber]]],
     dtype: DTypeLike = None,
     device: DeviceLike = None,
 ) -> Tensor3D:

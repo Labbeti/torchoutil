@@ -107,4 +107,8 @@ NumberLike = Union[BuiltinNumber, NumpyNumberLike, Tensor0D]
 ScalarLike = Union[BuiltinScalar, NumpyScalarLike, Tensor0D]
 TensorLike = Union[torch.Tensor, np.ndarray]
 
-T_TensorLike = TypeVar("T_TensorLike", torch.Tensor, np.ndarray)
+T_TensorLike = TypeVar(
+    "T_TensorLike",
+    bound=Union[torch.Tensor, np.ndarray],
+    covariant=True,
+)
