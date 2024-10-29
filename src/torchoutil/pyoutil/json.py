@@ -3,7 +3,7 @@
 
 import json
 from pathlib import Path
-from typing import Any, Union
+from typing import Any, Optional, Union
 
 
 def to_json(
@@ -13,7 +13,7 @@ def to_json(
     overwrite: bool = True,
     make_parents: bool = True,
     # JSON dump kwargs
-    indent: int | None = 4,
+    indent: Optional[int] = 4,
     ensure_ascii: bool = False,
     **json_dump_kwds,
 ) -> str:
