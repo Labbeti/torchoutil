@@ -67,10 +67,11 @@ def to_yaml(
     to_builtins: bool = False,
     make_parents: bool = True,
     resolve: bool = False,
+    encoding: Optional[str] = "utf-8",
+    # YAML dump kwargs
     sort_keys: bool = False,
     indent: Union[int, None] = None,
     width: Union[int, None] = 1000,
-    encoding: Optional[str] = "utf-8",
     allow_unicode: bool = True,
     **yaml_dump_kwds,
 ) -> str:
