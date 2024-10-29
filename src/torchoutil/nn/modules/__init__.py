@@ -21,14 +21,14 @@ from .multiclass import (
 )
 from .multilabel import (
     IndicesToMultihot,
-    IndicesToNames,
+    IndicesToMultinames,
     MultihotToIndices,
-    MultihotToNames,
-    NamesToIndices,
-    NamesToMultihot,
+    MultihotToMultinames,
+    MultinamesToIndices,
+    MultinamesToMultihot,
     ProbsToIndices,
     ProbsToMultihot,
-    ProbsToNames,
+    ProbsToMultinames,
 )
 from .numpy import NumpyToTensor, TensorToNumpy, ToNumpy
 from .pad import PadAndStackRec, PadDim, PadDims

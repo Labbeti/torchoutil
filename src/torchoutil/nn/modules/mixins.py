@@ -55,10 +55,12 @@ pylog = logging.getLogger(__name__)
 
 __all__ = [
     "DeviceDetectMode",
+    "DEVICE_DETECT_MODES",
     "EModule",
     "ESequential",
     "EModuleList",
     "EModuleDict",
+    "EModulePartial",
 ]
 
 
@@ -662,7 +664,7 @@ class EModuleList(
     """Enriched torch.nn.ModuleList with proxy device, forward typing and automatic configuration detection from attributes.
 
     Designed to work with `torchoutil.nn.EModule` instances.
-    The default behaviour is the same than PyTorch ModuleList class, except for the forward call which returns a list containing the output of each model called separately.
+    The default behaviour is the same than PyTorch ModuleList class, except for the forward call which returns a list containing the output of each module called separately.
     """
 
     @overload
@@ -715,7 +717,7 @@ class EModuleDict(
     """Enriched torch.nn.ModuleDict with proxy device, forward typing and automatic configuration detection from attributes.
 
     Designed to work with `torchoutil.nn.EModule` instances.
-    The default behaviour is the same than PyTorch ModuleDict class, except for the forward call which returns a dict containing the output of each model called separately.
+    The default behaviour is the same than PyTorch ModuleDict class, except for the forward call which returns a dict containing the output of each module called separately.
     """
 
     @overload
