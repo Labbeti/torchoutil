@@ -1,26 +1,25 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from typing import Generic, List, Mapping, Optional, TypeVar, Union
+from typing import Generic, List, Mapping, Optional, Union
 
 import torch
 from torch import Tensor, nn
 from torch.types import Device
 
 from torchoutil.nn.functional.multilabel import (
+    T_Name,
     indices_to_multihot,
-    indices_to_names,
+    indices_to_multinames,
     multihot_to_indices,
-    multihot_to_names,
-    names_to_indices,
-    names_to_multihot,
+    multihot_to_multinames,
+    multinames_to_indices,
+    multinames_to_multihot,
     probs_to_indices,
     probs_to_multihot,
-    probs_to_names,
+    probs_to_multinames,
 )
 from torchoutil.pyoutil.collections import dump_dict
-
-T = TypeVar("T")
 
 
 class IndicesToMultihot(nn.Module):
@@ -67,14 +66,14 @@ class IndicesToMultihot(nn.Module):
         )
 
 
-class IndicesToNames(Generic[T], nn.Module):
+class IndicesToMultinames(Generic[T_Name], nn.Module):
     """
-    For more information, see :func:`~torchoutil.nn.functional.multilabel.indices_to_names`.
+    For more information, see :func:`~torchoutil.nn.functional.multilabel.indices_to_multinames`.
     """
 
     def __init__(
         self,
-        idx_to_name: Mapping[int, T],
+        idx_to_name: Mapping[int, T_Name],
         *,
         padding_idx: Optional[int] = None,
     ) -> None:
@@ -85,8 +84,8 @@ class IndicesToNames(Generic[T], nn.Module):
     def forward(
         self,
         indices: Union[List[List[int]], List[Tensor]],
-    ) -> List[List[T]]:
-        names = indices_to_names(
+    ) -> List[List[T_Name]]:
+        names = indices_to_multinames(
             indices,
             self.idx_to_name,
             padding_idx=self.padding_idx,
@@ -127,14 +126,14 @@ class MultihotToIndices(nn.Module):
         )
 
 
-class MultihotToNames(Generic[T], nn.Module):
+class MultihotToMultinames(Generic[T_Name], nn.Module):
     """
-    For more information, see :func:`~torchoutil.nn.functional.multilabel.multihot_to_names`.
+    For more information, see :func:`~torchoutil.nn.functional.multilabel.multihot_to_multinames`.
     """
 
     def __init__(
         self,
-        idx_to_name: Mapping[int, T],
+        idx_to_name: Mapping[int, T_Name],
     ) -> None:
         super().__init__()
         self.idx_to_name = idx_to_name
@@ -142,39 +141,39 @@ class MultihotToNames(Generic[T], nn.Module):
     def forward(
         self,
         multihot: Tensor,
-    ) -> List[List[T]]:
-        names = multihot_to_names(multihot, self.idx_to_name)
+    ) -> List[List[T_Name]]:
+        names = multihot_to_multinames(multihot, self.idx_to_name)
         return names
 
 
-class NamesToIndices(Generic[T], nn.Module):
+class MultinamesToIndices(Generic[T_Name], nn.Module):
     """
-    For more information, see :func:`~torchoutil.nn.functional.multilabel.names_to_indices`.
+    For more information, see :func:`~torchoutil.nn.functional.multilabel.multinames_to_indices`.
     """
 
     def __init__(
         self,
-        idx_to_name: Mapping[int, T],
+        idx_to_name: Mapping[int, T_Name],
     ) -> None:
         super().__init__()
         self.idx_to_name = idx_to_name
 
     def forward(
         self,
-        names: List[List[T]],
+        names: List[List[T_Name]],
     ) -> List[List[int]]:
-        indices = names_to_indices(names, self.idx_to_name)
+        indices = multinames_to_indices(names, self.idx_to_name)
         return indices
 
 
-class NamesToMultihot(Generic[T], nn.Module):
+class MultinamesToMultihot(Generic[T_Name], nn.Module):
     """
-    For more information, see :func:`~torchoutil.nn.functional.multilabel.names_to_multihot`.
+    For more information, see :func:`~torchoutil.nn.functional.multilabel.multinames_to_multihot`.
     """
 
     def __init__(
         self,
-        idx_to_name: Mapping[int, T],
+        idx_to_name: Mapping[int, T_Name],
         *,
         device: Device = None,
         dtype: Union[torch.dtype, None] = torch.bool,
@@ -186,9 +185,9 @@ class NamesToMultihot(Generic[T], nn.Module):
 
     def forward(
         self,
-        names: List[List[T]],
+        names: List[List[T_Name]],
     ) -> Tensor:
-        multihot = names_to_multihot(
+        multihot = multinames_to_multihot(
             names,
             self.idx_to_name,
             device=self.device,
@@ -268,15 +267,15 @@ class ProbsToMultihot(nn.Module):
         )
 
 
-class ProbsToNames(Generic[T], nn.Module):
+class ProbsToMultinames(Generic[T_Name], nn.Module):
     """
-    For more information, see :func:`~torchoutil.nn.functional.multilabel.probs_to_names`.
+    For more information, see :func:`~torchoutil.nn.functional.multilabel.probs_to_multinames`.
     """
 
     def __init__(
         self,
         threshold: Union[float, Tensor],
-        idx_to_name: Mapping[int, T],
+        idx_to_name: Mapping[int, T_Name],
     ) -> None:
         super().__init__()
         self.threshold = threshold
@@ -285,6 +284,6 @@ class ProbsToNames(Generic[T], nn.Module):
     def forward(
         self,
         probs: Tensor,
-    ) -> List[List[T]]:
-        names = probs_to_names(probs, self.threshold, self.idx_to_name)
+    ) -> List[List[T_Name]]:
+        names = probs_to_multinames(probs, self.threshold, self.idx_to_name)
         return names

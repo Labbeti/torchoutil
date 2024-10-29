@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-"""Helper functions for conversion between classes indices, multihot, names and probabilities for multilabel classification.
+"""Helper functions for conversion between classes indices, multihot, multi-names and probabilities for multilabel classification.
 """
 
 from typing import Hashable, Iterable, List, Mapping, Optional, Sequence, TypeVar, Union
@@ -13,10 +13,11 @@ from torch.types import Device
 from torchoutil.nn.functional.get import get_device
 from torchoutil.nn.functional.others import to_item
 from torchoutil.nn.functional.pad import pad_and_stack_rec
+from torchoutil.nn.functional.transform import to_tensor
 from torchoutil.pyoutil.typing import is_sequence_bool, is_sequence_int
 from torchoutil.types import is_number_like
 
-T = TypeVar("T")
+T_Name = TypeVar("T_Name", bound=Hashable)
 
 
 def indices_to_multihot(
@@ -27,7 +28,7 @@ def indices_to_multihot(
     device: Device = None,
     dtype: Union[torch.dtype, None] = torch.bool,
 ) -> Tensor:
-    """Convert indices of labels to multihot boolean encoding.
+    """Convert indices of labels to multihot boolean encoding for **multilabel** classification.
 
     Args:
         indices: List of list of label indices. Values should be integers in range [0..num_classes-1]
@@ -41,7 +42,7 @@ def indices_to_multihot(
     else:
         device = get_device(device)
 
-    def _indices_to_multihot_impl(x) -> Tensor:
+    def _impl(x) -> Tensor:
         if isinstance(x, Tensor) and not _is_valid_indices(x):
             raise ValueError(f"Invalid argument shape {x.shape=}.")
 
@@ -68,36 +69,38 @@ def indices_to_multihot(
             return multihot
 
         elif isinstance(x, Iterable):
-            result = [_indices_to_multihot_impl(xi) for xi in x]
+            result = [_impl(xi) for xi in x]
             return torch.stack(result)
 
         else:
             raise ValueError(f"Invalid argument {x=}.")
 
-    multihot = _indices_to_multihot_impl(indices)
+    multihot = _impl(indices)
     return multihot
 
 
-def indices_to_names(
+def indices_to_multinames(
     indices: Union[Sequence[Union[Sequence[int], Tensor]], Tensor],
-    idx_to_name: Mapping[int, T],
+    idx_to_name: Union[Mapping[int, T_Name], Sequence[T_Name]],
     *,
     padding_idx: Optional[int] = None,
-) -> List[List[T]]:
-    """Convert indices of labels to names using a mapping.
+) -> List[List[T_Name]]:
+    """Convert indices of labels to names using a mapping for **multilabel** classification.
 
     Args:
         indices: List of list of label indices.
         idx_to_name: Mapping to convert a class index to its name.
         padding_idx: Optional pad value to ignore.
     """
+    if not isinstance(indices, Iterable):
+        raise TypeError(f"Invalid argument {indices=}. (not an iterable)")
 
-    def _indices_to_names_impl(x) -> Union[int, list]:
+    def _impl(x) -> Union[int, list]:
         if is_number_like(x):
             return idx_to_name[to_item(x)]  # type: ignore
         elif isinstance(x, Iterable):
             return [
-                _indices_to_names_impl(xi)
+                _impl(xi)
                 for xi in x
                 if padding_idx is None or not is_number_like(xi) or xi != padding_idx
             ]
@@ -105,10 +108,7 @@ def indices_to_names(
             msg = f"Invalid argument {x=}. (not present in idx_to_name and not an iterable type)"
             raise ValueError(msg)
 
-    if not isinstance(indices, Iterable):
-        raise TypeError(f"Invalid argument {indices=}. (not an iterable)")
-
-    names = _indices_to_names_impl(indices)
+    names = _impl(indices)
     return names  # type: ignore
 
 
@@ -116,29 +116,32 @@ def multihot_to_indices(
     multihot: Union[Tensor, Sequence[Tensor], Sequence[Sequence[bool]]],
     *,
     padding_idx: Optional[int] = None,
+    dim: int = -1,
 ) -> List[List[int]]:
-    """Convert multihot boolean encoding to indices of labels.
+    """Convert multihot boolean encoding to indices of labels for **multilabel** classification.
 
     Args:
-        multihot: Multihot labels encoded as 2D matrix.
+        multihot: Multihot labels encoded as 2D matrix. Must be convertible to Tensor.
+        padding_idx: Class index fill value. When none, output will not be padded. defaults to None.
+        dim: Dimension of classes. defaults to -1.
     """
-    if is_number_like(multihot) or (
-        isinstance(multihot, Tensor) and not _is_valid_indices(multihot)
-    ):
-        msg = f"Invalid argument shape {multihot=}. (expected at least 1 dimension and the first axis should be > 0)"
+    multihot = to_tensor(multihot)
+    multihot = multihot.transpose(dim, -1)
+
+    if not _is_valid_indices(multihot):
+        msg = f"Invalid argument shape {multihot=}. (expected first axis should be > 0)"
         raise ValueError(msg)
 
-    def _multihot_to_indices_impl(
-        x: Union[Tensor, Sequence],
-    ) -> list:
+    def _impl(x: Union[Tensor, Sequence]) -> list:
         if (isinstance(x, Tensor) and x.ndim == 1) or is_sequence_bool(x):
             x = torch.as_tensor(x, dtype=torch.bool)
             preds = torch.where(x)[0].tolist()
             return preds
+
         elif (isinstance(x, Tensor) and x.ndim > 1) or isinstance(x, Sequence):
-            preds = [_multihot_to_indices_impl(multihot_i) for multihot_i in x]
+            preds = [_impl(multihot_i) for multihot_i in x]
             if padding_idx is not None:
-                preds = pad_and_stack_rec(preds, padding_idx)
+                preds = pad_and_stack_rec(preds, padding_idx, dtype=torch.long)
                 preds = preds.tolist()
             return preds
 
@@ -146,29 +149,33 @@ def multihot_to_indices(
             msg = f"Invalid argument {x=}. (not present in idx_to_name and not an iterable type)"
             raise ValueError(msg)
 
-    return _multihot_to_indices_impl(multihot)
+    result = _impl(multihot)
+    return result
 
 
-def multihot_to_names(
+def multihot_to_multinames(
     multihot: Union[Tensor, Sequence[Tensor], Sequence[Sequence[bool]]],
-    idx_to_name: Mapping[int, T],
-) -> List[List[T]]:
-    """Convert multihot boolean encoding to names using a mapping.
+    idx_to_name: Union[Mapping[int, T_Name], Sequence[T_Name]],
+    *,
+    dim: int = -1,
+) -> List[List[T_Name]]:
+    """Convert multihot boolean encoding to names using a mapping for **multilabel** classification.
 
     Args:
         multihot: Multihot labels encoded as 2D matrix.
         idx_to_name: Mapping to convert a class index to its name.
+        dim: Dimension of classes. defaults to -1.
     """
-    indices = multihot_to_indices(multihot)
-    names = indices_to_names(indices, idx_to_name)
+    indices = multihot_to_indices(multihot, dim=dim)
+    names = indices_to_multinames(indices, idx_to_name)
     return names
 
 
-def names_to_indices(
-    names: List[List[T]],
-    idx_to_name: Mapping[int, T],
+def multinames_to_indices(
+    names: List[List[T_Name]],
+    idx_to_name: Union[Mapping[int, T_Name], Sequence[T_Name]],
 ) -> List[List[int]]:
-    """Convert names to indices of labels.
+    """Convert names to indices of labels for **multilabel** classification.
 
     Args:
         names: List of list of label names.
@@ -190,14 +197,14 @@ def names_to_indices(
     return indices  # type: ignore
 
 
-def names_to_multihot(
-    names: List[List[T]],
-    idx_to_name: Mapping[int, T],
+def multinames_to_multihot(
+    names: List[List[T_Name]],
+    idx_to_name: Union[Mapping[int, T_Name], Sequence[T_Name]],
     *,
     device: Device = None,
     dtype: Union[torch.dtype, None] = torch.bool,
 ) -> Tensor:
-    """Convert names to multihot boolean encoding.
+    """Convert names to multihot boolean encoding for **multilabel** classification.
 
     Args:
         names: List of list of label names.
@@ -205,7 +212,7 @@ def names_to_multihot(
         device: PyTorch device of the output tensor.
         dtype: PyTorch DType of the output tensor.
     """
-    indices = names_to_indices(names, idx_to_name)
+    indices = multinames_to_indices(names, idx_to_name)
     multihot = indices_to_multihot(
         indices,
         len(idx_to_name),
@@ -220,15 +227,18 @@ def probs_to_indices(
     threshold: Union[float, Sequence[float], Tensor],
     *,
     padding_idx: Optional[int] = None,
+    dim: int = -1,
 ) -> List[List[int]]:
-    """Convert matrix of probabilities to indices of labels.
+    """Convert matrix of probabilities to indices of labels for **multilabel** classification.
 
     Args:
         probs: Output probabilities for each classes.
         threshold: Threshold(s) to binarize probabilities. Can be a scalar or a sequence of (num_classes,) thresholds.
+        padding_idx: Class index fill value. When none, output will not be padded. defaults to None.
+        dim: Dimension of classes. defaults to -1.
     """
-    multihot = probs_to_multihot(probs, threshold)
-    indices = multihot_to_indices(multihot, padding_idx=padding_idx)
+    multihot = probs_to_multihot(probs, threshold, dim=dim)
+    indices = multihot_to_indices(multihot, padding_idx=padding_idx, dim=dim)
     return indices
 
 
@@ -236,22 +246,24 @@ def probs_to_multihot(
     probs: Tensor,
     threshold: Union[float, Sequence[float], Tensor],
     *,
+    dim: int = -1,
     device: Device = None,
     dtype: Union[torch.dtype, None] = torch.bool,
 ) -> Tensor:
-    """Convert matrix of probabilities to multihot boolean encoding.
+    """Convert matrix of probabilities to multihot boolean encoding for **multilabel** classification.
 
     Args:
-        probs: Output probabilities for each classes.
+        probs: Output probabilities for each class.
         threshold: Threshold(s) to binarize probabilities. Can be a scalar or a sequence of (num_classes,) thresholds.
+        dim: Dimension of classes. defaults to -1.
         device: PyTorch device of the output tensor.
         dtype: PyTorch DType of the output tensor.
     """
-    if probs.ndim != 2:
-        msg = "Invalid argument probs. (expected a batch of probabilities of shape (N, n_classes))."
+    if probs.ndim == 0:
+        msg = f"Invalid argument ndim {probs.ndim=}. (expected at least 1 dim)."
         raise ValueError(msg)
 
-    num_classes = probs.shape[-1]
+    num_classes = probs.shape[dim]
     if device is None:
         device = probs.device
     else:
@@ -272,17 +284,21 @@ def probs_to_multihot(
         msg = f"Invalid number of dimensions in input threshold. (found {threshold.shape=} but expected 0-d or 1-d tensor)"
         raise ValueError(msg)
 
+    dim = dim % probs.ndim
+    slices = [(slice(None) if i == dim else None) for i in range(probs.ndim)]
+    threshold = threshold[slices]
+
     multihot = probs >= threshold
     multihot = multihot.to(dtype=dtype)
     return multihot
 
 
-def probs_to_names(
+def probs_to_multinames(
     probs: Tensor,
     threshold: Union[float, Sequence[float], Tensor],
-    idx_to_name: Mapping[int, T],
-) -> List[List[T]]:
-    """Convert matrix of probabilities to labels names.
+    idx_to_name: Union[Mapping[int, T_Name], Sequence[T_Name]],
+) -> List[List[T_Name]]:
+    """Convert matrix of probabilities to labels names for **multilabel** classification.
 
     Args:
         probs: Output probabilities for each classes.
@@ -290,7 +306,7 @@ def probs_to_names(
         idx_to_name: Mapping to convert a class index to its name.
     """
     indices = probs_to_indices(probs, threshold)
-    names = indices_to_names(indices, idx_to_name)
+    names = indices_to_multinames(indices, idx_to_name)
     return names
 
 
