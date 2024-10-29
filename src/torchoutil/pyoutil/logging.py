@@ -10,6 +10,8 @@ from pathlib import Path
 from types import ModuleType
 from typing import IO, List, Literal, Optional, Sequence, TypeVar, Union
 
+from .importlib import reload_submodules
+
 T = TypeVar("T", covariant=True)
 
 PackageOrLogger = Union[str, ModuleType, None, Logger, Literal["__parent_file__"]]
@@ -45,6 +47,7 @@ def setup_logging_verbose(
     stream: Union[IO[str], Literal["auto"]] = "auto",
     set_fmt: bool = True,
     capture_warnings: bool = True,
+    autoreload: bool = True,
 ) -> None:
     """Helper function to customize logging messages using verbose_level.
 
@@ -62,6 +65,7 @@ def setup_logging_verbose(
         stream=stream,
         set_fmt=set_fmt,
         capture_warnings=capture_warnings,
+        autoreload=autoreload,
     )
 
 
@@ -73,6 +77,7 @@ def setup_logging_level(
     stream: Union[IO[str], Literal["auto"]] = "auto",
     set_fmt: bool = True,
     capture_warnings: bool = True,
+    autoreload: bool = True,
 ) -> None:
     """Helper function to customize logging messages using logging.level.
 
@@ -107,6 +112,12 @@ def setup_logging_level(
 
         if level is not None:
             logger.setLevel(level)
+
+    if autoreload:
+        for logger in logger_lst:
+            if logger.name not in sys.modules:
+                continue
+            reload_submodules(sys.modules[logger.name])
 
 
 def running_on_interpreter() -> bool:

@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import os
+import pickle
 import random
 import tempfile
 import time
@@ -55,6 +56,12 @@ class TestHDF(TestCase):
         assert np.equal(image0, image1).all()
         assert np.equal(label0, label1).all()
 
+        # Try pickle for DDP support
+        dumped = pickle.dumps(hdf_dataset)
+        hdf_dataset_2 = pickle.loads(dumped)
+        assert hdf_dataset == hdf_dataset_2
+
+        hdf_dataset_2.close(remove_file=False)
         hdf_dataset.close(remove_file=True)
 
     def test_shape_column(self) -> None:

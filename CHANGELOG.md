@@ -3,6 +3,8 @@
 All notable changes to this project will be documented in this file.
 
 ## [0.5.0] UNRELEASED
+Major rework of `torchoutil` project folders.
+
 ### Added
 - Function `get_key_fn` to customize sorting using patterns.
 - Option `on_error` to `load_yaml` to ignore yaml scanner and parser exceptions.

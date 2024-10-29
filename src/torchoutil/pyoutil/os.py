@@ -7,7 +7,7 @@ import os.path as osp
 import sys
 from pathlib import Path
 from re import Pattern
-from typing import Any, Generator, Iterable, List, Union
+from typing import Any, Generator, Iterable, List, Tuple, Union
 
 from torchoutil.pyoutil.logging import warn_once
 from torchoutil.pyoutil.re import PatternLike, compile_patterns, match_patterns
@@ -41,7 +41,7 @@ def safe_rmdir(
     followlinks: bool = False,
     dry_run: bool = False,
     verbose: int = 0,
-) -> List[str]:
+) -> Tuple[List[str], List[str]]:
     """Remove all empty sub-directories.
 
     Args:
@@ -53,23 +53,28 @@ def safe_rmdir(
         verbose: Verbose level. defaults to 0.
 
     Returns:
-        The list of directories paths deleted.
+        A tuple containing the list of directories paths deleted and the list of directories paths reviewed.
     """
     root = str(root)
     if not osp.isdir(root):
         msg = f"Target root directory does not exists. (with {root=})"
         raise FileNotFoundError(msg)
 
-    to_delete = set()
+    to_delete = {}
+    reviewed = []
     walker = os.walk(root, topdown=False, followlinks=followlinks)
 
     for dpath, dnames, fnames in walker:
+        reviewed.append(dpath)
+
         if not rm_root and dpath == root:
             continue
+
         elif len(fnames) == 0 and (
             all(osp.join(dpath, dname) in to_delete for dname in dnames)
         ):
-            to_delete.add(dpath)
+            to_delete[dpath] = None
+
         elif error_on_non_empty_dir:
             raise RuntimeError(f"Cannot remove non-empty directory '{dpath}'.")
         elif verbose >= 2:
@@ -79,7 +84,7 @@ def safe_rmdir(
         for dpath in to_delete:
             os.rmdir(dpath)
 
-    return list(to_delete)
+    return list(to_delete), reviewed
 
 
 def tree_iter(

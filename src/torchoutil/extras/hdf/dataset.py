@@ -29,7 +29,7 @@ import h5py
 import numpy as np
 from h5py import Dataset as HDFRawDataset
 from torch import Tensor
-from typing_extensions import TypeGuard, override
+from typing_extensions import override
 
 import torchoutil as to
 from torchoutil.extras.hdf.common import (
@@ -43,11 +43,7 @@ from torchoutil.nn.functional.indices import get_inverse_perm
 from torchoutil.pyoutil.collections import all_eq
 from torchoutil.pyoutil.difflib import find_closest_in_list
 from torchoutil.pyoutil.inspect import get_current_fn_name
-from torchoutil.pyoutil.typing import (
-    is_iterable_bytes_or_list,
-    is_iterable_int,
-    is_iterable_str,
-)
+from torchoutil.pyoutil.typing import is_iterable_bytes_or_list, is_iterable_str
 from torchoutil.types._typing import ScalarLike
 from torchoutil.types.guards import is_scalar_like
 from torchoutil.utils.data import DatasetSlicer
@@ -681,17 +677,3 @@ def _decode_bytes(
     else:
         msg = f"Invalid argument type {type(encoded)} for {get_current_fn_name()}. (expected bytes, bytes ndarray or Iterable)"
         raise TypeError(msg)
-
-
-def _is_index(index: Any) -> TypeGuard[IndexLike]:
-    return (
-        isinstance(index, int)
-        or is_iterable_int(index)
-        or isinstance(index, slice)
-        or index is None
-        or (isinstance(index, Tensor) and not index.is_floating_point())
-    )
-
-
-def _is_column(column: Any) -> TypeGuard[ColumnLike]:
-    return is_iterable_str(column, accept_str=True) or column is None

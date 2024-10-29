@@ -86,7 +86,7 @@ def print_safe_rmdir(
     dry_run: bool = False,
     verbose: int = 0,
 ) -> None:
-    deleted = safe_rmdir(
+    deleted, reviewed = safe_rmdir(
         root=root,
         rm_root=rm_root,
         error_on_non_empty_dir=error_on_non_empty_dir,
@@ -95,7 +95,9 @@ def print_safe_rmdir(
         verbose=verbose,
     )
     if dry_run:
-        print(f"List of directories to delete ({len(deleted)}):")
+        print(
+            f"Dry run mode enabled. Here is the list of directories to delete ({len(deleted)}/{len(reviewed)}):"
+        )
         for path in deleted:
             print(f" - {path}")
 
