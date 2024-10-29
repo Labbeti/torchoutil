@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import json
 import pickle
 from pathlib import Path
 from typing import Any, Callable, Dict, Literal, TypeVar, Union
@@ -9,6 +8,7 @@ from typing import Any, Callable, Dict, Literal, TypeVar, Union
 import torch
 
 from torchoutil.core.packaging import _NUMPY_AVAILABLE, _YAML_AVAILABLE
+from torchoutil.pyoutil.json import to_json
 from torchoutil.types._typing import np
 from torchoutil.utils.saving.csv_io import to_csv
 
@@ -21,7 +21,7 @@ SaveFnLike = Union[
 
 
 def json_save_fn(obj: Any, fpath: Path) -> None:
-    fpath.write_text(json.dumps(obj))
+    to_json(obj, fpath)
 
 
 def numpy_save_fn(obj: Any, fpath: Path) -> None:

@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 from torchoutil.core.packaging import _NUMPY_AVAILABLE, _YAML_AVAILABLE
+from torchoutil.pyoutil.json import load_json, to_json
 
 from .common import to_builtin
 from .csv_io import load_csv, to_csv

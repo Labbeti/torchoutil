@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import json
 import pickle
 from pathlib import Path
 from typing import Any, Callable, Dict, Literal, TypeVar, Union
@@ -9,6 +8,7 @@ from typing import Any, Callable, Dict, Literal, TypeVar, Union
 import torch
 
 from torchoutil.core.packaging import _NUMPY_AVAILABLE, _YAML_AVAILABLE
+from torchoutil.pyoutil.json import load_json
 from torchoutil.types._typing import np
 from torchoutil.utils.saving.csv_io import load_csv
 from torchoutil.utils.saving.yaml_io import load_yaml
@@ -23,7 +23,7 @@ LoadFnLike = Union[
 
 
 def json_load_fn(fpath: Path) -> Any:
-    return json.loads(fpath.read_text())
+    return load_json(fpath)
 
 
 def pickle_load_fn(fpath: Path) -> Any:
