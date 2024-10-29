@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from typing import Union
+from typing import TypeVar, Union
 
 import torch
 
@@ -106,3 +106,5 @@ r"""/!\ The following type hints are meant for type annotation only, not for run
 NumberLike = Union[BuiltinNumber, NumpyNumberLike, Tensor0D]
 ScalarLike = Union[BuiltinScalar, NumpyScalarLike, Tensor0D]
 TensorLike = Union[torch.Tensor, np.ndarray]
+
+T_TensorLike = TypeVar("T_TensorLike", torch.Tensor, np.ndarray)
