@@ -12,6 +12,9 @@ def to_json(
     *,
     overwrite: bool = True,
     make_parents: bool = True,
+    # JSON dump kwargs
+    indent: int | None = 4,
+    ensure_ascii: bool = False,
     **json_dump_kwds,
 ) -> str:
     """Dump content to JSON format."""
@@ -22,7 +25,12 @@ def to_json(
         elif make_parents:
             fpath.parent.mkdir(parents=True, exist_ok=True)
 
-    content = json.dumps(data, **json_dump_kwds)
+    content = json.dumps(
+        data,
+        indent=indent,
+        ensure_ascii=ensure_ascii,
+        **json_dump_kwds,
+    )
     if fpath is not None:
         fpath.write_text(content)
     return content
