@@ -40,6 +40,8 @@ torchoutil-info
 `torchoutil` functions and modules can be used like `torch` ones. The default acronym for `torchoutil` is `to`.
 
 ### Label conversions
+Supports **multiclass** labels conversions between probabilities, classes indices, classes names and onehot encoding.
+
 ```python
 import torchoutil as to
 
@@ -47,6 +49,8 @@ probs = to.as_tensor([[0.9, 0.1], [0.4, 0.6]])
 names = to.probs_to_name(probs, idx_to_name={0: "Cat", 1: "Dog"})
 # ["Cat", "Dog"]
 ```
+
+This package also supports **multilabel** labels conversions between probabilities, classes multi-indices, classes multi-names and multihot encoding.
 
 ```python
 import torchoutil as to
