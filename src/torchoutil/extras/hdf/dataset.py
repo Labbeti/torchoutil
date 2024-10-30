@@ -401,21 +401,18 @@ class HDFDataset(Generic[T, U], DatasetSlicer[U]):
     def get_hdf_keys(self) -> Tuple[str, ...]:
         if self.is_closed():
             raise RuntimeError("Cannot get keys from a closed HDF file.")
-        else:
-            return tuple(self._hdf_file.keys())
+        return tuple(self._hdf_file.keys())
 
     def get_column_shape(self, column_name: str) -> Tuple[int, ...]:
         if self.is_closed():
             msg = f"Cannot get column shape with a closed HDF file. ({self._hdf_file is None=} or {not bool(self._hdf_file)=})"
             raise RuntimeError(msg)
-
         return tuple(self._hdf_file[column_name].shape)
 
     def get_column_dtype(self, column_name: str) -> np.dtype:
         if self.is_closed():
             msg = f"Cannot get dtype with a closed HDF file. ({self._hdf_file is None=} or {not bool(self._hdf_file)=})"
             raise RuntimeError(msg)
-
         return self._hdf_file[column_name].dtype
 
     def is_closed(self) -> bool:
