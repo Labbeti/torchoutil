@@ -8,9 +8,16 @@ from typing import Any
 from torchoutil.pyoutil.inspect import get_current_fn_name
 
 
-class generic:
+class _placeholder:
+    def __init__(self, *args, **kwargs) -> None:
+        ...
+
     def __getattr__(self, name: str) -> Any:
         return self
+
+
+class generic(_placeholder):
+    ...
 
 
 class number(generic):
@@ -21,15 +28,11 @@ class bool_(generic):
     ...
 
 
-class dtype:
-    def __getattr__(self, name: str) -> Any:
-        return self
+class dtype(_placeholder):
+    ...
 
 
-class ndarray:
-    def __getattr__(self, name: str) -> Any:
-        return self
-
+class ndarray(_placeholder):
     def __getitem__(self, *args) -> Any:
         return self
 
