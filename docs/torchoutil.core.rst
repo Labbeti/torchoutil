@@ -15,3 +15,4 @@ Submodules
    torchoutil.core.dtype_enum
    torchoutil.core.get
    torchoutil.core.packaging
+   torchoutil.core.semver
