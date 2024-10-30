@@ -185,7 +185,7 @@ def numpy_dtype_to_fill_value(dtype: Any) -> BuiltinScalar:
 def merge_numpy_dtypes(
     dtypes: Iterable[Union[np.dtype, T_EmptyNp]],
     *,
-    empty: T_EmptyNp = np.void,
+    empty: T_EmptyNp = np.dtype("V"),
 ) -> Union[np.dtype, T_EmptyNp]:
     dtypes = list(dict.fromkeys(dtypes))
     dtypes = [dtype for dtype in dtypes if dtype != empty]
