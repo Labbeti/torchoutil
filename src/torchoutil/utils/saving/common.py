@@ -17,6 +17,9 @@ from torchoutil.core.packaging import (
 )
 from torchoutil.pyoutil.typing import (
     BuiltinNumber,
+    DataclassInstance,
+    NamedTupleInstance,
+    T_BuiltinScalar,
     is_builtin_scalar,
     is_dataclass_instance,
     is_namedtuple_instance,
@@ -38,6 +41,15 @@ V = TypeVar("V")
 
 UnkMode = Literal["identity", "error"]
 UNK_MODES = ("identity", "error")
+
+
+@overload
+def to_builtin(
+    x: T_BuiltinScalar,
+    *,
+    unk_mode: UnkMode = "error",
+) -> T_BuiltinScalar:
+    ...
 
 
 @overload
@@ -96,10 +108,28 @@ def to_builtin(
 
 @overload
 def to_builtin(
-    x: T,
+    x: DataclassInstance,
     *,
     unk_mode: UnkMode = "error",
-) -> T:
+) -> Dict[str, Any]:
+    ...
+
+
+@overload
+def to_builtin(
+    x: NamedTupleInstance,
+    *,
+    unk_mode: UnkMode = "error",
+) -> Dict[str, Any]:
+    ...
+
+
+@overload
+def to_builtin(
+    x: Any,
+    *,
+    unk_mode: UnkMode = "error",
+) -> Any:
     ...
 
 
