@@ -129,7 +129,7 @@ jobs:
       run: |
         torchoutil-info
 
-    - name: Test with pytest
+    - name: Test with coverage + pytest
       run: |
         coverage run -m pytest -v --ignore=./tests/test_extras_hdf.py --ignore=./tests/test_utils_pack.py --ignore=./tests/test_hub_registry.py --ignore=./tests/test_extras_numpy_functional.py --ignore=./tests/test_extras_numpy_scan_info.py
 

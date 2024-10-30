@@ -184,3 +184,7 @@ def numpy_all_eq(x: Union[np.generic, np.ndarray]) -> bool:
         return True
     else:
         return (x.flat[0] == x.flat[1:]).all()
+
+
+def numpy_all_ne(x: Union[np.generic, np.ndarray]) -> bool:
+    return len(np.unique(x)) == x.size

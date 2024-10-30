@@ -406,10 +406,17 @@ class HDFDataset(Generic[T, U], DatasetSlicer[U]):
 
     def get_column_shape(self, column_name: str) -> Tuple[int, ...]:
         if self.is_closed():
-            msg = f"Cannot get max_shape with a closed HDF file. ({self._hdf_file is not None=} and {bool(self._hdf_file)=})"
+            msg = f"Cannot get column shape with a closed HDF file. ({self._hdf_file is None=} or {not bool(self._hdf_file)=})"
             raise RuntimeError(msg)
-        else:
-            return tuple(self._hdf_file[column_name].shape)
+
+        return tuple(self._hdf_file[column_name].shape)
+
+    def get_column_dtype(self, column_name: str) -> np.dtype:
+        if self.is_closed():
+            msg = f"Cannot get dtype with a closed HDF file. ({self._hdf_file is None=} or {not bool(self._hdf_file)=})"
+            raise RuntimeError(msg)
+
+        return self._hdf_file[column_name].dtype
 
     def is_closed(self) -> bool:
         return not self.is_open()

@@ -54,6 +54,7 @@ from .multilabel import (
 from .numpy import numpy_to_tensor, tensor_to_numpy, to_numpy
 from .others import (
     all_eq,
+    all_ne,
     can_be_converted_to_tensor,
     can_be_stacked,
     count_parameters,

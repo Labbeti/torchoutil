@@ -3,6 +3,7 @@
 
 import json
 import logging
+import os
 from dataclasses import asdict
 from pathlib import Path
 from tempfile import NamedTemporaryFile
@@ -189,6 +190,7 @@ def pack_to_hdf(
         delete=False,
     ) as file:
         json.dump(data, file)
+        scan_results_fpath = Path(file.name)
 
     creation_date = now_iso()
 
@@ -380,8 +382,74 @@ def pack_to_hdf(
     if verbose >= 2:
         pylog.debug(f"Data has been packed into HDF file '{hdf_fpath}'.")
 
+    if scan_results_fpath.is_file():
+        os.remove(scan_results_fpath)
+
     hdf_dataset = HDFDataset(hdf_fpath, **ds_kwds)
     return hdf_dataset
+
+
+def hdf_dtype_to_fill_value(hdf_dtype: Optional[HDFDType]) -> BuiltinScalar:
+    if isinstance(hdf_dtype, np.dtype):
+        hdf_dtype = hdf_dtype.type
+
+    if hdf_dtype == "b" or hdf_dtype == np.bool_:
+        return False
+    elif hdf_dtype in ("i", "u") or (
+        isinstance(hdf_dtype, type) and issubclass(hdf_dtype, np.integer)
+    ):
+        return 0
+    elif hdf_dtype == "f" or (
+        isinstance(hdf_dtype, type) and issubclass(hdf_dtype, np.floating)
+    ):
+        return 0.0
+    elif (
+        hdf_dtype == "c"
+        or (
+            isinstance(hdf_dtype, type)
+            and (
+                hdf_dtype in (np.void, np.object_, np.bytes_, np.str_)
+                or issubclass(hdf_dtype, np.complexfloating)
+            )
+        )
+        or (isinstance(hdf_dtype, np.dtype) and numpy_is_complex_dtype(hdf_dtype))
+    ):
+        return None
+    else:
+        msg = f"Unsupported type {hdf_dtype=}."
+        raise ValueError(msg)
+
+
+def numpy_dtype_to_hdf_dtype(
+    dtype: Optional[np.dtype],
+    *,
+    encoding: str = HDF_ENCODING,
+) -> np.dtype:
+    if dtype is None:
+        return HDF_VOID_DTYPE
+    elif isinstance(dtype, np.dtype) and dtype.kind == "U":
+        return h5py.string_dtype(encoding, None)
+    else:
+        return dtype
+
+
+def hdf_dtype_to_numpy_dtype(hdf_dtype: HDFDType) -> np.dtype:
+    if isinstance(hdf_dtype, np.dtype):
+        return hdf_dtype
+    if hdf_dtype == HDF_VOID_DTYPE:
+        return np.dtype("V")
+    if hdf_dtype == HDF_STRING_DTYPE:
+        return np.dtype("<U")
+    if hdf_dtype == "f":
+        return np.dtype("float32")
+    if hdf_dtype == "i":
+        return np.dtype("int32")
+    if hdf_dtype == "b":
+        return np.dtype("int8")
+    if hdf_dtype == "c":
+        return np.dtype("|S1")
+
+    raise ValueError(f"Unsupported dtype {hdf_dtype=} for numpy dtype.")
 
 
 def _scan_dataset(
@@ -526,69 +594,6 @@ def _scan_dataset(
         all_eq_shapes,
         src_np_dtypes,
     )
-
-
-def hdf_dtype_to_fill_value(hdf_dtype: Optional[HDFDType]) -> BuiltinScalar:
-    if isinstance(hdf_dtype, np.dtype):
-        hdf_dtype = hdf_dtype.type
-
-    if hdf_dtype == "b" or hdf_dtype == np.bool_:
-        return False
-    elif hdf_dtype in ("i", "u") or (
-        isinstance(hdf_dtype, type) and issubclass(hdf_dtype, np.integer)
-    ):
-        return 0
-    elif hdf_dtype == "f" or (
-        isinstance(hdf_dtype, type) and issubclass(hdf_dtype, np.floating)
-    ):
-        return 0.0
-    elif (
-        hdf_dtype == "c"
-        or (
-            isinstance(hdf_dtype, type)
-            and (
-                hdf_dtype in (np.void, np.object_, np.bytes_, np.str_)
-                or issubclass(hdf_dtype, np.complexfloating)
-            )
-        )
-        or (isinstance(hdf_dtype, np.dtype) and numpy_is_complex_dtype(hdf_dtype))
-    ):
-        return None
-    else:
-        msg = f"Unsupported type {hdf_dtype=}."
-        raise ValueError(msg)
-
-
-def numpy_dtype_to_hdf_dtype(
-    dtype: Optional[np.dtype],
-    *,
-    encoding: str = HDF_ENCODING,
-) -> np.dtype:
-    if dtype is None:
-        return HDF_VOID_DTYPE
-    elif isinstance(dtype, np.dtype) and dtype.kind == "U":
-        return h5py.string_dtype(encoding, None)
-    else:
-        return dtype
-
-
-def hdf_dtype_to_numpy_dtype(hdf_dtype: HDFDType) -> np.dtype:
-    if isinstance(hdf_dtype, np.dtype):
-        return hdf_dtype
-    if hdf_dtype == HDF_VOID_DTYPE:
-        return np.dtype("V")
-    if hdf_dtype == HDF_STRING_DTYPE:
-        return np.dtype("<U")
-    if hdf_dtype == "f":
-        return np.dtype("float32")
-    if hdf_dtype == "i":
-        return np.dtype("int32")
-    if hdf_dtype == "b":
-        return np.dtype("int8")
-    if hdf_dtype == "c":
-        return np.dtype("|S1")
-
-    raise ValueError(f"Unsupported dtype {hdf_dtype=} for numpy dtype.")
 
 
 def bytearray_to_bytes(x: Any) -> Any:

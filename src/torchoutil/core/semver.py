@@ -16,24 +16,31 @@ _VERSION_FORMAT = r"{major}.{minor}.{patch}"
 _VERSION_KEYS = ("major", "minor", "patch", "prerelease", "buildmetadata")
 
 
+PreRelease = Union[int, str, None, list]
+BuildMetadata = Union[int, str, None, list]
+
+
 class VersionDict(TypedDict):
     major: int
     minor: int
     patch: int
-    prerelease: NotRequired[Union[int, str, None, list]]
-    buildmetadata: NotRequired[Union[int, str, None, list]]
+    prerelease: NotRequired[PreRelease]
+    buildmetadata: NotRequired[BuildMetadata]
 
 
 VersionTupleLike = Union[
     Tuple[int, int, int],
-    Tuple[int, int, int, Union[int, str, None, list]],
-    Tuple[int, int, int, Union[int, str, None, list], Union[int, str, None, list]],
+    Tuple[int, int, int, PreRelease],
+    Tuple[int, int, int, PreRelease, BuildMetadata],
 ]
 
 
 @dataclass(init=False, eq=False)
 class Version:
-    """Version utility class following Semantic Versioning (SemVer) spec."""
+    """Version utility class following Semantic Versioning (SemVer) spec.
+
+    Version format is: MAJOR.MINOR.PATCH[-PRERELEASE][+BUILDMETADATA]
+    """
 
     major: int
     minor: int
@@ -143,15 +150,17 @@ class Version:
         return version_dict  # type: ignore
 
     def to_str(self) -> str:
-        version_str = _VERSION_FORMAT.format(
+        kwds = dict(
             major=self.major,
             minor=self.minor,
             patch=self.patch,
         )
+        version_str = _VERSION_FORMAT.format(**kwds)
         if self.prerelease is not None:
             version_str = f"{version_str}-{self.prerelease}"
         if self.buildmetadata is not None:
             version_str = f"{version_str}+{self.buildmetadata}"
+
         return version_str
 
     def to_tuple(
@@ -164,9 +173,13 @@ class Version:
         return version_tuple  # type: ignore
 
     def __eq__(self, other: Any) -> bool:
+        if isinstance(other, (dict, tuple, str)):
+            other = Version(other)
+        elif not isinstance(other, Version):
+            return False
+
         return (
-            isinstance(other, Version)
-            and self.major == other.major
+            self.major == other.major
             and self.minor == other.minor
             and self.patch == other.patch
             and self.prerelease == other.prerelease

@@ -26,6 +26,7 @@ from torchoutil.extras.numpy import (
     ACCEPTED_NUMPY_DTYPES,
     np,
     numpy_all_eq,
+    numpy_all_ne,
     numpy_is_complex,
     numpy_is_floating_point,
     numpy_view_as_complex,
@@ -33,6 +34,7 @@ from torchoutil.extras.numpy import (
 )
 from torchoutil.nn.functional.get import get_device
 from torchoutil.pyoutil.collections import all_eq as builtin_all_eq
+from torchoutil.pyoutil.collections import all_ne as builtin_all_ne
 from torchoutil.pyoutil.collections import is_sorted as builtin_is_sorted
 from torchoutil.pyoutil.collections import prod as builtin_prod
 from torchoutil.pyoutil.functools import identity
@@ -307,6 +309,8 @@ def nelement(x: Union[ScalarLike, Tensor, np.ndarray, Iterable]) -> int:
     """Returns the number of elements in Tensor-like object."""
     if isinstance(x, Tensor):
         return x.nelement()
+    elif isinstance(x, (np.ndarray, np.generic)):
+        return x.size
     else:
         return builtin_prod(shape(x))
 
@@ -544,5 +548,18 @@ def all_eq(x: Union[Tensor, np.ndarray, ScalarLike, Iterable]) -> bool:
         return True
     elif isinstance(x, Iterable):
         return builtin_all_eq(x)
+    else:
+        raise TypeError(f"Invalid argument type {type(x)=}.")
+
+
+def all_ne(x: Union[Tensor, np.ndarray, ScalarLike, Iterable]) -> bool:
+    if isinstance(x, Tensor):
+        return len(torch.unique(x)) == x.nelement()
+    elif isinstance(x, (np.ndarray, np.generic)):
+        return numpy_all_ne(x)
+    elif is_scalar_like(x):
+        return True
+    elif isinstance(x, Iterable):
+        return builtin_all_ne(x)
     else:
         raise TypeError(f"Invalid argument type {type(x)=}.")
