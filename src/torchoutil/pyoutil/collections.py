@@ -21,7 +21,7 @@ from typing import (
     overload,
 )
 
-from typing_extensions import TypeGuard
+from typing_extensions import TypeIs
 
 from torchoutil.pyoutil.typing import T_BuiltinScalar, is_builtin_scalar, is_mapping_str
 
@@ -41,6 +41,8 @@ def list_dict_to_dict_list(
     lst: Sequence[Mapping[K, V]],
     key_mode: Literal["intersect", "same"],
     default_val: Any = None,
+    *,
+    default_val_fn: Any = None,
 ) -> Dict[K, List[V]]:
     ...
 
@@ -49,7 +51,20 @@ def list_dict_to_dict_list(
 def list_dict_to_dict_list(
     lst: Sequence[Mapping[K, V]],
     key_mode: Literal["union"],
+    default_val: Any = None,
+    *,
+    default_val_fn: Callable[[K], X],
+) -> Dict[K, List[Union[V, X]]]:
+    ...
+
+
+@overload
+def list_dict_to_dict_list(
+    lst: Sequence[Mapping[K, V]],
+    key_mode: Literal["union"],
     default_val: W = None,
+    *,
+    default_val_fn: None = None,
 ) -> Dict[K, List[Union[V, W]]]:
     ...
 
@@ -58,6 +73,7 @@ def list_dict_to_dict_list(
     lst: Sequence[Mapping[K, V]],
     key_mode: KeyMode,
     default_val: W = None,
+    default_val_fn: Optional[Callable[[K], X]] = None,
 ) -> Dict[K, List[Union[V, W]]]:
     """Convert list of dicts to dict of lists.
 
@@ -89,7 +105,15 @@ def list_dict_to_dict_list(
         msg = f"Invalid argument key_mode={key_mode}. (expected one of {KEY_MODES})"
         raise ValueError(msg)
 
-    result = {key: [item.get(key, default_val) for item in lst] for key in keys}
+    result = {
+        key: [
+            item.get(
+                key, default_val_fn(key) if default_val_fn is not None else default_val
+            )
+            for item in lst
+        ]
+        for key in keys
+    }
     return result
 
 
@@ -432,11 +456,34 @@ def unflat_dict_of_dict(dic: Mapping[str, Any], *, sep: str = ".") -> Dict[str, 
     return output
 
 
-def flat_list_of_list(lst: Iterable[Sequence[T]]) -> Tuple[List[T], List[int]]:
+@overload
+def flat_list_of_list(
+    lst: Iterable[Sequence[T]],
+    return_sizes: Literal[True] = True,
+) -> Tuple[List[T], List[int]]:
+    ...
+
+
+@overload
+def flat_list_of_list(
+    lst: Iterable[Sequence[T]],
+    return_sizes: Literal[False],
+) -> List[T]:
+    ...
+
+
+def flat_list_of_list(
+    lst: Iterable[Sequence[T]],
+    return_sizes: bool = True,
+) -> Union[Tuple[List[T], List[int]], List[T]]:
     """Return a flat version of the input list of sublists with each sublist size."""
     flatten_lst = [elt for sublst in lst for elt in sublst]
     sizes = [len(sents) for sents in lst]
-    return flatten_lst, sizes
+
+    if return_sizes:
+        return flatten_lst, sizes
+    else:
+        return flatten_lst
 
 
 def unflat_list_of_list(
@@ -545,7 +592,7 @@ def flatten(
     x: Any,
     start_dim: int = 0,
     end_dim: Optional[int] = None,
-    is_scalar_fn: Callable[[Any], TypeGuard[T]] = is_builtin_scalar,
+    is_scalar_fn: Callable[[Any], TypeIs[T]] = is_builtin_scalar,
 ) -> List[Any]:
     ...
 
@@ -554,7 +601,7 @@ def flatten(
     x: Any,
     start_dim: int = 0,
     end_dim: Optional[int] = None,
-    is_scalar_fn: Callable[[Any], TypeGuard[T]] = is_builtin_scalar,
+    is_scalar_fn: Callable[[Any], TypeIs[T]] = is_builtin_scalar,
 ) -> List[Any]:
     if end_dim is None:
         end_dim = sys.maxsize
