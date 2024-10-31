@@ -28,7 +28,7 @@ from torchoutil.nn.functional.others import nelement, to_item
 from torchoutil.pyoutil.logging import warn_once
 from torchoutil.types import LongTensor, is_number_like
 
-T_Name = TypeVar("T_Hashable", bound=Hashable)
+T_Name = TypeVar("T_Name", bound=Hashable)
 
 
 def index_to_onehot(
@@ -124,7 +124,7 @@ def onehot_to_index(
         empty = onehot.eq(False).all(dim=dim)
         index = torch.where(empty, padding_idx, index)
 
-    return index
+    return index  # type: ignore
 
 
 def onehot_to_name(
@@ -207,7 +207,7 @@ def probs_to_index(
         dim: Dimension of classes. defaults to -1.
     """
     index = probs.argmax(dim=dim)
-    return index
+    return index  # type: ignore
 
 
 def probs_to_onehot(

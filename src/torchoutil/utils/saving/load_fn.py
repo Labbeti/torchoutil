@@ -1,17 +1,17 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import pickle
 from pathlib import Path
 from typing import Any, Callable, Dict, Literal, TypeVar, Union
 
 import torch
 
 from torchoutil.core.packaging import _NUMPY_AVAILABLE, _YAML_AVAILABLE
-from torchoutil.pyoutil.json import load_json
 from torchoutil.types._typing import np
-from torchoutil.utils.saving.csv_io import load_csv
-from torchoutil.utils.saving.yaml_io import load_yaml
+from torchoutil.utils.saving.csv import load_csv
+from torchoutil.utils.saving.json import load_json
+from torchoutil.utils.saving.pickle import load_pickle
+from torchoutil.utils.saving.yaml import load_yaml
 
 T = TypeVar("T", covariant=True)
 
@@ -22,18 +22,10 @@ LoadFnLike = Union[
 ]
 
 
-def json_load_fn(fpath: Path) -> Any:
-    return load_json(fpath)
-
-
-def pickle_load_fn(fpath: Path) -> Any:
-    return pickle.loads(fpath.read_bytes())
-
-
 LOAD_FNS: Dict[str, LoadFn[Any]] = {
     "csv": load_csv,
-    "json": json_load_fn,
-    "pickle": pickle_load_fn,
+    "json": load_json,
+    "pickle": load_pickle,
     "torch": torch.load,
 }
 

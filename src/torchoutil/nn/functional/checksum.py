@@ -207,7 +207,7 @@ def checksum_builtin_scalar(x: BuiltinScalar, **kwargs) -> int:
 
 def checksum_bytearray(x: bytearray, **kwargs) -> int:
     accumulator = kwargs.pop("accumulator", 0) + checksum_str(get_fullname(x), **kwargs)
-    return checksum_bytes(x, accumulator=accumulator, **kwargs)
+    return _checksum_bytes_bytearray(x, accumulator=accumulator, **kwargs)
 
 
 def checksum_complex(x: complex, **kwargs) -> int:
@@ -259,8 +259,8 @@ def checksum_bool(x: bool, **kwargs) -> int:
     return int(x) + kwargs.get("accumulator", 0)
 
 
-def checksum_bytes(x: bytes, **kwargs) -> int:
-    return zlib.crc32(x) % (1 << 32) + kwargs.get("accumulator", 0)
+def checksum_bytes(x: Union[bytes, bytearray], **kwargs) -> int:
+    return _checksum_bytes_bytearray(x, **kwargs)
 
 
 def checksum_float(x: float, **kwargs) -> int:
@@ -280,6 +280,10 @@ def _interpret_float_as_int(x: float) -> int:
     xbytes = struct.pack("!f", x)
     xint = struct.unpack("!i", xbytes)[0]
     return xint
+
+
+def _checksum_bytes_bytearray(x: Union[bytes, bytearray], **kwargs) -> int:
+    return zlib.crc32(x) % (1 << 32) + kwargs.get("accumulator", 0)
 
 
 def _checksum_tensor_array_like(
@@ -312,8 +316,8 @@ def _checksum_tensor_array_like(
             posinf=posinf_csum,
         )
 
-    shape = x.shape
-    x = x.flatten()
+    shape = x.shape  # type: ignore
+    x = x.flatten()  # type: ignore
     arange = arange_fn(1, nelement(x) + 1, dtype=range_dtype)
     x = x + arange
     x = x * arange
