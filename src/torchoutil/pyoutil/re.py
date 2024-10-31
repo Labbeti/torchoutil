@@ -5,7 +5,7 @@ import logging
 import re
 from functools import partial
 from re import Pattern
-from typing import Any, Callable, Iterable, List, TypeVar, Union
+from typing import Any, Callable, Iterable, List, Optional, TypeVar, Union
 
 from torchoutil.pyoutil.collections import find
 
@@ -40,16 +40,26 @@ def find_patterns(
 
 def match_patterns(
     x: str,
-    include: PatternListLike = ".*",
+    include: Optional[PatternListLike] = ".*",
     *,
-    exclude: PatternListLike = (),
+    exclude: Optional[PatternListLike] = (),
     match_fn: Callable[[PatternLike, str], Any] = re.search,
 ) -> bool:
-    """Returns True if at least 1 pattern match the first argument."""
-    return (
-        find_patterns(x, include, match_fn=match_fn, default=-1) != -1
-        and find_patterns(x, exclude, match_fn=match_fn, default=-1) == -1
-    )
+    """Returns True if the first argument match at least 1 included pattern and does not match any excluded pattern.
+
+    Args:
+        x: String to check.
+        include: Acceptable pattern(s) for x. If None, match all patterns with '.*'. defaults to '.*'.
+        exclude Forbidden pattern(s) for x. If None, match no patterns with value (). defaults to ().
+        match_fn: Match function use to compare a pattern with argument x. defaults to re.search.
+    """
+    if include is None:
+        include = ".*"
+    if exclude is None:
+        exclude = ()
+    include_index = find_patterns(x, include, match_fn=match_fn, default=-1)
+    exclude_index = find_patterns(x, exclude, match_fn=match_fn, default=-1)
+    return include_index != -1 and exclude_index == -1
 
 
 def get_key_fn(
