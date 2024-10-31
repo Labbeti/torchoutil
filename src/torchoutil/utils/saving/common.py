@@ -157,17 +157,17 @@ def to_builtin(
         return x.pattern
     if isinstance(x, Tensor):
         return x.tolist()
-    if _NUMPY_AVAILABLE and isinstance(x, np.ndarray):
+    if _NUMPY_AVAILABLE and isinstance(x, np.ndarray):  # type: ignore
         return x.tolist()
-    if _NUMPY_AVAILABLE and isinstance(x, np.generic):
+    if _NUMPY_AVAILABLE and isinstance(x, np.generic):  # type: ignore
         return x.item()
-    if _NUMPY_AVAILABLE and isinstance(x, np.dtype):
+    if _NUMPY_AVAILABLE and isinstance(x, np.dtype):  # type: ignore
         return str(x)
 
     # Non-terminal cases (iterables and mappings)
-    if _OMEGACONF_AVAILABLE and isinstance(x, (DictConfig, ListConfig)):
-        return to_builtin(OmegaConf.to_container(x, resolve=False, enum_to_str=True))
-    if _PANDAS_AVAILABLE and isinstance(x, DataFrame):
+    if _OMEGACONF_AVAILABLE and isinstance(x, (DictConfig, ListConfig)):  # type: ignore
+        return to_builtin(OmegaConf.to_container(x, resolve=False, enum_to_str=True))  # type: ignore
+    if _PANDAS_AVAILABLE and isinstance(x, DataFrame):  # type: ignore
         return to_builtin(x.to_dict("list"))
     if isinstance(x, Namespace):
         return to_builtin(x.__dict__)
@@ -176,9 +176,9 @@ def to_builtin(
     if is_namedtuple_instance(x):
         return to_builtin(x._asdict())
     if isinstance(x, Mapping):
-        return {to_builtin(k): to_builtin(v) for k, v in x.items()}  # type: ignore
+        return {to_builtin(k): to_builtin(v) for k, v in x.items()}
     if isinstance(x, Iterable):
-        return [to_builtin(xi) for xi in x]  # type: ignore
+        return [to_builtin(xi) for xi in x]
 
     if unk_mode == "identity":
         return x
