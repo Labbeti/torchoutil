@@ -68,7 +68,11 @@ class Compose(Generic[T, U]):
     ) -> None:
         ...
 
-    def __init__(self, *fns: Callable[[Any], Any]) -> None:
+    @overload
+    def __init__(self, *fns: Callable) -> None:
+        ...
+
+    def __init__(self, *fns: Callable) -> None:
         super().__init__()
         self.fns = fns
 
