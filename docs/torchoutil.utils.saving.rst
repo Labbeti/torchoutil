@@ -13,7 +13,9 @@ Submodules
    :maxdepth: 4
 
    torchoutil.utils.saving.common
-   torchoutil.utils.saving.csv_io
+   torchoutil.utils.saving.csv
+   torchoutil.utils.saving.json
    torchoutil.utils.saving.load_fn
+   torchoutil.utils.saving.pickle
    torchoutil.utils.saving.save_fn
-   torchoutil.utils.saving.yaml_io
+   torchoutil.utils.saving.yaml

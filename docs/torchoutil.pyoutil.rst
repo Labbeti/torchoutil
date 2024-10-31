@@ -37,4 +37,5 @@ Submodules
    torchoutil.pyoutil.logging
    torchoutil.pyoutil.math
    torchoutil.pyoutil.os
+   torchoutil.pyoutil.pickle
    torchoutil.pyoutil.re
