@@ -15,6 +15,7 @@ _EXTRAS_PACKAGES = (
     "numpy",
     "omegaconf",
     "pandas",
+    "safetensors",
     "tensorboard",
     "tqdm",
     "yaml",
