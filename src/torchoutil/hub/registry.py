@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import json
 import logging
 import os
 import os.path as osp
@@ -27,6 +26,9 @@ from typing_extensions import NotRequired
 
 from torchoutil.nn.functional.get import DeviceLike, get_device
 from torchoutil.pyoutil.hashlib import HashName, hash_file
+from torchoutil.pyoutil.logging import warn_once
+from torchoutil.utils.saving.json import load_json, to_json
+from torchoutil.utils.saving.load_fn import LOAD_FNS
 
 T_Hashable = TypeVar("T_Hashable", bound=Hashable)
 
@@ -94,7 +96,7 @@ class RegistryHub(Generic[T_Hashable]):
         *,
         device: DeviceLike = None,
         offline: bool = False,
-        load_fn: Callable = torch.load,
+        load_fn: Union[Callable, str] = torch.load,
         load_kwds: Optional[Dict[str, Any]] = None,
         verbose: int = 0,
     ) -> Dict[str, Tensor]:
@@ -111,19 +113,26 @@ class RegistryHub(Generic[T_Hashable]):
         Returns:
             Loaded file content.
         """
+        if isinstance(load_fn, str):
+            if load_fn not in LOAD_FNS:
+                msg = f"Invalid argument {load_fn=}. (expected one of {tuple(LOAD_FNS.keys())})"
+                raise ValueError(msg)
+            load_fn = LOAD_FNS[load_fn]
+
         if load_kwds is None:
             load_kwds = {}
 
         if device is not None:
             src_device = device
             device = get_device(device)
-            msg = f"Deprecated argument device={src_device}. Use `load_kwds=dict(map_location={device})` instead."
-            pylog.warning(msg)
+            msg = f"Deprecated argument device={src_device}. Use `load_kwds=dict(map_location={device})` with function torch.load instead."
+            warn_once(msg, __name__)
+
             if device is not None:
                 load_kwds["map_location"] = device
 
         if isinstance(name_or_path, (str, Path)) and osp.isfile(name_or_path):
-            path = name_or_path
+            path = Path(name_or_path)
             name = self._get_name(path)
         else:
             name = name_or_path
@@ -133,12 +142,13 @@ class RegistryHub(Generic[T_Hashable]):
                 msg = f"Invalid argument {name_or_path=}. (expected a path to a checkpoint file or a model name in {self.names})"
                 raise ValueError(msg)
 
-            if not osp.isfile(path):
-                if offline:
-                    msg = f"Cannot find checkpoint model file in '{path}' for model '{name_or_path}' with mode {offline=}."
-                    raise FileNotFoundError(msg)
-                else:
-                    self.download_file(name_or_path, verbose=verbose)  # type: ignore
+            if path.is_file():
+                pass
+            elif offline:
+                msg = f"Cannot find checkpoint model file in '{path}' for model '{name_or_path}' with mode {offline=}."
+                raise FileNotFoundError(msg)
+            else:
+                self.download_file(name_or_path, verbose=verbose)  # type: ignore
 
         del name_or_path
 
@@ -153,9 +163,8 @@ class RegistryHub(Generic[T_Hashable]):
 
         if verbose >= 1:
             test_map = data.get("test_mAP", "unknown")
-            pylog.info(
-                f"Loading encoder weights from '{path}'... (with test_mAP={test_map})"
-            )
+            msg = f"Loading encoder weights from '{path}'... (with test_mAP={test_map})"
+            pylog.info(msg)
 
         return state_dict
 
@@ -215,14 +224,12 @@ class RegistryHub(Generic[T_Hashable]):
             "infos": self._infos,
             "register_root": str(self._ckpt_parent_path),
         }
-        with open(path, "r") as file:
-            json.dump(args, file)
+        to_json(args, path)
 
     @classmethod
     def from_file(cls, path: Union[str, Path]) -> "RegistryHub":
         """Load register info from JSON file."""
-        with open(path, "r") as file:
-            args = json.load(file)
+        args = load_json(path)
         return RegistryHub(**args)
 
     def _get_name(self, path: Union[str, Path]) -> Optional[T_Hashable]:

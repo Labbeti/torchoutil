@@ -8,6 +8,7 @@ from pathlib import Path
 from re import Pattern
 from typing import Any, Dict, Iterable, List, Literal, Mapping, TypeVar, Union, overload
 
+import torch
 from torch import Tensor
 
 from torchoutil.core.packaging import (
@@ -157,6 +158,8 @@ def to_builtin(
         return x.pattern
     if isinstance(x, Tensor):
         return x.tolist()
+    if isinstance(x, torch.dtype):
+        return str(x)
     if _NUMPY_AVAILABLE and isinstance(x, np.ndarray):  # type: ignore
         return x.tolist()
     if _NUMPY_AVAILABLE and isinstance(x, np.generic):  # type: ignore
