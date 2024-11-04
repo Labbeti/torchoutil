@@ -16,16 +16,16 @@ def crop_dim(
     x: Tensor,
     target_length: int,
     *,
-    align: CropAlign = "left",
     dim: int = -1,
+    align: CropAlign = "left",
     generator: Union[int, Generator, None] = None,
 ) -> Tensor:
     """Generic function to crop a single dimension."""
     return crop_dims(
         x,
         [target_length],
-        aligns=[align],
         dims=[dim],
+        aligns=[align],
         generator=generator,
     )
 
@@ -34,8 +34,8 @@ def crop_dims(
     x: Tensor,
     target_lengths: Iterable[int],
     *,
-    aligns: Union[CropAlign, Iterable[CropAlign]] = "left",
     dims: Union[Iterable[int], Literal["auto"]] = "auto",
+    aligns: Union[CropAlign, Iterable[CropAlign]] = "left",
     generator: Union[int, Generator, None] = None,
 ) -> Tensor:
     """Generic function to crop multiple dimensions."""

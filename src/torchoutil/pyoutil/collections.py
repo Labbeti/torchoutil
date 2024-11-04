@@ -393,17 +393,17 @@ def flat_dict_of_dict(
         overwrite: If True, overwrite duplicated keys in output. Otherwise duplicated keys will raises a ValueError.
     """
 
-    def _flat_dict_of_dict_impl(nested_dic: Mapping[str, Any]) -> Dict[str, Any]:
+    def _impl(nested_dic: Mapping[str, Any]) -> Dict[str, Any]:
         output = {}
         for k, v in nested_dic.items():
             if is_mapping_str(v):
-                v = _flat_dict_of_dict_impl(v)
+                v = _impl(v)
                 v = {f"{k}{sep}{kv}": vv for kv, vv in v.items()}
                 output.update(v)
 
             elif flat_iterables and isinstance(v, Iterable) and not isinstance(v, str):
                 v = {f"{i}": vi for i, vi in enumerate(v)}
-                v = _flat_dict_of_dict_impl(v)
+                v = _impl(v)
                 v = {f"{k}{sep}{kv}": vv for kv, vv in v.items()}
                 output.update(v)
 
@@ -415,7 +415,7 @@ def flat_dict_of_dict(
                 raise ValueError(msg)
         return output
 
-    return _flat_dict_of_dict_impl(nested_dic)
+    return _impl(nested_dic)
 
 
 def unflat_dict_of_dict(dic: Mapping[str, Any], *, sep: str = ".") -> Dict[str, Any]:

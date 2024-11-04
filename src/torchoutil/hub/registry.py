@@ -7,7 +7,6 @@ import os.path as osp
 from pathlib import Path
 from typing import (
     Any,
-    Callable,
     Dict,
     Generic,
     Hashable,
@@ -28,7 +27,7 @@ from torchoutil.nn.functional.get import DeviceLike, get_device
 from torchoutil.pyoutil.hashlib import HashName, hash_file
 from torchoutil.pyoutil.logging import warn_once
 from torchoutil.utils.saving.json import load_json, to_json
-from torchoutil.utils.saving.load_fn import LOAD_FNS
+from torchoutil.utils.saving.load_fn import LOAD_FNS, LoadFnLike
 
 T_Hashable = TypeVar("T_Hashable", bound=Hashable)
 
@@ -96,7 +95,7 @@ class RegistryHub(Generic[T_Hashable]):
         *,
         device: DeviceLike = None,
         offline: bool = False,
-        load_fn: Union[Callable, str] = torch.load,
+        load_fn: LoadFnLike = torch.load,
         load_kwds: Optional[Dict[str, Any]] = None,
         verbose: int = 0,
     ) -> Dict[str, Tensor]:
@@ -152,21 +151,21 @@ class RegistryHub(Generic[T_Hashable]):
 
         del name_or_path
 
-        data = load_fn(path, **load_kwds)
         info = self._infos.get(name, {})  # type: ignore
         state_dict_key = info.get("state_dict_key", None)
+        data = load_fn(path, **load_kwds)
 
         if state_dict_key is None:
-            state_dict = data
+            result = data
         else:
-            state_dict = data[state_dict_key]
+            result = data[state_dict_key]
 
         if verbose >= 1:
             test_map = data.get("test_mAP", "unknown")
             msg = f"Loading encoder weights from '{path}'... (with test_mAP={test_map})"
             pylog.info(msg)
 
-        return state_dict
+        return result
 
     def download_file(
         self,
@@ -185,8 +184,7 @@ class RegistryHub(Generic[T_Hashable]):
         if exists and force:
             os.remove(model_path)
 
-        os.makedirs(model_path.parent, exist_ok=True)
-
+        model_path.parent.mkdir(parents=True, exist_ok=True)
         url = self._infos[name]["url"]
         torch.hub.download_url_to_file(url, str(model_path), progress=verbose >= 1)
 

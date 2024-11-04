@@ -217,18 +217,20 @@ def ndim(
     x: Union[ScalarLike, Tensor, np.ndarray, Iterable],
     *,
     return_valid: bool = False,
+    use_first_for_list_tuple: bool = False,
 ) -> Union[int, return_types.ndim]:
     """Scan first argument to return its number of dimension(s). Works recursively with Tensors, numpy arrays and builtins types instances.
 
     Args:
         x: Input value to scan.
         return_valid: If True, returns a tuple containing a boolean indicator if the data has an homogeneous ndim instead of raising a ValueError.
+        use_first_for_list_tuple: If True, use first value to determine ndim for list and tuple argument. Otherwise it will scan each value in argument to determine its shape. defaults to False.
 
     Raises:
         ValueError if input has an heterogeneous number of dimensions.
         TypeError if input has an unsupported type.
     """
-    valid, ndim = _search_ndim(x)
+    valid, ndim = _search_ndim(x, use_first_for_list_tuple)
     if return_valid:
         return return_types.ndim(valid, ndim)
     if valid:
@@ -263,6 +265,7 @@ def shape(
     *,
     output_type: Callable[[Tuple[int, ...]], T] = identity,
     return_valid: bool = False,
+    use_first_for_list_tuple: bool = False,
 ) -> Union[T, return_types.shape[T]]:
     """Scan first argument to return its shape. Works recursively with Tensors, numpy arrays and builtins types instances.
 
@@ -275,7 +278,7 @@ def shape(
         ValueError: if input has an heterogeneous shape.
         TypeError: if input has an unsupported type.
     """
-    valid, shape = _search_shape(x)
+    valid, shape = _search_shape(x, use_first_for_list_tuple)
     if return_valid:
         shape = output_type(shape)
         return return_types.shape(valid, shape)
@@ -316,7 +319,8 @@ def nelement(x: Union[ScalarLike, Tensor, np.ndarray, Iterable]) -> int:
 
 
 def _search_ndim(
-    x: Union[ScalarLike, Tensor, np.ndarray, Iterable]
+    x: Union[ScalarLike, Tensor, np.ndarray, Iterable],
+    use_first_for_list_tuple: bool,
 ) -> Tuple[bool, int]:
     if is_scalar_like(x):
         return True, 0
@@ -328,7 +332,7 @@ def _search_ndim(
         ndims = [_search_ndim(xi)[1] for xi in x]  # type: ignore
         if len(ndims) == 0:
             return True, 1
-        elif builtin_all_eq(ndims):
+        elif use_first_for_list_tuple or builtin_all_eq(ndims):
             return True, ndims[0] + 1
         else:
             return False, -1
@@ -337,7 +341,8 @@ def _search_ndim(
 
 
 def _search_shape(
-    x: Union[ScalarLike, Tensor, np.ndarray, Iterable]
+    x: Union[ScalarLike, Tensor, np.ndarray, Iterable],
+    use_first_for_list_tuple: bool,
 ) -> Tuple[bool, Tuple[int, ...]]:
     if is_scalar_like(x):
         return True, ()
@@ -349,7 +354,7 @@ def _search_shape(
         shapes = [_search_shape(xi)[1] for xi in x]  # type: ignore
         if len(shapes) == 0:
             return True, (0,)
-        elif builtin_all_eq(shapes):
+        elif use_first_for_list_tuple or builtin_all_eq(shapes):
             return True, (len(shapes),) + shapes[0]
         else:
             return False, ()
@@ -538,7 +543,7 @@ def is_sorted(
 
 def all_eq(x: Union[Tensor, np.ndarray, ScalarLike, Iterable]) -> bool:
     if isinstance(x, Tensor):
-        if x.ndim == 0 or nelement(x) == 0:
+        if x.ndim == 0 or x.nelement() == 0:
             return True
         x = x.view(-1)
         return (x[0] == x[1:]).all().item()

@@ -283,7 +283,7 @@ class _TensorNDBase(
                 msg = f"Invalid number of dimension(s) for argument data in {cls.__name__}. (found {ndim} but expected {cls_ndim})"
                 raise ValueError(msg)
 
-        if layout is None:  # supports older torch versions
+        if layout is None:  # supports older PyTorch versions
             layout = torch.strided
 
         if data is not None:
@@ -292,6 +292,7 @@ class _TensorNDBase(
                 dtype=dtype,
                 device=device,
             )  # type: ignore
+
         elif size is not None:
             return torch.empty(
                 size,
@@ -303,6 +304,7 @@ class _TensorNDBase(
                 pin_memory=pin_memory,
                 requires_grad=requires_grad,
             )  # type: ignore
+
         else:
             msg = f"Internal error: found {data=} and {size=} in {cls.__name__}."
             raise RuntimeError(msg)

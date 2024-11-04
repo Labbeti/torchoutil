@@ -31,8 +31,8 @@ class CropDim(nn.Module):
         return crop_dim(
             x,
             self.target_length,
-            align=self.align,
             dim=self.dim,
+            align=self.align,
             generator=self.generator,
         )
 
@@ -40,8 +40,8 @@ class CropDim(nn.Module):
         return dump_dict(
             dict(
                 target_length=self.target_length,
-                align=self.align,
                 dim=self.dim,
+                align=self.align,
             )
         )
 
@@ -60,16 +60,16 @@ class CropDims(nn.Module):
     ) -> None:
         super().__init__()
         self.target_lengths = target_lengths
-        self.aligns: Union[CropAlign, Iterable[CropAlign]] = aligns
         self.dims = dims
+        self.aligns: Union[CropAlign, Iterable[CropAlign]] = aligns
         self.generator = generator
 
     def forward(self, x: Tensor) -> Tensor:
         return crop_dims(
             x,
             self.target_lengths,
-            aligns=self.aligns,
             dims=self.dims,
+            aligns=self.aligns,
             generator=self.generator,
         )
 
@@ -77,7 +77,7 @@ class CropDims(nn.Module):
         return dump_dict(
             dict(
                 target_lengths=self.target_lengths,
-                aligns=self.aligns,
                 dims=self.dims,
+                aligns=self.aligns,
             )
         )

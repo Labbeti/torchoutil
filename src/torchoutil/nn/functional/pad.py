@@ -6,11 +6,11 @@ from typing import Any, Callable, Dict, Iterable, List, Literal, Sized, Tuple, U
 import torch
 from torch import Generator, Size, Tensor
 from torch.nn import functional as F
-from torch.types import Device, Number
+from torch.types import Number
 
 from torchoutil.nn.functional.get import get_device, get_generator
 from torchoutil.nn.functional.others import can_be_stacked
-from torchoutil.types import is_number_like
+from torchoutil.types import DeviceLike, is_number_like
 
 PAD_ALIGNS = ("left", "right", "center", "random")
 PadAlign = Literal["left", "right", "center", "random"]
@@ -22,9 +22,9 @@ def pad_dim(
     x: Tensor,
     target_length: int,
     *,
+    dim: int = -1,
     align: PadAlign = "left",
     pad_value: PadValue = 0.0,
-    dim: int = -1,
     mode: PadMode = "constant",
     generator: Union[int, Generator, None] = None,
 ) -> Tensor:
@@ -32,9 +32,9 @@ def pad_dim(
     return pad_dims(
         x,
         [target_length],
+        dims=[dim],
         aligns=[align],
         pad_value=pad_value,
-        dims=[dim],
         mode=mode,
         generator=generator,
     )
@@ -44,9 +44,9 @@ def pad_dims(
     x: Tensor,
     target_lengths: Iterable[int],
     *,
+    dims: Iterable[int] = (-1,),
     aligns: Iterable[PadAlign] = ("left",),
     pad_value: PadValue = 0.0,
-    dims: Iterable[int] = (-1,),
     mode: PadMode = "constant",
     generator: Union[int, Generator, None] = None,
 ) -> Tensor:
@@ -81,7 +81,8 @@ def pad_and_stack_rec(
     sequence: Union[Tensor, int, float, tuple, list],
     pad_value: Number = 0,
     *,
-    device: Device = None,
+    align: PadAlign = "left",
+    device: DeviceLike = None,
     dtype: Union[None, torch.dtype] = None,
 ) -> Tensor:
     """Recursive version of torch.nn.utils.rnn.pad_sequence, with padding of Tensors.
@@ -89,64 +90,64 @@ def pad_and_stack_rec(
     Args:
         sequence: The sequence to pad. Must be convertable to tensor by having the correct number of dims in all sublists.
         pad_value: The pad value used.
-        dtype: The dtype of the output Tensor. defaults to None.
         device: The device of the output Tensor. defaults to None.
+        dtype: The dtype of the output Tensor. defaults to None.
 
     Example 1::
     -----------
-        >>> sequence = [[1, 2], [3], [], [4, 5]]
-        >>> output = pad_sequence_rec(sequence, 0)
-        tensor([[1, 2], [3, 0], [0, 0], [4, 5]])
+    >>> sequence = [[1, 2], [3], [], [4, 5]]
+    >>> output = pad_sequence_rec(sequence, 0)
+    tensor([[1, 2], [3, 0], [0, 0], [4, 5]])
 
     Example 2::
     -----------
-        >>> invalid_sequence = [[1, 2, 3], 3]
-        >>> output = pad_sequence_rec(invalid_sequence, 0)
-        ValueError : Cannot pad sequence of tensors of differents number of dims.
+    >>> invalid_sequence = [[1, 2, 3], 3]
+    >>> output = pad_sequence_rec(invalid_sequence, 0)
+    ValueError : Cannot pad sequence of tensors of differents number of dims.
 
     """
     device = get_device(device)
 
-    if isinstance(sequence, Tensor):
-        return sequence.to(dtype=dtype, device=device)
+    def _impl(sequence: Union[Tensor, int, float, tuple, list]) -> Tensor:
+        if isinstance(sequence, Tensor):
+            return sequence.to(dtype=dtype, device=device)
 
-    elif is_number_like(sequence) or (
-        isinstance(sequence, Sized) and len(sequence) == 0
-    ):
-        return torch.as_tensor(sequence, dtype=dtype, device=device)  # type: ignore
+        elif is_number_like(sequence) or (
+            isinstance(sequence, Sized) and len(sequence) == 0
+        ):
+            return torch.as_tensor(sequence, dtype=dtype, device=device)  # type: ignore
 
-    elif isinstance(sequence, (list, tuple)):
-        sequence = [
-            pad_and_stack_rec(elt, pad_value, dtype=dtype, device=device)
-            for elt in sequence
-        ]
-        if can_be_stacked(sequence):
-            return torch.stack(sequence)
+        elif isinstance(sequence, (list, tuple)):
+            tensors = [_impl(elt) for elt in sequence]
+            if can_be_stacked(tensors):
+                return torch.stack(tensors)
 
-        shapes = [elt.shape for elt in sequence]
-        shape0 = shapes[0]
+            shapes = [elt.shape for elt in tensors]
+            shape0 = shapes[0]
 
-        if not all(len(shape) == len(shape0) for shape in shapes):
-            msg = f"Cannot pad sequence of tensors of differents number of dims. (with {shapes=})"
-            raise ValueError(msg)
+            if not all(len(shape) == len(shape0) for shape in shapes):
+                msg = f"Cannot pad sequence of tensors of differents number of dims. (with {shapes=})"
+                raise ValueError(msg)
 
-        max_lens = [max(shape[i] for shape in shapes) for i in range(len(shape0))]
-        sequence = [
-            pad_dims(
-                xi,
-                target_lengths=max_lens,
-                pad_value=pad_value,
-                aligns=["left"] * xi.ndim,
-                dims=range(xi.ndim),
-            )
-            for xi in sequence
-        ]
-        result = torch.stack(sequence)
-        return result
+            max_lens = [max(shape[i] for shape in shapes) for i in range(len(shape0))]
+            tensors = [
+                pad_dims(
+                    xi,
+                    target_lengths=max_lens,
+                    pad_value=pad_value,
+                    aligns=[align] * xi.ndim,
+                    dims=range(xi.ndim),
+                )
+                for xi in tensors
+            ]
+            result = torch.stack(tensors)
+            return result
 
-    else:
-        msg = f"Invalid type {type(sequence)}. (expected Tensor, int, float, list or tuple)"
-        raise TypeError(msg)
+        else:
+            msg = f"Invalid type {type(sequence)}. (expected Tensor, int, float, list or tuple)"
+            raise TypeError(msg)
+
+    return _impl(sequence)
 
 
 def cat_padded_batch(
