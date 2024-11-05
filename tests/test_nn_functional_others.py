@@ -8,15 +8,13 @@ from unittest import TestCase
 import torch
 
 from torchoutil.core.packaging import _NUMPY_AVAILABLE
+from torchoutil.extras.numpy import np
 from torchoutil.nn.functional.others import (
     can_be_converted_to_tensor,
     can_be_stacked,
     ndim,
     shape,
 )
-
-if _NUMPY_AVAILABLE:
-    import numpy as np
 
 
 class TestCanBeConvertedToTensor(TestCase):
@@ -93,6 +91,7 @@ class TestNDimShape(TestCase):
             [2, []],
             "",
             [[[]], []],
+            [1, [[], 2]],
         ]
         expected_ndims = [
             1,
@@ -110,6 +109,7 @@ class TestNDimShape(TestCase):
             ValueError,
             0,
             ValueError,
+            ValueError,
         ]
         expected_shapes = [
             (0,),
@@ -126,6 +126,7 @@ class TestNDimShape(TestCase):
             (2, 0),
             ValueError,
             (),
+            ValueError,
             ValueError,
         ]
 
