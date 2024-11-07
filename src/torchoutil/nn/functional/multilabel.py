@@ -8,9 +8,8 @@ from typing import Hashable, Iterable, List, Mapping, Optional, Sequence, TypeVa
 
 import torch
 from torch import Tensor
-from torch.types import Device
 
-from torchoutil.nn.functional.get import get_device
+from torchoutil.core.get import DeviceLike, DTypeLike, get_device, get_dtype
 from torchoutil.nn.functional.others import can_be_stacked, to_item
 from torchoutil.nn.functional.pad import pad_and_stack_rec
 from torchoutil.nn.functional.transform import to_tensor
@@ -25,8 +24,8 @@ def indices_to_multihot(
     num_classes: int,
     *,
     padding_idx: Optional[int] = None,
-    device: Device = None,
-    dtype: Union[torch.dtype, None] = torch.bool,
+    device: DeviceLike = None,
+    dtype: DTypeLike = torch.bool,
 ) -> Tensor:
     """Convert indices of labels to multihot boolean encoding for **multilabel** classification.
 
@@ -41,6 +40,7 @@ def indices_to_multihot(
         device = indices.device
     else:
         device = get_device(device)
+    dtype = get_dtype(dtype)
 
     def _impl(x) -> Tensor:
         if isinstance(x, Tensor) and not _is_valid_indices(x):
@@ -208,8 +208,8 @@ def multinames_to_multihot(
     names: List[List[T_Name]],
     idx_to_name: Union[Mapping[int, T_Name], Sequence[T_Name]],
     *,
-    device: Device = None,
-    dtype: Union[torch.dtype, None] = torch.bool,
+    device: DeviceLike = None,
+    dtype: DTypeLike = torch.bool,
 ) -> Tensor:
     """Convert names to multihot boolean encoding for **multilabel** classification.
 
@@ -254,8 +254,8 @@ def probs_to_multihot(
     threshold: Union[float, Sequence[float], Tensor],
     *,
     dim: int = -1,
-    device: Device = None,
-    dtype: Union[torch.dtype, None] = torch.bool,
+    device: DeviceLike = None,
+    dtype: DTypeLike = torch.bool,
 ) -> Tensor:
     """Convert matrix of probabilities to multihot boolean encoding for **multilabel** classification.
 
@@ -275,6 +275,7 @@ def probs_to_multihot(
         device = probs.device
     else:
         device = get_device(device)
+    dtype = get_dtype(dtype)
 
     if not isinstance(threshold, Tensor):
         threshold = torch.as_tensor(threshold, dtype=torch.float, device=device)

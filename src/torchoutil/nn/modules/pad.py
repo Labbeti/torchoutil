@@ -7,6 +7,7 @@ import torch
 from torch import Generator, Tensor, nn
 from torch.types import Number
 
+from torchoutil.core.get import DeviceLike
 from torchoutil.nn.functional.pad import (
     PadAlign,
     PadMode,
@@ -16,7 +17,6 @@ from torchoutil.nn.functional.pad import (
     pad_dims,
 )
 from torchoutil.pyoutil.collections import dump_dict
-from torchoutil.types import DeviceLike
 
 
 class PadDim(nn.Module):

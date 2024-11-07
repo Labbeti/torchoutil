@@ -7,7 +7,7 @@ from typing import Callable, Iterable, List, Optional, Union
 import torch
 from torch import Generator, Tensor
 
-from torchoutil.nn.functional.get import get_generator
+from torchoutil.core.get import get_generator
 from torchoutil.pyoutil.collections import flat_list_of_list
 
 

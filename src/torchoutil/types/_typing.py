@@ -112,3 +112,5 @@ T_TensorLike = TypeVar(
     bound=Union[torch.Tensor, np.ndarray],
     covariant=True,
 )
+
+del np

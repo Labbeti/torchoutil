@@ -22,6 +22,7 @@ import torch
 from torch import Tensor, nn
 from typing_extensions import TypeGuard
 
+from torchoutil.core.get import get_device
 from torchoutil.extras.numpy import (
     ACCEPTED_NUMPY_DTYPES,
     np,
@@ -32,7 +33,6 @@ from torchoutil.extras.numpy import (
     numpy_view_as_complex,
     numpy_view_as_real,
 )
-from torchoutil.nn.functional.get import get_device
 from torchoutil.pyoutil.collections import all_eq as builtin_all_eq
 from torchoutil.pyoutil.collections import all_ne as builtin_all_ne
 from torchoutil.pyoutil.collections import is_sorted as builtin_is_sorted
@@ -222,6 +222,8 @@ def ndim(
 ) -> Union[int, return_types.ndim]:
     """Scan first argument to return its number of dimension(s). Works recursively with Tensors, numpy arrays and builtins types instances.
 
+    Note: Sets and dicts are considered as scalars with a shape equal to 0.
+
     Args:
         x: Input value to scan.
         return_valid: If True, returns a tuple containing a boolean indicator if the data has an homogeneous ndim instead of raising a ValueError.
@@ -294,6 +296,8 @@ def shape(
     use_first_for_list_tuple: bool = False,
 ) -> Union[T, return_types.shape[T]]:
     """Scan first argument to return its shape. Works recursively with Tensors, numpy arrays and builtins types instances.
+
+    Note: Sets and dicts are considered as scalars with a shape equal to ().
 
     Args:
         x: Input value to scan.

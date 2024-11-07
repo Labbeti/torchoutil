@@ -347,6 +347,7 @@ class _TensorNDBase(
     ) -> None:
         ...
 
+    @overload
     def __eq__(self, other: Any) -> "BoolTensor":
         ...
 
@@ -363,6 +364,22 @@ class _TensorNDBase(
         ...
 
     @overload
+    def __getitem__(self: "Tensor0D", /, idx: None) -> "Tensor1D":
+        ...
+
+    @overload
+    def __getitem__(self: "Tensor1D", /, idx: None) -> "Tensor2D":
+        ...
+
+    @overload
+    def __getitem__(self: "Tensor2D", /, idx: None) -> "Tensor3D":
+        ...
+
+    @overload
+    def __getitem__(self: "Tensor3D", /, idx: None) -> "Tensor":
+        ...
+
+    @overload
     def __getitem__(self: T_Tensor, /, sl: slice) -> T_Tensor:
         ...
 
@@ -370,28 +387,72 @@ class _TensorNDBase(
     def __getitem__(self, *args) -> "Tensor":
         ...
 
+    @overload
     def __ne__(self, other: Any) -> "BoolTensor":
         ...
 
+    @overload
     def abs(self: T_Tensor) -> T_Tensor:
         ...
 
+    @overload
     def is_complex(self) -> T_Complex:  # type: ignore
         ...
 
+    @overload
     def is_floating_point(self) -> T_Floating:  # type: ignore
         ...
 
+    @overload
     def is_signed(self) -> T_Signed:  # type: ignore
         ...
 
+    @overload
     def item(self) -> T_BuiltinNumber:  # type: ignore
         ...
 
+    @overload
+    def mean(self, dim: Literal[None] = None) -> "Tensor0D":
+        ...
+
+    @overload
+    def mean(self: "Tensor1D", dim: int) -> "Tensor0D":
+        ...
+
+    @overload
+    def mean(self: "Tensor2D", dim: int) -> "Tensor1D":
+        ...
+
+    @overload
+    def mean(self: "Tensor3D", dim: int) -> "Tensor2D":
+        ...
+
+    @overload
     def mean(self, dim: Optional[int] = None) -> "Tensor":
         ...
 
+    @overload
     def squeeze(self, dim: Optional[int] = None) -> "Tensor":
+        ...
+
+    @overload
+    def sum(self, dim: Literal[None] = None) -> "Tensor0D":
+        ...
+
+    @overload
+    def sum(self: "Tensor1D", dim: int) -> "Tensor0D":
+        ...
+
+    @overload
+    def sum(self: "Tensor2D", dim: int) -> "Tensor1D":
+        ...
+
+    @overload
+    def sum(self: "Tensor3D", dim: int) -> "Tensor2D":
+        ...
+
+    @overload
+    def sum(self, dim: Optional[int] = None) -> "Tensor":
         ...
 
     @overload
@@ -428,10 +489,24 @@ class _TensorNDBase(
     ) -> T_Tensor:
         ...
 
+    @overload
     def tolist(self) -> Union[list, T_BuiltinNumber]:  # type: ignore
         ...
 
-    def unsqueeze(self, dim: Optional[int] = None) -> "Tensor":
+    @overload
+    def unsqueeze(self: "Tensor0D", dim: int) -> "Tensor1D":
+        ...
+
+    @overload
+    def unsqueeze(self: "Tensor1D", dim: int) -> "Tensor2D":
+        ...
+
+    @overload
+    def unsqueeze(self: "Tensor2D", dim: int) -> "Tensor3D":
+        ...
+
+    @overload
+    def unsqueeze(self, dim: int) -> "Tensor":
         ...
 
     @overload
@@ -482,6 +557,7 @@ class _TensorNDBase(
     item = torch.Tensor.item  # noqa: F811  # type: ignore
     mean = torch.Tensor.mean  # noqa: F811
     squeeze = torch.Tensor.squeeze  # noqa: F811
+    sum = torch.Tensor.sum  # noqa: F811
     to = torch.Tensor.to  # noqa: F811
     tolist = torch.Tensor.tolist  # noqa: F811
     unsqueeze = torch.Tensor.unsqueeze  # noqa: F811

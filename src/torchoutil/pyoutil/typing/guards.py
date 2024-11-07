@@ -190,11 +190,11 @@ def is_namedtuple_instance(x: Any) -> TypeIs[NamedTupleInstance]:
 
 
 def is_sequence_bool(x: Any) -> TypeIs[Sequence[bool]]:
-    return isinstance(x, Sequence) and (all(isinstance(xi, bool) for xi in x))
+    return isinstance(x, Sequence) and all(isinstance(xi, bool) for xi in x)
 
 
 def is_sequence_int(x: Any) -> TypeIs[Sequence[int]]:
-    return isinstance(x, Sequence) and (all(isinstance(xi, int) for xi in x))
+    return isinstance(x, Sequence) and all(isinstance(xi, int) for xi in x)
 
 
 def is_sequence_str(

@@ -24,7 +24,7 @@ def to_numpy(
     dtype: Union[str, np.dtype, None] = None,
     force: bool = False,
 ) -> np.ndarray:
-    """Convert input to numpy array."""
+    """Convert input to numpy array. Works with any arbitrary object."""
     if isinstance(x, Tensor):
         return tensor_to_numpy(x, dtype=dtype, force=force)
     else:

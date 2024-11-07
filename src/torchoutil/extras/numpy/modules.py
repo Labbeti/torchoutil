@@ -5,9 +5,14 @@ from typing import Union
 
 import torch
 from torch import Tensor, nn
-from torch.types import Device
 
-from .functional import np, numpy_to_tensor, tensor_to_numpy, to_numpy
+from torchoutil.core.get import DeviceLike
+from torchoutil.extras.numpy.definitions import np
+from torchoutil.extras.numpy.functional import (
+    numpy_to_tensor,
+    tensor_to_numpy,
+    to_numpy,
+)
 
 
 class ToNumpy(nn.Module):
@@ -16,7 +21,10 @@ class ToNumpy(nn.Module):
     """
 
     def __init__(
-        self, *, dtype: Union[str, np.dtype, None] = None, force: bool = False
+        self,
+        *,
+        dtype: Union[str, np.dtype, None] = None,
+        force: bool = False,
     ) -> None:
         super().__init__()
         self.dtype = dtype
@@ -32,7 +40,10 @@ class TensorToNumpy(nn.Module):
     """
 
     def __init__(
-        self, *, dtype: Union[str, np.dtype, None] = None, force: bool = False
+        self,
+        *,
+        dtype: Union[str, np.dtype, None] = None,
+        force: bool = False,
     ) -> None:
         super().__init__()
         self.dtype = dtype
@@ -50,7 +61,7 @@ class NumpyToTensor(nn.Module):
     def __init__(
         self,
         *,
-        device: Device = None,
+        device: DeviceLike = None,
         dtype: Union[torch.dtype, None] = None,
     ) -> None:
         super().__init__()

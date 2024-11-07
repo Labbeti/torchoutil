@@ -5,9 +5,9 @@ from typing import Any, Dict, List, Union
 
 import torch
 from torch import Tensor
-from torch.types import Device, Number
+from torch.types import Number
 
-from torchoutil.nn.functional.get import CUDA_IF_AVAILABLE, get_device, get_generator
+from torchoutil.core.get import CUDA_IF_AVAILABLE, DeviceLike, get_device, get_generator
 from torchoutil.types import LongTensor1D, Tensor1D, is_builtin_number
 
 
@@ -18,6 +18,17 @@ def get_inverse_perm(indices: Tensor, dim: int = -1) -> Tensor:
     Args:
         indices: Original permutation indices as tensor of shape (..., N).
         dim: Dimension of indices. defaults to -1.
+
+    Example 1
+    ----------
+        >>> x = torch.as_tensor([2, 4, 8, 10])
+        >>> indices = torch.randperm(len(x))
+        >>> x = x[indices]
+        >>> # x is now shuffled, to get back the original order we need the indices
+        >>> inv_indices = get_inverse_perm(indices)
+        >>> x_reordered = x[inv_indices]
+        >>> x_reordered
+        ... tensor([2, 4, 8, 10])
     """
     arange = torch.arange(
         indices.shape[dim],
@@ -33,7 +44,7 @@ def get_inverse_perm(indices: Tensor, dim: int = -1) -> Tensor:
 def randperm_diff(
     size: int,
     generator: Union[None, int, torch.Generator] = None,
-    device: Device = CUDA_IF_AVAILABLE,
+    device: DeviceLike = CUDA_IF_AVAILABLE,
 ) -> LongTensor1D:
     """This function ensure that every value i cannot be the element at index i.
     The output will be a tensor of shape (size,).
@@ -65,7 +76,7 @@ def randperm_diff(
     return perm  # type: ignore
 
 
-def get_perm_indices(x1: Tensor1D, x2: Tensor1D) -> LongTensor1D:
+def get_perm_indices(x1: Tensor, x2: Tensor) -> LongTensor1D:
     """Find permutation between two vectors t1 and t2 which contains values from 0 to N-1.
 
     Example 1::

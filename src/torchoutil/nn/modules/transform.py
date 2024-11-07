@@ -16,6 +16,8 @@ from typing import (
 import torch
 from torch import Generator, Tensor, nn
 
+from torchoutil.core.get import DeviceLike, DTypeLike
+from torchoutil.extras.numpy import np
 from torchoutil.nn.functional.transform import (
     PadCropAlign,
     PadMode,
@@ -33,8 +35,6 @@ from torchoutil.nn.functional.transform import (
     transform_drop,
 )
 from torchoutil.pyoutil.collections import dump_dict
-from torchoutil.types import DeviceLike, DTypeLike
-from torchoutil.types._typing import np
 
 T = TypeVar("T")
 

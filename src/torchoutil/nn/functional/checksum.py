@@ -14,6 +14,7 @@ import torch
 from torch import Tensor, nn
 
 from torchoutil.core.packaging import _NUMPY_AVAILABLE
+from torchoutil.extras.numpy import np
 from torchoutil.nn.functional.others import is_complex, is_floating_point, nelement
 from torchoutil.pyoutil.inspect import get_fullname
 from torchoutil.pyoutil.typing import (
@@ -23,7 +24,6 @@ from torchoutil.pyoutil.typing import (
     NamedTupleInstance,
     NoneType,
 )
-from torchoutil.types._typing import np
 
 CHECKSUM_TYPES = (
     "int",

@@ -23,7 +23,7 @@ import torch
 from torch import Tensor
 from typing_extensions import NotRequired
 
-from torchoutil.nn.functional.get import DeviceLike, get_device
+from torchoutil.core.get import DeviceLike, get_device
 from torchoutil.pyoutil.hashlib import HashName, hash_file
 from torchoutil.pyoutil.logging import warn_once
 from torchoutil.utils.saving.json import load_json, to_json

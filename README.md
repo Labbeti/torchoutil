@@ -28,7 +28,7 @@ Collection of functions and modules to help development in PyTorch.
 pip install torchoutil
 ```
 
-The only requirement is **[PyTorch](https://pytorch.org/)**.
+The main requirement is **[PyTorch](https://pytorch.org/)**.
 
 To check if the package is installed and show the package version, you can use the following command:
 ```bash

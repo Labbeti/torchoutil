@@ -8,9 +8,9 @@ from torch import Generator, Size, Tensor
 from torch.nn import functional as F
 from torch.types import Number
 
-from torchoutil.nn.functional.get import get_device, get_generator
+from torchoutil.core.get import DeviceLike, get_device, get_generator
 from torchoutil.nn.functional.others import can_be_stacked
-from torchoutil.types import DeviceLike, is_number_like
+from torchoutil.types import is_number_like
 
 PAD_ALIGNS = ("left", "right", "center", "random")
 PadAlign = Literal["left", "right", "center", "random"]

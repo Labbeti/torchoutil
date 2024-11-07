@@ -6,7 +6,7 @@ from typing import Iterable, List, Literal, Union
 import torch
 from torch import Generator, Tensor
 
-from torchoutil.nn.functional.get import get_generator
+from torchoutil.core.get import get_generator
 
 CROP_ALIGNS = ("left", "right", "center", "random")
 CropAlign = Literal["left", "right", "center", "random"]

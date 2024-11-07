@@ -27,6 +27,16 @@ class TestRandpermDiff(TestCase):
 
 class TestGetInversePerm(TestCase):
     def test_example_1(self) -> None:
+        x = torch.as_tensor([2, 4, 8, 10])
+        indices = torch.randperm(len(x))
+        x = x[indices]
+        # x is now shuffled, to get back the original order we need the indices
+        inv_indices = get_inverse_perm(indices)
+        x_reordered = x[inv_indices]
+
+        assert torch.equal(x_reordered, torch.as_tensor([2, 4, 8, 10]))
+
+    def test_examples_random(self) -> None:
         n_steps = 5
         for _ in range(n_steps):
             size = int(torch.randint(0, 100, ()).item())

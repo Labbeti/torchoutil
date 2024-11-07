@@ -5,7 +5,6 @@ import math
 
 import torch
 from torch import Tensor, nn
-from torch.types import Device
 
 from torchoutil.core.get import DeviceLike, DTypeLike, get_device, get_dtype
 from torchoutil.types._typing import Tensor2D
@@ -17,7 +16,7 @@ class PositionalEncoding(nn.Module):
         emb_size: int,
         dropout_p: float,
         maxlen: int = 5000,
-        device: Device = None,
+        device: DeviceLike = None,
     ) -> None:
         """Vanilla Positional Encoding for transformers networks.
 

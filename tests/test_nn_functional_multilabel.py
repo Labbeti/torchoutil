@@ -6,7 +6,7 @@ from unittest import TestCase
 
 import torch
 
-from torchoutil.nn.functional.get import get_device
+from torchoutil.core.get import get_device
 from torchoutil.nn.functional.multilabel import (
     indices_to_multihot,
     indices_to_multinames,

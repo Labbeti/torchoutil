@@ -20,10 +20,9 @@ from typing import (
 import torch
 from torch import Tensor
 from torch.nn import functional as F
-from torch.types import Device
 
+from torchoutil.core.get import DeviceLike, DTypeLike, get_device, get_dtype
 from torchoutil.extras.numpy import np
-from torchoutil.nn.functional.get import get_device
 from torchoutil.nn.functional.others import nelement, to_item
 from torchoutil.pyoutil.logging import warn_once
 from torchoutil.types import LongTensor, is_number_like
@@ -36,8 +35,8 @@ def index_to_onehot(
     num_classes: int,
     *,
     padding_idx: Optional[int] = None,
-    device: Device = None,
-    dtype: Union[torch.dtype, None] = torch.bool,
+    device: DeviceLike = None,
+    dtype: DTypeLike = torch.bool,
 ) -> Tensor:
     """Convert indices of labels to onehot boolean encoding for **multiclass** classification.
 
@@ -50,6 +49,7 @@ def index_to_onehot(
         dtype: PyTorch DType of the output tensor.
     """
     device = get_device(device)
+    dtype = get_dtype(dtype)
     index = torch.as_tensor(index, device=device, dtype=torch.long)
 
     if padding_idx is not None:
@@ -179,8 +179,8 @@ def name_to_onehot(
     name: List[T_Name],
     idx_to_name: Union[Mapping[int, T_Name], Sequence[T_Name]],
     *,
-    device: Device = None,
-    dtype: Union[torch.dtype, None] = torch.bool,
+    device: DeviceLike = None,
+    dtype: DTypeLike = torch.bool,
 ) -> Tensor:
     """Convert names to onehot boolean encoding for **multiclass** classification.
 
@@ -214,8 +214,8 @@ def probs_to_onehot(
     probs: Tensor,
     *,
     dim: int = -1,
-    device: Device = None,
-    dtype: Union[torch.dtype, None] = torch.bool,
+    device: DeviceLike = None,
+    dtype: DTypeLike = torch.bool,
 ) -> Tensor:
     """Convert matrix of probabilities to onehot boolean encoding for **multiclass** classification.
 

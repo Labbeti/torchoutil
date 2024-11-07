@@ -18,15 +18,22 @@ from typing import (
 import torch
 from torch import Generator, Tensor
 
+from torchoutil.core.get import (
+    DeviceLike,
+    DTypeLike,
+    get_device,
+    get_dtype,
+    get_generator,
+)
+from torchoutil.extras.numpy import np
 from torchoutil.nn.functional.crop import crop_dim
-from torchoutil.nn.functional.get import get_device, get_dtype, get_generator
 from torchoutil.nn.functional.pad import PadMode, PadValue, pad_dim
 from torchoutil.pyoutil.collections import all_eq
 from torchoutil.pyoutil.collections import flatten as builtin_flatten
 from torchoutil.pyoutil.collections import prod as builtin_prod
 from torchoutil.pyoutil.functools import identity  # noqa: F401
 from torchoutil.pyoutil.typing import T_BuiltinScalar
-from torchoutil.types import DeviceLike, DTypeLike, is_number_like, is_scalar_like
+from torchoutil.types import is_number_like, is_scalar_like
 from torchoutil.types._typing import (
     BuiltinNumber,
     NumberLike,
@@ -34,7 +41,6 @@ from torchoutil.types._typing import (
     Tensor1D,
     Tensor2D,
     Tensor3D,
-    np,
 )
 
 T = TypeVar("T")

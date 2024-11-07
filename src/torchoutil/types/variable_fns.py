@@ -1,12 +1,14 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from typing import Any, Literal, Sequence, Union, overload, Tuple
+from typing import Any, Literal, Optional, Sequence, Tuple, Union, overload
 
 import torch
+from torch import Tensor
+from torch.types import Device, Number
 from typing_extensions import Never
 
-from torchoutil.nn.functional.get import get_device, get_dtype
+from torchoutil.core.get import get_device, get_dtype
 from torchoutil.pyoutil.typing import BuiltinNumber
 from torchoutil.types import (
     BoolTensor0D,
@@ -1113,4 +1115,69 @@ def full(
         device=device,
         pin_memory=pin_memory,
         requires_grad=requires_grad,
+    )
+
+
+@overload
+def arange(
+    end: int,
+    *,
+    out: Optional[Tensor] = None,
+    dtype: Literal[None] = None,
+    device: Optional[Device] = None,
+    requires_grad: bool = False,
+    pin_memory: bool = False,
+) -> LongTensor1D:
+    ...
+
+
+@overload
+def arange(
+    start: int,
+    end: int,
+    *,
+    out: Optional[Tensor] = None,
+    dtype: Literal[None] = None,
+    device: Optional[Device] = None,
+    requires_grad: bool = False,
+    pin_memory: bool = False,
+) -> LongTensor1D:
+    ...
+
+
+@overload
+def arange(
+    start: int,
+    end: int,
+    step: int,
+    *,
+    out: Optional[Tensor] = None,
+    dtype: Literal[None] = None,
+    device: Optional[Device] = None,
+    requires_grad: bool = False,
+    pin_memory: bool = False,
+) -> LongTensor1D:
+    ...
+
+
+def arange(
+    start: Number,
+    end: Number,
+    step: Number,
+    *,
+    out: Optional[Tensor] = None,
+    dtype: Optional[torch.dtype] = None,
+    device: Optional[Device] = None,
+    requires_grad: bool = False,
+    pin_memory: bool = False,
+) -> Tensor1D:
+    return torch.arange(
+        start,
+        end,
+        step,
+        out=out,
+        dtype=dtype,
+        device=device,
+        requires_grad=requires_grad,
+        pin_memory=pin_memory,
     )

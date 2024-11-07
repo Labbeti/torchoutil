@@ -11,7 +11,7 @@ from torchoutil.core.packaging import (
     _SAFETENSORS_AVAILABLE,
     _YAML_AVAILABLE,
 )
-from torchoutil.types._typing import np
+from torchoutil.extras.numpy import np
 from torchoutil.utils.saving.csv import load_csv
 from torchoutil.utils.saving.json import load_json
 from torchoutil.utils.saving.pickle import load_pickle
