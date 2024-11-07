@@ -219,7 +219,8 @@ def pack_to_hdf(
 
         if verbose >= 2:
             num_scalars = sum(len(hdf_ds.shape) == 1 for hdf_ds in hdf_dsets.values())
-            msg = f"{num_scalars}/{len(hdf_dsets)} column dsets contains a single dim."
+            ratio = num_scalars / total
+            msg = f"{num_scalars}/{len(hdf_dsets)} column dsets contains a single dim. ({ratio*100:.3f}%)"
             pylog.debug(msg)
 
             if num_scalars < len(hdf_dsets):
