@@ -333,7 +333,10 @@ def filter_iterable(
 
 
 def all_eq(it: Iterable[T], eq_fn: Optional[Callable[[T, T], bool]] = None) -> bool:
-    """Returns true if all elements in inputs are equal."""
+    """Returns true if all elements in iterable are equal.
+
+    Note: This function returns True for iterable that contains 0 or 1 element.
+    """
     it = list(it)
     first = it[0]
     if eq_fn is None:
@@ -342,10 +345,22 @@ def all_eq(it: Iterable[T], eq_fn: Optional[Callable[[T, T], bool]] = None) -> b
         return all(eq_fn(first, elt) for elt in it)
 
 
-def all_ne(it: Iterable[T], ne_fn: Optional[Callable[[T, T], bool]] = None) -> bool:
-    """Returns true if all elements in inputs are differents."""
+def all_ne(
+    it: Iterable[T],
+    ne_fn: Optional[Callable[[T, T], bool]] = None,
+    use_set: bool = False,
+) -> bool:
+    """Returns true if all elements in iterable are differents.
+
+    Note: This function returns True for iterable that contains 0 or 1 element.
+    """
+    if use_set and ne_fn is not None:
+        raise ValueError(f"Cannot use arguments {use_set=} with {ne_fn=}.")
+
     it = list(it)
-    if ne_fn is None:
+    if use_set:
+        return len(it) == len(set(it))
+    elif ne_fn is None:
         return all(
             it[i] != it[j] for i in range(len(it)) for j in range(i + 1, len(it))
         )

@@ -7,6 +7,9 @@ import unittest
 from unittest import TestCase
 
 from torchoutil.pyoutil.collections import (
+    all_eq,
+    all_ne,
+    dict_list_to_list_dict,
     flat_dict_of_dict,
     flat_list_of_list,
     flatten,
@@ -15,10 +18,24 @@ from torchoutil.pyoutil.collections import (
     list_dict_to_dict_list,
     unflat_dict_of_dict,
     unflat_list_of_list,
-    dict_list_to_list_dict,
 )
 from torchoutil.pyoutil.re import get_key_fn
 from torchoutil.pyoutil.typing import is_list_list_str, is_list_str
+
+
+class TestAllEqAllNe(TestCase):
+    def test_all_eq(self) -> None:
+        x = [1, 2, 3, 4]
+        assert not all_eq(x)
+
+        x = [1] * 10
+        assert all_eq(x)
+        assert all_eq([random.randint(0, 2**20)])
+
+    def test_all_ne(self) -> None:
+        lst = [random.randint(0, 10) for _ in range(100)]
+        assert all_ne(set(lst))
+        assert all_ne([random.randint(0, 2**20)])
 
 
 class TestDictListToListDict(TestCase):
