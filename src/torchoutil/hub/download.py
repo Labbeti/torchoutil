@@ -4,6 +4,7 @@
 import logging
 from pathlib import Path
 from typing import Optional, Union
+from urllib.error import HTTPError
 
 from torch.hub import download_url_to_file
 
@@ -26,10 +27,17 @@ def download_file(
         dpath = fpath.parent
         dpath.mkdir(parents=True, exist_ok=True)
 
-    download_url_to_file(
-        url,
-        fpath,  # type: ignore
-        hash_prefix=hash_prefix,
-        progress=verbose > 0,
-    )
+    try:
+        download_url_to_file(
+            url,
+            fpath,  # type: ignore
+            hash_prefix=hash_prefix,
+            progress=verbose > 0,
+        )
+
+    except HTTPError as err:
+        msg = f"Cannot download from {url=}. (with {fpath=}, {hash_prefix=}, {make_intermediate=})"
+        pylog.error(msg)
+        raise err
+
     return fpath

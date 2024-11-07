@@ -396,6 +396,10 @@ class _TensorNDBase(
         ...
 
     @overload
+    def contiguous(self: T_Tensor) -> T_Tensor:
+        ...
+
+    @overload
     def is_complex(self) -> T_Complex:  # type: ignore
         ...
 
@@ -429,6 +433,38 @@ class _TensorNDBase(
 
     @overload
     def mean(self, dim: Optional[int] = None) -> "Tensor":
+        ...
+
+    @overload
+    def reshape(self: T_Tensor, size: Tuple[()]) -> "Tensor0D":
+        ...
+
+    @overload
+    def reshape(self: T_Tensor, size: Tuple[int]) -> "Tensor1D":
+        ...
+
+    @overload
+    def reshape(self: T_Tensor, size: Tuple[int, int]) -> "Tensor2D":
+        ...
+
+    @overload
+    def reshape(self: T_Tensor, size: Tuple[int, int, int]) -> "Tensor3D":
+        ...
+
+    @overload
+    def reshape(self: T_Tensor, size: Tuple[int, ...]) -> "Tensor":
+        ...
+
+    @overload
+    def reshape(self: T_Tensor, size0: int) -> "Tensor1D":
+        ...
+
+    @overload
+    def reshape(self: T_Tensor, size0: int, size1: int) -> "Tensor2D":
+        ...
+
+    @overload
+    def reshape(self: T_Tensor, size0: int, size1: int, size2: int) -> "Tensor3D":
         ...
 
     @overload
@@ -551,11 +587,13 @@ class _TensorNDBase(
     __getitem__ = torch.Tensor.__getitem__  # noqa: F811
     __ne__ = torch.Tensor.__ne__  # noqa: F811
     abs = torch.Tensor.abs  # noqa: F811
+    contiguous = torch.Tensor.contiguous  # noqa: F811
     is_complex = torch.Tensor.is_complex  # noqa: F811
     is_floating_point = torch.Tensor.is_floating_point  # noqa: F811
     is_signed = torch.Tensor.is_signed  # noqa: F811
     item = torch.Tensor.item  # noqa: F811  # type: ignore
     mean = torch.Tensor.mean  # noqa: F811
+    reshape = torch.Tensor.reshape  # noqa: F811
     squeeze = torch.Tensor.squeeze  # noqa: F811
     sum = torch.Tensor.sum  # noqa: F811
     to = torch.Tensor.to  # noqa: F811
