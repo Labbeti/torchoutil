@@ -218,6 +218,10 @@ def checksum_function(x: FunctionType, **kwargs) -> int:
     return checksum_str(x.__qualname__, **kwargs)
 
 
+def checksum_none(x: None, **kwargs) -> int:
+    return checksum_type(x.__class__, **kwargs) + kwargs.get("accumulator", 0)
+
+
 def checksum_ndarray(x: Union[np.ndarray, np.generic], **kwargs) -> int:
     if not _NUMPY_AVAILABLE:
         msg = "Cannot call function 'checksum_ndarray' because optional dependancy 'numpy' is not installed. Please install it using 'pip install torchoutil[extras]'"
@@ -270,10 +274,6 @@ def checksum_float(x: float, **kwargs) -> int:
 
 def checksum_int(x: int, **kwargs) -> int:
     return x + kwargs.get("accumulator", 0)
-
-
-def checksum_none(x: None, **kwargs) -> int:
-    return kwargs.get("accumulator", 0)
 
 
 def _interpret_float_as_int(x: float) -> int:
