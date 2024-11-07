@@ -5,8 +5,7 @@ import unittest
 from unittest import TestCase
 
 from torchoutil.core.packaging import _NUMPY_AVAILABLE
-from torchoutil.extras.numpy import merge_numpy_dtypes
-from torchoutil.types._typing import np
+from torchoutil.extras.numpy import merge_numpy_dtypes, np
 
 
 class TestDType(TestCase):
