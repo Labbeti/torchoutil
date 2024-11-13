@@ -13,6 +13,7 @@ from torchoutil.nn.modules import (
     CropDim,
     CropDims,
     Identity,
+    LogSoftmaxMultidim,
     Mean,
     PadAndStackRec,
     PadDim,
@@ -20,6 +21,7 @@ from torchoutil.nn.modules import (
     Permute,
     RepeatInterleaveNd,
     ResampleNearestRates,
+    SoftmaxMultidim,
     ToList,
     Transpose,
     Unsqueeze,
@@ -56,6 +58,8 @@ class TestSequential(TestCase):
             Permute(1, 0),
             RepeatInterleaveNd(10, 0),
             Transpose(0, 1),
+            LogSoftmaxMultidim(dims=(0, 1)),
+            SoftmaxMultidim(dims=(1,)),
         )
 
         x = torch.rand(16, 10)
