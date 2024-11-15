@@ -51,6 +51,7 @@ from torchoutil.types._typing import (
     FloatingTensor,
     LongTensor,
     ScalarLike,
+    T_TensorLike,
 )
 from torchoutil.types.guards import is_list_tensor, is_scalar_like, is_tuple_tensor
 from torchoutil.utils import return_types
@@ -580,3 +581,10 @@ def all_ne(x: Union[Tensor, np.ndarray, ScalarLike, Iterable]) -> bool:
         return builtin_all_ne(x)
     else:
         raise TypeError(f"Invalid argument type {type(x)=}.")
+
+
+def average_power(
+    x: T_TensorLike,
+    dim: Union[int, Tuple[int, ...], None] = -1,
+) -> T_TensorLike:
+    return (abs(x) ** 2).mean(dim)
