@@ -432,6 +432,7 @@ def view_as_real(x: complex) -> Tuple[float, float]:
 def view_as_real(
     x: Union[Tensor, np.ndarray, complex]
 ) -> Union[Tensor, np.ndarray, Tuple[float, float]]:
+    """Convert complex-valued input to floating-point object."""
     if isinstance(x, Tensor):
         return torch.view_as_real(x)
 
@@ -459,6 +460,7 @@ def view_as_complex(x: Tuple[float, float]) -> complex:
 def view_as_complex(
     x: Union[Tensor, np.ndarray, Tuple[float, float]]
 ) -> Union[ComplexFloatingTensor, np.ndarray, complex]:
+    """Convert floating-point input to complex-valued object."""
     if isinstance(x, Tensor):
         return torch.view_as_complex(x)  # type: ignore
     elif isinstance(x, np.ndarray):
@@ -500,18 +502,25 @@ def prod(
     dim: Optional[int] = None,
     start: T_BuiltinNumber = 1,
 ) -> Union[Tensor, T_BuiltinNumber]:
+    """Returns the product of all elements in input."""
     if isinstance(x, Tensor):
         return torch.prod(x, dim=dim)
     elif isinstance(x, np.ndarray):
         return np.prod(x, axis=dim)
     elif isinstance(x, Iterable):
+        if dim is not None:
+            msg = f"Invalid argument {dim=}. (expected None with {type(x)=})"
+            raise ValueError(msg)
         return builtin_prod(x, start=start)  # type: ignore
     else:
-        msg = f"Invalid argument type {type(x)=}. (expected Tensor or Iterable)"
+        msg = (
+            f"Invalid argument type {type(x)=}. (expected Tensor, ndarray or Iterable)"
+        )
         raise TypeError(msg)
 
 
 def is_floating_point(x: Any) -> TypeGuard[Union[FloatingTensor, np.ndarray, float]]:
+    """Returns True if object is a/contains floating-point object(s)."""
     if isinstance(x, Tensor):
         return x.is_floating_point()
     elif isinstance(x, (np.ndarray, np.generic)):
@@ -521,6 +530,7 @@ def is_floating_point(x: Any) -> TypeGuard[Union[FloatingTensor, np.ndarray, flo
 
 
 def is_complex(x: Any) -> TypeGuard[Union[ComplexFloatingTensor, np.ndarray, complex]]:
+    """Returns True if object is a/contains complex-valued object(s)."""
     if isinstance(x, Tensor):
         return x.is_complex()
     elif isinstance(x, (np.ndarray, np.generic)):
@@ -535,8 +545,12 @@ def is_sorted(
     reverse: bool = False,
     strict: bool = False,
 ) -> bool:
+    """Returns True if the sequence is sorted."""
     if isinstance(x, (Tensor, np.ndarray)):
-        assert x.ndim == 1
+        if x.ndim != 1:
+            msg = f"Invalid number of dims in argument {x.ndim=}. (expected 1)"
+            raise ValueError(msg)
+
         if not reverse and not strict:
             result = (x[:-1] <= x[1:]).all().item()
         elif not reverse and strict:
@@ -547,7 +561,7 @@ def is_sorted(
             result = (x[:-1] > x[1:]).all().item()
         return result  # type: ignore
 
-    elif isinstance(x, Sequence):
+    elif isinstance(x, Iterable):
         return builtin_is_sorted(x, reverse=reverse, strict=strict)
 
     else:
@@ -555,6 +569,7 @@ def is_sorted(
 
 
 def all_eq(x: Union[Tensor, np.ndarray, ScalarLike, Iterable]) -> bool:
+    """Check if all elements are equal in a tensor, ndarray, iterable or scalar object."""
     if isinstance(x, Tensor):
         if x.ndim == 0 or x.nelement() == 0:
             return True
@@ -571,6 +586,7 @@ def all_eq(x: Union[Tensor, np.ndarray, ScalarLike, Iterable]) -> bool:
 
 
 def all_ne(x: Union[Tensor, np.ndarray, ScalarLike, Iterable]) -> bool:
+    """Check if all elements are NOT equal in a tensor, ndarray, iterable or scalar object."""
     if isinstance(x, Tensor):
         return len(torch.unique(x)) == x.nelement()
     elif isinstance(x, (np.ndarray, np.generic)):
@@ -587,4 +603,5 @@ def average_power(
     x: T_TensorLike,
     dim: Union[int, Tuple[int, ...], None] = -1,
 ) -> T_TensorLike:
+    """Compute average power of a signal along a specified dim/axis."""
     return (abs(x) ** 2).mean(dim)
