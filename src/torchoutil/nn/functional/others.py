@@ -568,19 +568,51 @@ def is_sorted(
         raise TypeError(f"Invalid argument type {type(x)=}.")
 
 
-def all_eq(x: Union[Tensor, np.ndarray, ScalarLike, Iterable]) -> bool:
+@overload
+def all_eq(
+    x: Union[Tensor, np.ndarray, ScalarLike, Iterable],
+    dim: None = None,
+) -> bool:
+    ...
+
+
+@overload
+def all_eq(
+    x: Union[T_TensorLike],
+    dim: int,
+) -> T_TensorLike:
+    ...
+
+
+def all_eq(
+    x: Union[T_TensorLike, ScalarLike, Iterable],
+    dim: Union[int, None] = None,
+) -> Union[bool, T_TensorLike]:
     """Check if all elements are equal in a tensor, ndarray, iterable or scalar object."""
     if isinstance(x, Tensor):
-        if x.ndim == 0 or x.nelement() == 0:
-            return True
-        x = x.view(-1)
-        return (x[0] == x[1:]).all().item()
+        if dim is None:
+            if x.ndim == 0 or x.nelement() == 0:
+                return True
+            x = x.reshape(-1)
+            return (x[0] == x[1:]).all().item()
+        else:
+            slices = [slice(None) for _ in range(x.ndim)]
+            slices[dim] = 0
+            slices.insert(dim + 1, None)
+            return (x == x[slices]).all(dim)
+
     elif isinstance(x, (np.ndarray, np.generic)):
-        return numpy_all_eq(x)
+        return numpy_all_eq(x, dim=dim)
+
+    elif dim is not None:
+        raise ValueError(f"Invalid argument {dim=} with {type(x)=}.")
+
     elif is_scalar_like(x):
         return True
+
     elif isinstance(x, Iterable):
         return builtin_all_eq(x)
+
     else:
         raise TypeError(f"Invalid argument type {type(x)=}.")
 

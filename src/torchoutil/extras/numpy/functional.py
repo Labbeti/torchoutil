@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from typing import Any, Sequence, Tuple, Union
+from typing import Any, Sequence, Tuple, Union, overload
 
 import torch
 from torch import Tensor
@@ -135,6 +135,7 @@ def logical_and_lst(
     /,
     *others: np.ndarray,
 ) -> np.ndarray:
+    """Compute multiple logical_and over numpy arrays."""
     current = arr0
     for other in others:
         current = np.logical_and(current, other)
@@ -146,6 +147,7 @@ def logical_or_lst(
     /,
     *others: np.ndarray,
 ) -> np.ndarray:
+    """Compute multiple logical_or over numpy arrays."""
     current = arr0
     for other in others:
         current = np.logical_or(current, other)
@@ -179,11 +181,38 @@ def numpy_item(x: Union[np.ndarray, np.generic, BuiltinScalar]) -> np.generic:
     return x[indices]
 
 
-def numpy_all_eq(x: Union[np.generic, np.ndarray]) -> bool:
-    if x.ndim == 0 or prod(x.shape) == 0:
-        return True
+@overload
+def numpy_all_eq(
+    x: Union[np.generic, np.ndarray],
+    dim: None = None,
+) -> bool:
+    ...
+
+
+@overload
+def numpy_all_eq(
+    x: Union[np.generic, np.ndarray],
+    dim: int,
+) -> np.ndarray:
+    ...
+
+
+def numpy_all_eq(
+    x: Union[np.generic, np.ndarray],
+    dim: Union[int, None] = None,
+) -> bool:
+    if dim is None:
+        if x.ndim == 0 or prod(x.shape) == 0:
+            return True
+        else:
+            return (x.flat[0] == x.flat[1:]).all()
+
     else:
-        return (x.flat[0] == x.flat[1:]).all()
+        slices = [slice(None) for _ in range(x.ndim)]
+        slices[dim] = 0
+        slices.insert(dim + 1, None)
+        slices = tuple(slices)
+        return (x == x[slices]).all(dim)
 
 
 def numpy_all_ne(x: Union[np.generic, np.ndarray]) -> bool:
