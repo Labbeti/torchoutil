@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import functools
 import itertools
 import math
 import pickle
@@ -25,7 +26,28 @@ from torchoutil.pyoutil.typing import (
     NoneType,
 )
 
-CHECKSUM_TYPES = (
+Checksumable = Union[
+    int,
+    bool,
+    complex,
+    float,
+    NoneType,
+    str,
+    bytes,
+    bytearray,
+    nn.Module,
+    Tensor,
+    np.ndarray,
+    np.generic,
+    NamedTupleInstance,
+    DataclassInstance,
+    Mapping,
+    Iterable,
+    MethodType,
+    FunctionType,
+    functools.partial,
+]
+CHECKSUMABLE_TYPES = (
     "int",
     "bool",
     "complex",
@@ -44,18 +66,19 @@ CHECKSUM_TYPES = (
     "Iterable",
     "MethodType",
     "FunctionType",
+    "functools.partial",
 )
 UnkMode = Literal["pickle", "error"]
 UNK_MODES = ("pickle", "error")
 
 
 # Recursive functions
-def checksum(x: Any, *, unk_mode: UnkMode = "error", **kwargs) -> int:
+def checksum(x: Checksumable, *, unk_mode: UnkMode = "error", **kwargs) -> int:
     """Alias for `torchoutil.checksum_any`."""
     return checksum_any(x, unk_mode=unk_mode, **kwargs)
 
 
-def checksum_any(x: Any, *, unk_mode: UnkMode = "error", **kwargs) -> int:
+def checksum_any(x: Checksumable, *, unk_mode: UnkMode = "error", **kwargs) -> int:
     """Compute checksum of an arbitrary python object."""
     kwargs["unk_mode"] = unk_mode
     if isinstance(x, (int, bool, complex, float)):
@@ -86,12 +109,14 @@ def checksum_any(x: Any, *, unk_mode: UnkMode = "error", **kwargs) -> int:
         return checksum_method(x, **kwargs)
     elif isinstance(x, FunctionType):
         return checksum_function(x, **kwargs)
+    elif isinstance(x, functools.partial):
+        return checksum_partial(x, **kwargs)
     elif isinstance(x, type):
         return checksum_type(x, **kwargs)
     elif unk_mode == "pickle":
         return checksum_bytes(pickle.dumps(x), **kwargs)
     elif unk_mode == "error":
-        msg = f"Invalid argument type {type(x)}. (expected one of {CHECKSUM_TYPES})"
+        msg = f"Invalid argument type {type(x)}. (expected one of {CHECKSUMABLE_TYPES})"
         raise TypeError(msg)
     else:
         raise ValueError(f"Invalid argument {unk_mode=}. (expected one of {UNK_MODES})")
@@ -169,6 +194,10 @@ def checksum_namedtuple(x: NamedTupleInstance, **kwargs) -> int:
     accumulator = kwargs.pop("accumulator", 0) + checksum_str(get_fullname(x), **kwargs)
     kwargs["accumulator"] = accumulator
     return checksum_mapping(x._asdict(), **kwargs)
+
+
+def checksum_partial(x: functools.partial, **kwargs) -> int:
+    return checksum_iterable(("functools.partial", x.func, x.args, x.keywords))
 
 
 # Intermediate functions
