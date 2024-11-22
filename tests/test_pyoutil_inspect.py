@@ -3,7 +3,7 @@
 
 import sys
 import unittest
-from typing import Mapping
+from typing import Iterable, Literal, Mapping
 from unittest import TestCase
 
 from torchoutil.pyoutil import inspect
@@ -37,6 +37,11 @@ class TestPyoutilInspect(TestCase):
 
         if sys.version_info.minor >= 11:
             assert get_fullname(Mapping) == "typing.Mapping"
+            assert get_fullname(Iterable[str]) == "typing.Iterable[builtins.str]"
+            assert (
+                get_fullname(Iterable[Literal[1]])
+                == "typing.Iterable[typing.Literal[builtins.int(...)]]"
+            )
 
 
 if __name__ == "__main__":

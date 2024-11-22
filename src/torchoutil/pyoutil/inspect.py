@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import inspect
-from typing import Any
+from typing import Any, get_args
 
 
 def get_current_fn_name() -> str:
@@ -43,4 +43,11 @@ def get_fullname(x: Any, *, inst_suffix: str = "(...)") -> str:
     else:
         cls = x.__class__
         name = f"{cls.__module__}.{cls.__qualname__}{inst_suffix}"
+
+    cls_args = get_args(x)
+    if len(cls_args) != 0:
+        argsnames = [get_fullname(arg, inst_suffix=inst_suffix) for arg in cls_args]
+        argsnames_str = ", ".join(argsnames)
+        name = f"{name}[{argsnames_str}]"
+
     return name
