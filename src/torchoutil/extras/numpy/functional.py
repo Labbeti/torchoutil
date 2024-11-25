@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from typing import Any, Sequence, Tuple, Union, overload
+from typing import Any, Iterable, Tuple, Union, overload
 
 import torch
 from torch import Tensor
@@ -19,7 +19,7 @@ from torchoutil.pyoutil import (
 
 
 def to_numpy(
-    x: Union[Tensor, np.ndarray, Sequence, BuiltinScalar],
+    x: Union[Tensor, np.ndarray, Iterable, BuiltinScalar],
     *,
     dtype: Union[str, np.dtype, None] = None,
     force: bool = False,

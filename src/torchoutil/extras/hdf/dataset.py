@@ -281,7 +281,7 @@ class HDFDataset(Generic[T, U], DatasetSlicer[U]):
         if index is None:
             index = slice(None)
         elif is_scalar_like(index):
-            index = to.to_item(index)
+            index = to.to_item(index)  # type: ignore
         elif isinstance(index, Iterable):
             index = to.to_numpy(index)
         elif isinstance(index, (int, slice)):
@@ -310,7 +310,8 @@ class HDFDataset(Generic[T, U], DatasetSlicer[U]):
             return result  # type: ignore
 
         if column not in self.all_columns:
-            msg = f"Invalid argument {column=}. (did you mean '{find_closest_in_list(column, self.all_columns)}'? Expected one of {tuple(self.all_columns)})"
+            closest = find_closest_in_list(column, self.all_columns)  # type: ignore
+            msg = f"Invalid argument {column=}. (did you mean '{closest}'? Expected one of {tuple(self.all_columns)})"
             raise ValueError(msg)
 
         if isinstance(index, slice) or (
@@ -468,11 +469,11 @@ class HDFDataset(Generic[T, U], DatasetSlicer[U]):
     def __getitem__(self, index: Any) -> Any:
         ...
 
-    def __getitem__(
+    def __getitem__(  # type: ignore
         self,
         index: Union[IndexLike, Tuple[IndexLike, ColumnLike]],
     ) -> Any:
-        return super().__getitem__(index)
+        return super().__getitem__(index)  # type: ignore
 
     def __getstate__(self) -> Dict[str, Any]:
         return {
@@ -507,7 +508,7 @@ class HDFDataset(Generic[T, U], DatasetSlicer[U]):
             if not all_eq(hdf_dsets_lens):
                 msg = f"Found an different number of lengths in hdf sub-datasets. (found {set(hdf_dsets_lens)})"
                 raise ValueError(msg)
-            length = len(hdf_dsets_lens[0])
+            length = hdf_dsets_lens[0]
         else:
             length = 0
 
@@ -635,6 +636,7 @@ class HDFDataset(Generic[T, U], DatasetSlicer[U]):
                 result = to_builtin(hdf_values)
 
         elif self._cast == "to_numpy_src":
+            assert isinstance(hdf_values, np.ndarray), f"{type(hdf_values)=}"
             valid = to.shape(hdf_values, return_valid=True).valid
             src_np_dtypes = self.attrs["src_np_dtypes"]
             target_np_dtype = src_np_dtypes.get(column, hdf_values.dtype)
@@ -647,14 +649,15 @@ class HDFDataset(Generic[T, U], DatasetSlicer[U]):
                 result = hdf_values
 
         elif self._cast == "to_torch_src":
+            assert isinstance(hdf_values, np.ndarray), f"{type(hdf_values)=}"
             valid = to.shape(hdf_values, return_valid=True).valid
             src_np_dtypes = self.attrs["src_np_dtypes"]
             target_np_dtype = src_np_dtypes.get(column, hdf_values.dtype)
             target_pt_dtype = numpy_dtype_to_torch_dtype(target_np_dtype, invalid=None)
 
             if isinstance(hdf_values, np.ndarray):
-                hdf_values = hdf_values.view(target_np_dtype)
-                result = to.numpy_to_tensor(hdf_values)
+                hdf_values_view = hdf_values.view(target_np_dtype)
+                result = to.numpy_to_tensor(hdf_values_view)
             elif valid:
                 result = to.to_tensor(hdf_values, dtype=target_pt_dtype)
             else:

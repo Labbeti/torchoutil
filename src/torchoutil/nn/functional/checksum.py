@@ -46,6 +46,7 @@ Checksumable = Union[
     MethodType,
     FunctionType,
     functools.partial,
+    type,
 ]
 CHECKSUMABLE_TYPES = (
     "int",
@@ -67,20 +68,41 @@ CHECKSUMABLE_TYPES = (
     "MethodType",
     "FunctionType",
     "functools.partial",
+    "type",
 )
 UnkMode = Literal["pickle", "error"]
 UNK_MODES = ("pickle", "error")
 
 
 # Recursive functions
-def checksum(x: Checksumable, *, unk_mode: UnkMode = "error", **kwargs) -> int:
+def checksum(
+    x: Checksumable,
+    *,
+    unk_mode: UnkMode = "error",
+    allow_protocol: bool = True,
+    **kwargs,
+) -> int:
     """Alias for `torchoutil.checksum_any`."""
-    return checksum_any(x, unk_mode=unk_mode, **kwargs)
+    return checksum_any(
+        x,
+        unk_mode=unk_mode,
+        allow_protocol=allow_protocol,
+        **kwargs,
+    )
 
 
-def checksum_any(x: Checksumable, *, unk_mode: UnkMode = "error", **kwargs) -> int:
+def checksum_any(
+    x: Checksumable,
+    *,
+    unk_mode: UnkMode = "error",
+    allow_protocol: bool = True,
+    **kwargs,
+) -> int:
     """Compute checksum of an arbitrary python object."""
-    kwargs["unk_mode"] = unk_mode
+    kwargs |= dict(
+        unk_mode=unk_mode,
+        allow_protocol=allow_protocol,
+    )
     if isinstance(x, (int, bool, complex, float)):
         return checksum_builtin_number(x, **kwargs)
     elif x is None:
@@ -97,13 +119,13 @@ def checksum_any(x: Checksumable, *, unk_mode: UnkMode = "error", **kwargs) -> i
         return checksum_tensor(x, **kwargs)
     elif isinstance(x, (np.ndarray, np.generic)):
         return checksum_ndarray(x, **kwargs)
-    elif isinstance(x, NamedTupleInstance):
+    elif allow_protocol and isinstance(x, NamedTupleInstance):
         return checksum_namedtuple(x, **kwargs)
-    elif isinstance(x, DataclassInstance):
+    elif allow_protocol and isinstance(x, DataclassInstance):
         return checksum_dataclass(x, **kwargs)
-    elif isinstance(x, Mapping):
+    elif allow_protocol and isinstance(x, Mapping):
         return checksum_mapping(x, **kwargs)
-    elif isinstance(x, Iterable):
+    elif allow_protocol and isinstance(x, Iterable):
         return checksum_iterable(x, **kwargs)
     elif isinstance(x, MethodType):
         return checksum_method(x, **kwargs)
