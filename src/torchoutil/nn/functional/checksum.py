@@ -99,9 +99,11 @@ def checksum_any(
     **kwargs,
 ) -> int:
     """Compute checksum of an arbitrary python object."""
-    kwargs |= dict(
-        unk_mode=unk_mode,
-        allow_protocol=allow_protocol,
+    kwargs.update(
+        dict(
+            unk_mode=unk_mode,
+            allow_protocol=allow_protocol,
+        )
     )
     if isinstance(x, (int, bool, complex, float)):
         return checksum_builtin_number(x, **kwargs)
