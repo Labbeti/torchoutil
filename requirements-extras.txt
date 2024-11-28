@@ -7,5 +7,6 @@ omegaconf
 pandas
 pyyaml
 safetensors
+scipy
 tensorboard
 tqdm
