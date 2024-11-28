@@ -1,11 +1,12 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from typing import Iterable, Literal, Union
+from typing import Iterable, List, Literal, Union
 
 import torch
 from torch import Generator, Tensor
 
+from torchoutil.core.get import get_generator
 
 CROP_ALIGNS = ("left", "right", "center", "random")
 CropAlign = Literal["left", "right", "center", "random"]
@@ -14,54 +15,58 @@ CropAlign = Literal["left", "right", "center", "random"]
 def crop_dim(
     x: Tensor,
     target_length: int,
-    align: CropAlign = "left",
+    *,
     dim: int = -1,
+    align: CropAlign = "left",
     generator: Union[int, Generator, None] = None,
 ) -> Tensor:
     """Generic function to crop a single dimension."""
-    return crop_dims(x, [target_length], [align], [dim], generator)
+    return crop_dims(
+        x,
+        [target_length],
+        dims=[dim],
+        aligns=[align],
+        generator=generator,
+    )
 
 
 def crop_dims(
     x: Tensor,
     target_lengths: Iterable[int],
-    aligns: Union[  # type: ignore
-        CropAlign,
-        Iterable[CropAlign],
-    ] = "left",
+    *,
     dims: Union[Iterable[int], Literal["auto"]] = "auto",
+    aligns: Union[CropAlign, Iterable[CropAlign]] = "left",
     generator: Union[int, Generator, None] = None,
 ) -> Tensor:
     """Generic function to crop multiple dimensions."""
 
     target_lengths = list(target_lengths)
 
+    aligns_lst: List[CropAlign]
     if isinstance(aligns, str):
-        aligns = [aligns] * len(target_lengths)
+        aligns_lst = [aligns] * len(target_lengths)
     else:
-        aligns = list(aligns)
+        aligns_lst = list(aligns)
+    del aligns
 
     if dims == "auto":
         dims = list(range(-len(target_lengths), 0))
     else:
         dims = list(dims)
 
-    if isinstance(generator, int):
-        generator = Generator().manual_seed(generator)
+    generator = get_generator(generator)
 
     if len(target_lengths) != len(dims):
-        raise ValueError(
-            f"Invalid number of targets lengths ({len(target_lengths)}) with the number of dimensions ({len(dims)})."
-        )
+        msg = f"Invalid number of targets lengths ({len(target_lengths)}) with the number of dimensions ({len(dims)})."
+        raise ValueError(msg)
 
-    if len(aligns) != len(dims):
-        raise ValueError(
-            f"Invalid number of aligns ({len(aligns)}) with the number of dimensions ({len(dims)})."
-        )
+    if len(aligns_lst) != len(dims):
+        msg = f"Invalid number of aligns ({len(aligns_lst)}) with the number of dimensions ({len(dims)})."
+        raise ValueError(msg)
 
     slices = [slice(None)] * len(x.shape)
 
-    for target_length, dim, align in zip(target_lengths, dims, aligns):
+    for target_length, dim, align in zip(target_lengths, dims, aligns_lst):
         if x.shape[dim] <= target_length:
             continue
 
@@ -80,9 +85,8 @@ def crop_dims(
             start = torch.randint(low=0, high=diff, size=(), generator=generator).item()
             end = start + target_length
         else:
-            raise ValueError(
-                f"Invalid argument {align=}. (expected one of {CROP_ALIGNS})"
-            )
+            msg = f"Invalid argument {align=}. (expected one of {CROP_ALIGNS})"
+            raise ValueError(msg)
 
         slices[dim] = slice(start, end)
 

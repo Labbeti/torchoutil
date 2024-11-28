@@ -2,6 +2,27 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.5.0] 2024-11-28
+Major rework of `torchoutil` project folders.
+
+### Added
+- Tensor typing classes for instance checks like `Tensor2D`, `FloatTensor1D`, etc.
+- Function `get_key_fn` to customize sorting using patterns.
+- Option `on_error` to `load_yaml` to ignore yaml scanner and parser exceptions.
+- Function `ranks` to get the ranking values in a tensor.
+- Function `sort_with_patterns` to sort values using string-based patterns.
+- Function `pad_and_crop_dim` and class `PadCropDim` to pad then crop a tensor along a specified dimension.
+- Function `reimport_modules` to re-import modules and functions in a notebook.
+- Function `checksum_module` to compare module weights.
+- Function `nelement` to get number of elements in Tensor-like object.
+- Function `flatten` to get flat of elements in Tensors, numpy array, builtins scalars and lists.
+- Added `DatasetSlicer` class in utils.
+
+### Modified
+- Rename `is_pickle_root` to `is_packed_root` (old name was kept for backward compatibility).
+- Split python functions into a separate directory called `pyoutil`.
+
+
 ## [0.4.0] 2024-05-27
 ### Added
 - Option `subdir_size` to `pack_dataset`.

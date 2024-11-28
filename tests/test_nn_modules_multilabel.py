@@ -9,11 +9,11 @@ import torch
 from torchoutil.nn.modules.mixins import ESequential
 from torchoutil.nn.modules.multilabel import (
     IndicesToMultihot,
-    IndicesToNames,
+    IndicesToMultinames,
     MultihotToIndices,
-    MultihotToNames,
-    NamesToIndices,
-    NamesToMultihot,
+    MultihotToMultinames,
+    MultinamesToIndices,
+    MultinamesToMultihot,
 )
 
 
@@ -31,10 +31,10 @@ class TestMultilabel(TestCase):
             # dummy pipeline to convert labels multiple times
             pipeline = ESequential(
                 MultihotToIndices(),
-                IndicesToNames(idx_to_name),
-                NamesToMultihot(idx_to_name),
-                MultihotToNames(idx_to_name),
-                NamesToIndices(idx_to_name),
+                IndicesToMultinames(idx_to_name),
+                MultinamesToMultihot(idx_to_name),
+                MultihotToMultinames(idx_to_name),
+                MultinamesToIndices(idx_to_name),
                 IndicesToMultihot(num_classes),
             )
             result = pipeline(multihot)

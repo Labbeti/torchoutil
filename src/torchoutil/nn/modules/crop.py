@@ -6,7 +6,7 @@ from typing import Iterable, Union
 from torch import Generator, Tensor, nn
 
 from torchoutil.nn.functional.crop import CropAlign, crop_dim, crop_dims
-from torchoutil.utils.collections import dump_dict
+from torchoutil.pyoutil.collections import dump_dict
 
 
 class CropDim(nn.Module):
@@ -27,24 +27,21 @@ class CropDim(nn.Module):
         self.dim = dim
         self.generator = generator
 
-    def forward(
-        self,
-        x: Tensor,
-    ) -> Tensor:
+    def forward(self, x: Tensor) -> Tensor:
         return crop_dim(
             x,
             self.target_length,
-            self.align,
-            self.dim,
-            self.generator,
+            dim=self.dim,
+            align=self.align,
+            generator=self.generator,
         )
 
     def extra_repr(self) -> str:
         return dump_dict(
             dict(
                 target_length=self.target_length,
-                align=self.align,
                 dim=self.dim,
+                align=self.align,
             )
         )
 
@@ -57,27 +54,30 @@ class CropDims(nn.Module):
     def __init__(
         self,
         target_lengths: Iterable[int],
-        aligns: Iterable[CropAlign] = ("left",),
+        aligns: Union[CropAlign, Iterable[CropAlign]] = "left",
         dims: Iterable[int] = (-1,),
         generator: Union[int, Generator, None] = None,
     ) -> None:
         super().__init__()
         self.target_lengths = target_lengths
-        self.aligns = aligns
         self.dims = dims
+        self.aligns: Union[CropAlign, Iterable[CropAlign]] = aligns
         self.generator = generator
 
-    def forward(
-        self,
-        x: Tensor,
-    ) -> Tensor:
-        return crop_dims(x, self.target_lengths, self.aligns, self.dims, self.generator)
+    def forward(self, x: Tensor) -> Tensor:
+        return crop_dims(
+            x,
+            self.target_lengths,
+            dims=self.dims,
+            aligns=self.aligns,
+            generator=self.generator,
+        )
 
     def extra_repr(self) -> str:
         return dump_dict(
             dict(
                 target_lengths=self.target_lengths,
-                aligns=self.aligns,
                 dims=self.dims,
+                aligns=self.aligns,
             )
         )

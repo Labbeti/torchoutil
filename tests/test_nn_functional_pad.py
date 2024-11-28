@@ -14,8 +14,8 @@ class TestPad(TestCase):
         sequence = [[1, 2], [3], [], [4, 5]]
         output = pad_and_stack_rec(sequence, 0)
         output_expected = torch.as_tensor([[1, 2], [3, 0], [0, 0], [4, 5]])
-        self.assertEqual(output.ndim, output_expected.ndim)
-        self.assertTrue(output.eq(output_expected).all())
+        assert output.ndim == output_expected.ndim
+        assert output.eq(output_expected).all()
 
     def test_pad_sequence_rec_example_2(self) -> None:
         sequence_invalid = [[1, 2, 3], 3]
@@ -27,20 +27,20 @@ class TestPad(TestCase):
         output_expected = torch.as_tensor(
             [[[1, 0, 0], [2, 3, 0], [0, 0, 0]], [[4, 5, 6], [7, 0, 0], [0, 0, 0]]]
         )
-        self.assertTrue(output.eq(output_expected).all())
+        assert output.eq(output_expected).all()
 
     def test_pad_sequence_rec_example_4(self) -> None:
         sequence = [torch.zeros(10, 2), torch.zeros(5, 2)]
         output = pad_and_stack_rec(sequence, 0)
         output_expected = torch.zeros(2, 10, 2)
-        self.assertEqual(output.ndim, output_expected.ndim)
-        self.assertTrue(output.eq(output_expected).all())
+        assert output.ndim == output_expected.ndim
+        assert output.eq(output_expected).all()
 
     def test_pad_sequence_rec_example_5(self) -> None:
         sequence = [torch.zeros(3, 5), torch.zeros(3, 10)]
         output = pad_and_stack_rec(sequence, 0)
         output_expected = torch.zeros(2, 3, 10)
-        self.assertEqual(output.ndim, output_expected.ndim)
+        assert output.ndim == output_expected.ndim
         self.assertTrue(
             output.eq(output_expected).all(), f"{output}\n{output_expected}"
         )
@@ -49,7 +49,7 @@ class TestPad(TestCase):
         sequence = [torch.zeros(3, 2, 5), torch.zeros(3, 6, 5)]
         output = pad_and_stack_rec(sequence, 0)
         output_expected = torch.zeros(2, 3, 6, 5)
-        self.assertEqual(output.ndim, output_expected.ndim)
+        assert output.ndim == output_expected.ndim
         self.assertTrue(
             output.eq(output_expected).all(), f"{output}\n{output_expected}"
         )
@@ -58,7 +58,7 @@ class TestPad(TestCase):
         sequence = [torch.zeros(4, 2, 3, 10), torch.zeros(4, 5, 5, 10)]
         output = pad_and_stack_rec(sequence, 0)
         output_expected = torch.zeros(2, 4, 5, 5, 10)
-        self.assertEqual(output.ndim, output_expected.ndim)
+        assert output.ndim == output_expected.ndim
         self.assertTrue(
             output.eq(output_expected).all(), f"{output}\n{output_expected}"
         )
@@ -67,7 +67,7 @@ class TestPad(TestCase):
         sequence = [torch.zeros(5, 10, 2), torch.zeros(2, 10, 2), torch.zeros(2, 10, 2)]
         output = pad_and_stack_rec(sequence, 0)
         output_expected = torch.zeros(3, 5, 10, 2)
-        self.assertEqual(output.ndim, output_expected.ndim)
+        assert output.ndim == output_expected.ndim
         self.assertTrue(
             output.eq(output_expected).all(), f"{output}\n{output_expected}"
         )
@@ -76,7 +76,7 @@ class TestPad(TestCase):
         sequence = [[torch.ones(20, 1), torch.ones(8, 2)], [torch.ones(1, 10)]]
         output = pad_and_stack_rec(sequence, 1)
         output_expected = torch.ones(2, 2, 20, 10)
-        self.assertEqual(output.ndim, output_expected.ndim)
+        assert output.ndim == output_expected.ndim
         self.assertTrue(
             output.eq(output_expected).all(), f"{output}\n{output_expected}"
         )
@@ -85,22 +85,22 @@ class TestPad(TestCase):
         sequence = []
         output = pad_and_stack_rec(sequence, 0)
         output_expected = torch.as_tensor([])
-        self.assertEqual(output.ndim, output_expected.ndim)
-        self.assertTrue(output.eq(output_expected).all())
+        assert output.ndim == output_expected.ndim
+        assert output.eq(output_expected).all()
 
     def test_pad_sequence_rec_limit_2(self) -> None:
         sequence = [[]]
         output = pad_and_stack_rec(sequence, 0)
         output_expected = torch.as_tensor([[]])
-        self.assertEqual(output.ndim, output_expected.ndim)
-        self.assertTrue(output.eq(output_expected).all())
+        assert output.ndim == output_expected.ndim
+        assert output.eq(output_expected).all()
 
     def test_pad_sequence_rec_limit_3(self) -> None:
         sequence = [[[], []], [[], []], [[], []]]
         output = pad_and_stack_rec(sequence, 0)
         output_expected = torch.as_tensor([[[], []], [[], []], [[], []]])
-        self.assertEqual(output.ndim, output_expected.ndim)
-        self.assertTrue(output.eq(output_expected).all())
+        assert output.ndim == output_expected.ndim
+        assert output.eq(output_expected).all()
 
     def test_pad_sequence_rec_limit_4(self) -> None:
         sequence = [[], [[]]]
@@ -139,10 +139,10 @@ class TestCatPaddedBatch(TestCase):
         expected_lens = torch.as_tensor([7, 5, 3])
         x12, x12_lens = cat_padded_batch(x1, x1_lens, x2, x2_lens, seq_dim, batch_dim)
 
-        self.assertEqual(expected.shape, x12.shape)
-        self.assertEqual(expected_lens.shape, x12_lens.shape)
-        self.assertTrue(torch.equal(expected, x12))
-        self.assertTrue(torch.equal(expected_lens, x12_lens))
+        assert expected.shape == x12.shape
+        assert expected_lens.shape == x12_lens.shape
+        assert torch.equal(expected, x12)
+        assert torch.equal(expected_lens, x12_lens)
 
     def test_example_2(self) -> None:
         # Cas 3D
@@ -175,10 +175,10 @@ class TestCatPaddedBatch(TestCase):
         expected_lens = torch.as_tensor([7, 5, 3])
         x12, x12_lens = cat_padded_batch(x1, x1_lens, x2, x2_lens, seq_dim, batch_dim)
 
-        self.assertEqual(expected.shape, x12.shape)
-        self.assertEqual(expected_lens.shape, x12_lens.shape)
-        self.assertTrue(torch.equal(expected, x12))
-        self.assertTrue(torch.equal(expected_lens, x12_lens))
+        assert expected.shape == x12.shape
+        assert expected_lens.shape == x12_lens.shape
+        assert torch.equal(expected, x12)
+        assert torch.equal(expected_lens, x12_lens)
 
 
 if __name__ == "__main__":

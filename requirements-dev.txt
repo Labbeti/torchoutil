@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
 
 black==23.12.1
-coverage
+coverage[toml]
 flake8
 ipython
+numpy<2.0.0
 pre-commit
 pytest
 soundfile

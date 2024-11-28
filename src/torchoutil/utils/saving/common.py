@@ -2,27 +2,35 @@
 # -*- coding: utf-8 -*-
 
 from argparse import Namespace
-from collections import Counter, OrderedDict
 from dataclasses import asdict
 from enum import Enum
 from pathlib import Path
+from re import Pattern
 from typing import Any, Dict, Iterable, List, Literal, Mapping, TypeVar, Union, overload
 
+import torch
 from torch import Tensor
-from torch.types import Number as TorchNumber
 
-from torchoutil.utils.packaging import (
+from torchoutil.core.packaging import (
     _NUMPY_AVAILABLE,
     _OMEGACONF_AVAILABLE,
     _PANDAS_AVAILABLE,
 )
-from torchoutil.utils.type_checks import is_dataclass_instance, is_namedtuple_instance
+from torchoutil.pyoutil.typing import (
+    BuiltinNumber,
+    DataclassInstance,
+    NamedTupleInstance,
+    T_BuiltinScalar,
+    is_builtin_scalar,
+    is_dataclass_instance,
+    is_namedtuple_instance,
+)
 
 if _NUMPY_AVAILABLE:
     import numpy as np
 
 if _OMEGACONF_AVAILABLE:
-    from omegaconf import DictConfig, ListConfig, OmegaConf
+    from omegaconf import DictConfig, ListConfig, OmegaConf  # type: ignore
 
 if _PANDAS_AVAILABLE:
     from pandas import DataFrame
@@ -38,9 +46,18 @@ UNK_MODES = ("identity", "error")
 
 @overload
 def to_builtin(
+    x: T_BuiltinScalar,
+    *,
+    unk_mode: UnkMode = "error",
+) -> T_BuiltinScalar:
+    ...
+
+
+@overload
+def to_builtin(
     x: Enum,
     *,
-    unk_mode: UnkMode = "identity",
+    unk_mode: UnkMode = "error",
 ) -> str:
     ...
 
@@ -49,7 +66,16 @@ def to_builtin(
 def to_builtin(
     x: Path,
     *,
-    unk_mode: UnkMode = "identity",
+    unk_mode: UnkMode = "error",
+) -> str:
+    ...
+
+
+@overload
+def to_builtin(
+    x: Pattern,
+    *,
+    unk_mode: UnkMode = "error",
 ) -> str:
     ...
 
@@ -58,7 +84,7 @@ def to_builtin(
 def to_builtin(
     x: Namespace,
     *,
-    unk_mode: UnkMode = "identity",
+    unk_mode: UnkMode = "error",
 ) -> Dict[str, Any]:
     ...
 
@@ -67,8 +93,8 @@ def to_builtin(
 def to_builtin(
     x: Tensor,
     *,
-    unk_mode: UnkMode = "identity",
-) -> Union[List, TorchNumber]:
+    unk_mode: UnkMode = "error",
+) -> Union[List, BuiltinNumber]:
     ...
 
 
@@ -76,24 +102,42 @@ def to_builtin(
 def to_builtin(
     x: Mapping[K, V],
     *,
-    unk_mode: UnkMode = "identity",
+    unk_mode: UnkMode = "error",
 ) -> Dict[K, V]:
     ...
 
 
 @overload
 def to_builtin(
-    x: T,
+    x: DataclassInstance,
     *,
-    unk_mode: UnkMode = "identity",
-) -> T:
+    unk_mode: UnkMode = "error",
+) -> Dict[str, Any]:
+    ...
+
+
+@overload
+def to_builtin(
+    x: NamedTupleInstance,
+    *,
+    unk_mode: UnkMode = "error",
+) -> Dict[str, Any]:
+    ...
+
+
+@overload
+def to_builtin(
+    x: Any,
+    *,
+    unk_mode: UnkMode = "error",
+) -> Any:
     ...
 
 
 def to_builtin(
     x: Any,
     *,
-    unk_mode: UnkMode = "identity",
+    unk_mode: UnkMode = "error",
 ) -> Any:
     """Helper function to sanitize data before saving to YAML or CSV file.
 
@@ -104,36 +148,42 @@ def to_builtin(
             If unk_mode == "error", a TypeError is raised.
     """
     # Terminal cases
-    if isinstance(x, (int, float, bool, complex, str, bytes)):
+    if is_builtin_scalar(x, strict=True):
         return x
-    elif isinstance(x, Enum):
+    if isinstance(x, Enum):
         return x.name
-    elif isinstance(x, Path):
+    if isinstance(x, Path):
         return str(x)
-    elif isinstance(x, Tensor):
+    if isinstance(x, Pattern):
+        return x.pattern
+    if isinstance(x, Tensor):
         return x.tolist()
-    elif _NUMPY_AVAILABLE and isinstance(x, np.ndarray):
+    if isinstance(x, torch.dtype):
+        return str(x)
+    if _NUMPY_AVAILABLE and isinstance(x, np.ndarray):  # type: ignore
         return x.tolist()
-    elif _NUMPY_AVAILABLE and isinstance(x, np.generic):
+    if _NUMPY_AVAILABLE and isinstance(x, np.generic):  # type: ignore
         return x.item()
-    # Non-terminal cases
-    elif _OMEGACONF_AVAILABLE and isinstance(x, (DictConfig, ListConfig)):
-        return to_builtin(OmegaConf.to_container(x, resolve=False, enum_to_str=True))
-    elif _PANDAS_AVAILABLE and isinstance(x, DataFrame):
-        return to_builtin(x.to_dict())
-    elif isinstance(x, Namespace):
+    if _NUMPY_AVAILABLE and isinstance(x, np.dtype):  # type: ignore
+        return str(x)
+
+    # Non-terminal cases (iterables and mappings)
+    if _OMEGACONF_AVAILABLE and isinstance(x, (DictConfig, ListConfig)):  # type: ignore
+        return to_builtin(OmegaConf.to_container(x, resolve=False, enum_to_str=True))  # type: ignore
+    if _PANDAS_AVAILABLE and isinstance(x, DataFrame):  # type: ignore
+        return to_builtin(x.to_dict("list"))
+    if isinstance(x, Namespace):
         return to_builtin(x.__dict__)
-    elif isinstance(x, (Counter, OrderedDict)):
-        return to_builtin(dict(x))
-    elif is_dataclass_instance(x):
+    if is_dataclass_instance(x):
         return to_builtin(asdict(x))
-    elif is_namedtuple_instance(x):
+    if is_namedtuple_instance(x):
         return to_builtin(x._asdict())
-    elif isinstance(x, Mapping):
-        return {to_builtin(k): to_builtin(v) for k, v in x.items()}  # type: ignore
-    elif isinstance(x, Iterable):
-        return [to_builtin(xi) for xi in x]  # type: ignore
-    elif unk_mode == "identity":
+    if isinstance(x, Mapping):
+        return {to_builtin(k): to_builtin(v) for k, v in x.items()}
+    if isinstance(x, Iterable):
+        return [to_builtin(xi) for xi in x]
+
+    if unk_mode == "identity":
         return x
     elif unk_mode == "error":
         raise TypeError(f"Unsupported argument type {type(x)}.")

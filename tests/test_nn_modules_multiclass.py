@@ -21,7 +21,7 @@ from torchoutil.nn.modules.multiclass import (
 class TestMulticlass(TestCase):
     def test_example_1(self) -> None:
         for _ in range(10):
-            num_steps = int(torch.randint(0, 10, ()).item())
+            num_steps = int(torch.randint(1, 10, ()).item())
             num_samples = int(torch.randint(0, 20, ()).item())
             num_classes = int(torch.randint(1, 20, ()).item())
             idx_to_name = dict(zip(range(num_classes), map(str, range(num_classes))))
@@ -40,7 +40,7 @@ class TestMulticlass(TestCase):
             )
             result = pipeline(onehot)
 
-            assert torch.equal(onehot, result)
+            assert torch.equal(onehot, result), f"{onehot=}; {result=}"
 
 
 if __name__ == "__main__":

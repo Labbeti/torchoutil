@@ -5,32 +5,47 @@ import json
 import logging
 import sys
 from pathlib import Path
-from typing import Any, Callable, Dict, Generic, List, Optional, TypeVar, Union
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    Generic,
+    Iterable,
+    List,
+    Optional,
+    Sequence,
+    TypeVar,
+    Union,
+)
 
-import torch
-from torch.utils.data.dataset import Dataset
+from typing_extensions import override
 
+from torchoutil import Tensor
+from torchoutil.pyoutil import is_iterable_str
+from torchoutil.types.tensor_subclasses import Tensor1D
+from torchoutil.utils.data import DatasetSlicer
 from torchoutil.utils.pack.common import (
     ATTRS_FNAME,
     ContentMode,
+    ItemType,
     PackedDatasetAttributes,
+    _dict_to_tuple,
 )
-
-pylog = logging.getLogger(__name__)
+from torchoutil.utils.saving.load_fn import LOAD_FNS, LoadFn, LoadFnLike
 
 T = TypeVar("T")
 U = TypeVar("U")
 
+pylog = logging.getLogger(__name__)
 
-class PackedDataset(Generic[T, U], Dataset[U]):
+
+class PackedDataset(Generic[T, U], DatasetSlicer[U]):
     def __init__(
         self,
         root: Union[str, Path],
         transform: Optional[Callable[[T], U]] = None,
         *,
-        load_fn: Callable[..., Union[T, List[T]]] = torch.load,
-        load_kwds: Optional[Dict[str, Any]] = None,
-        use_cache: bool = False,
+        load_fn: LoadFnLike[Union[T, List[T]]] = "pickle",
     ) -> None:
         """
 
@@ -38,28 +53,23 @@ class PackedDataset(Generic[T, U], Dataset[U]):
             root: Root directory containing the info.json and the data files.
             transform: Optional transform to apply to each item. defaults to None.
             load_fn: Load function to load an item or batch. defaults to torch.load.
-            load_kwds: Keywords arguments passed to load_fn. defaults to None.
-            use_cache: If True, cache each item or batch in memory. defaults to False.
         """
         root = Path(root)
-        if load_kwds is None:
-            load_kwds = {}
+        if isinstance(load_fn, str):
+            load_fn = LOAD_FNS[load_fn]
 
         super().__init__()
         self._root = root
         self._transform = transform
         self._load_fn = load_fn
-        self._load_kwds = load_kwds
-        self._use_cache = use_cache
 
-        self._attrs = {}
-        self._fpaths = []
-        self._cache = None
-        self._cache_idx = None
-        self._reload_data()
+        self._attrs: PackedDatasetAttributes = {}  # type: ignore
+        self._fpaths: List[Path] = []
+        self._column_to_fname: Dict[str, str] = {}
+        self._reload_data(root, load_fn)
 
     @property
-    def attrs(self) -> PackedDatasetAttributes:
+    def attrs(self) -> Optional[PackedDatasetAttributes]:
         return self._attrs  # type: ignore
 
     @property
@@ -67,39 +77,45 @@ class PackedDataset(Generic[T, U], Dataset[U]):
         return self._attrs.get("content_mode")
 
     @property
+    def item_type(self) -> ItemType:
+        return self._attrs.get("item_type", "raw")
+
+    @property
     def batch_size(self) -> int:
         return self._attrs["batch_size"]
 
-    def __getitem__(self, idx: int) -> U:
-        item = self._load_item(idx)
-        if self._transform is not None:
-            item = self._transform(item)
-        return item  # type: ignore
-
+    @override
     def __len__(self) -> int:
         return self._attrs["length"]
 
-    def _load_item(self, idx: int) -> T:
-        if self.content_mode == "item":
+    def to_dict(self) -> Dict[str, Sequence]:
+        if self.item_type != "dict":
+            msg = f"Cannot convert non-dict dataset to dict. (found {self.item_type=})"
+            raise ValueError(msg)
+
+        if self.content_mode == "column":
+            return self._load_item_from_columns(slice(None), None)
+        else:
+            return self[:]  # type: ignore
+
+    @override
+    def get_item(self, idx: int) -> Union[T, U]:
+        if self.content_mode == "column":
+            item = self._load_item_from_columns(idx)
+            if self._transform is not None:
+                item = self._transform(item)  # type: ignore
+            return item
+        elif self.content_mode == "item":
             batch_size = 1
         elif self.content_mode == "batch":
             batch_size = self.batch_size
         else:
-            raise RuntimeError(
-                f"Invalid PickleDataset state. (cannot load item with {self.content_mode=})"
-            )
+            msg = f"Invalid PickleDataset state. (cannot load item with {self.content_mode=})"
+            raise RuntimeError(msg)
 
-        target_cache_idx = idx // batch_size
-        if self._cache is None or self._cache_idx != target_cache_idx:
-            self._cache = None
-            path = self._fpaths[target_cache_idx]
-            item_or_batch = self._load_fn(path, **self._load_kwds)
-
-            if self._use_cache:
-                self._cache = item_or_batch
-                self._cache_idx = target_cache_idx
-        else:
-            item_or_batch = self._cache
+        target_idx = idx // batch_size
+        fpath = self._fpaths[target_idx]
+        item_or_batch = self._load_fn(fpath)
 
         if self.content_mode == "item":
             item: T = item_or_batch  # type: ignore
@@ -108,10 +124,77 @@ class PackedDataset(Generic[T, U], Dataset[U]):
             local_idx = idx % batch_size
             item = batch[local_idx]
 
+        if self._transform is not None:
+            item = self._transform(item)  # type: ignore
+        return item  # type: ignore
+
+    @override
+    def get_items_indices(
+        self,
+        indices: Union[Iterable[int], Tensor1D],
+        *args,
+    ) -> List[U]:
+        if self.content_mode == "column":
+            return self._load_item_from_columns(indices)
+        else:
+            return super().get_items_indices(indices, *args)
+
+    @override
+    def get_items_mask(
+        self,
+        mask: Union[Iterable[bool], Tensor],
+        *args,
+    ) -> List[U]:
+        if self.content_mode == "column":
+            return self._load_item_from_columns(mask)  # type: ignore
+        else:
+            return super().get_items_mask(mask, *args)
+
+    @override
+    def get_items_slice(
+        self,
+        slice_: slice,
+        *args,
+    ) -> List[U]:
+        if self.content_mode == "column":
+            return self._load_item_from_columns(slice_)
+        else:
+            return super().get_items_slice(slice_, *args)
+
+    def _load_item_from_columns(
+        self,
+        idx: Union[int, Iterable[int], Iterable[bool], Tensor1D, slice],
+        column: Union[str, Iterable[str], None] = None,
+    ) -> Any:
+        if isinstance(column, str):
+            columns = [column]
+        elif is_iterable_str(column):
+            columns = column
+        elif column is None:
+            columns = self._column_to_fname.keys()
+        else:
+            raise TypeError(f"Invalid argument type {type(column)=}.")
+
+        fnames = dict.fromkeys(self._column_to_fname[column_i] for column_i in columns)
+        fpaths = [
+            fpath for fname in fnames for fpath in self._fpaths if fpath.name == fname
+        ]
+        loaded = {fpath.name: self._load_fn(fpath) for fpath in fpaths}
+        fname_to_column = {
+            fname: column for column, fname in self._column_to_fname.items()
+        }
+
+        item = {fname_to_column[fname]: v[idx] for fname, v in loaded.items()}  # type: ignore
+        if self.item_type == "tuple":
+            item = _dict_to_tuple(item)  # type: ignore
         return item
 
-    def _reload_data(self) -> None:
-        attrs_fpath = self._root.joinpath(ATTRS_FNAME)
+    def _reload_data(
+        self,
+        root: Path,
+        load_fn: LoadFn[Union[T, List[T]]],
+    ) -> None:
+        attrs_fpath = root.joinpath(ATTRS_FNAME)
 
         if not attrs_fpath.is_file():
             raise FileNotFoundError(f"Cannot find attribute file '{str(attrs_fpath)}'.")
@@ -130,21 +213,24 @@ class PackedDataset(Generic[T, U], Dataset[U]):
             )
 
         if len(missing) > 0:
-            raise RuntimeError(
-                f"Missing {len(missing)} keys in attribute file. (with {missing=})"
-            )
+            msg = f"Missing {len(missing)} keys in attribute file. (with {missing=} in {attrs_fpath=})"
+            raise RuntimeError(msg)
 
         content_dname = attrs["content_dname"]
-        content_dpath = self._root.joinpath(content_dname)
+        content_dpath = root.joinpath(content_dname)
 
         fnames = attrs["files"]
         fpaths = [content_dpath.joinpath(fname) for fname in fnames]
+        column_to_fname = attrs.get("column_to_fname", {})
 
+        self._root = root
+        self._load_fn = load_fn
         self._attrs = attrs
         self._fpaths = fpaths
+        self._column_to_fname = column_to_fname
 
     @classmethod
-    def is_pickle_root(cls, root: Union[str, Path]) -> bool:
+    def is_packed_root(cls, root: Union[str, Path]) -> bool:
         try:
             PackedDataset(root)
             return True

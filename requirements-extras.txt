@@ -4,6 +4,9 @@ colorlog
 h5py
 numpy
 omegaconf
+pandas
 pyyaml
+safetensors
+scipy
 tensorboard
 tqdm

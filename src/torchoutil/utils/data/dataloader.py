@@ -1,7 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import os
+import torch
+
+from torchoutil.pyoutil.os import get_num_cpus_available
 
 
 def get_auto_num_cpus() -> int:
@@ -9,11 +11,13 @@ def get_auto_num_cpus() -> int:
     Useful for setting num_workers argument in DataLoaders.
 
     On Windows and MAC OS, this will just return the number of CPUs on this machine.
+    If the number of CPUs cannot be detected, returns 0.
+
+    Alias of `pyoutil.os.get_num_cpus`.
     """
-    try:
-        num_cpus = len(os.sched_getaffinity(0))
-    except AttributeError:
-        num_cpus = os.cpu_count()
-        if num_cpus is None:
-            num_cpus = 0
-    return num_cpus
+    return get_num_cpus_available()
+
+
+def get_auto_num_gpus() -> int:
+    """Returns the number of GPUs available to the current process."""
+    return torch.cuda.device_count()

@@ -6,61 +6,68 @@ from typing import Any, Callable, Dict, Iterable, List, Literal, Sized, Tuple, U
 import torch
 from torch import Generator, Size, Tensor
 from torch.nn import functional as F
-from torch.types import Device, Number
+from torch.types import Number
 
-from torchoutil.nn.functional.get import get_device
+from torchoutil.core.get import DeviceLike, get_device, get_generator
 from torchoutil.nn.functional.others import can_be_stacked
-from torchoutil.utils.type_checks import is_scalar
+from torchoutil.types import is_number_like
 
 PAD_ALIGNS = ("left", "right", "center", "random")
 PadAlign = Literal["left", "right", "center", "random"]
 PadValue = Union[Number, Callable[[Tensor], Number]]
+PadMode = Literal["constant", "reflect", "replicate", "circular"]
 
 
 def pad_dim(
     x: Tensor,
     target_length: int,
+    *,
+    dim: int = -1,
     align: PadAlign = "left",
     pad_value: PadValue = 0.0,
-    dim: int = -1,
-    mode: str = "constant",
+    mode: PadMode = "constant",
     generator: Union[int, Generator, None] = None,
 ) -> Tensor:
     """Generic function for pad a single dimension."""
-    return pad_dims(x, [target_length], [align], pad_value, [dim], mode, generator)
+    return pad_dims(
+        x,
+        [target_length],
+        dims=[dim],
+        aligns=[align],
+        pad_value=pad_value,
+        mode=mode,
+        generator=generator,
+    )
 
 
 def pad_dims(
     x: Tensor,
     target_lengths: Iterable[int],
+    *,
+    dims: Iterable[int] = (-1,),
     aligns: Iterable[PadAlign] = ("left",),
     pad_value: PadValue = 0.0,
-    dims: Iterable[int] = (-1,),
-    mode: str = "constant",
+    mode: PadMode = "constant",
     generator: Union[int, Generator, None] = None,
 ) -> Tensor:
     """Generic function to pad multiple dimensions."""
-    if isinstance(generator, int):
-        generator = Generator().manual_seed(generator)
+    generator = get_generator(generator)
 
     target_lengths = list(target_lengths)
     aligns = list(aligns)
     dims = list(dims)
 
     if len(dims) == 0:
-        raise ValueError(
-            f"Invalid argument {dims=}. (cannot use an empty list of dimensions)"
-        )
+        msg = f"Invalid argument {dims=}. (cannot use an empty list of dimensions)"
+        raise ValueError(msg)
 
     if len(target_lengths) != len(dims):
-        raise ValueError(
-            f"Invalid number of targets lengths ({len(target_lengths)}) with the number of dimensions ({len(dims)})."
-        )
+        msg = f"Invalid number of targets lengths ({len(target_lengths)}) with the number of dimensions ({len(dims)})."
+        raise ValueError(msg)
 
     if len(aligns) != len(dims):
-        raise ValueError(
-            f"Invalid number of aligns ({len(aligns)}) with the number of dimensions ({len(dims)})."
-        )
+        msg = f"Invalid number of aligns ({len(aligns)}) with the number of dimensions ({len(dims)})."
+        raise ValueError(msg)
 
     if isinstance(pad_value, Callable):
         pad_value = pad_value(x)
@@ -72,9 +79,10 @@ def pad_dims(
 
 def pad_and_stack_rec(
     sequence: Union[Tensor, int, float, tuple, list],
-    pad_value: Number,
+    pad_value: Number = 0,
     *,
-    device: Device = None,
+    align: PadAlign = "left",
+    device: DeviceLike = None,
     dtype: Union[None, torch.dtype] = None,
 ) -> Tensor:
     """Recursive version of torch.nn.utils.rnn.pad_sequence, with padding of Tensors.
@@ -82,64 +90,64 @@ def pad_and_stack_rec(
     Args:
         sequence: The sequence to pad. Must be convertable to tensor by having the correct number of dims in all sublists.
         pad_value: The pad value used.
-        dtype: The dtype of the output Tensor. defaults to None.
         device: The device of the output Tensor. defaults to None.
+        dtype: The dtype of the output Tensor. defaults to None.
 
     Example 1::
     -----------
-        >>> sequence = [[1, 2], [3], [], [4, 5]]
-        >>> output = pad_sequence_rec(sequence, 0)
-        tensor([[1, 2], [3, 0], [0, 0], [4, 5]])
+    >>> sequence = [[1, 2], [3], [], [4, 5]]
+    >>> output = pad_sequence_rec(sequence, 0)
+    tensor([[1, 2], [3, 0], [0, 0], [4, 5]])
 
     Example 2::
     -----------
-        >>> invalid_sequence = [[1, 2, 3], 3]
-        >>> output = pad_sequence_rec(invalid_sequence, 0)
-        ValueError : Cannot pad sequence of tensors of differents number of dims.
+    >>> invalid_sequence = [[1, 2, 3], 3]
+    >>> output = pad_sequence_rec(invalid_sequence, 0)
+    ValueError : Cannot pad sequence of tensors of differents number of dims.
 
     """
     device = get_device(device)
 
-    if isinstance(sequence, Tensor):
-        return sequence.to(dtype=dtype, device=device)
+    def _impl(sequence: Union[Tensor, int, float, tuple, list]) -> Tensor:
+        if isinstance(sequence, Tensor):
+            return sequence.to(dtype=dtype, device=device)
 
-    elif is_scalar(sequence) or (isinstance(sequence, Sized) and len(sequence) == 0):
-        return torch.as_tensor(sequence, dtype=dtype, device=device)  # type: ignore
+        elif is_number_like(sequence) or (
+            isinstance(sequence, Sized) and len(sequence) == 0
+        ):
+            return torch.as_tensor(sequence, dtype=dtype, device=device)  # type: ignore
 
-    elif isinstance(sequence, (list, tuple)):
-        sequence = [
-            pad_and_stack_rec(elt, pad_value, dtype=dtype, device=device)
-            for elt in sequence
-        ]
-        if can_be_stacked(sequence):
-            return torch.stack(sequence)
+        elif isinstance(sequence, (list, tuple)):
+            tensors = [_impl(elt) for elt in sequence]
+            if can_be_stacked(tensors):
+                return torch.stack(tensors)
 
-        shapes = [elt.shape for elt in sequence]
-        shape0 = shapes[0]
+            shapes = [elt.shape for elt in tensors]
+            shape0 = shapes[0]
 
-        if not all(len(shape) == len(shape0) for shape in shapes):
-            raise ValueError(
-                f"Cannot pad sequence of tensors of differents number of dims. (with {shapes=})"
-            )
+            if not all(len(shape) == len(shape0) for shape in shapes):
+                msg = f"Cannot pad sequence of tensors of differents number of dims. (with {shapes=})"
+                raise ValueError(msg)
 
-        max_lens = [max(shape[i] for shape in shapes) for i in range(len(shape0))]
-        sequence = [
-            pad_dims(
-                xi,
-                target_lengths=max_lens,
-                pad_value=pad_value,
-                aligns=["left"] * xi.ndim,
-                dims=range(xi.ndim),
-            )
-            for xi in sequence
-        ]
-        result = torch.stack(sequence)
-        return result
+            max_lens = [max(shape[i] for shape in shapes) for i in range(len(shape0))]
+            tensors = [
+                pad_dims(
+                    xi,
+                    target_lengths=max_lens,
+                    pad_value=pad_value,
+                    aligns=[align] * xi.ndim,
+                    dims=range(xi.ndim),
+                )
+                for xi in tensors
+            ]
+            result = torch.stack(tensors)
+            return result
 
-    else:
-        raise TypeError(
-            f"Invalid type {type(sequence)}. (expected Tensor, int, float, list or tuple)"
-        )
+        else:
+            msg = f"Invalid type {type(sequence)}. (expected Tensor, int, float, list or tuple)"
+            raise TypeError(msg)
+
+    return _impl(sequence)
 
 
 def cat_padded_batch(
@@ -220,9 +228,8 @@ def __generate_pad_seq(
             )
             missing_right = missing - missing_left
         else:
-            raise ValueError(
-                f"Invalid argument {align=}. (expected one of {PAD_ALIGNS})"
-            )
+            msg = f"Invalid argument {align=}. (expected one of {PAD_ALIGNS})"
+            raise ValueError(msg)
 
         # Note: pad_seq : [pad_left_dim_-1, pad_right_dim_-1, pad_left_dim_-2, pad_right_dim_-2, ...)
         idx = len(x_shape) - (dim % len(x_shape)) - 1
@@ -248,9 +255,8 @@ def _check_cat_padded_batch(
 
     batch_size = x1.shape[batch_dim]
     if not (x1_lens.shape == x2_lens.shape == Size((batch_size,))):
-        raise ValueError(
-            f"Invalid arguments shape. (with {x1_lens.shape=} and {x2_lens.shape=})"
-        )
+        msg = f"Invalid arguments shape. (with {x1_lens.shape=} and {x2_lens.shape=})"
+        raise ValueError(msg)
 
     x1_shape = torch.as_tensor(x1.shape)
     x2_shape = torch.as_tensor(x2.shape)

@@ -1,17 +1,15 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from typing import Any, Dict, Iterable, List, Optional, TypeVar
+import re
+from typing import Any, Dict, List, Optional, TypeVar
 
 import torch
 
 from torchoutil.nn.functional.others import can_be_converted_to_tensor, can_be_stacked
 from torchoutil.nn.functional.pad import pad_and_stack_rec
-from torchoutil.utils.collections import (
-    KeyMode,
-    filter_iterable,
-    list_dict_to_dict_list,
-)
+from torchoutil.pyoutil.collections import KeyMode, list_dict_to_dict_list
+from torchoutil.pyoutil.re import PatternListLike, match_patterns
 
 K = TypeVar("K")
 V = TypeVar("V")
@@ -38,8 +36,8 @@ class AdvancedCollateDict:
     def __init__(
         self,
         pad_values: Optional[Dict[str, Any]] = None,
-        include_keys: Optional[Iterable[str]] = None,
-        exclude_keys: Optional[Iterable[str]] = None,
+        include_keys: Optional[PatternListLike] = None,
+        exclude_keys: Optional[PatternListLike] = None,
         key_mode: KeyMode = "same",
     ) -> None:
         """Collate list of dict into a dict of list WITH auto-padding for given keys."""
@@ -57,13 +55,17 @@ class AdvancedCollateDict:
             batch_lst,
             key_mode=self.key_mode,
         )
-        batch_keys = filter_iterable(
-            batch_dict.keys(),
-            self.include_keys,
-            self.exclude_keys,
-        )
+        batch_keys = [
+            k
+            for k in batch_dict.keys()
+            if match_patterns(
+                k,
+                self.include_keys,
+                exclude=self.exclude_keys,
+                match_fn=re.match,
+            )
+        ]
         batch_dict = {k: batch_dict[k] for k in batch_keys}
-
         result = {}
 
         for key, values in batch_dict.items():

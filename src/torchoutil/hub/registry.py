@@ -1,15 +1,15 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import json
 import logging
 import os
 import os.path as osp
 from pathlib import Path
 from typing import (
-    Callable,
+    Any,
     Dict,
     Generic,
+    Hashable,
     List,
     Mapping,
     Optional,
@@ -21,31 +21,32 @@ from typing import (
 
 import torch
 from torch import Tensor
-from torch.types import Device
 from typing_extensions import NotRequired
 
-from torchoutil.hub.download import HashType, hash_file
-from torchoutil.nn.functional.get import get_device
+from torchoutil.core.get import DeviceLike, get_device
+from torchoutil.pyoutil.hashlib import HashName, hash_file
+from torchoutil.pyoutil.logging import warn_once
+from torchoutil.utils.saving.json import load_json, to_json
+from torchoutil.utils.saving.load_fn import LOAD_FNS, LoadFnLike
+
+T_Hashable = TypeVar("T_Hashable", bound=Hashable)
 
 pylog = logging.getLogger(__name__)
-
-
-T = TypeVar("T")
 
 
 class RegistryEntry(TypedDict):
     url: str
     fname: str
     hash_value: NotRequired[str]
-    hash_type: NotRequired[HashType]
+    hash_type: NotRequired[HashName]
     state_dict_key: NotRequired[str]
     architecture: NotRequired[str]
 
 
-class RegistryHub(Generic[T]):
+class RegistryHub(Generic[T_Hashable]):
     def __init__(
         self,
-        infos: Mapping[T, RegistryEntry],
+        infos: Mapping[T_Hashable, RegistryEntry],
         register_root: Union[str, Path, None] = None,
     ) -> None:
         """
@@ -64,7 +65,7 @@ class RegistryHub(Generic[T]):
         self._ckpt_parent_path = register_root
 
     @property
-    def infos(self) -> Dict[T, RegistryEntry]:
+    def infos(self) -> Dict[T_Hashable, RegistryEntry]:
         return self._infos
 
     @property
@@ -72,18 +73,17 @@ class RegistryHub(Generic[T]):
         return self._ckpt_parent_path.resolve()
 
     @property
-    def names(self) -> List[T]:
+    def names(self) -> List[T_Hashable]:
         return list(self._infos.keys())
 
     @property
     def paths(self) -> List[Path]:
         return [self.get_path(model_name) for model_name in self.names]
 
-    def get_path(self, name: T) -> Path:
+    def get_path(self, name: T_Hashable) -> Path:
         if name not in self.names:
-            raise ValueError(
-                f"Invalid argument {name=}. (expected one of {self.names})"
-            )
+            msg = f"Invalid argument {name=}. (expected one of {self.names})"
+            raise ValueError(msg)
 
         fname = self._infos[name]["fname"]
         fpath = self.register_root.joinpath(fname)
@@ -91,70 +91,85 @@ class RegistryHub(Generic[T]):
 
     def load_state_dict(
         self,
-        name_or_path: Union[T, str, Path],
+        name_or_path: Union[T_Hashable, str, Path],
         *,
-        device: Device = None,
+        device: DeviceLike = None,
         offline: bool = False,
-        load_fn: Callable = torch.load,
+        load_fn: LoadFnLike = torch.load,
+        load_kwds: Optional[Dict[str, Any]] = None,
         verbose: int = 0,
     ) -> Dict[str, Tensor]:
         """Load state_dict weights.
 
         Args:
             model_name_or_path: Model name (case sensitive) or path to checkpoint file.
-            device: Device of checkpoint weights.
+            device: Device of checkpoint weights. (deprecated)
             offline: If False, the checkpoint from a model name will be automatically downloaded.
             load_fn: Load function backend. defaults to torch.load.
+            load_kwds: Optional keywords arguments passed to load_fn. defaults to None.
             verbose: Verbose level. defaults to 0.
 
         Returns:
             Loaded file content.
         """
-        device = get_device(device)
+        if isinstance(load_fn, str):
+            if load_fn not in LOAD_FNS:
+                msg = f"Invalid argument {load_fn=}. (expected one of {tuple(LOAD_FNS.keys())})"
+                raise ValueError(msg)
+            load_fn = LOAD_FNS[load_fn]
 
-        if osp.isfile(name_or_path):
-            path = name_or_path
+        if load_kwds is None:
+            load_kwds = {}
+
+        if device is not None:
+            src_device = device
+            device = get_device(device)
+            msg = f"Deprecated argument device={src_device}. Use `load_kwds=dict(map_location={device})` with function torch.load instead."
+            warn_once(msg, __name__)
+
+            if device is not None:
+                load_kwds["map_location"] = device
+
+        if isinstance(name_or_path, (str, Path)) and osp.isfile(name_or_path):
+            path = Path(name_or_path)
             name = self._get_name(path)
         else:
             name = name_or_path
             try:
-                path = self.get_path(name_or_path)
+                path = self.get_path(name_or_path)  # type: ignore
             except ValueError:
-                raise ValueError(
-                    f"Invalid argument {name_or_path=}. (expected a path to a checkpoint file or a model name in {self.names})"
-                )
+                msg = f"Invalid argument {name_or_path=}. (expected a path to a checkpoint file or a model name in {self.names})"
+                raise ValueError(msg)
 
-            if not osp.isfile(path):
-                if offline:
-                    raise FileNotFoundError(
-                        f"Cannot find checkpoint model file in '{path}' for model '{name_or_path}' with mode {offline=}."
-                    )
-                else:
-                    self.download_file(name_or_path, verbose=verbose)
+            if path.is_file():
+                pass
+            elif offline:
+                msg = f"Cannot find checkpoint model file in '{path}' for model '{name_or_path}' with mode {offline=}."
+                raise FileNotFoundError(msg)
+            else:
+                self.download_file(name_or_path, verbose=verbose)  # type: ignore
 
         del name_or_path
 
-        data = load_fn(path, map_location=device)
-
         info = self._infos.get(name, {})  # type: ignore
         state_dict_key = info.get("state_dict_key", None)
+        data = load_fn(path, **load_kwds)
 
         if state_dict_key is None:
-            state_dict = data
+            result = data
         else:
-            state_dict = data[state_dict_key]
+            result = data[state_dict_key]
 
         if verbose >= 1:
             test_map = data.get("test_mAP", "unknown")
-            pylog.info(
-                f"Loading encoder weights from '{path}'... (with test_mAP={test_map})"
-            )
+            msg = f"Loading encoder weights from '{path}'... (with test_mAP={test_map})"
+            pylog.info(msg)
 
-        return state_dict
+        return result
 
     def download_file(
         self,
-        name: T,
+        name: T_Hashable,
         force: bool = False,
         check_hash: bool = True,
         verbose: int = 0,
@@ -169,8 +184,7 @@ class RegistryHub(Generic[T]):
         if exists and force:
             os.remove(model_path)
 
-        os.makedirs(model_path.parent, exist_ok=True)
-
+        model_path.parent.mkdir(parents=True, exist_ok=True)
         url = self._infos[name]["url"]
         torch.hub.download_url_to_file(url, str(model_path), progress=verbose >= 1)
 
@@ -186,13 +200,12 @@ class RegistryHub(Generic[T]):
 
     def is_valid_hash(
         self,
-        name: T,
+        name: T_Hashable,
     ) -> bool:
         info = self.infos[name]
         if "hash_type" not in info or "hash_value" not in info:
-            pylog.warning(
-                f"Cannot check hash for {name}. (cannot find any expected hash value or type)"
-            )
+            msg = f"Cannot check hash for {name}. (cannot find any expected hash value or type)"
+            pylog.warning(msg)
             return True
 
         hash_type = info["hash_type"]
@@ -209,26 +222,21 @@ class RegistryHub(Generic[T]):
             "infos": self._infos,
             "register_root": str(self._ckpt_parent_path),
         }
-        with open(path, "r") as file:
-            json.dump(args, file)
+        to_json(args, path)
 
     @classmethod
     def from_file(cls, path: Union[str, Path]) -> "RegistryHub":
         """Load register info from JSON file."""
-        with open(path, "r") as file:
-            args = json.load(file)
+        args = load_json(path)
         return RegistryHub(**args)
 
-    def _get_name(self, path: Union[str, Path]) -> Optional[T]:
+    def _get_name(self, path: Union[str, Path]) -> Optional[T_Hashable]:
         path_to_name = {
             path_i.resolve().expanduser(): name_i
             for path_i, name_i in zip(self.paths, self.names)
         }
         path = Path(path).resolve().expanduser()
-        if path in path_to_name:
-            name = path_to_name[path]
-        else:
-            name = None
+        name = path_to_name.get(path, None)
         return name
 
 

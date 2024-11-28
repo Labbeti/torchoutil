@@ -2,29 +2,42 @@
 # -*- coding: utf-8 -*-
 
 import os
+import tempfile
 import time
 import unittest
+from pathlib import Path
 from unittest import TestCase
 
-import numpy as np
 import torch
 from torch import Generator
 from torch.utils.data.dataset import Subset
 from torchvision.datasets import CIFAR10
 
+from torchoutil.extras.numpy import np
 from torchoutil.nn import ESequential, IndexToOnehot, ToList, ToNumpy
-from torchoutil.utils.pack import pack_dataset
+from torchoutil.utils.pack.pack import pack_dataset, pack_dataset_to_columns
 
 
 class TestPackCIFAR10(TestCase):
-    def test_cifar10_pack_per_item(self) -> None:
+    @classmethod
+    def setUpClass(cls) -> None:
+        tmpdir = Path(os.getenv("TORCHOUTIL_TMPDIR", tempfile.gettempdir())).joinpath(
+            "torchoutil_tests"
+        )
         dataset = CIFAR10(
-            "/tmp",
+            tmpdir,
             train=False,
             transform=ToNumpy(),
             target_transform=ESequential(IndexToOnehot(10), ToList()),
             download=True,
         )
+        cls.dataset = dataset
+        cls.tmpdir = tmpdir
+
+    def test_cifar10_pack_per_item(self) -> None:
+        cls = self.__class__
+        dataset = cls.dataset
+        tmpdir = cls.tmpdir
 
         seed = int(torch.randint(0, 10000, ()).item())
         generator = Generator().manual_seed(seed)
@@ -38,8 +51,12 @@ class TestPackCIFAR10(TestCase):
             ).tolist(),
         )
 
-        path = "/tmp/test_cifar10"
-        pkl_dataset = pack_dataset(dataset, path, overwrite=True)
+        path = tmpdir.joinpath("test_cifar10")
+        pkl_dataset = pack_dataset(
+            dataset,
+            path,
+            exists="overwrite",
+        )
 
         assert len(dataset) == len(pkl_dataset)
 
@@ -52,13 +69,9 @@ class TestPackCIFAR10(TestCase):
         assert np.equal(image0, image1).all()
 
     def test_cifar10_pack_per_batch(self) -> None:
-        dataset = CIFAR10(
-            "/tmp",
-            train=False,
-            transform=ToNumpy(),
-            target_transform=ESequential(IndexToOnehot(10), ToList()),
-            download=True,
-        )
+        cls = self.__class__
+        dataset = cls.dataset
+        tmpdir = cls.tmpdir
 
         seed = int(torch.randint(0, 10000, ()).item())
         generator = Generator().manual_seed(seed)
@@ -72,11 +85,11 @@ class TestPackCIFAR10(TestCase):
             ).tolist(),
         )
 
-        path = "/tmp/test_cifar10_batch"
+        path = tmpdir.joinpath("test_cifar10_batch")
         pkl_dataset = pack_dataset(
             dataset,
             path,
-            overwrite=True,
+            exists="overwrite",
             content_mode="batch",
         )
 
@@ -91,13 +104,9 @@ class TestPackCIFAR10(TestCase):
         assert np.equal(image0, image1).all()
 
     def test_cifar10_pack_subdir(self) -> None:
-        dataset = CIFAR10(
-            "/tmp",
-            train=False,
-            transform=ToNumpy(),
-            target_transform=ESequential(IndexToOnehot(10), ToList()),
-            download=True,
-        )
+        cls = self.__class__
+        dataset = cls.dataset
+        tmpdir = cls.tmpdir
 
         seed = int(torch.randint(0, 10000, ()).item())
         generator = Generator().manual_seed(seed)
@@ -111,11 +120,11 @@ class TestPackCIFAR10(TestCase):
             ).tolist(),
         )
 
-        path = "/tmp/test_cifar10_subdir"
+        path = tmpdir.joinpath("test_cifar10_subdir")
         pkl_dataset = pack_dataset(
             dataset,
             path,
-            overwrite=True,
+            exists="overwrite",
             content_mode="item",
             subdir_size=100,
         )
@@ -130,8 +139,38 @@ class TestPackCIFAR10(TestCase):
         assert label0 == label1, f"{label0=}, {label1=}"
         assert np.equal(image0, image1).all()
 
+    def test_cifar10_pack_columns(self) -> None:
+        cls = self.__class__
+        dataset = cls.dataset
+        tmpdir = cls.tmpdir
+
+        path = tmpdir.joinpath("test_cifar10_columns")
+        packed = pack_dataset_to_columns(
+            dataset,
+            path,
+            exists="overwrite",
+            save_fn="numpy",
+            ds_kwds=dict(load_fn="numpy"),
+        )
+
+        assert len(dataset) == len(packed)
+        for i in range(len(dataset)):
+            sample_i, label_i = dataset[i]
+            psample_i, plabel_i = packed[i]
+
+            assert np.all(sample_i == psample_i)
+            assert np.all(label_i == plabel_i)
+
 
 class TestPackSpeechCommands(TestCase):
+    @classmethod
+    def setUpClass(cls) -> None:
+        tmpdir = Path(os.getenv("TORCHOUTIL_TMPDIR", tempfile.gettempdir())).joinpath(
+            "torchoutil_tests"
+        )
+        tmpdir.mkdir(parents=True, exist_ok=True)
+        cls.tmpdir = tmpdir
+
     def test_example_1(self) -> None:
         from torch import nn
         from torchaudio.datasets import SPEECHCOMMANDS
@@ -139,8 +178,8 @@ class TestPackSpeechCommands(TestCase):
 
         from torchoutil.utils.pack import pack_dataset
 
-        speech_commands_root = "/tmp/speech_commands"
-        packed_root = "/tmp/packed_speech_commands"
+        speech_commands_root = self.tmpdir.joinpath("speech_commands")
+        packed_root = self.tmpdir.joinpath("packed_speech_commands")
 
         os.makedirs(speech_commands_root, exist_ok=True)
         os.makedirs(packed_root, exist_ok=True)
@@ -164,12 +203,18 @@ class TestPackSpeechCommands(TestCase):
                 return (spectrogram,) + item[1:]
 
         transform = MyTransform()
-        pack_dataset(dataset, packed_root, transform, overwrite=True, num_workers=0)
+        pack_dataset(
+            dataset,
+            packed_root,
+            transform,
+            exists="overwrite",
+            num_workers=0,
+        )
 
         # Read from pickle
         from torchoutil.utils.pack import PackedDataset
 
-        packed_root = "/tmp/packed_speech_commands"
+        packed_root = self.tmpdir.joinpath("packed_speech_commands")
         pack = PackedDataset(packed_root)
         pack[0]  # first transformed item
 

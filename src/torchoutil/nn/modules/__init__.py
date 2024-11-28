@@ -3,11 +3,11 @@
 
 from torch.nn.modules import *
 
-from .activation import SoftmaxMultidim
+from .activation import LogSoftmaxMultidim, SoftmaxMultidim
 from .crop import CropDim, CropDims
 from .layer import PositionalEncoding
 from .mask import MaskedMean, MaskedSum
-from .mixins import EModule, ESequential
+from .mixins import EModule, EModuleDict, EModuleList, EModulePartial, ESequential
 from .multiclass import (
     IndexToName,
     IndexToOnehot,
@@ -21,23 +21,26 @@ from .multiclass import (
 )
 from .multilabel import (
     IndicesToMultihot,
-    IndicesToNames,
+    IndicesToMultinames,
     MultihotToIndices,
-    MultihotToNames,
-    NamesToIndices,
-    NamesToMultihot,
+    MultihotToMultinames,
+    MultinamesToIndices,
+    MultinamesToMultihot,
     ProbsToIndices,
     ProbsToMultihot,
-    ProbsToNames,
+    ProbsToMultinames,
 )
 from .numpy import NumpyToTensor, TensorToNumpy, ToNumpy
 from .pad import PadAndStackRec, PadDim, PadDims
+from .powerset import MultilabelToPowerset, PowersetToMultilabel
 from .tensor import (
     FFT,
     IFFT,
     Abs,
     Angle,
     AsTensor,
+    Exp,
+    Exp2,
     Imag,
     Log,
     Log2,
@@ -56,13 +59,20 @@ from .tensor import (
     TensorTo,
     ToItem,
     ToList,
+    Topk,
     Transpose,
     Unsqueeze,
+    View,
 )
 from .transform import (
+    Flatten,
+    Identity,
+    PadAndCropDim,
     RepeatInterleaveNd,
     ResampleNearestFreqs,
     ResampleNearestRates,
     ResampleNearestSteps,
+    Shuffled,
+    ToTensor,
     TransformDrop,
 )

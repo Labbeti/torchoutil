@@ -2,20 +2,20 @@
 # -*- coding: utf-8 -*-
 
 import unittest
+import warnings
 from unittest import TestCase
 
 import torch
 
+from torchoutil.core.packaging import _NUMPY_AVAILABLE
+from torchoutil.extras.numpy import np
 from torchoutil.nn.functional.others import (
+    all_eq,
     can_be_converted_to_tensor,
     can_be_stacked,
     ndim,
     shape,
 )
-from torchoutil.utils.packaging import _NUMPY_AVAILABLE
-
-if _NUMPY_AVAILABLE:
-    import numpy as np
 
 
 class TestCanBeConvertedToTensor(TestCase):
@@ -40,6 +40,7 @@ class TestCanBeConvertedToTensor(TestCase):
         ]
 
         if _NUMPY_AVAILABLE:
+            warnings.filterwarnings("ignore", category=UserWarning)
             examples += [
                 np.float64(42),
                 [[np.float64(42)], np.array([2])],
@@ -91,6 +92,7 @@ class TestNDimShape(TestCase):
             [2, []],
             "",
             [[[]], []],
+            [1, [[], 2]],
         ]
         expected_ndims = [
             1,
@@ -108,6 +110,7 @@ class TestNDimShape(TestCase):
             ValueError,
             0,
             ValueError,
+            ValueError,
         ]
         expected_shapes = [
             (0,),
@@ -124,6 +127,7 @@ class TestNDimShape(TestCase):
             (2, 0),
             ValueError,
             (),
+            ValueError,
             ValueError,
         ]
 
@@ -158,6 +162,39 @@ class TestNDimShape(TestCase):
                 with self.assertRaises(expected_shape):
                     invalid_shape = shape(example)
                     print(f"{invalid_shape=} with {example=} at {i=}")
+
+
+class TestAllEq(TestCase):
+    def test_all_eq_example(self) -> None:
+        x = torch.full((100, 2, 4), torch.rand(()).item())
+        assert all_eq(x)
+
+    def test_all_eq_dim(self) -> None:
+        x = torch.as_tensor(
+            [
+                [1, 2, 3, 4, 5],
+                [1, 2, 3, 4, 5],
+                [1, 2, 3, 4, 5],
+            ]
+        )
+
+        assert not all_eq(x)
+        assert all_eq(x, dim=0).all()
+        assert not all_eq(x, dim=1).any()
+
+        assert not all_eq(x.T)
+        assert not all_eq(x.T, dim=0).any()
+        assert all_eq(x.T, dim=1).all()
+
+        if _NUMPY_AVAILABLE:
+            x = x.numpy()
+            assert not all_eq(x)
+            assert all_eq(x, dim=0).all()
+            assert not all_eq(x, dim=1).any()
+
+            assert not all_eq(x.T)
+            assert not all_eq(x.T, dim=0).any()
+            assert all_eq(x.T, dim=1).all()
 
 
 if __name__ == "__main__":

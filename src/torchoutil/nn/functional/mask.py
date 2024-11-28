@@ -4,10 +4,9 @@
 from typing import Iterable, List, Optional, Union
 
 import torch
-from torch import Tensor
-from torch.types import Device
+from torch import LongTensor, Tensor
 
-from torchoutil.nn.functional.get import get_device
+from torchoutil.core.get import DeviceLike, DTypeLike, get_device, get_dtype
 
 
 def masked_mean(
@@ -85,14 +84,17 @@ def generate_square_subsequent_mask(
     size: int,
     diagonal: int = 0,
     *,
-    device: Device = None,
-    dtype: Optional[torch.dtype] = None,
+    device: DeviceLike = None,
+    dtype: DTypeLike = None,
 ) -> Tensor:
     device = get_device(device)
+    dtype = get_dtype(dtype)
+
     mask = torch.ones((size, size), device=device, dtype=torch.bool)
     mask = torch.tril(mask, diagonal=diagonal)
     mask = torch.where(mask, 0.0, -torch.inf)
     mask = mask.to(dtype=dtype)
+
     return mask
 
 
@@ -100,7 +102,8 @@ def lengths_to_non_pad_mask(
     lengths: Tensor,
     max_len: Optional[int] = None,
     include_end: bool = False,
-    dtype: Optional[torch.dtype] = None,
+    *,
+    dtype: DTypeLike = None,
 ) -> Tensor:
     """Convert lengths to binary mask of non-padded values.
 
@@ -133,6 +136,7 @@ def lengths_to_non_pad_mask(
         non_pad_mask = indices <= lengths
     else:
         non_pad_mask = indices < lengths
+    dtype = get_dtype(dtype)
     non_pad_mask = non_pad_mask.to(dtype=dtype)
     return non_pad_mask
 
@@ -141,7 +145,8 @@ def lengths_to_pad_mask(
     lengths: Tensor,
     max_len: Optional[int] = None,
     include_end: bool = True,
-    dtype: Optional[torch.dtype] = None,
+    *,
+    dtype: DTypeLike = None,
 ) -> Tensor:
     """Convert lengths to binary mask of padded values.
     The output will be a tensor of shape (B, max_len).
@@ -165,27 +170,32 @@ def lengths_to_pad_mask(
                 [True, True, True, True]])
     """
     non_pad_mask = lengths_to_non_pad_mask(
-        lengths, max_len, not include_end, dtype=torch.bool
+        lengths,
+        max_len,
+        not include_end,
+        dtype=torch.bool,
     )
     pad_mask = non_pad_mask.logical_not()
+    dtype = get_dtype(dtype)
     pad_mask = pad_mask.to(dtype=dtype)
     return pad_mask
 
 
-def non_pad_mask_to_lengths(mask: Tensor, dim: int = -1) -> Tensor:
-    return mask.sum(dim=dim)
+def non_pad_mask_to_lengths(mask: Tensor, *, dim: int = -1) -> LongTensor:
+    return mask.sum(dim=dim)  # type: ignore
 
 
-def pad_mask_to_lengths(mask: Tensor, dim: int = -1) -> Tensor:
-    return mask.shape[dim] - non_pad_mask_to_lengths(mask, dim)
+def pad_mask_to_lengths(mask: Tensor, *, dim: int = -1) -> LongTensor:
+    return mask.shape[dim] - non_pad_mask_to_lengths(mask, dim=dim)  # type: ignore
 
 
 def tensor_to_lengths(
     tensor: Tensor,
+    *,
     pad_value: Optional[float] = None,
     end_value: Optional[float] = None,
     dim: int = -1,
-) -> Tensor:
+) -> LongTensor:
     """Get the lengths of the non-padded elements of a tensor.
 
     You must provide a value for one of `pad_value` or `end_value`.
@@ -217,9 +227,8 @@ def tensor_to_lengths(
 
     """
     if (pad_value is None) == (end_value is None):
-        raise ValueError(
-            "Invalid arguments. Please provide only one of the arguments: end_value, pad_value."
-        )
+        msg = "Invalid arguments. Please provide only one of the arguments: end_value, pad_value."
+        raise ValueError(msg)
 
     if pad_value is not None:
         non_pad_mask = tensor != pad_value
@@ -231,19 +240,19 @@ def tensor_to_lengths(
         lengths = torch.where(contains_eos, indices_eos, tensor.shape[dim])
 
     else:
-        raise ValueError(
-            "Invalid arguments. Please provide only one of the arguments : end_value, pad_value."
-        )
+        msg = "Invalid arguments. Please provide only one of the arguments : end_value, pad_value."
+        raise ValueError(msg)
 
-    return lengths
+    return lengths  # type: ignore
 
 
 def tensor_to_non_pad_mask(
     tensor: Tensor,
+    *,
     pad_value: Optional[float] = None,
     end_value: Optional[float] = None,
     include_end: bool = False,
-    dtype: Optional[torch.dtype] = None,
+    dtype: DTypeLike = None,
 ) -> Tensor:
     """Convert tensor to non-pad binary mask.
     You must provide a value for one of pad_value or end_value. If both values are provided, the end_value is ignored.
@@ -263,10 +272,11 @@ def tensor_to_non_pad_mask(
         >>> tensor_to_pad_mask(input, end_value=2)
         tensor([True, True, True, False, False, False])
     """
+    dtype = get_dtype(dtype)
+
     if (pad_value is None) == (end_value is None):
-        raise ValueError(
-            "Invalid arguments. Please provide only one of the arguments: end_value, pad_value."
-        )
+        msg = "Invalid arguments. Please provide only one of the arguments: end_value, pad_value."
+        raise ValueError(msg)
 
     if pad_value is not None:
         non_pad_mask = tensor.ne(pad_value)
@@ -274,28 +284,27 @@ def tensor_to_non_pad_mask(
 
     elif end_value is not None:
         if tensor.ndim > 2:
-            raise ValueError(
-                f"Cannot compute non_pad_mask for with more than 2 dimensions with {end_value=}. (found {tensor.ndim=})"
-            )
+            msg = f"Cannot compute non_pad_mask for with more than 2 dimensions with {end_value=}. (found {tensor.ndim=})"
+            raise ValueError(msg)
         lengths = tensor_to_lengths(tensor, end_value=end_value, dim=-1)
         non_pad_mask = lengths_to_non_pad_mask(
             lengths, tensor.shape[-1], include_end, dtype=dtype
         )
 
     else:
-        raise ValueError(
-            "Invalid arguments. Please provide only one of the arguments : end_value, pad_value."
-        )
+        msg = "Invalid arguments. Please provide only one of the arguments : end_value, pad_value."
+        raise ValueError(msg)
 
     return non_pad_mask
 
 
 def tensor_to_pad_mask(
     tensor: Tensor,
+    *,
     pad_value: Optional[float] = None,
     end_value: Optional[float] = None,
     include_end: bool = True,
-    dtype: Optional[torch.dtype] = None,
+    dtype: DTypeLike = None,
 ) -> Tensor:
     """Convert tensor to pad binary mask.
 
@@ -315,8 +324,13 @@ def tensor_to_pad_mask(
         >>> tensor_to_pad_mask(input, end_value=2)
         tensor([False, False, False, True, True, True])
     """
+    dtype = get_dtype(dtype)
     non_pad_mask = tensor_to_non_pad_mask(
-        tensor, pad_value, end_value, not include_end, dtype=torch.bool
+        tensor,
+        pad_value=pad_value,
+        end_value=end_value,
+        include_end=not include_end,
+        dtype=torch.bool,
     )
     pad_mask = non_pad_mask.logical_not()
     pad_mask = pad_mask.to(dtype=dtype)
@@ -325,6 +339,7 @@ def tensor_to_pad_mask(
 
 def tensor_to_tensors_list(
     tensor: Tensor,
+    *,
     pad_value: Optional[float] = None,
     end_value: Optional[float] = None,
     non_pad_mask: Optional[Tensor] = None,
@@ -363,14 +378,13 @@ def tensor_to_tensors_list(
         tensors = [tensor[slices] for slices in slices_lst]
 
     else:
-        raise ValueError(
-            "Invalid arguments. Please provide only one of the arguments : end_value, pad_value, non_pad_mask or lengths."
-        )
+        msg = "Invalid arguments. Please provide only one of the arguments : end_value, pad_value, non_pad_mask or lengths."
+        raise ValueError(msg)
 
     return tensors
 
 
-def tensors_list_to_lengths(tensors: List[Tensor], dim: int = -1) -> Tensor:
+def tensors_list_to_lengths(tensors: List[Tensor], dim: int = -1) -> LongTensor:
     """Return the size of the tensor at a specific dim.
 
     The output will be a tensor of size N.
@@ -382,4 +396,4 @@ def tensors_list_to_lengths(tensors: List[Tensor], dim: int = -1) -> Tensor:
     device = None if len(tensors) == 0 else tensors[0].device
     lst = [tensor.shape[dim] for tensor in tensors]
     output = torch.as_tensor(lst, dtype=torch.long, device=device)
-    return output
+    return output  # type: ignore

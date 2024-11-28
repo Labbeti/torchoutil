@@ -12,8 +12,8 @@ from torchoutil import (
     lengths_to_non_pad_mask,
     masked_mean,
     multihot_to_indices,
+    probs_to_multinames,
     probs_to_name,
-    probs_to_names,
 )
 
 
@@ -47,9 +47,11 @@ class TestReadme(TestCase):
 
         assert names == expected
 
-    def test_probs_to_names_example(self) -> None:
+    def test_probs_to_multinames_example(self) -> None:
         probs = torch.as_tensor([[0.9, 0.1], [0.6, 0.9]])
-        names = probs_to_names(probs, threshold=0.5, idx_to_name={0: "Cat", 1: "Dog"})
+        names = probs_to_multinames(
+            probs, threshold=0.5, idx_to_name={0: "Cat", 1: "Dog"}
+        )
         expected = [["Cat"], ["Cat", "Dog"]]
 
         assert names == expected

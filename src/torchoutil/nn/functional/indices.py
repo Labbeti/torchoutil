@@ -5,9 +5,10 @@ from typing import Any, Dict, List, Union
 
 import torch
 from torch import Tensor
-from torch.types import Device, Number
+from torch.types import Number
 
-from torchoutil.nn.functional.get import _DEVICE_CUDA_IF_AVAILABLE, get_device
+from torchoutil.core.get import CUDA_IF_AVAILABLE, DeviceLike, get_device, get_generator
+from torchoutil.types import LongTensor1D, Tensor1D, is_builtin_number
 
 
 def get_inverse_perm(indices: Tensor, dim: int = -1) -> Tensor:
@@ -17,6 +18,17 @@ def get_inverse_perm(indices: Tensor, dim: int = -1) -> Tensor:
     Args:
         indices: Original permutation indices as tensor of shape (..., N).
         dim: Dimension of indices. defaults to -1.
+
+    Example 1
+    ----------
+        >>> x = torch.as_tensor([2, 4, 8, 10])
+        >>> indices = torch.randperm(len(x))
+        >>> x = x[indices]
+        >>> # x is now shuffled, to get back the original order we need the indices
+        >>> inv_indices = get_inverse_perm(indices)
+        >>> x_reordered = x[inv_indices]
+        >>> x_reordered
+        ... tensor([2, 4, 8, 10])
     """
     arange = torch.arange(
         indices.shape[dim],
@@ -32,8 +44,8 @@ def get_inverse_perm(indices: Tensor, dim: int = -1) -> Tensor:
 def randperm_diff(
     size: int,
     generator: Union[None, int, torch.Generator] = None,
-    device: Device = _DEVICE_CUDA_IF_AVAILABLE,
-) -> Tensor:
+    device: DeviceLike = CUDA_IF_AVAILABLE,
+) -> LongTensor1D:
     """This function ensure that every value i cannot be the element at index i.
     The output will be a tensor of shape (size,).
 
@@ -53,8 +65,7 @@ def randperm_diff(
         raise ValueError(f"Invalid argument {size=} < 2 for randperm_diff.")
 
     device = get_device(device)
-    if isinstance(generator, int):
-        generator = torch.Generator().manual_seed(generator)
+    generator = get_generator(generator)
 
     perm_kws: Dict[str, Any] = dict(generator=generator, device=device)
     arange = torch.arange(size, device=device)
@@ -62,29 +73,29 @@ def randperm_diff(
 
     while perm.eq(arange).any():
         perm = torch.randperm(size, **perm_kws)
-    return perm
+    return perm  # type: ignore
 
 
-def get_perm_indices(t1: Tensor, t2: Tensor) -> Tensor:
+def get_perm_indices(x1: Tensor, x2: Tensor) -> LongTensor1D:
     """Find permutation between two vectors t1 and t2 which contains values from 0 to N-1.
 
     Example 1::
     -----------
-        >>> t1 = torch.as_tensor([0, 1, 2, 4, 3, 6, 5, 7])
-        >>> t2 = torch.as_tensor([0, 2, 1, 4, 3, 5, 6, 7])
-        >>> indices = get_perm_indices(t1, t2)
-        >>> (t1[indices] == t2).all().item()
+        >>> x1 = torch.as_tensor([0, 1, 2, 4, 3, 6, 5, 7])
+        >>> x2 = torch.as_tensor([0, 2, 1, 4, 3, 5, 6, 7])
+        >>> indices = get_perm_indices(x1, x2)
+        >>> torch.equal(x1, x2[indices])
         True
     """
-    i1 = (t1[..., None, :] == t2[..., :, None]).int().argmax(dim=-2)
-    return i1
+    indices = (x1[..., None, :] == x2[..., :, None]).short().argmax(dim=-2)
+    return indices  # type: ignore
 
 
 def insert_at_indices(
     x: Tensor,
     indices: Union[Tensor, List, Number],
     values: Union[Number, Tensor],
-) -> Tensor:
+) -> Tensor1D:
     """Insert value(s) in vector at specified indices.
 
     Example 1::
@@ -96,15 +107,18 @@ def insert_at_indices(
         tensor([1, 1, 4, 2, 2, 2, 4, 3])
     """
     if x.ndim != 1:
-        raise ValueError(
-            f"Invalid argument number of dims. (found {x.ndim=} but expected 1)"
-        )
+        msg = f"Invalid argument number of dims. (found {x.ndim=} but expected 1)"
+        raise ValueError(msg)
 
     device = x.device
-    if isinstance(indices, (int, float, bool)):
+    if isinstance(indices, Tensor):
+        pass
+    elif is_builtin_number(indices):
         indices = torch.as_tensor([indices], device=device, dtype=torch.long)
     elif isinstance(indices, list):
         indices = torch.as_tensor(indices, device=device, dtype=torch.long)
+    else:
+        raise TypeError(f"Invalid argument type {type(indices)=}.")
 
     out = torch.empty((x.shape[0] + indices.shape[0]), dtype=x.dtype, device=device)
     indices = indices + torch.arange(
@@ -120,18 +134,21 @@ def insert_at_indices(
 def remove_at_indices(
     x: Tensor,
     indices: Union[Tensor, List, Number],
-) -> Tensor:
+) -> Tensor1D:
     """Remove value(s) in vector at specified indices."""
     if x.ndim != 1:
-        raise ValueError(
-            f"Invalid argument number of dims. (found {x.ndim=} but expected 1)"
-        )
+        msg = f"Invalid argument number of dims. (found {x.ndim=} but expected 1)"
+        raise ValueError(msg)
 
     device = x.device
-    if isinstance(indices, (int, float, bool)):
+    if isinstance(indices, Tensor):
+        pass
+    elif is_builtin_number(indices):
         indices = torch.as_tensor([indices], device=device, dtype=torch.long)
     elif isinstance(indices, list):
         indices = torch.as_tensor(indices, device=device, dtype=torch.long)
+    else:
+        raise TypeError(f"Invalid argument type {type(indices)=}.")
 
     indices = indices + torch.arange(
         indices.shape[0], device=device, dtype=indices.dtype

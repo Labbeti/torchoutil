@@ -3,9 +3,10 @@
 
 from torch.nn.functional import *
 
-from .activation import softmax_multidim
+from .activation import log_softmax_multidim, softmax_multidim
+from .checksum import checksum, checksum_any
 from .crop import crop_dim, crop_dims
-from .get import get_device
+from .get import CUDA_IF_AVAILABLE, get_device, get_dtype, get_generator
 from .indices import (
     get_inverse_perm,
     get_perm_indices,
@@ -41,31 +42,49 @@ from .multiclass import (
 )
 from .multilabel import (
     indices_to_multihot,
-    indices_to_names,
+    indices_to_multinames,
     multihot_to_indices,
-    multihot_to_names,
-    names_to_indices,
-    names_to_multihot,
+    multihot_to_multinames,
+    multinames_to_indices,
+    multinames_to_multihot,
     probs_to_indices,
     probs_to_multihot,
-    probs_to_names,
+    probs_to_multinames,
 )
 from .numpy import numpy_to_tensor, tensor_to_numpy, to_numpy
 from .others import (
+    all_eq,
+    all_ne,
+    average_power,
     can_be_converted_to_tensor,
     can_be_stacked,
     count_parameters,
     find,
-    item,
+    is_complex,
+    is_floating_point,
+    is_sorted,
     move_to_rec,
     ndim,
+    nelement,
+    prod,
+    ranks,
     shape,
+    to_item,
+    view_as_complex,
+    view_as_real,
 )
 from .pad import cat_padded_batch, pad_and_stack_rec, pad_dim, pad_dims
+from .powerset import multilabel_to_powerset, powerset_to_multilabel
+from .segments import extract_segments, segments_to_list
 from .transform import (
+    flatten,
+    identity,
+    pad_and_crop_dim,
     repeat_interleave_nd,
     resample_nearest_freqs,
     resample_nearest_rates,
     resample_nearest_steps,
+    shuffled,
+    to_tensor,
     transform_drop,
 )

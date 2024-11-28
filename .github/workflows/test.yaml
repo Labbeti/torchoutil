@@ -33,7 +33,7 @@ jobs:
     steps:
     # --- INSTALLATIONS ---
     - name: Checkout repository
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
 
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v5
@@ -71,7 +71,11 @@ jobs:
 
     - name: Test with pytest
       run: |
-        python -m pytest -v
+        coverage run -m pytest -v
+
+    - name: Show coverage results
+      run: |
+        coverage report -m
 
   build-minimal:
     runs-on: ${{ matrix.os }}
@@ -89,7 +93,7 @@ jobs:
     steps:
     # --- INSTALLATIONS ---
     - name: Checkout repository
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
 
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v5
@@ -125,6 +129,10 @@ jobs:
       run: |
         torchoutil-info
 
-    - name: Test with pytest
+    - name: Test with coverage + pytest
       run: |
-        python -m pytest -v --ignore=./tests/test_utils_hdf.py
+        coverage run -m pytest -v --ignore=./tests/test_extras_hdf.py --ignore=./tests/test_utils_pack.py --ignore=./tests/test_hub_registry.py --ignore=./tests/test_extras_numpy_functional.py --ignore=./tests/test_extras_numpy_scan_info.py
+
+    - name: Show coverage results
+      run: |
+        coverage report -m

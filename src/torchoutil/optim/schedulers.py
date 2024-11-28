@@ -28,9 +28,8 @@ class CosDecayRule:
     # Note : use class instead of function for scheduler rules to become pickable for multiple-GPU with Lightning
     def __init__(self, n_steps: int) -> None:
         if n_steps < 0:
-            raise ValueError(
-                f"Invalid argument {n_steps=} < 0 in {self.__class__.__name__}."
-            )
+            msg = f"Invalid argument {n_steps=} < 0 in {self.__class__.__name__}."
+            raise ValueError(msg)
         elif n_steps == 0:
             pylog.warning(
                 f"Replacing {n_steps=} by n_steps=1 in {self.__class__.__name__}."
