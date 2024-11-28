@@ -22,6 +22,7 @@ from .guards import (
     is_numpy_scalar_like,
     is_scalar_like,
     is_tensor0d,
+    is_tensor_like,
     is_tuple_tensor,
 )
 from .tensor_subclasses import (

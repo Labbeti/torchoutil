@@ -14,7 +14,7 @@ from torchoutil.nn.functional.others import can_be_stacked, to_item
 from torchoutil.nn.functional.pad import pad_and_stack_rec
 from torchoutil.nn.functional.transform import to_tensor
 from torchoutil.pyoutil.typing import is_sequence_int
-from torchoutil.types import LongTensor, is_number_like
+from torchoutil.types import LongTensor, is_number_like, is_tensor_like
 from torchoutil.types._typing import TensorLike
 
 T_Name = TypeVar("T_Name", bound=Hashable)
@@ -44,10 +44,10 @@ def indices_to_multihot(
     dtype = get_dtype(dtype)
 
     def _impl(x) -> Tensor:
-        if isinstance(x, TensorLike) and not _is_valid_indices(x):
+        if is_tensor_like(x) and not _is_valid_indices(x):
             raise ValueError(f"Invalid argument shape {x.shape=}.")
 
-        if (isinstance(x, TensorLike) and x.ndim == 1) or is_sequence_int(x):
+        if (is_tensor_like(x) and x.ndim == 1) or is_sequence_int(x):
             x = torch.as_tensor(x, dtype=torch.long, device=device)
 
             if padding_idx is not None:

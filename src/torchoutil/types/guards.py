@@ -7,7 +7,7 @@ import torch
 from torch import Tensor
 from typing_extensions import TypeIs
 
-from torchoutil.extras.numpy import is_numpy_number_like, is_numpy_scalar_like
+from torchoutil.extras.numpy import is_numpy_number_like, is_numpy_scalar_like, np
 from torchoutil.pyoutil.typing import is_builtin_number, is_builtin_scalar
 from torchoutil.types._typing import (
     BoolTensor,
@@ -19,6 +19,7 @@ from torchoutil.types._typing import (
     SignedIntegerTensor,
     SignedIntegerTensor1D,
     Tensor0D,
+    TensorLike,
 )
 
 
@@ -85,6 +86,10 @@ def is_scalar_like(x: Any) -> TypeIs[ScalarLike]:
 def is_tensor0d(x: Any) -> TypeIs[Tensor0D]:
     """Returns True if x is a zero-dimensional torch Tensor."""
     return isinstance(x, Tensor) and x.ndim == 0
+
+
+def is_tensor_like(x: Any) -> TensorLike:
+    return isinstance(x, (Tensor, np.ndarray))
 
 
 def is_tuple_tensor(x: Any) -> TypeIs[Tuple[Tensor, ...]]:
