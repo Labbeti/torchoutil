@@ -17,5 +17,6 @@ Submodules
    torchoutil.utils.saving.json
    torchoutil.utils.saving.load_fn
    torchoutil.utils.saving.pickle
+   torchoutil.utils.saving.safetensors
    torchoutil.utils.saving.save_fn
    torchoutil.utils.saving.yaml
