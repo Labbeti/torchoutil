@@ -5,6 +5,7 @@ import functools
 import itertools
 import math
 import pickle
+import re
 import struct
 import zlib
 from dataclasses import asdict
@@ -115,6 +116,8 @@ def checksum_any(
         return checksum_bytes(x, **kwargs)
     elif isinstance(x, bytearray):
         return checksum_bytearray(x, **kwargs)
+    elif isinstance(x, re.Pattern):
+        return checksum_pattern(x, **kwargs)
     elif isinstance(x, nn.Module):
         return checksum_module(x, **kwargs)
     elif isinstance(x, Tensor):
@@ -222,6 +225,11 @@ def checksum_namedtuple(x: NamedTupleInstance, **kwargs) -> int:
 
 def checksum_partial(x: functools.partial, **kwargs) -> int:
     return checksum_iterable(("functools.partial", x.func, x.args, x.keywords))
+
+
+def checksum_pattern(x: re.Pattern, **kwargs) -> int:
+    kwargs["accumulator"] = checksum_type(type(x)) + kwargs.get("accumulator", 0)
+    return checksum_str(str(x), **kwargs)
 
 
 # Intermediate functions
