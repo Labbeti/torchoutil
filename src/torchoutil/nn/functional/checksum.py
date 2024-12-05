@@ -36,6 +36,7 @@ Checksumable = Union[
     str,
     bytes,
     bytearray,
+    re.Pattern,
     nn.Module,
     Tensor,
     np.ndarray,
@@ -58,6 +59,7 @@ CHECKSUMABLE_TYPES = (
     "str",
     "bytes",
     "bytearray",
+    "re.Pattern",
     "torch.nn.Module",
     "torch.Tensor",
     "numpy.ndarray",
@@ -146,7 +148,8 @@ def checksum_any(
         msg = f"Invalid argument type {type(x)}. (expected one of {CHECKSUMABLE_TYPES})"
         raise TypeError(msg)
     else:
-        raise ValueError(f"Invalid argument {unk_mode=}. (expected one of {UNK_MODES})")
+        msg = f"Invalid argument {unk_mode=}. (expected one of {UNK_MODES})"
+        raise ValueError(msg)
 
 
 def checksum_dataclass(x: DataclassInstance, **kwargs) -> int:
