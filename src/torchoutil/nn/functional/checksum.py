@@ -118,6 +118,8 @@ def checksum_any(
         return checksum_bytes(x, **kwargs)
     elif isinstance(x, bytearray):
         return checksum_bytearray(x, **kwargs)
+    elif isinstance(x, slice):
+        return checksum_slice(x, **kwargs)
     elif isinstance(x, re.Pattern):
         return checksum_pattern(x, **kwargs)
     elif isinstance(x, nn.Module):
@@ -233,6 +235,11 @@ def checksum_partial(x: functools.partial, **kwargs) -> int:
 def checksum_pattern(x: re.Pattern, **kwargs) -> int:
     kwargs["accumulator"] = checksum_type(type(x)) + kwargs.get("accumulator", 0)
     return checksum_str(str(x), **kwargs)
+
+
+def checksum_slice(x: slice, **kwargs) -> int:
+    kwargs["accumulator"] = checksum_type(type(x)) + kwargs.get("accumulator", 0)
+    return checksum_iterable((x.start, x.stop, x.step), **kwargs)
 
 
 # Intermediate functions
