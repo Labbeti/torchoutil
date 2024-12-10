@@ -16,6 +16,7 @@ import pyoutil as po
 import torchoutil as to
 from torchoutil import nn
 from torchoutil.core.packaging import _NUMPY_AVAILABLE, _TQDM_AVAILABLE
+from torchoutil.extras.numpy import np
 from torchoutil.extras.numpy.scan_info import (
     merge_numpy_dtypes,
     numpy_dtype_to_fill_value,
@@ -36,13 +37,11 @@ from torchoutil.utils.pack.common import (
     _tuple_to_dict,
 )
 from torchoutil.utils.pack.dataset import PackedDataset
-from torchoutil.utils.saving.common import to_builtin
-from torchoutil.utils.saving.save_fn import SAVE_EXTENSIONS, SAVE_FNS, SaveFnLike
+from torchoutil.utils.saving.common import BACKEND_TO_EXTENSION, to_builtin
+from torchoutil.utils.saving.dump_fn import DUMP_FNS, DumpFnLike
 
 if _TQDM_AVAILABLE:
     import tqdm
-if _NUMPY_AVAILABLE:
-    import numpy as np
 
 
 T = TypeVar("T", covariant=True)
@@ -63,7 +62,7 @@ def pack_dataset(
     custom_file_fmt: Union[None, str, Callable[[int], str]] = None,
     ds_kwds: Optional[Dict[str, Any]] = None,
     exists: ExistsMode = "error",
-    save_fn: SaveFnLike[Union[U, List[U]]] = "pickle",
+    dump_fn: DumpFnLike[Union[U, List[U]]] = "pickle",
     subdir_size: Optional[int] = 100,
     num_workers: Union[int, Literal["auto"]] = "auto",
     transform_in_worker: bool = True,
@@ -105,7 +104,7 @@ def pack_dataset(
         custom_file_fmt: Custom file format.
             If None, defaults to "{{i:0{num_digits}d}}.pt".
             defaults to None.
-        save_fn: Custom save function to save an item or a batch. defaults to torch.save.
+        dump_fn: Custom save function to save an item or a batch. defaults to torch.save.
         subdir_size: Optional number of files per folder.
             Using None will disable subdir an put all files in data/ folder.
             defaults to 100.
@@ -130,7 +129,7 @@ def pack_dataset(
             exists=exists,
             fname_fmt=custom_file_fmt,
             num_workers=num_workers,
-            save_fn=save_fn,  # type: ignore
+            dump_fn=dump_fn,  # type: ignore
             user_attrs=user_attrs,
             verbose=verbose,
         )
@@ -148,9 +147,9 @@ def pack_dataset(
     if num_workers == "auto":
         num_workers = get_auto_num_cpus()
 
-    if isinstance(save_fn, str):
-        ext = SAVE_EXTENSIONS[save_fn]
-        save_fn = SAVE_FNS[save_fn]
+    if isinstance(dump_fn, str):
+        ext = BACKEND_TO_EXTENSION[dump_fn]
+        dump_fn = DUMP_FNS[dump_fn]
     else:
         ext = "bin"
 
@@ -210,7 +209,7 @@ def pack_dataset(
             parent.mkdir(parents=True, exist_ok=True)
 
     if _TQDM_AVAILABLE and verbose >= 1:
-        loader = tqdm.tqdm(
+        loader = tqdm.tqdm(  # type: ignore
             loader,
             total=len(loader),
             desc=f"Packing {len(fnames)} items...",
@@ -224,12 +223,12 @@ def pack_dataset(
         if content_mode == "item":
             for item in batch_lst:
                 fpath = fpaths[i]
-                save_fn(item, fpath)
+                dump_fn(item, fpath)
                 i += 1
 
         elif content_mode == "batch":
             fpath = fpaths[i]
-            save_fn(batch_lst, fpath)
+            dump_fn(batch_lst, fpath)
             i += 1
 
         else:
@@ -283,7 +282,7 @@ def pack_dataset_to_columns(
     exists: ExistsMode = "error",
     fname_fmt: str = "{column}.{ext}",
     num_workers: Union[int, Literal["auto"]] = "auto",
-    save_fn: SaveFnLike[np.ndarray] = "pickle",
+    dump_fn: DumpFnLike[np.ndarray] = "pickle",
     user_attrs: Optional[Dict[str, Any]] = None,
     verbose: int = 0,
 ) -> PackedDataset[T_DictOrTuple, T_DictOrTuple]:
@@ -343,7 +342,7 @@ def pack_dataset_to_columns(
     )
 
     if _TQDM_AVAILABLE:
-        loader = tqdm.tqdm(loader, total=len(loader), disable=verbose < 1)
+        loader = tqdm.tqdm(loader, total=len(loader), disable=verbose < 1)  # type: ignore
 
     i = 0
     for batch in loader:
@@ -377,7 +376,7 @@ def pack_dataset_to_columns(
     i = 0
     it = iter(loader)
     if _TQDM_AVAILABLE:
-        it = tqdm.tqdm(it, total=len(loader), disable=verbose < 1)
+        it = tqdm.tqdm(it, total=len(loader), disable=verbose < 1)  # type: ignore
 
     for batch in it:
         batch = [dict_pre_transform(item) for item in batch]
@@ -415,7 +414,7 @@ def pack_dataset_to_columns(
         root=root,
         content_dpath=content_dpath,
         src_attrs=src_attrs,
-        save_fn=save_fn,
+        dump_fn=dump_fn,
         ds_kwds=ds_kwds,
         fname_fmt=fname_fmt,
         verbose=verbose,
@@ -429,7 +428,7 @@ def pack_dataset_dict(
     ds_kwds: Optional[Dict[str, Any]] = None,
     exists: ExistsMode = "error",
     fname_fmt: str = "{column}.{ext}",
-    save_fn: SaveFnLike[np.ndarray] = "pickle",
+    dump_fn: DumpFnLike[np.ndarray] = "pickle",
     user_attrs: Optional[Dict[str, Any]] = None,
     verbose: int = 0,
 ) -> PackedDataset:
@@ -455,7 +454,7 @@ def pack_dataset_dict(
         content_dpath=content_dpath,
         ds_kwds=ds_kwds,
         fname_fmt=fname_fmt,
-        save_fn=save_fn,
+        dump_fn=dump_fn,
         src_attrs=src_attrs,
         verbose=verbose,
     )
@@ -467,24 +466,28 @@ def _pack_dataset_dict(
     content_dpath: Path,
     ds_kwds: Optional[Dict[str, Any]] = None,
     fname_fmt: str = "{column}.{ext}",
-    save_fn: SaveFnLike[np.ndarray] = "pickle",
+    dump_fn: DumpFnLike[np.ndarray] = "pickle",
     src_attrs: Optional[Dict[str, Any]] = None,
     verbose: int = 0,
 ) -> PackedDataset:
-    if isinstance(save_fn, str):
-        ext = SAVE_EXTENSIONS[save_fn]
-        save_fn = SAVE_FNS[save_fn]
+    if isinstance(dump_fn, str):
+        ext = BACKEND_TO_EXTENSION[dump_fn]
+        dump_fn = DUMP_FNS[dump_fn]
     else:
         ext = "bin"
 
     data_dict = {k: to.to_numpy(v) for k, v in data_dict.items()}
 
     column_to_fname = {}
-    for column, values in tqdm.tqdm(data_dict.items(), disable=verbose < 1):
+    it = data_dict.items()
+    if _TQDM_AVAILABLE:
+        it = tqdm.tqdm(it, disable=verbose < 1)  # type: ignore
+
+    for column, values in it:
         fname = fname_fmt.format(column=column, ext=ext)
         column_to_fname[column] = fname
         fpath = content_dpath.joinpath(fname)
-        save_fn(values, fpath)
+        dump_fn(values, fpath)
 
     fnames = list(dict.fromkeys(column_to_fname.values()))
     attrs = {

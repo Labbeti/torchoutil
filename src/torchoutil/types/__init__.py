@@ -7,11 +7,15 @@ from torchoutil.core.dtype_enum import DTypeEnum
 from torchoutil.core.get import DeviceLike, DTypeLike, GeneratorLike
 from torchoutil.pyoutil.typing import *
 
+from ._typing import T_TensorOrArray, TensorOrArray
 from .guards import (
     is_bool_tensor,
     is_bool_tensor1d,
     is_builtin_number,
     is_builtin_scalar,
+    is_complex_tensor,
+    is_dict_str_tensor,
+    is_floating_tensor,
     is_integral_dtype,
     is_integral_tensor,
     is_integral_tensor1d,

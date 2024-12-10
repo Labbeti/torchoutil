@@ -5,18 +5,11 @@
 
 from typing import Any
 
+from torchoutil.pyoutil.importlib import Placeholder
 from torchoutil.pyoutil.inspect import get_current_fn_name
 
 
-class _placeholder:
-    def __init__(self, *args, **kwargs) -> None:
-        ...
-
-    def __getattr__(self, name: str) -> Any:
-        return self
-
-
-class generic(_placeholder):
+class generic(Placeholder):
     ...
 
 
@@ -28,11 +21,11 @@ class bool_(generic):
     ...
 
 
-class dtype(_placeholder):
+class dtype(Placeholder):
     ...
 
 
-class ndarray(_placeholder):
+class ndarray(Placeholder):
     def __getitem__(self, *args) -> Any:
         return self
 

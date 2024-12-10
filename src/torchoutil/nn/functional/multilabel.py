@@ -15,13 +15,13 @@ from torchoutil.nn.functional.pad import pad_and_stack_rec
 from torchoutil.nn.functional.transform import to_tensor
 from torchoutil.pyoutil.typing import is_sequence_int
 from torchoutil.types import LongTensor, is_number_like, is_tensor_like
-from torchoutil.types._typing import TensorLike
+from torchoutil.types._typing import TensorOrArray
 
 T_Name = TypeVar("T_Name", bound=Hashable)
 
 
 def indices_to_multihot(
-    indices: Union[Sequence[Union[Sequence[int], TensorLike]], TensorLike],
+    indices: Union[Sequence[Union[Sequence[int], TensorOrArray]], TensorOrArray],
     num_classes: int,
     *,
     padding_idx: Optional[int] = None,
@@ -81,7 +81,7 @@ def indices_to_multihot(
 
 
 def indices_to_multinames(
-    indices: Union[Sequence[Union[Sequence[int], TensorLike]], TensorLike],
+    indices: Union[Sequence[Union[Sequence[int], TensorOrArray]], TensorOrArray],
     idx_to_name: Union[Mapping[int, T_Name], Sequence[T_Name]],
     *,
     padding_idx: Optional[int] = None,
@@ -115,7 +115,7 @@ def indices_to_multinames(
 
 def multihot_to_indices(
     multihot: Union[
-        TensorLike, Sequence[TensorLike], Sequence[Sequence[bool]], Sequence
+        TensorOrArray, Sequence[TensorOrArray], Sequence[Sequence[bool]], Sequence
     ],
     *,
     keep_tensor: bool = False,
@@ -137,7 +137,7 @@ def multihot_to_indices(
         msg = f"Invalid argument shape {multihot=}. (expected first axis should be > 0)"
         raise ValueError(msg)
 
-    def _impl(x: TensorLike) -> Union[list, LongTensor]:
+    def _impl(x: TensorOrArray) -> Union[list, LongTensor]:
         if x.ndim == 1:
             x = torch.as_tensor(x, dtype=torch.bool)
             preds = torch.where(x)[0]
@@ -164,7 +164,7 @@ def multihot_to_indices(
 
 
 def multihot_to_multinames(
-    multihot: Union[TensorLike, Sequence[TensorLike], Sequence[Sequence[bool]]],
+    multihot: Union[TensorOrArray, Sequence[TensorOrArray], Sequence[Sequence[bool]]],
     idx_to_name: Union[Mapping[int, T_Name], Sequence[T_Name]],
     *,
     dim: int = -1,
@@ -236,8 +236,8 @@ def multinames_to_multihot(
 
 
 def probs_to_indices(
-    probs: TensorLike,
-    threshold: Union[float, Sequence[float], TensorLike],
+    probs: TensorOrArray,
+    threshold: Union[float, Sequence[float], TensorOrArray],
     *,
     padding_idx: Optional[int] = None,
     dim: int = -1,
@@ -256,8 +256,8 @@ def probs_to_indices(
 
 
 def probs_to_multihot(
-    probs: TensorLike,
-    threshold: Union[float, Sequence[float], TensorLike],
+    probs: TensorOrArray,
+    threshold: Union[float, Sequence[float], TensorOrArray],
     *,
     dim: int = -1,
     device: DeviceLike = None,
@@ -309,8 +309,8 @@ def probs_to_multihot(
 
 
 def probs_to_multinames(
-    probs: TensorLike,
-    threshold: Union[float, Sequence[float], TensorLike],
+    probs: TensorOrArray,
+    threshold: Union[float, Sequence[float], TensorOrArray],
     idx_to_name: Union[Mapping[int, T_Name], Sequence[T_Name]],
 ) -> List[List[T_Name]]:
     """Convert matrix of probabilities to labels names for **multilabel** classification.
@@ -325,7 +325,7 @@ def probs_to_multinames(
     return names
 
 
-def _is_valid_indices(x: TensorLike, dim: int = -1) -> bool:
+def _is_valid_indices(x: TensorOrArray, dim: int = -1) -> bool:
     """Returns True if tensor has valid shape for indices_to_multihot."""
     shape = list(x.shape)
     dim = dim % len(shape)

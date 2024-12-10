@@ -51,7 +51,7 @@ from torchoutil.types._typing import (
     FloatingTensor,
     LongTensor,
     ScalarLike,
-    T_TensorLike,
+    T_TensorOrArray,
 )
 from torchoutil.types.guards import is_list_tensor, is_scalar_like, is_tuple_tensor
 from torchoutil.utils import return_types
@@ -578,16 +578,16 @@ def all_eq(
 
 @overload
 def all_eq(
-    x: Union[T_TensorLike],
+    x: Union[T_TensorOrArray],
     dim: int,
-) -> T_TensorLike:
+) -> T_TensorOrArray:
     ...
 
 
 def all_eq(
-    x: Union[T_TensorLike, ScalarLike, Iterable],
+    x: Union[T_TensorOrArray, ScalarLike, Iterable],
     dim: Union[int, None] = None,
-) -> Union[bool, T_TensorLike]:
+) -> Union[bool, T_TensorOrArray]:
     """Check if all elements are equal in a tensor, ndarray, iterable or scalar object."""
     if isinstance(x, Tensor):
         if dim is None:
@@ -632,8 +632,8 @@ def all_ne(x: Union[Tensor, np.ndarray, ScalarLike, Iterable]) -> bool:
 
 
 def average_power(
-    x: T_TensorLike,
+    x: T_TensorOrArray,
     dim: Union[int, Tuple[int, ...], None] = -1,
-) -> T_TensorLike:
+) -> T_TensorOrArray:
     """Compute average power of a signal along a specified dim/axis."""
     return (abs(x) ** 2).mean(dim)

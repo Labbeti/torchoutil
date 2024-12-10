@@ -8,7 +8,7 @@ import pkgutil
 import sys
 from importlib.util import find_spec
 from types import ModuleType
-from typing import Iterable, List
+from typing import Any, Iterable, List
 
 DEFAULT_SKIPPED = (
     "reimport_all",
@@ -119,3 +119,19 @@ def reload_globals_modules(
                 print(f"Cannot set parent global value '{k}'.")
 
     return candidates
+
+
+class Placeholder:
+    """Placeholder object. All attributes always returns the object itself."""
+
+    def __init__(self, *args, **kwargs) -> None:
+        ...
+
+    def __getattr__(self, name: str) -> Any:
+        return self
+
+    def __call__(self, *args, **kwargs) -> Any:
+        return self
+
+    def __getitem__(self, *args, **kwargs) -> Any:
+        return self

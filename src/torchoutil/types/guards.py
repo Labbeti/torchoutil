@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from typing import Any, Iterable, List, Tuple
+from typing import Any, Dict, Iterable, List, Tuple
 
 import torch
 from torch import Tensor
@@ -19,7 +19,7 @@ from torchoutil.types._typing import (
     SignedIntegerTensor,
     SignedIntegerTensor1D,
     Tensor0D,
-    TensorLike,
+    TensorOrArray,
 )
 
 
@@ -33,6 +33,12 @@ def is_bool_tensor1d(x: Any) -> TypeIs[BoolTensor1D]:
 
 def is_complex_tensor(x: Any) -> TypeIs[ComplexFloatingTensor]:
     return isinstance(x, Tensor) and x.is_complex()
+
+
+def is_dict_str_tensor(x: Any) -> TypeIs[Dict[str, Tensor]]:
+    return isinstance(x, dict) and all(
+        isinstance(k, str) and isinstance(v, Tensor) for k, v in x.items()
+    )
 
 
 def is_floating_tensor(x: Any) -> TypeIs[FloatingTensor]:
@@ -88,7 +94,7 @@ def is_tensor0d(x: Any) -> TypeIs[Tensor0D]:
     return isinstance(x, Tensor) and x.ndim == 0
 
 
-def is_tensor_like(x: Any) -> TensorLike:
+def is_tensor_like(x: Any) -> TypeIs[TensorOrArray]:
     return isinstance(x, (Tensor, np.ndarray))
 
 

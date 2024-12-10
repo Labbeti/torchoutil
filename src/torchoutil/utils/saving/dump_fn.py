@@ -12,50 +12,49 @@ from torchoutil.core.packaging import (
     _YAML_AVAILABLE,
 )
 from torchoutil.utils.saving.common import EXTENSION_TO_BACKEND, SavingBackends
-from torchoutil.utils.saving.csv import load_csv
-from torchoutil.utils.saving.json import load_json
-from torchoutil.utils.saving.pickle import load_pickle
+from torchoutil.utils.saving.csv import to_csv
+from torchoutil.utils.saving.json import to_json
+from torchoutil.utils.saving.pickle import to_pickle
 
 T = TypeVar("T", covariant=True)
 
+DumpFn = Callable[[T, Path], Any]
+DumpFnLike = Union[DumpFn[T], SavingBackends]
 
-LoadFn = Callable[[Path], T]
-LoadFnLike = Union[LoadFn[T], SavingBackends]
 
-
-LOAD_FNS: Dict[SavingBackends, LoadFn[Any]] = {
-    "csv": load_csv,
-    "json": load_json,
-    "pickle": load_pickle,
-    "torch": torch.load,
+DUMP_FNS: Dict[str, DumpFn[Any]] = {
+    "csv": to_csv,  # type: ignore
+    "json": to_json,
+    "pickle": to_pickle,
+    "torch": torch.save,
 }
 
 if _NUMPY_AVAILABLE:
-    from .numpy import load_numpy
+    from .numpy import dump_numpy
 
-    LOAD_FNS["numpy"] = load_numpy
-
+    DUMP_FNS["numpy"] = dump_numpy
 
 if _SAFETENSORS_AVAILABLE:
-    from .safetensors import load_safetensors
+    from .safetensors import to_safetensors
 
-    LOAD_FNS["safetensors"] = load_safetensors
-
+    DUMP_FNS["safetensors"] = to_safetensors
 
 if _YAML_AVAILABLE:
-    from .yaml import load_yaml
+    from .yaml import to_yaml
 
-    LOAD_FNS["yaml"] = load_yaml
+    DUMP_FNS["yaml"] = to_yaml  # type: ignore
 
 
-def load(
+def dump(
+    obj: Any,
     fpath: Union[str, Path],
     *args,
     backend: Optional[SavingBackends] = None,
     **kwargs,
-) -> Any:
+) -> None:
     """Load from file using the correct backend."""
-    fpath = Path(fpath)
+    if isinstance(fpath, str):
+        fpath = Path(fpath)
 
     if backend is None:
         ext = fpath.suffix[1:]
@@ -64,6 +63,6 @@ def load(
             raise ValueError(msg)
         backend = EXTENSION_TO_BACKEND[ext]
 
-    load_fn = LOAD_FNS[backend]
-    result = load_fn(fpath, *args, **kwargs)
+    dump_fn = DUMP_FNS[backend]
+    result = dump_fn(obj, fpath, *args, **kwargs)
     return result

@@ -26,13 +26,13 @@ from torchoutil.extras.numpy import np
 from torchoutil.nn.functional.others import nelement, to_item
 from torchoutil.pyoutil.logging import warn_once
 from torchoutil.types import LongTensor, is_number_like
-from torchoutil.types._typing import TensorLike
+from torchoutil.types._typing import TensorOrArray
 
 T_Name = TypeVar("T_Name", bound=Hashable)
 
 
 def index_to_onehot(
-    index: Union[Sequence[int], TensorLike, Sequence],
+    index: Union[Sequence[int], TensorOrArray, Sequence],
     num_classes: int,
     *,
     padding_idx: Optional[int] = None,
@@ -72,7 +72,7 @@ def index_to_onehot(
 
 
 def index_to_name(
-    index: Union[Sequence[int], TensorLike, Sequence],
+    index: Union[Sequence[int], TensorOrArray, Sequence],
     idx_to_name: Union[Mapping[int, T_Name], Sequence[T_Name]],
     *,
     is_number_fn: Callable[[Any], bool] = is_number_like,

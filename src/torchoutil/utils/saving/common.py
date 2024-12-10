@@ -15,6 +15,8 @@ from torchoutil.core.packaging import (
     _NUMPY_AVAILABLE,
     _OMEGACONF_AVAILABLE,
     _PANDAS_AVAILABLE,
+    _SAFETENSORS_AVAILABLE,
+    _YAML_AVAILABLE,
 )
 from torchoutil.pyoutil.typing import (
     BuiltinNumber,
@@ -25,9 +27,6 @@ from torchoutil.pyoutil.typing import (
     is_dataclass_instance,
     is_namedtuple_instance,
 )
-
-if _NUMPY_AVAILABLE:
-    import numpy as np
 
 if _OMEGACONF_AVAILABLE:
     from omegaconf import DictConfig, ListConfig, OmegaConf  # type: ignore
@@ -41,6 +40,35 @@ K = TypeVar("K")
 V = TypeVar("V")
 
 UnkMode = Literal["identity", "error"]
+SavingBackends = Literal[
+    "csv", "json", "numpy", "pickle", "safetensors", "torch", "yaml"
+]
+
+# Note: order matter here: last extension of a backend is the recommanded one
+EXTENSION_TO_BACKEND: Dict[str, SavingBackends] = {
+    "csv": "csv",
+    "json": "json",
+    "pkl": "pickle",
+    "pickle": "pickle",
+    "torch": "torch",
+    "pt": "torch",
+}
+
+if _NUMPY_AVAILABLE:
+    import numpy as np
+
+    EXTENSION_TO_BACKEND["npy"] = "numpy"
+
+if _SAFETENSORS_AVAILABLE:
+    EXTENSION_TO_BACKEND["safetensors"] = "safetensors"
+
+if _YAML_AVAILABLE:
+    EXTENSION_TO_BACKEND["yml"] = "yaml"
+    EXTENSION_TO_BACKEND["yaml"] = "yaml"
+
+BACKEND_TO_EXTENSION: Dict[SavingBackends, str] = {
+    backend: ext for ext, backend in EXTENSION_TO_BACKEND.items()
+}
 UNK_MODES = ("identity", "error")
 
 

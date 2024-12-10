@@ -21,7 +21,7 @@ def to_json(
     ensure_ascii: bool = False,
     **json_dump_kwds,
 ) -> str:
-    """Dump content to csv format."""
+    """Dump content to JSON format into a string and/or file."""
     if to_builtins:
         data = to_builtin(data)
 

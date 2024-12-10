@@ -9,7 +9,6 @@ from torchoutil.extras.numpy.definitions import (  # noqa: F401
     NumpyNumberLike,
     NumpyScalarLike,
     np,
-    numpy,
 )
 from torchoutil.pyoutil.typing.classes import BuiltinNumber, BuiltinScalar
 
@@ -105,10 +104,10 @@ r"""/!\ The following type hints are meant for type annotation only, not for run
 
 NumberLike = Union[BuiltinNumber, NumpyNumberLike, Tensor0D]
 ScalarLike = Union[BuiltinScalar, NumpyScalarLike, Tensor0D]
-TensorLike = Union[torch.Tensor, np.ndarray]
+TensorOrArray = Union[torch.Tensor, np.ndarray]
 
-T_TensorLike = TypeVar(
-    "T_TensorLike",
+T_TensorOrArray = TypeVar(
+    "T_TensorOrArray",
     bound=Union[torch.Tensor, np.ndarray],
     covariant=True,
 )

@@ -11,7 +11,8 @@ from torchoutil.types import BoolTensor, LongTensor
 
 
 def extract_segments(x: Tensor) -> LongTensor:
-    """
+    """Extracts segments start and end positions from a boolean activity/mask tensor.
+
     Example 1
     ----------
     >>> x = torch.as_tensor([0, 1, 1, 0, 0, 1, 1, 1, 1, 0]).bool()
@@ -57,6 +58,7 @@ def segments_to_list(
     segments: Tensor,
     maxsize: Union[int, Tuple[int, ...], None],
 ) -> list:
+    """Converts segments starts and ends to a list of (start, end) positions."""
     if segments.shape[0] == 2:
         starts, ends = segments.tolist()
         return list(zip(starts, ends))

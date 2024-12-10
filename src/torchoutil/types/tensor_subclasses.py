@@ -42,7 +42,6 @@ from typing_extensions import TypeVar
 
 from torchoutil.core.dtype_enum import DTypeEnum
 from torchoutil.core.get import DeviceLike, DTypeLike, get_device, get_dtype
-from torchoutil.nn import functional as F
 from torchoutil.pyoutil import BuiltinNumber, T_BuiltinNumber
 
 _DEFAULT_T_DTYPE = Literal[None]
@@ -274,24 +273,19 @@ class _TensorNDBase(
             raise ValueError(msg)
         del args
 
-        if data is not None and cls_ndim is not None:
-            valid, ndim = F.ndim(data, return_valid=True)
-            if not valid:
-                msg = f"Invalid argument data in {cls.__name__}. (cannot compute ndim for heterogeneous number of dimensions)"
-                raise TypeError(msg)
-            elif ndim != cls_ndim:
-                msg = f"Invalid number of dimension(s) for argument data in {cls.__name__}. (found {ndim} but expected {cls_ndim})"
-                raise ValueError(msg)
-
         if layout is None:  # supports older PyTorch versions
             layout = torch.strided
 
         if data is not None:
-            return torch.as_tensor(
+            result = torch.as_tensor(
                 data=data,
                 dtype=dtype,
                 device=device,
-            )  # type: ignore
+            )
+            if cls_ndim is not None and result.ndim != cls_ndim:
+                msg = f"Invalid number of dimension(s) for argument data in {cls.__name__}. (found {result.ndim} but expected {cls_ndim})"
+                raise ValueError(msg)
+            return result  # type: ignore
 
         elif size is not None:
             return torch.empty(
@@ -436,43 +430,43 @@ class _TensorNDBase(
         ...
 
     @overload
-    def reshape(self: T_Tensor, size: Tuple[()]) -> "Tensor0D":
+    def reshape(self, size: Tuple[()]) -> "Tensor0D":
         ...
 
     @overload
-    def reshape(self: T_Tensor, size: Tuple[int]) -> "Tensor1D":
+    def reshape(self, size: Tuple[int]) -> "Tensor1D":
         ...
 
     @overload
-    def reshape(self: T_Tensor, size: Tuple[int, int]) -> "Tensor2D":
+    def reshape(self, size: Tuple[int, int]) -> "Tensor2D":
         ...
 
     @overload
-    def reshape(self: T_Tensor, size: Tuple[int, int, int]) -> "Tensor3D":
+    def reshape(self, size: Tuple[int, int, int]) -> "Tensor3D":
         ...
 
     @overload
-    def reshape(self: T_Tensor, size: Tuple[int, ...]) -> "Tensor":
+    def reshape(self, size: Tuple[int, ...]) -> "Tensor":
         ...
 
     @overload
-    def reshape(self: T_Tensor, size0: int) -> "Tensor1D":
+    def reshape(self, size0: int) -> "Tensor1D":
         ...
 
     @overload
-    def reshape(self: T_Tensor, size0: int, size1: int) -> "Tensor2D":
+    def reshape(self, size0: int, size1: int) -> "Tensor2D":
         ...
 
     @overload
-    def reshape(self: T_Tensor, size0: int, size1: int, size2: int) -> "Tensor3D":
+    def reshape(self, size0: int, size1: int, size2: int) -> "Tensor3D":  # type: ignore
         ...
 
     @overload
-    def squeeze(self, dim: Optional[int] = None) -> "Tensor":
+    def squeeze(self, dim: Optional[int] = None) -> "Tensor":  # type: ignore
         ...
 
     @overload
-    def sum(self, dim: Literal[None] = None) -> "Tensor0D":
+    def sum(self, dim: Literal[None] = None) -> "Tensor0D":  # type: ignore
         ...
 
     @overload
@@ -488,11 +482,11 @@ class _TensorNDBase(
         ...
 
     @overload
-    def sum(self, dim: Optional[int] = None) -> "Tensor":
+    def sum(self, dim: Optional[int] = None) -> "Tensor":  # type: ignore
         ...
 
     @overload
-    def to(
+    def to(  # type: ignore
         self: T_Tensor,
         dtype: Optional[torch.dtype] = None,
         non_blocking: bool = False,
@@ -530,7 +524,7 @@ class _TensorNDBase(
         ...
 
     @overload
-    def unsqueeze(self: "Tensor0D", dim: int) -> "Tensor1D":
+    def unsqueeze(self: "Tensor0D", dim: int) -> "Tensor1D":  # type: ignore
         ...
 
     @overload
@@ -546,60 +540,60 @@ class _TensorNDBase(
         ...
 
     @overload
-    def view(self: T_Tensor, size: Tuple[()]) -> "Tensor0D":
+    def view(self, size: Tuple[()]) -> "Tensor0D":  # type: ignore
         ...
 
     @overload
-    def view(self: T_Tensor, size: Tuple[int]) -> "Tensor1D":
+    def view(self, size: Tuple[int]) -> "Tensor1D":  # type: ignore
         ...
 
     @overload
-    def view(self: T_Tensor, size: Tuple[int, int]) -> "Tensor2D":
+    def view(self, size: Tuple[int, int]) -> "Tensor2D":
         ...
 
     @overload
-    def view(self: T_Tensor, size: Tuple[int, int, int]) -> "Tensor3D":
+    def view(self, size: Tuple[int, int, int]) -> "Tensor3D":
         ...
 
     @overload
-    def view(self: T_Tensor, size: Tuple[int, ...]) -> "Tensor":
+    def view(self, size: Tuple[int, ...]) -> "Tensor":
         ...
 
     @overload
-    def view(self: T_Tensor, size0: int) -> "Tensor1D":
+    def view(self, size0: int) -> "Tensor1D":
         ...
 
     @overload
-    def view(self: T_Tensor, size0: int, size1: int) -> "Tensor2D":
+    def view(self, size0: int, size1: int) -> "Tensor2D":
         ...
 
     @overload
-    def view(self: T_Tensor, size0: int, size1: int, size2: int) -> "Tensor3D":
+    def view(self, size0: int, size1: int, size2: int) -> "Tensor3D":
         ...
 
     @overload
-    def view(self, dtype: torch.dtype) -> "Tensor":
+    def view(self, dtype: torch.dtype) -> "Tensor":  # type: ignore
         ...
 
     ndim: T_NDim  # type: ignore
 
-    __eq__ = torch.Tensor.__eq__  # noqa: F811
-    __getitem__ = torch.Tensor.__getitem__  # noqa: F811
-    __ne__ = torch.Tensor.__ne__  # noqa: F811
-    abs = torch.Tensor.abs  # noqa: F811
-    contiguous = torch.Tensor.contiguous  # noqa: F811
-    is_complex = torch.Tensor.is_complex  # noqa: F811
-    is_floating_point = torch.Tensor.is_floating_point  # noqa: F811
-    is_signed = torch.Tensor.is_signed  # noqa: F811
+    __eq__ = torch.Tensor.__eq__  # noqa: F811  # type: ignore
+    __getitem__ = torch.Tensor.__getitem__  # noqa: F811  # type: ignore
+    __ne__ = torch.Tensor.__ne__  # noqa: F811  # type: ignore
+    abs = torch.Tensor.abs  # noqa: F811  # type: ignore
+    contiguous = torch.Tensor.contiguous  # noqa: F811  # type: ignore
+    is_complex = torch.Tensor.is_complex  # noqa: F811  # type: ignore
+    is_floating_point = torch.Tensor.is_floating_point  # noqa: F811  # type: ignore
+    is_signed = torch.Tensor.is_signed  # noqa: F811  # type: ignore
     item = torch.Tensor.item  # noqa: F811  # type: ignore
-    mean = torch.Tensor.mean  # noqa: F811
-    reshape = torch.Tensor.reshape  # noqa: F811
-    squeeze = torch.Tensor.squeeze  # noqa: F811
-    sum = torch.Tensor.sum  # noqa: F811
-    to = torch.Tensor.to  # noqa: F811
-    tolist = torch.Tensor.tolist  # noqa: F811
-    unsqueeze = torch.Tensor.unsqueeze  # noqa: F811
-    view = torch.Tensor.view  # noqa: F811
+    mean = torch.Tensor.mean  # noqa: F811  # type: ignore
+    reshape = torch.Tensor.reshape  # noqa: F811  # type: ignore
+    squeeze = torch.Tensor.squeeze  # noqa: F811  # type: ignore
+    sum = torch.Tensor.sum  # noqa: F811  # type: ignore
+    to = torch.Tensor.to  # noqa: F811  # type: ignore
+    tolist = torch.Tensor.tolist  # noqa: F811  # type: ignore
+    unsqueeze = torch.Tensor.unsqueeze  # noqa: F811  # type: ignore
+    view = torch.Tensor.view  # noqa: F811  # type: ignore
 
 
 class Tensor(

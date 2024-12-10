@@ -7,14 +7,15 @@ import torch
 from torch import LongTensor, Tensor
 
 from torchoutil.core.get import DeviceLike, DTypeLike, get_device, get_dtype
+from torchoutil.types import T_TensorOrArray
 
 
 def masked_mean(
-    x: Tensor,
-    non_pad_mask: Tensor,
+    x: T_TensorOrArray,
+    non_pad_mask: T_TensorOrArray,
     *,
     dim: Union[None, int, Iterable[int]] = None,
-) -> Tensor:
+) -> T_TensorOrArray:
     """Average a tensor along the specified dim(s).
 
     Args:
@@ -31,16 +32,16 @@ def masked_mean(
         dim = tuple(dim)
 
     masked = x * non_pad_mask
-    reduced = masked.sum(dim=dim) / non_pad_mask.sum(dim=dim).clamp(min=1.0)
-    return reduced
+    reduced = masked.sum(dim) / non_pad_mask.sum(dim).clamp(min=1.0)
+    return reduced  # type: ignore
 
 
 def masked_sum(
-    x: Tensor,
-    non_pad_mask: Tensor,
+    x: T_TensorOrArray,
+    non_pad_mask: T_TensorOrArray,
     *,
     dim: Union[None, int, Iterable[int]] = None,
-) -> Tensor:
+) -> T_TensorOrArray:
     """Sum a tensor along the specified dim(s).
 
     Args:
@@ -57,8 +58,8 @@ def masked_sum(
         dim = tuple(dim)
 
     masked = x * non_pad_mask
-    reduced = masked.sum(dim=dim)
-    return reduced
+    reduced = masked.sum(dim)
+    return reduced  # type: ignore
 
 
 def masked_equal(
@@ -130,6 +131,7 @@ def lengths_to_non_pad_mask(
     dim = -1
     if max_len is None:
         max_len = int(lengths.max(dim=dim)[0].item())
+
     indices = torch.arange(0, max_len, device=lengths.device)
     lengths = lengths.unsqueeze(dim=-1)
     if include_end:
@@ -181,11 +183,11 @@ def lengths_to_pad_mask(
     return pad_mask
 
 
-def non_pad_mask_to_lengths(mask: Tensor, *, dim: int = -1) -> LongTensor:
-    return mask.sum(dim=dim)  # type: ignore
+def non_pad_mask_to_lengths(mask: T_TensorOrArray, *, dim: int = -1) -> T_TensorOrArray:
+    return mask.sum(dim)  # type: ignore
 
 
-def pad_mask_to_lengths(mask: Tensor, *, dim: int = -1) -> LongTensor:
+def pad_mask_to_lengths(mask: T_TensorOrArray, *, dim: int = -1) -> T_TensorOrArray:
     return mask.shape[dim] - non_pad_mask_to_lengths(mask, dim=dim)  # type: ignore
 
 

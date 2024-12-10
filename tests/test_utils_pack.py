@@ -149,7 +149,7 @@ class TestPackCIFAR10(TestCase):
             dataset,
             path,
             exists="overwrite",
-            save_fn="numpy",
+            dump_fn="numpy",
             ds_kwds=dict(load_fn="numpy"),
         )
 
