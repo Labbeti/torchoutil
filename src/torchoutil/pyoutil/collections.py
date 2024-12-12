@@ -3,6 +3,7 @@
 
 import copy
 import operator
+import random
 import sys
 from typing import (
     Any,
@@ -13,6 +14,7 @@ from typing import (
     List,
     Literal,
     Mapping,
+    MutableSequence,
     Optional,
     Sequence,
     Tuple,
@@ -706,3 +708,23 @@ def argmin(x: Iterable) -> int:
 def argmax(x: Iterable) -> int:
     max_index, _max_value = max(enumerate(x), key=lambda t: t[1])
     return max_index
+
+
+def shuffled(
+    x: MutableSequence[T], *, seed: Optional[int] = None, deep: bool = False
+) -> MutableSequence[T]:
+    if deep:
+        x = copy.deepcopy(x)
+    else:
+        x = copy.copy(x)
+
+    if seed is None:
+        random.shuffle(x)
+        return x
+    else:
+        state = random.getstate()
+        random.seed(seed)
+        random.shuffle(x)
+        state = random.setstate(state)
+
+        return x
