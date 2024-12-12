@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+from torch import Tensor
 from torch.types import *
 
 from torchoutil.core.dtype_enum import DTypeEnum

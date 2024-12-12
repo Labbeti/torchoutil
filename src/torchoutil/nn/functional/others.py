@@ -43,6 +43,7 @@ from torchoutil.pyoutil.typing import (
     BuiltinScalar,
     SizedIterable,
     T_BuiltinNumber,
+    T_BuiltinScalar,
     is_builtin_number,
     is_builtin_scalar,
 )
@@ -345,6 +346,16 @@ def shape(
     else:
         msg = f"Invalid argument {x}. (cannot compute shape for heterogeneous data)"
         raise ValueError(msg)
+
+
+@overload
+def to_item(x: T_BuiltinScalar) -> T_BuiltinScalar:
+    ...
+
+
+@overload
+def to_item(x: Union[Tensor, np.ndarray, SizedIterable]) -> BuiltinScalar:
+    ...
 
 
 def to_item(x: Union[ScalarLike, Tensor, np.ndarray, SizedIterable]) -> BuiltinScalar:

@@ -25,6 +25,7 @@ from .collections import (
     list_dict_to_dict_list,
     prod,
     recursive_generator,
+    shuffled,
     sorted_dict,
     unflat_dict_of_dict,
     unflat_list_of_list,

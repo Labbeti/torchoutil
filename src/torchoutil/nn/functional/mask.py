@@ -4,10 +4,10 @@
 from typing import Iterable, List, Optional, Union
 
 import torch
-from torch import LongTensor, Tensor
+from torch import Tensor
 
 from torchoutil.core.get import DeviceLike, DTypeLike, get_device, get_dtype
-from torchoutil.types import T_TensorOrArray
+from torchoutil.types import LongTensor, LongTensor1D, T_TensorOrArray
 
 
 def masked_mean(
@@ -386,7 +386,7 @@ def tensor_to_tensors_list(
     return tensors
 
 
-def tensors_list_to_lengths(tensors: List[Tensor], dim: int = -1) -> LongTensor:
+def tensors_list_to_lengths(tensors: List[Tensor], dim: int = -1) -> LongTensor1D:
     """Return the size of the tensor at a specific dim.
 
     The output will be a tensor of size N.

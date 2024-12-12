@@ -135,7 +135,7 @@ def pad_and_stack_rec(
                     xi,
                     target_lengths=max_lens,
                     pad_value=pad_value,
-                    aligns=[align] * xi.ndim,
+                    aligns=[align] * xi.ndim,  # type: ignore
                     dims=range(xi.ndim),
                 )
                 for xi in tensors
