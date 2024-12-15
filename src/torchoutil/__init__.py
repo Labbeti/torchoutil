@@ -36,6 +36,12 @@ from .core.get import (  # noqa: F401
 )
 from .core.semver import Version
 from .nn.functional import *
+from .types.guards import (
+    is_builtin_number,
+    is_builtin_scalar,
+    is_number_like,
+    is_scalar_like,
+)
 from .types.tensor_subclasses import (
     BoolTensor,
     BoolTensor0D,
