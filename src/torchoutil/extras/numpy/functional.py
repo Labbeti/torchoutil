@@ -5,7 +5,7 @@ from typing import Any, Iterable, Tuple, Union, overload
 
 import torch
 from torch import Tensor
-from typing_extensions import TypeIs
+from typing_extensions import TypeGuard
 
 from torchoutil.core.get import DeviceLike, DTypeLike, get_device, get_dtype
 from torchoutil.core.packaging import torch_version_ge_1_13
@@ -110,11 +110,11 @@ def numpy_is_complex_dtype(dtype: np.dtype) -> bool:
     return np.iscomplexobj(np.empty((0,), dtype=dtype))
 
 
-def is_numpy_bool_array(x: Any) -> TypeIs[Union[np.bool_, np.ndarray]]:
+def is_numpy_bool_array(x: Any) -> TypeGuard[Union[np.bool_, np.ndarray]]:
     return isinstance(x, (np.generic, np.ndarray)) and x.dtype.kind == "b"
 
 
-def is_numpy_number_like(x: Any) -> TypeIs[NumpyNumberLike]:
+def is_numpy_number_like(x: Any) -> TypeGuard[NumpyNumberLike]:
     """Returns True if x is an instance of a numpy number type, a np.bool_ or a zero-dimensional numpy array.
     If numpy is not installed, this function always returns False.
     """
@@ -123,7 +123,7 @@ def is_numpy_number_like(x: Any) -> TypeIs[NumpyNumberLike]:
     )
 
 
-def is_numpy_scalar_like(x: Any) -> TypeIs[NumpyScalarLike]:
+def is_numpy_scalar_like(x: Any) -> TypeGuard[NumpyScalarLike]:
     """Returns True if x is an instance of a numpy number type or a zero-dimensional numpy array.
     If numpy is not installed, this function always returns False.
     """

@@ -5,7 +5,7 @@ from typing import Any, Dict, Iterable, List, Tuple
 
 import torch
 from torch import Tensor
-from typing_extensions import TypeIs
+from typing_extensions import TypeGuard, TypeIs
 
 from torchoutil.extras.numpy import is_numpy_number_like, is_numpy_scalar_like, np
 from torchoutil.pyoutil.typing import is_builtin_number, is_builtin_scalar
@@ -65,7 +65,7 @@ def is_list_tensor(x: Any) -> TypeIs[List[Tensor]]:
     return isinstance(x, list) and all(isinstance(xi, Tensor) for xi in x)
 
 
-def is_number_like(x: Any) -> TypeIs[NumberLike]:
+def is_number_like(x: Any) -> TypeGuard[NumberLike]:
     """Returns True if input is a scalar number.
 
     Accepted numbers-like objects are:
@@ -77,7 +77,7 @@ def is_number_like(x: Any) -> TypeIs[NumberLike]:
     return is_builtin_number(x) or is_numpy_number_like(x) or is_tensor0d(x)
 
 
-def is_scalar_like(x: Any) -> TypeIs[ScalarLike]:
+def is_scalar_like(x: Any) -> TypeGuard[ScalarLike]:
     """Returns True if input is a scalar number.
 
     Accepted scalar-like objects are:
