@@ -572,6 +572,10 @@ class _TensorNDBase(
         ...
 
     @overload
+    def view(self, *size: int) -> "Tensor":  # type: ignore
+        ...
+
+    @overload
     def view(self, dtype: torch.dtype) -> "Tensor":  # type: ignore
         ...
 
