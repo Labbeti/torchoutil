@@ -369,10 +369,13 @@ def to_tensor(data: Any, dtype: DTypeLike = None, device: DeviceLike = None) -> 
         return torch.as_tensor(data, dtype=dtype, device=device)
 
     elif isinstance(data, (list, tuple)):
-        tensors = [to_tensor(data_i, dtype=dtype, device=device) for data_i in data]
+        tensors: list[Tensor] = [
+            to_tensor(data_i, dtype=dtype, device=device) for data_i in data
+        ]
         shapes = [tensor.shape for tensor in tensors]
         if not all_eq(shapes):
-            msg = f"Cannot convert to tensor a list of elements with heterogeneous shapes. (found {shapes})"
+            uniq_shapes = tuple(set(shapes))
+            msg = f"Cannot convert to tensor a list of elements with heterogeneous shapes. (found different shapes: {uniq_shapes})"
             raise ValueError(msg)
         return torch.stack(tensors)
 
