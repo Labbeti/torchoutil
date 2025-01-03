@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.5.0] UNRELEASED
+### Added
+- Functions `unsqueeze`, `squeeze` and `one_hot`.
+
 ## [0.5.0] 2024-11-28
 Major rework of `torchoutil` project folders.
 
