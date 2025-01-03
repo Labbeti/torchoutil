@@ -26,6 +26,7 @@ from torchoutil.pyoutil.collections import (
 T = TypeVar("T")
 
 ORIENT_VALUES = ("list", "dict")
+Orient = Literal["list", "dict"]
 
 
 def to_csv(
@@ -108,6 +109,8 @@ def load_csv(
     header: bool = True,
     comment_start: Optional[str] = None,
     strip_content: bool = False,
+    # CSV reader kwargs
+    delimiter: Optional[str] = None,
     **csv_reader_kwds,
 ) -> Dict[str, List[Any]]:
     ...
@@ -122,6 +125,8 @@ def load_csv(
     header: bool = True,
     comment_start: Optional[str] = None,
     strip_content: bool = False,
+    # CSV reader kwargs
+    delimiter: Optional[str] = None,
     **csv_reader_kwds,
 ) -> List[Dict[str, Any]]:
     ...
@@ -131,20 +136,25 @@ def load_csv(
     fpath: Union[str, Path],
     /,
     *,
-    orient: Literal["list", "dict"] = "list",
+    orient: Orient = "list",
     header: bool = True,
     comment_start: Optional[str] = None,
     strip_content: bool = False,
+    # CSV reader kwargs
+    delimiter: Optional[str] = None,
     **csv_reader_kwds,
 ) -> Union[List[Dict[str, Any]], Dict[str, List[Any]]]:
     """Load content from csv filepath."""
+    if delimiter is None or delimiter is ...:
+        delimiter = "\t" if fpath.suffix == ".tsv" else ","
+
     if header:
         reader_cls = DictReader
     else:
         reader_cls = csv.reader
 
     with open(fpath, "r") as file:
-        reader = reader_cls(file, **csv_reader_kwds)
+        reader = reader_cls(file, delimiter=delimiter, **csv_reader_kwds)
         raw_data_lst = list(reader)
 
     data_lst: List[Dict[str, Any]]

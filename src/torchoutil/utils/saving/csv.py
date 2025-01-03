@@ -15,6 +15,7 @@ from typing import (
 )
 
 from torchoutil.core.packaging import _PANDAS_AVAILABLE
+from torchoutil.pyoutil.csv import ORIENT_VALUES, Orient
 from torchoutil.pyoutil.csv import load_csv as load_csv_base
 from torchoutil.pyoutil.csv import to_csv as to_csv_base
 from torchoutil.utils.saving.common import to_builtin
@@ -24,7 +25,6 @@ if _PANDAS_AVAILABLE:
 
 CSVBackend = Literal["csv", "pandas"]
 CSV_BACKENDS = ("csv", "pandas")
-ORIENTS = ("list", "dict")
 
 
 @overload
@@ -37,6 +37,8 @@ def load_csv(
     comment_start: Optional[str] = None,
     strip_content: bool = False,
     backend: CSVBackend = "csv",
+    # CSV reader kwargs
+    delimiter: Optional[str] = None,
     **csv_reader_kwds,
 ) -> Dict[str, List[Any]]:
     ...
@@ -52,6 +54,8 @@ def load_csv(
     comment_start: Optional[str] = None,
     strip_content: bool = False,
     backend: CSVBackend = "csv",
+    # CSV reader kwargs
+    delimiter: Optional[str] = None,
     **csv_reader_kwds,
 ) -> List[Dict[str, Any]]:
     ...
@@ -61,11 +65,13 @@ def load_csv(
     fpath: Union[str, Path],
     /,
     *,
-    orient: Literal["list", "dict"] = "list",
+    orient: Orient = "list",
     header: bool = True,
     comment_start: Optional[str] = None,
     strip_content: bool = False,
     backend: CSVBackend = "csv",
+    # CSV reader kwargs
+    delimiter: Optional[str] = None,
     **csv_reader_kwds,
 ) -> Union[List[Dict[str, Any]], Dict[str, List[Any]]]:
     if backend == "csv":
@@ -75,6 +81,7 @@ def load_csv(
             header=header,
             comment_start=comment_start,
             strip_content=strip_content,
+            delimiter=delimiter,
             **csv_reader_kwds,
         )
 
@@ -85,6 +92,7 @@ def load_csv(
             header=header,
             comment_start=comment_start,
             strip_content=strip_content,
+            delimiter=delimiter,
             **csv_reader_kwds,
         )
 
@@ -97,10 +105,12 @@ def _load_csv_with_pandas(
     fpath: Union[str, Path],
     /,
     *,
-    orient: Literal["list", "dict"] = "list",
+    orient: Orient = "list",
     header: bool = True,
     comment_start: Optional[str] = None,
     strip_content: bool = False,
+    # CSV reader kwargs
+    delimiter: Optional[str] = None,
     **csv_reader_kwds,
 ) -> Union[List[Dict[str, Any]], Dict[str, List[Any]]]:
     backend = "pandas"
@@ -121,14 +131,14 @@ def _load_csv_with_pandas(
         msg = f"Invalid arguments {csv_reader_kwds=} with {backend=}."
         raise ValueError(msg)
 
-    df = pd.read_csv(fpath)  # type: ignore
+    df = pd.read_csv(fpath, delimiter=delimiter)  # type: ignore
 
     if orient == "list":
         return df.to_dict("records")  # type: ignore
     elif orient == "dict":
         return df.to_dict("list")  # type: ignore
     else:
-        msg = f"Invalid argument {orient=}. (expected one of {ORIENTS})"
+        msg = f"Invalid argument {orient=}. (expected one of {ORIENT_VALUES})"
         raise ValueError(msg)
 
 

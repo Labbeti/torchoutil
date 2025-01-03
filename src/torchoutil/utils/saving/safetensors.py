@@ -2,20 +2,53 @@
 # -*- coding: utf-8 -*-
 
 from pathlib import Path
-from typing import Dict, Optional, Union
+from typing import Dict, Literal, Optional, Tuple, Union, overload
 
-from safetensors.torch import load_file, save_file
+from safetensors import safe_open
+from safetensors.torch import save_file
 from torch import Tensor
 
 from torchoutil.types.guards import is_dict_str_tensor
+
+
+@overload
+def load_safetensors(
+    fpath: Union[str, Path],
+    *,
+    device: str = "cpu",
+    return_metadata: Literal[False] = False,
+) -> Dict[str, Tensor]:
+    ...
+
+
+@overload
+def load_safetensors(
+    fpath: Union[str, Path],
+    *,
+    device: str = "cpu",
+    return_metadata: Literal[True],
+) -> Tuple[Dict[str, Tensor], Dict[str, str]]:
+    ...
 
 
 def load_safetensors(
     fpath: Union[str, Path],
     *,
     device: str = "cpu",
-) -> Dict[str, Tensor]:
-    return load_file(fpath, device)
+    return_metadata: bool = False,
+) -> Union[Dict[str, Tensor], Tuple[Dict[str, Tensor], Dict[str, str]]]:
+    tensors = {}
+    with safe_open(fpath, framework="pt", device=device) as f:
+        for k in f.keys():
+            tensors[k] = f.get_tensor(k)
+
+        if return_metadata:
+            metadata = f.metadata()
+            result = tensors, metadata
+        else:
+            result = tensors
+
+    return result
 
 
 def to_safetensors(

@@ -41,11 +41,18 @@ V = TypeVar("V")
 
 UnkMode = Literal["identity", "error"]
 SavingBackends = Literal[
-    "csv", "json", "numpy", "pickle", "safetensors", "torch", "yaml"
+    "csv",
+    "json",
+    "numpy",
+    "pickle",
+    "safetensors",
+    "torch",
+    "yaml",
 ]
 
-# Note: order matter here: last extension of a backend is the recommanded one
+# Note: order matter here: last extension of a backend is the default/recommanded one
 EXTENSION_TO_BACKEND: Dict[str, SavingBackends] = {
+    "tsv": "csv",
     "csv": "csv",
     "json": "json",
     "pkl": "pickle",
@@ -57,6 +64,7 @@ EXTENSION_TO_BACKEND: Dict[str, SavingBackends] = {
 if _NUMPY_AVAILABLE:
     import numpy as np
 
+    EXTENSION_TO_BACKEND["npz"] = "numpy"
     EXTENSION_TO_BACKEND["npy"] = "numpy"
 
 if _SAFETENSORS_AVAILABLE:

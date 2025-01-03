@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import warnings
 from io import BytesIO
 from pathlib import Path
 from typing import Union
@@ -9,10 +10,23 @@ from torchoutil.extras.numpy import np
 
 
 def dump_numpy(
-    obj: np.ndarray, fpath: Union[str, Path, None] = None, *args, **kwargs
+    obj: np.ndarray,
+    fpath: Union[str, Path, None] = None,
+    *args,
+    **kwargs,
 ) -> bytes:
+    if fpath.suffix == ".npy":
+        save_fn = np.save
+    elif fpath.suffix == ".npz":
+        save_fn = np.savez
+    else:
+        NUMPY_EXTENSIONS = (".npy", ".npz")
+        msg = f"Unknown numpy extension '{fpath.suffix}'. (expected one of {NUMPY_EXTENSIONS})"
+        warnings.warn(msg, UserWarning)
+        save_fn = np.save
+
     buffer = BytesIO()
-    np.save(buffer, obj, *args, **kwargs)
+    save_fn(buffer, obj, *args, **kwargs)
     buffer.seek(0)
     content = buffer.read()
 
