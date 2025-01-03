@@ -3,6 +3,7 @@
 
 import random
 import unittest
+import warnings
 from unittest import TestCase
 
 import torch
@@ -205,6 +206,8 @@ class TestTensorTyping(TestCase):
         assert x.ndim == 0 and x.dtype == torch.float
 
     def test_instantiate_all(self) -> None:
+        warnings.simplefilter("ignore", UserWarning)
+
         module = tensor_subclasses
         for name in dir(module):
             elem = getattr(module, name)
@@ -219,6 +222,8 @@ class TestTensorTyping(TestCase):
             tensor = tensor_cls()
 
             assert isinstance(tensor, torch.Tensor)
+
+        warnings.resetwarnings()
 
     def test_complex_class(self) -> None:
         cls = ComplexFloatingTensor
