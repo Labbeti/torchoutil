@@ -50,12 +50,18 @@ def balanced_monolabel_split(
         lengths: Ratios of the target splits.
         generator: Torch Generator or seed to make this function deterministic. defaults to None.
     """
+    assert (0 <= targets_indices).all(), "Target classes indices must be positive."
+    assert (
+        targets_indices < num_classes
+    ).all(), f"Target classes indices must be lower than {num_classes=}."
+
     lengths = list(lengths)
     generator = get_generator(generator)
 
     indices_per_class = []
     for class_idx in range(num_classes):
-        indices = torch.where(targets_indices.eq(class_idx))[0]
+        mask = targets_indices.eq(class_idx)
+        indices = torch.where(mask)[0]
         indices = indices.tolist()
         indices_per_class.append(indices)
 
