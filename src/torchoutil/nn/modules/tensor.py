@@ -458,37 +458,6 @@ class Reshape(nn.Module):
         )
 
 
-class Squeeze(nn.Module):
-    """
-    Module version of :func:`~torch.squeeze`.
-    """
-
-    def __init__(self, dim: Optional[int] = None, inplace: bool = True) -> None:
-        super().__init__()
-        self.dim = dim
-        self.inplace = inplace
-
-    def forward(self, x: Tensor) -> Tensor:
-        if not self.inplace:
-            if self.dim is None:
-                return x.squeeze()
-            else:
-                return x.squeeze(self.dim)
-        else:
-            if self.dim is None:
-                return x.squeeze_()
-            else:
-                return x.squeeze_(self.dim)
-
-    def extra_repr(self) -> str:
-        return dump_dict(
-            dict(
-                dim=self.dim,
-                inplace=self.inplace,
-            ),
-        )
-
-
 class TensorTo(nn.Module):
     """
     Module version of :func:`~torch.Tensor.to`.
@@ -603,31 +572,6 @@ class Transpose(nn.Module):
                 dim1=self.dim1,
             ),
             fmt="{value}",
-        )
-
-
-class Unsqueeze(nn.Module):
-    """
-    Module version of :func:`~torch.Tensor.unsqueeze`.
-    """
-
-    def __init__(self, dim: int, inplace: bool = True) -> None:
-        super().__init__()
-        self.dim = dim
-        self.inplace = inplace
-
-    def forward(self, x: Tensor) -> Tensor:
-        if not self.inplace:
-            return x.unsqueeze(self.dim)
-        else:
-            return x.unsqueeze_(self.dim)
-
-    def extra_repr(self) -> str:
-        return dump_dict(
-            dict(
-                dim=self.dim,
-                inplace=self.inplace,
-            ),
         )
 
 

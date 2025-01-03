@@ -37,6 +37,7 @@ from torchoutil.types import is_number_like, is_scalar_like
 from torchoutil.types._typing import (
     BuiltinNumber,
     NumberLike,
+    T_TensorOrArray,
     Tensor0D,
     Tensor1D,
     Tensor2D,
@@ -48,6 +49,9 @@ U = TypeVar("U")
 
 PadCropAlign = Literal["left", "right", "center", "random"]
 PAD_CROP_ALIGN_VALUES = ("left", "right", "center", "random")
+
+SqueezeMode = Literal["view_if_possible", "view", "copy", "inplace"]
+UNSQUEEZE_MODES = ("view_if_possible", "view", "copy", "inplace")
 
 
 def repeat_interleave_nd(x: Tensor, repeats: int, dim: int = 0) -> Tensor:
@@ -383,3 +387,145 @@ def to_tensor(data: Any, dtype: DTypeLike = None, device: DeviceLike = None) -> 
         EXPECTED = (Tensor, np.ndarray, NumberLike, list, tuple)
         msg = f"Invalid argument type '{type(data)}'. (expected one of {EXPECTED})"
         raise TypeError(msg)
+
+
+def squeeze(
+    x: T_TensorOrArray,
+    dim: Union[int, Iterable[int], None] = None,
+    mode: SqueezeMode = "view_if_possible",
+) -> T_TensorOrArray:
+    return _squeeze_impl(x, dim, mode=mode)
+
+
+def squeeze_(x: Tensor, dim: Union[int, Iterable[int], None] = None) -> Tensor:
+    return _squeeze_impl(x, dim, mode="inplace")
+
+
+def squeeze_copy(
+    x: T_TensorOrArray,
+    dim: Union[int, Iterable[int], None] = None,
+) -> T_TensorOrArray:
+    return _squeeze_impl(x, dim, mode="copy")
+
+
+def _squeeze_impl(
+    x: T_TensorOrArray,
+    dim: Union[int, Iterable[int], None],
+    mode: SqueezeMode,
+) -> T_TensorOrArray:
+    if isinstance(x, Tensor):
+        return __squeeze_impl_tensor(x, dim, mode)
+    elif isinstance(x, np.ndarray):
+        return __squeeze_impl_array(x, dim, mode)
+    else:
+        msg = f"Invalid argument type {type(x)}. (expected Tensor or array)"
+        raise TypeError(msg)
+
+
+def __squeeze_impl_tensor(
+    x: Tensor,
+    dim: Union[int, Iterable[int], None],
+    mode: SqueezeMode,
+) -> Tensor:
+    if dim is None:
+        args = ()
+    else:
+        args = (dim,)
+
+    if isinstance(dim, int):
+        if mode in ("view", "view_if_possible"):
+            return torch.squeeze(x, *args)
+        elif mode == "copy":
+            return torch.squeeze_copy(x, *args)
+        elif mode == "inplace":
+            return x.squeeze_(*args)
+        else:
+            msg = f"Invalid argument {mode=}. (expected one of {UNSQUEEZE_MODES})"
+            raise ValueError(msg)
+
+    else:
+        msg = f"Invalid argument type {type(dim)}. (expected int or Iterable[int] or None)"
+        raise TypeError(msg)
+
+
+def __squeeze_impl_array(
+    x: np.ndarray,
+    dim: Union[int, Iterable[int], None],
+    mode: SqueezeMode,
+) -> np.ndarray:
+    if mode in ("view_if_possible", "copy"):
+        return np.squeeze(x, axis=dim)
+    else:
+        msg = f"Invalid argument {mode=} with numpy array. (expected one of {('view_if_possible', 'copy')})"
+        raise ValueError(msg)
+
+
+def unsqueeze(
+    x: T_TensorOrArray,
+    dim: Union[int, Iterable[int]],
+    mode: SqueezeMode = "view_if_possible",
+) -> T_TensorOrArray:
+    return _unsqueeze_impl(x, dim, mode=mode)
+
+
+def unsqueeze_(x: Tensor, dim: Union[int, Iterable[int]]) -> Tensor:
+    return _unsqueeze_impl(x, dim, mode="inplace")
+
+
+def unsqueeze_copy(
+    x: T_TensorOrArray,
+    dim: Union[int, Iterable[int]],
+) -> T_TensorOrArray:
+    return _unsqueeze_impl(x, dim, mode="copy")
+
+
+def _unsqueeze_impl(
+    x: T_TensorOrArray,
+    dim: Union[int, Iterable[int]],
+    mode: SqueezeMode,
+) -> T_TensorOrArray:
+    if isinstance(x, Tensor):
+        return __unsqueeze_impl_tensor(x, dim, mode)
+    elif isinstance(x, np.ndarray):
+        return __unsqueeze_impl_array(x, dim, mode)
+    else:
+        msg = f"Invalid argument type {type(x)}. (expected Tensor or array)"
+        raise TypeError(msg)
+
+
+def __unsqueeze_impl_tensor(
+    x: Tensor,
+    dim: Union[int, Iterable[int]],
+    mode: SqueezeMode,
+) -> Tensor:
+    if isinstance(dim, int):
+        if mode in ("view", "view_if_possible"):
+            return torch.unsqueeze(x, dim)
+        elif mode == "copy":
+            return torch.unsqueeze_copy(x, dim)
+        elif mode == "inplace":
+            return x.unsqueeze_(dim)
+        else:
+            msg = f"Invalid argument {mode=}. (expected one of {UNSQUEEZE_MODES})"
+            raise ValueError(msg)
+
+    elif isinstance(dim, Iterable):
+        for dim_i in dim:
+            x = __unsqueeze_impl_tensor(x, dim_i, mode)
+        return x
+
+    else:
+        msg = f"Invalid argument type {type(dim)}. (expected int or Iterable[int])"
+        raise TypeError(msg)
+
+
+def __unsqueeze_impl_array(
+    x: np.ndarray,
+    dim: Union[int, Iterable[int]],
+    mode: SqueezeMode,
+) -> np.ndarray:
+    if mode in ("view_if_possible", "copy"):
+        return np.expand_dims(x, axis=dim)
+    else:
+        msg = f"Invalid argument {mode=} with numpy array. (expected one of {('view_if_possible', 'copy')})"
+        raise ValueError(msg)

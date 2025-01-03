@@ -71,6 +71,20 @@ def index_to_onehot(
     return onehot
 
 
+def one_hot(
+    tensor: Union[Sequence[int], TensorOrArray, Sequence],
+    num_classes: int,
+    *,
+    padding_idx: Optional[int] = None,
+    device: DeviceLike = None,
+    dtype: DTypeLike = torch.bool,
+) -> Tensor:
+    """Alias of :func:`~torchoutil.nn.functional.multiclass.index_to_onehot`."""
+    return index_to_onehot(
+        tensor, num_classes, padding_idx=padding_idx, device=device, dtype=dtype
+    )
+
+
 def index_to_name(
     index: Union[Sequence[int], TensorOrArray, Sequence],
     idx_to_name: Union[Mapping[int, T_Name], Sequence[T_Name]],

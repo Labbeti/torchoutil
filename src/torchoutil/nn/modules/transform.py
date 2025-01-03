@@ -22,6 +22,7 @@ from torchoutil.nn.functional.transform import (
     PadCropAlign,
     PadMode,
     PadValue,
+    SqueezeMode,
     T_BuiltinScalar,
     flatten,
     identity,
@@ -31,10 +32,13 @@ from torchoutil.nn.functional.transform import (
     resample_nearest_rates,
     resample_nearest_steps,
     shuffled,
+    squeeze,
     to_tensor,
     transform_drop,
+    unsqueeze,
 )
 from torchoutil.pyoutil.collections import dump_dict
+from torchoutil.types._typing import T_TensorOrArray
 
 T = TypeVar("T")
 
@@ -315,4 +319,54 @@ class ToTensor(nn.Module):
                 device=self.device,
             ),
             ignore_lst=(None,),
+        )
+
+
+class Squeeze(nn.Module):
+    """
+    Module version of :func:`~torchoutil.squeeze`.
+    """
+
+    def __init__(
+        self,
+        dim: Union[int, Iterable[int], None] = None,
+        mode: SqueezeMode = "view_if_possible",
+    ) -> None:
+        super().__init__()
+        self.dim = dim
+        self.mode: SqueezeMode = mode
+
+    def forward(self, x: Tensor) -> Tensor:
+        return squeeze(x, self.dim, self.mode)
+
+    def extra_repr(self) -> str:
+        return dump_dict(
+            dict(
+                dim=self.dim,
+                mode=self.mode,
+            ),
+        )
+
+
+class Unsqueeze(nn.Module):
+    """
+    Module version of :func:`~torchoutil.unsqueeze`.
+    """
+
+    def __init__(
+        self, dim: Union[int, Iterable[int]], mode: SqueezeMode = "view_if_possible"
+    ) -> None:
+        super().__init__()
+        self.dim = dim
+        self.mode: SqueezeMode = mode
+
+    def forward(self, x: T_TensorOrArray) -> T_TensorOrArray:
+        return unsqueeze(x, self.dim, self.mode)
+
+    def extra_repr(self) -> str:
+        return dump_dict(
+            dict(
+                dim=self.dim,
+                mode=self.mode,
+            ),
         )

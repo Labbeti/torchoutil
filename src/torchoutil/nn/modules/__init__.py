@@ -55,13 +55,11 @@ from .tensor import (
     Repeat,
     RepeatInterleave,
     Reshape,
-    Squeeze,
     TensorTo,
     ToItem,
     ToList,
     Topk,
     Transpose,
-    Unsqueeze,
     View,
 )
 from .transform import (
@@ -73,6 +71,8 @@ from .transform import (
     ResampleNearestRates,
     ResampleNearestSteps,
     Shuffled,
+    Squeeze,
     ToTensor,
     TransformDrop,
+    Unsqueeze,
 )
