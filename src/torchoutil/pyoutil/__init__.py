@@ -38,7 +38,7 @@ from .dataclasses import get_defaults_values
 from .datetime import now_iso
 from .difflib import find_closest_in_list, sequence_matcher_ratio
 from .enum import StrEnum
-from .functools import Compose, compose, identity
+from .functools import Compose, compose, filter_and_call, get_argnames, identity
 from .hashlib import hash_file
 from .importlib import (
     package_is_available,
