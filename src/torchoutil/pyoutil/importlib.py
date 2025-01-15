@@ -122,7 +122,7 @@ def reload_globals_modules(
 
 
 class Placeholder:
-    """Placeholder object. All attributes always returns the object itself."""
+    """Placeholder object. All instances attributes always returns the object itself."""
 
     def __init__(self, *args, **kwargs) -> None:
         ...
