@@ -2,9 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
-## [0.5.0] UNRELEASED
+## [0.5.1] UNRELEASED
 ### Added
 - Functions `unsqueeze`, `squeeze` and `one_hot`.
+
+### Fixed
+- Fix global import of `to.utils.return_types.shape` in python 3.9.
+- `checksum` function with non-cpu tensors.
 
 ## [0.5.0] 2024-11-28
 Major rework of `torchoutil` project folders.
