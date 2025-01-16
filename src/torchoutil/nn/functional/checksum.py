@@ -9,6 +9,7 @@ import re
 import struct
 import zlib
 from dataclasses import asdict
+from functools import partial
 from types import FunctionType, MethodType
 from typing import Any, Callable, Iterable, Literal, Mapping, Union
 
@@ -320,7 +321,7 @@ def checksum_tensor(x: Tensor, **kwargs) -> int:
     return _checksum_tensor_array_like(
         x,
         nan_to_num_fn=torch.nan_to_num,
-        arange_fn=torch.arange,
+        arange_fn=partial(torch.arange, device=x.device),
         **kwargs,
     )
 
