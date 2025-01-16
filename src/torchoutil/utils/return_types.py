@@ -19,7 +19,7 @@ if __version__ < TorchVersion("2.0.0"):
         values: Tensor
         indices: LongTensor
 
-        def __init__(self, args: Sequence[Tensor]):
+        def __init__(self, args: Sequence[Tensor]) -> None:
             super().__init__(*args)
 
     class min(namedtuple_values_indices):
@@ -35,8 +35,8 @@ else:
     from torch.return_types import max, min, topk  # type: ignore # noqa: F401
 
 
-if sys.version_info.major == 3 and sys.version_info.minor <= 8:
-    # workaround for typing in python 3.8
+if sys.version_info.major == 3 and sys.version_info.minor <= 9:
+    # workaround for typing in python 3.8 and 3.9
     class _shape_base(NamedTuple):
         valid: bool
         shape: T  # type: ignore
