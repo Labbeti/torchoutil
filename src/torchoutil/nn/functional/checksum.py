@@ -18,7 +18,7 @@ from torch import Tensor, nn
 
 from torchoutil.core.packaging import _NUMPY_AVAILABLE
 from torchoutil.extras.numpy import np
-from torchoutil.nn.functional.others import is_complex, is_floating_point, nelement
+from torchoutil.nn.functional.predicate import is_complex, is_floating_point
 from torchoutil.pyoutil.inspect import get_fullname
 from torchoutil.pyoutil.typing import (
     BuiltinNumber,
@@ -50,6 +50,7 @@ Checksumable = Union[
     FunctionType,
     functools.partial,
     type,
+    slice,
 ]
 CHECKSUMABLE_TYPES = (
     "int",
@@ -73,6 +74,7 @@ CHECKSUMABLE_TYPES = (
     "FunctionType",
     "functools.partial",
     "type",
+    "slice",
 )
 UnkMode = Literal["pickle", "error"]
 UNK_MODES = ("pickle", "error")
@@ -177,7 +179,7 @@ def checksum_mapping(x: Mapping[Any, Any], **kwargs) -> int:
 def checksum_method(x: MethodType, **kwargs) -> int:
     fn = getattr(x.__self__, x.__name__)
     checksums = [
-        checksum_any(x.__self__, **kwargs),
+        checksum_any(x.__self__, **kwargs),  # type: ignore
         checksum_function(fn, **kwargs),
     ]
     return checksum_iterable(checksums, **kwargs)
@@ -349,8 +351,8 @@ def checksum_int(x: int, **kwargs) -> int:
 
 
 def _interpret_float_as_int(x: float) -> int:
-    xbytes = struct.pack("!f", x)
-    xint = struct.unpack("!i", xbytes)[0]
+    xbytes = struct.pack("!d", x)
+    xint = struct.unpack("l", xbytes)[0]
     return xint
 
 
@@ -368,15 +370,6 @@ def _checksum_tensor_array_like(
     if x.ndim == 0:
         return checksum_builtin_number(x.item(), **kwargs)
 
-    if x.dtype == bool:
-        range_dtype = int
-    elif x.dtype == torch.bool:
-        range_dtype = torch.int
-    elif is_complex(x):
-        range_dtype = x.real.dtype  # type: ignore
-    else:
-        range_dtype = x.dtype
-
     if is_floating_point(x) or is_complex(x):
         nan_csum = checksum_float(math.nan, **kwargs)
         neginf_csum = checksum_float(-math.inf, **kwargs)
@@ -389,20 +382,35 @@ def _checksum_tensor_array_like(
         )
 
     shape = x.shape  # type: ignore
-    x = x.flatten()  # type: ignore
-    arange = arange_fn(1, nelement(x) + 1, dtype=range_dtype)
-    x = x + arange
-    x = x * arange
-    x = x.sum()
+    fullname = get_fullname(x)
 
     # Ensure that accumulator exists
     kwargs["accumulator"] = kwargs.get("accumulator", 0)
-    type_csum = checksum_str(get_fullname(x), **kwargs)
+    type_csum = checksum_str(fullname, **kwargs)
 
     kwargs["accumulator"] += type_csum
     shape_csum = checksum_iterable(shape, **kwargs)
 
     kwargs["accumulator"] += shape_csum
-    x_csum = checksum_builtin_number(x.item(), **kwargs)
 
-    return x_csum
+    if isinstance(x, np.ndarray):
+        xbytes = x.tobytes()
+        csum = checksum_bytes(xbytes, **kwargs)
+    elif isinstance(x, Tensor):
+        if _NUMPY_AVAILABLE:
+            xbytes = x.cpu().numpy().tobytes()
+        else:
+            xbytes = _serialize_tensor_to_bytes(x)
+        csum = checksum_bytes(xbytes, **kwargs)
+    else:
+        msg = f"invalid argument type {type(x)}. (expected ndarray or Tensor)"
+        raise TypeError(msg)
+
+    return csum
+
+
+def _serialize_tensor_to_bytes(x: Tensor) -> bytes:
+    """Convert tensor data to bytes, but very slow compare to numpy' tobytes() method."""
+    x = x.view(torch.int8).view(-1)
+    xbytes = struct.pack(f"{len(x)}b", *x)
+    return xbytes
