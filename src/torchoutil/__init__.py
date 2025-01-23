@@ -25,14 +25,14 @@ from . import optim as optim
 from . import utils as utils
 from .core.dtype_enum import DTypeEnum
 from .core.dtype_enum import DTypeEnum as dtype_enum
-from .core.get import (  # noqa: F401
+from .core.make import (  # noqa: F401
     CUDA_IF_AVAILABLE,
     DeviceLike,
     DTypeLike,
     GeneratorLike,
-    get_device,
-    get_dtype,
-    get_generator,
+    make_device,
+    make_dtype,
+    make_generator,
 )
 from .core.semver import Version
 from .nn.functional import *

@@ -145,6 +145,7 @@ def load_csv(
     **csv_reader_kwds,
 ) -> Union[List[Dict[str, Any]], Dict[str, List[Any]]]:
     """Load content from csv filepath."""
+    fpath = Path(fpath)
     if delimiter is None or delimiter is ...:
         delimiter = "\t" if fpath.suffix == ".tsv" else ","
 

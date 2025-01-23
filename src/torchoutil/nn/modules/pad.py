@@ -7,7 +7,7 @@ import torch
 from torch import Generator, Tensor, nn
 from torch.types import Number
 
-from torchoutil.core.get import DeviceLike
+from torchoutil.core.make import DeviceLike
 from torchoutil.nn.functional.pad import (
     PadAlign,
     PadMode,

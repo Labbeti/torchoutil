@@ -5,7 +5,7 @@ from torch import Tensor
 from torch.types import *
 
 from torchoutil.core.dtype_enum import DTypeEnum
-from torchoutil.core.get import DeviceLike, DTypeLike, GeneratorLike
+from torchoutil.core.make import DeviceLike, DTypeLike, GeneratorLike
 from torchoutil.pyoutil.typing import *
 
 from ._typing import T_TensorOrArray, TensorOrArray

@@ -7,7 +7,12 @@ import torch
 from torch import Tensor
 from torch.types import Number
 
-from torchoutil.core.get import CUDA_IF_AVAILABLE, DeviceLike, get_device, get_generator
+from torchoutil.core.make import (
+    CUDA_IF_AVAILABLE,
+    DeviceLike,
+    make_device,
+    make_generator,
+)
 from torchoutil.types import LongTensor1D, Tensor1D, is_builtin_number
 
 
@@ -64,8 +69,8 @@ def randperm_diff(
     if size < 2:
         raise ValueError(f"Invalid argument {size=} < 2 for randperm_diff.")
 
-    device = get_device(device)
-    generator = get_generator(generator)
+    device = make_device(device)
+    generator = make_generator(generator)
 
     perm_kws: Dict[str, Any] = dict(generator=generator, device=device)
     arange = torch.arange(size, device=device)

@@ -8,6 +8,7 @@ from typing import (
     Iterable,
     List,
     Optional,
+    Tuple,
     TypeVar,
     Union,
     overload,
@@ -16,7 +17,7 @@ from typing import (
 import torch
 from torch import Generator, Tensor, nn
 
-from torchoutil.core.get import DeviceLike, DTypeLike
+from torchoutil.core.make import DeviceLike, DTypeLike
 from torchoutil.extras.numpy import np
 from torchoutil.nn.functional.transform import (
     PadCropAlign,
@@ -26,6 +27,7 @@ from torchoutil.nn.functional.transform import (
     T_BuiltinScalar,
     flatten,
     identity,
+    move_to_rec,
     pad_and_crop_dim,
     repeat_interleave_nd,
     resample_nearest_freqs,
@@ -33,12 +35,16 @@ from torchoutil.nn.functional.transform import (
     resample_nearest_steps,
     shuffled,
     squeeze,
+    to_item,
     to_tensor,
     transform_drop,
     unsqueeze,
+    view_as_complex,
+    view_as_real,
 )
 from torchoutil.pyoutil.collections import dump_dict
-from torchoutil.types._typing import T_TensorOrArray
+from torchoutil.pyoutil.typing import BuiltinScalar, SizedIterable
+from torchoutil.types._typing import ComplexFloatingTensor, ScalarLike, T_TensorOrArray
 
 T = TypeVar("T")
 
@@ -263,10 +269,6 @@ class Flatten(nn.Module):
     def forward(self, x: Iterable[T_BuiltinScalar]) -> List[T_BuiltinScalar]:
         ...
 
-    @overload
-    def forward(self, x: Any) -> List[Any]:
-        ...
-
     def forward(self, x: Any) -> Any:
         return flatten(
             x,
@@ -370,3 +372,51 @@ class Unsqueeze(nn.Module):
                 mode=self.mode,
             ),
         )
+
+
+class ToItem(nn.Module):
+    """
+    Module version of :func:`~torchoutil.to_item`.
+    """
+
+    def forward(
+        self, x: Union[ScalarLike, Tensor, np.ndarray, SizedIterable]
+    ) -> BuiltinScalar:
+        return to_item(x)  # type: ignore
+
+
+class ViewAsReal(nn.Module):
+    """
+    Module version of :func:`~torchoutil.to_item`.
+    """
+
+    def forward(
+        self, x: Union[Tensor, np.ndarray, complex]
+    ) -> Union[Tensor, np.ndarray, Tuple[float, float]]:
+        return view_as_real(x)
+
+
+class ViewAsComplex(nn.Module):
+    """
+    Module version of :func:`~torchoutil.to_item`.
+    """
+
+    def forward(
+        self, x: Union[Tensor, np.ndarray, Tuple[float, float]]
+    ) -> Union[ComplexFloatingTensor, np.ndarray, complex]:
+        return view_as_complex(x)
+
+
+class MoveToRec(nn.Module):
+    """
+    Module version of :func:`~torchoutil.move_to_rec`.
+    """
+
+    def __init__(
+        self, predicate: Optional[Callable[[Union[Tensor, nn.Module]], bool]] = None
+    ) -> None:
+        super().__init__()
+        self.predicate = predicate
+
+    def forward(self, x: Any) -> Any:
+        return move_to_rec(x, predicate=self.predicate)

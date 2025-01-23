@@ -58,7 +58,7 @@ class TestInheritEModule(TestCase):
         result = module1(x)
 
         assert tuple(result.shape) == (bsize, out_features)
-        assert module1.get_device() == torch.device("cpu")
+        assert module1.make_device() == torch.device("cpu")
 
         expected_config = {
             "projection.linear.in_features": 32,

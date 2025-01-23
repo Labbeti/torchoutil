@@ -1,13 +1,22 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from typing import Callable, Final, Iterable, Union
+from typing import Callable, Final, Iterable, Optional, Union
 
 import torch
 
 from torchoutil.core.semver import Version
 from torchoutil.pyoutil.functools import identity
 from torchoutil.pyoutil.importlib import package_is_available
+
+
+def _get_extra_version(name: str) -> Optional[str]:
+    try:
+        module = __import__(name)
+        return str(module.__version__)
+    except (ImportError, AttributeError):
+        return None
+
 
 _EXTRAS_PACKAGES = (
     "colorlog",
@@ -22,6 +31,7 @@ _EXTRAS_PACKAGES = (
     "yaml",
 )
 _EXTRA_AVAILABLE = {name: package_is_available(name) for name in _EXTRAS_PACKAGES}
+_EXTRA_VERSION = {name: _get_extra_version(name) for name in _EXTRAS_PACKAGES}
 
 
 _COLORLOG_AVAILABLE: Final[bool] = _EXTRA_AVAILABLE["colorlog"]

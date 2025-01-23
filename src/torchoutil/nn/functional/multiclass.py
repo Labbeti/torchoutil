@@ -21,9 +21,10 @@ import torch
 from torch import Tensor
 from torch.nn import functional as F
 
-from torchoutil.core.get import DeviceLike, DTypeLike, get_device, get_dtype
+from torchoutil.core.make import DeviceLike, DTypeLike, make_device, make_dtype
 from torchoutil.extras.numpy import np
-from torchoutil.nn.functional.others import nelement, to_item
+from torchoutil.nn.functional.others import nelement
+from torchoutil.nn.functional.transform import to_item
 from torchoutil.pyoutil.logging import warn_once
 from torchoutil.types import LongTensor, is_number_like
 from torchoutil.types._typing import TensorOrArray
@@ -49,8 +50,8 @@ def index_to_onehot(
         device: PyTorch device of the output tensor.
         dtype: PyTorch DType of the output tensor.
     """
-    device = get_device(device)
-    dtype = get_dtype(dtype)
+    device = make_device(device)
+    dtype = make_dtype(dtype)
     index = torch.as_tensor(index, device=device, dtype=torch.long)
 
     if padding_idx is not None:

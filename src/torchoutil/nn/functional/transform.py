@@ -2,41 +2,50 @@
 # -*- coding: utf-8 -*-
 
 import math
+from typing import Any, Callable, Dict
+from typing import Generator as PythonGenerator
 from typing import (
-    Any,
-    Callable,
     Iterable,
     List,
     Literal,
+    Mapping,
     Optional,
     Sequence,
+    Tuple,
     TypeVar,
     Union,
     overload,
 )
 
 import torch
-from torch import Generator, Tensor
+from torch import Generator, Tensor, nn
 
-from torchoutil.core.get import (
+from torchoutil.core.make import (
     DeviceLike,
     DTypeLike,
-    get_device,
-    get_dtype,
-    get_generator,
+    make_device,
+    make_dtype,
+    make_generator,
 )
-from torchoutil.extras.numpy import np
+from torchoutil.extras.numpy import np, numpy_view_as_complex, numpy_view_as_real
 from torchoutil.nn.functional.crop import crop_dim
+from torchoutil.nn.functional.others import nelement
 from torchoutil.nn.functional.pad import PadMode, PadValue, pad_dim
 from torchoutil.pyoutil.collections import all_eq
 from torchoutil.pyoutil.collections import flatten as builtin_flatten
 from torchoutil.pyoutil.collections import prod as builtin_prod
 from torchoutil.pyoutil.functools import identity  # noqa: F401
-from torchoutil.pyoutil.typing import T_BuiltinScalar
-from torchoutil.types import is_number_like, is_scalar_like
-from torchoutil.types._typing import (
+from torchoutil.pyoutil.typing import (
     BuiltinNumber,
+    BuiltinScalar,
+    SizedIterable,
+    T_BuiltinScalar,
+    is_builtin_scalar,
+)
+from torchoutil.types import ComplexFloatingTensor, is_number_like, is_scalar_like
+from torchoutil.types._typing import (
     NumberLike,
+    ScalarLike,
     T_TensorOrArray,
     Tensor0D,
     Tensor1D,
@@ -181,7 +190,7 @@ def transform_drop(
     """
     if p < 0.0:
         raise ValueError(f"Invalid argument {p=} < 0")
-    generator = get_generator(generator)
+    generator = make_generator(generator)
 
     p_floor = math.floor(p)
     for _ in range(p_floor):
@@ -235,7 +244,7 @@ def shuffled(
     else:
         dims = list(dims)
 
-    generator = get_generator(generator)
+    generator = make_generator(generator)
     slices: List[Union[slice, Tensor]] = [slice(None) for _ in range(x.ndim)]
     for dim in dims:
         indices = torch.randperm(x.shape[dim], generator=generator)
@@ -280,23 +289,14 @@ def flatten(
     ...
 
 
-@overload
 def flatten(
     x: Any,
     start_dim: int = 0,
     end_dim: Optional[int] = None,
-) -> List[Any]:
-    ...
-
-
-def flatten(
-    x: Any,
-    start_dim: int = 0,
-    end_dim: Optional[int] = None,
-) -> Any:
+) -> Union[Tensor1D, np.ndarray, list]:
     if isinstance(x, Tensor):
         end_dim = end_dim if end_dim is not None else x.ndim - 1
-        return x.flatten(start_dim, end_dim)
+        return x.flatten(start_dim, end_dim)  # type: ignore
     elif isinstance(x, np.generic):
         return x.flatten()
     elif isinstance(x, np.ndarray):
@@ -368,8 +368,8 @@ def to_tensor(data: Any, dtype: DTypeLike = None, device: DeviceLike = None) -> 
         PyTorch tensor created from data.
     """
     if isinstance(data, (Tensor, np.ndarray)) or is_number_like(data):
-        dtype = get_dtype(dtype)
-        device = get_device(device)
+        dtype = make_dtype(dtype)
+        device = make_device(device)
         return torch.as_tensor(data, dtype=dtype, device=device)
 
     elif isinstance(data, (list, tuple)):
@@ -454,6 +454,8 @@ def __squeeze_impl_array(
     mode: SqueezeMode,
 ) -> np.ndarray:
     if mode in ("view_if_possible", "copy"):
+        if isinstance(dim, Iterable):
+            dim = tuple(dim)
         return np.squeeze(x, axis=dim)
     else:
         msg = f"Invalid argument {mode=} with numpy array. (expected one of {('view_if_possible', 'copy')})"
@@ -525,7 +527,141 @@ def __unsqueeze_impl_array(
     mode: SqueezeMode,
 ) -> np.ndarray:
     if mode in ("view_if_possible", "copy"):
+        if isinstance(dim, Iterable):
+            dim = tuple(dim)
         return np.expand_dims(x, axis=dim)
     else:
         msg = f"Invalid argument {mode=} with numpy array. (expected one of {('view_if_possible', 'copy')})"
         raise ValueError(msg)
+
+
+@overload
+def to_item(x: T_BuiltinScalar) -> T_BuiltinScalar:
+    ...
+
+
+@overload
+def to_item(x: Union[Tensor, np.ndarray, SizedIterable]) -> BuiltinScalar:
+    ...
+
+
+def to_item(x: Union[ScalarLike, Tensor, np.ndarray, SizedIterable]) -> BuiltinScalar:
+    """Convert scalar value to the closest built-in type."""
+    if is_builtin_scalar(x, strict=True):
+        return x
+    elif isinstance(x, (Tensor, np.ndarray, np.generic)) and nelement(x) == 1:
+        return x.item()
+    elif isinstance(x, SizedIterable) and len(x) == 1:
+        return to_item(next(iter(x)))
+    else:
+        msg = f"Invalid argument type {type(x)=}. (expected scalar-like object)"
+        raise TypeError(msg)
+
+
+@overload
+def view_as_real(x: Tensor) -> Tensor:
+    ...
+
+
+@overload
+def view_as_real(x: np.ndarray) -> np.ndarray:
+    ...
+
+
+@overload
+def view_as_real(x: complex) -> Tuple[float, float]:
+    ...
+
+
+def view_as_real(
+    x: Union[Tensor, np.ndarray, complex]
+) -> Union[Tensor, np.ndarray, Tuple[float, float]]:
+    """Convert complex-valued input to floating-point object."""
+    if isinstance(x, Tensor):
+        return torch.view_as_real(x)
+    elif isinstance(x, np.ndarray):
+        return numpy_view_as_real(x)
+    else:
+        return x.real, x.imag
+
+
+@overload
+def view_as_complex(x: Tensor) -> ComplexFloatingTensor:
+    ...
+
+
+@overload
+def view_as_complex(x: np.ndarray) -> np.ndarray:
+    ...
+
+
+@overload
+def view_as_complex(x: Tuple[float, float]) -> complex:
+    ...
+
+
+def view_as_complex(
+    x: Union[Tensor, np.ndarray, Tuple[float, float]]
+) -> Union[ComplexFloatingTensor, np.ndarray, complex]:
+    """Convert floating-point input to complex-valued object."""
+    if isinstance(x, Tensor):
+        return torch.view_as_complex(x)  # type: ignore
+    elif isinstance(x, np.ndarray):
+        return numpy_view_as_complex(x)
+    elif (
+        isinstance(x, Sequence)
+        and len(x) == 2
+        and isinstance(x[0], float)
+        and isinstance(x[1], float)
+    ):
+        return x[0] + x[1] * 1j
+    else:
+        raise TypeError(f"Invalid argument type {type(x)=}.")
+
+
+@overload
+def move_to_rec(
+    x: Mapping[T, U],
+    predicate: Optional[Callable[[Union[Tensor, nn.Module]], bool]] = None,
+    **kwargs,
+) -> Dict[T, U]:
+    ...
+
+
+@overload
+def move_to_rec(
+    x: T,
+    predicate: Optional[Callable[[Union[Tensor, nn.Module]], bool]] = None,
+    **kwargs,
+) -> T:
+    ...
+
+
+def move_to_rec(
+    x: Any,
+    predicate: Optional[Callable[[Union[Tensor, nn.Module]], bool]] = None,
+    **kwargs,
+) -> Any:
+    """Move all modules and tensors recursively to a specific dtype or device."""
+    if "device" in kwargs:
+        kwargs["device"] = make_device(kwargs["device"])
+
+    if isinstance(x, (str, float, int, bool, complex)):
+        return x
+    elif isinstance(x, (Tensor, nn.Module)):
+        if predicate is None or predicate(x):
+            return x.to(**kwargs)
+        else:
+            return x
+    elif isinstance(x, Mapping):
+        return {k: move_to_rec(v, predicate=predicate, **kwargs) for k, v in x.items()}
+    elif isinstance(x, Iterable):
+        generator = (move_to_rec(xi, predicate=predicate, **kwargs) for xi in x)
+        if isinstance(x, PythonGenerator):
+            return generator
+        elif isinstance(x, tuple):
+            return tuple(generator)
+        else:
+            return list(generator)
+    else:
+        return x

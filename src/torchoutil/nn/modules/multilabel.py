@@ -6,7 +6,7 @@ from typing import Generic, List, Mapping, Optional, Union
 import torch
 from torch import Tensor, nn
 
-from torchoutil.core.get import DeviceLike, DTypeLike
+from torchoutil.core.make import DeviceLike, DTypeLike
 from torchoutil.nn.functional.multilabel import (
     T_Name,
     indices_to_multihot,

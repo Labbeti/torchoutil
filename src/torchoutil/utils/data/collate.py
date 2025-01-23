@@ -6,8 +6,11 @@ from typing import Any, Dict, List, Optional, TypeVar
 
 import torch
 
-from torchoutil.nn.functional.others import can_be_converted_to_tensor, can_be_stacked
 from torchoutil.nn.functional.pad import pad_and_stack_rec
+from torchoutil.nn.functional.predicate import (
+    can_be_converted_to_tensor,
+    can_be_stacked,
+)
 from torchoutil.pyoutil.collections import KeyMode, list_dict_to_dict_list
 from torchoutil.pyoutil.re import PatternListLike, match_patterns
 

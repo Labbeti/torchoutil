@@ -9,10 +9,10 @@ from typing import Hashable, Iterable, List, Mapping, Optional, Sequence, TypeVa
 import torch
 from torch import Tensor
 
-from torchoutil.core.get import DeviceLike, DTypeLike, get_device, get_dtype
-from torchoutil.nn.functional.others import can_be_stacked, to_item
+from torchoutil.core.make import DeviceLike, DTypeLike, make_device, make_dtype
 from torchoutil.nn.functional.pad import pad_and_stack_rec
-from torchoutil.nn.functional.transform import to_tensor
+from torchoutil.nn.functional.predicate import can_be_stacked
+from torchoutil.nn.functional.transform import to_item, to_tensor
 from torchoutil.pyoutil.typing import is_sequence_int
 from torchoutil.types import LongTensor, is_number_like, is_tensor_like
 from torchoutil.types._typing import TensorOrArray
@@ -40,8 +40,8 @@ def indices_to_multihot(
     if device is None and isinstance(indices, Tensor):
         device = indices.device
     else:
-        device = get_device(device)
-    dtype = get_dtype(dtype)
+        device = make_device(device)
+    dtype = make_dtype(dtype)
 
     def _impl(x) -> Tensor:
         if is_tensor_like(x) and not _is_valid_indices(x):
@@ -281,8 +281,8 @@ def probs_to_multihot(
     if device is None:
         device = probs.device
     else:
-        device = get_device(device)
-    dtype = get_dtype(dtype)
+        device = make_device(device)
+    dtype = make_dtype(dtype)
 
     if not isinstance(threshold, Tensor):
         threshold = torch.as_tensor(threshold, dtype=probs.dtype, device=device)

@@ -6,7 +6,7 @@ from typing import Union
 import torch
 from torch import Tensor, nn
 
-from torchoutil.core.get import DeviceLike
+from torchoutil.core.make import DeviceLike
 from torchoutil.extras.numpy.definitions import np
 from torchoutil.extras.numpy.functional import (
     numpy_to_tensor,

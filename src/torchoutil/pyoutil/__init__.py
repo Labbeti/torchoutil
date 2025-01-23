@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+# Re-import for language servers
+from . import typing as typing
 from .abc import Singleton
 from .argparse import (
     str_to_bool,

@@ -56,7 +56,6 @@ from .tensor import (
     RepeatInterleave,
     Reshape,
     TensorTo,
-    ToItem,
     ToList,
     Topk,
     Transpose,
@@ -65,6 +64,7 @@ from .tensor import (
 from .transform import (
     Flatten,
     Identity,
+    MoveToRec,
     PadAndCropDim,
     RepeatInterleaveNd,
     ResampleNearestFreqs,
@@ -72,7 +72,10 @@ from .transform import (
     ResampleNearestSteps,
     Shuffled,
     Squeeze,
+    ToItem,
     ToTensor,
     TransformDrop,
     Unsqueeze,
+    ViewAsComplex,
+    ViewAsReal,
 )

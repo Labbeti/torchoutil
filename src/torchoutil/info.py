@@ -9,7 +9,7 @@ from typing import Any, Dict
 import torch
 
 import torchoutil
-from torchoutil.core.packaging import _EXTRA_AVAILABLE
+from torchoutil.core.packaging import _EXTRA_VERSION
 from torchoutil.pyoutil.collections import dump_dict
 from torchoutil.utils.data.dataloader import get_auto_num_cpus, get_auto_num_gpus
 
@@ -30,7 +30,7 @@ def get_install_info() -> Dict[str, Any]:
         "num_cpus": get_auto_num_cpus(),
         "num_gpus": get_auto_num_gpus(),
     }
-    install_info.update({f"{k}_available": str(v) for k, v in _EXTRA_AVAILABLE.items()})
+    install_info.update({k: str(v) for k, v in _EXTRA_VERSION.items()})
     return install_info
 
 

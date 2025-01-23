@@ -11,7 +11,6 @@ from torch.nn import functional as F
 from torch.types import Device, Number
 
 from torchoutil.pyoutil.collections import dump_dict
-from torchoutil.types import BuiltinNumber
 from torchoutil.utils import return_types
 
 
@@ -474,15 +473,6 @@ class TensorTo(nn.Module):
         return dump_dict(dict(self.kwargs))
 
 
-class ToItem(nn.Module):
-    """
-    Module version of :func:`~torch.Tensor.item`.
-    """
-
-    def forward(self, x: Tensor) -> BuiltinNumber:
-        return x.item()
-
-
 class ToList(nn.Module):
     """
     Module version of :func:`~torch.Tensor.tolist`.
@@ -526,7 +516,7 @@ class Topk(nn.Module):
             sorted=self.sorted,
         )
         if self.return_values and self.return_indices:
-            return values_indices
+            return values_indices  # type: ignore
         elif self.return_values:
             return values_indices.values
         elif self.return_indices:
@@ -577,11 +567,11 @@ class Transpose(nn.Module):
 
 class View(nn.Module):
     @overload
-    def __init__(self, dtype: torch.dtype) -> None:
+    def __init__(self, dtype: torch.dtype, /) -> None:
         ...
 
     @overload
-    def __init__(self, size: Sequence[int]) -> None:
+    def __init__(self, size: Sequence[int], /) -> None:
         ...
 
     @overload

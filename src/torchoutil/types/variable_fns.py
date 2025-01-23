@@ -8,7 +8,7 @@ from torch import Tensor
 from torch.types import Device, Number
 from typing_extensions import Never
 
-from torchoutil.core.get import get_device, get_dtype
+from torchoutil.core.make import make_device, make_dtype
 from torchoutil.pyoutil.typing import BuiltinNumber
 from torchoutil.types import (
     BoolTensor0D,
@@ -263,8 +263,8 @@ def as_tensor(
     dtype: DTypeLike = None,
     device: DeviceLike = None,
 ) -> torch.Tensor:
-    dtype = get_dtype(dtype)
-    device = get_device(device)
+    dtype = make_dtype(dtype)
+    device = make_device(device)
     return torch.as_tensor(data, dtype=dtype, device=device)
 
 
@@ -385,8 +385,8 @@ def zeros(
     pin_memory: Union[bool, None] = False,
     requires_grad: Union[bool, None] = False,
 ) -> torch.Tensor:
-    dtype = get_dtype(dtype)
-    device = get_device(device)
+    dtype = make_dtype(dtype)
+    device = make_device(device)
     return torch.zeros(
         *data,
         out=out,
@@ -515,8 +515,8 @@ def ones(
     pin_memory: Union[bool, None] = False,
     requires_grad: Union[bool, None] = False,
 ) -> torch.Tensor:
-    dtype = get_dtype(dtype)
-    device = get_device(device)
+    dtype = make_dtype(dtype)
+    device = make_device(device)
     return torch.ones(
         *data,
         out=out,
@@ -645,8 +645,8 @@ def empty(
     pin_memory: Union[bool, None] = False,
     requires_grad: Union[bool, None] = False,
 ) -> torch.Tensor:
-    dtype = get_dtype(dtype)
-    device = get_device(device)
+    dtype = make_dtype(dtype)
+    device = make_device(device)
     return torch.empty(
         *data,
         out=out,
@@ -775,8 +775,8 @@ def rand(
     pin_memory: Union[bool, None] = False,
     requires_grad: Union[bool, None] = False,
 ) -> torch.Tensor:
-    dtype = get_dtype(dtype)
-    device = get_device(device)
+    dtype = make_dtype(dtype)
+    device = make_device(device)
     return torch.rand(
         *data,
         out=out,
@@ -1104,8 +1104,8 @@ def full(
     pin_memory: Union[bool, None] = False,
     requires_grad: Union[bool, None] = False,
 ) -> torch.Tensor:
-    dtype = get_dtype(dtype)
-    device = get_device(device)
+    dtype = make_dtype(dtype)
+    device = make_device(device)
     return torch.full(
         size,
         fill_value=fill_value,

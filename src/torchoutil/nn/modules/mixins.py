@@ -98,20 +98,20 @@ class ProxyDeviceModule(nn.Module):
     def device_detect_mode(self) -> DeviceDetectMode:
         return self.__device_detect_mode
 
-    def get_device(self) -> Optional[torch.device]:
+    def make_device(self) -> Optional[torch.device]:
         """Returns the Module device according to device_detect_mode property."""
         if self.__device_detect_mode == "proxy":
             return self._buffers["__proxy"].device  # type: ignore
         elif self.__device_detect_mode == "first_param":
             try:
-                device0 = next(self._get_devices_iterator(params=True, buffers=True))
+                device0 = next(self._make_devices_iterator(params=True, buffers=True))
                 return device0
             except StopIteration:
                 return None
         else:
             return None
 
-    def get_devices(
+    def make_devices(
         self,
         *,
         params: bool = True,
@@ -120,14 +120,14 @@ class ProxyDeviceModule(nn.Module):
         output_type: Callable[[Iterator[torch.device]], T] = list,
     ) -> T:
         return output_type(
-            self._get_devices_iterator(
+            self._make_devices_iterator(
                 params=params,
                 buffers=buffers,
                 recurse=recurse,
             )
         )
 
-    def _get_devices_iterator(
+    def _make_devices_iterator(
         self,
         *,
         params: bool = True,

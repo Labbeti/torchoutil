@@ -6,7 +6,6 @@ from torch.nn.functional import *
 from .activation import log_softmax_multidim, softmax_multidim
 from .checksum import checksum, checksum_any
 from .crop import crop_dim, crop_dims
-from .get import CUDA_IF_AVAILABLE, get_device, get_dtype, get_generator
 from .indices import (
     get_inverse_perm,
     get_perm_indices,
@@ -14,6 +13,7 @@ from .indices import (
     randperm_diff,
     remove_at_indices,
 )
+from .make import make_device, make_dtype, make_generator
 from .mask import (
     generate_square_subsequent_mask,
     lengths_to_non_pad_mask,
@@ -54,32 +54,32 @@ from .multilabel import (
 )
 from .numpy import numpy_to_tensor, tensor_to_numpy, to_numpy
 from .others import (
-    all_eq,
-    all_ne,
     average_power,
-    can_be_converted_to_tensor,
-    can_be_stacked,
     count_parameters,
     find,
-    is_complex,
-    is_floating_point,
-    is_sorted,
-    move_to_rec,
     ndim,
     nelement,
     prod,
     ranks,
     shape,
-    to_item,
-    view_as_complex,
-    view_as_real,
 )
 from .pad import cat_padded_batch, pad_and_stack_rec, pad_dim, pad_dims
 from .powerset import multilabel_to_powerset, powerset_to_multilabel
+from .predicate import (
+    all_eq,
+    all_ne,
+    can_be_converted_to_tensor,
+    can_be_stacked,
+    is_complex,
+    is_floating_point,
+    is_full,
+    is_sorted,
+)
 from .segments import extract_segments, segments_to_list
 from .transform import (
     flatten,
     identity,
+    move_to_rec,
     pad_and_crop_dim,
     repeat_interleave_nd,
     resample_nearest_freqs,
@@ -89,9 +89,12 @@ from .transform import (
     squeeze,
     squeeze_,
     squeeze_copy,
+    to_item,
     to_tensor,
     transform_drop,
     unsqueeze,
     unsqueeze_,
     unsqueeze_copy,
+    view_as_complex,
+    view_as_real,
 )

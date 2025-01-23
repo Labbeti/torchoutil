@@ -7,7 +7,7 @@ import torch
 from torch import Tensor
 from typing_extensions import TypeGuard
 
-from torchoutil.core.get import DeviceLike, DTypeLike, get_device, get_dtype
+from torchoutil.core.make import DeviceLike, DTypeLike, make_device, make_dtype
 from torchoutil.core.packaging import torch_version_ge_1_13
 from torchoutil.extras.numpy.definitions import NumpyNumberLike, NumpyScalarLike, np
 from torchoutil.pyoutil import (
@@ -59,8 +59,8 @@ def numpy_to_tensor(
     dtype: DTypeLike = None,
 ) -> Tensor:
     """Convert numpy array to PyTorch tensor."""
-    device = get_device(device)
-    dtype = get_dtype(dtype)
+    device = make_device(device)
+    dtype = make_dtype(dtype)
     return torch.from_numpy(x).to(dtype=dtype, device=device)
 
 

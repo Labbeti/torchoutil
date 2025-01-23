@@ -23,8 +23,9 @@ from typing import (
     overload,
 )
 
-from typing_extensions import TypeIs
+from typing_extensions import TypeGuard
 
+from torchoutil.pyoutil.functools import identity
 from torchoutil.pyoutil.typing import T_BuiltinScalar, is_builtin_scalar, is_mapping_str
 
 K = TypeVar("K", covariant=True)
@@ -33,6 +34,7 @@ U = TypeVar("U", covariant=True)
 V = TypeVar("V", covariant=True)
 W = TypeVar("W", covariant=True)
 X = TypeVar("X", covariant=True)
+Y = TypeVar("Y", covariant=True)
 
 KeyMode = Literal["intersect", "same", "union"]
 KEY_MODES = ("same", "intersect", "union")
@@ -41,10 +43,11 @@ KEY_MODES = ("same", "intersect", "union")
 @overload
 def list_dict_to_dict_list(
     lst: Sequence[Mapping[K, V]],
-    key_mode: Literal["intersect", "same"],
+    key_mode: Literal["intersect", "same"] = "same",
     default_val: Any = None,
     *,
     default_val_fn: Any = None,
+    list_fn: None = None,
 ) -> Dict[K, List[V]]:
     ...
 
@@ -56,6 +59,7 @@ def list_dict_to_dict_list(
     default_val: Any = None,
     *,
     default_val_fn: Callable[[K], X],
+    list_fn: None = None,
 ) -> Dict[K, List[Union[V, X]]]:
     ...
 
@@ -67,16 +71,31 @@ def list_dict_to_dict_list(
     default_val: W = None,
     *,
     default_val_fn: None = None,
+    list_fn: None = None,
 ) -> Dict[K, List[Union[V, W]]]:
+    ...
+
+
+@overload
+def list_dict_to_dict_list(
+    lst: Sequence[Mapping[K, V]],
+    key_mode: KeyMode = "same",
+    default_val: W = None,
+    *,
+    default_val_fn: Optional[Callable[[K], X]] = None,
+    list_fn: Callable[[List[Union[V, W, X]]], Y],
+) -> Dict[K, Y]:
     ...
 
 
 def list_dict_to_dict_list(
     lst: Sequence[Mapping[K, V]],
-    key_mode: KeyMode,
+    key_mode: KeyMode = "same",
     default_val: W = None,
+    *,
     default_val_fn: Optional[Callable[[K], X]] = None,
-) -> Dict[K, List[Union[V, W]]]:
+    list_fn: Optional[Callable[[List[Union[V, W, X]]], Y]] = identity,
+) -> Dict[K, Y]:
     """Convert list of dicts to dict of lists.
 
     Args:
@@ -86,6 +105,8 @@ def list_dict_to_dict_list(
             If "intersect", only the intersection of all keys will be used in output.
             If "union", the output dict will contains the union of all keys, and the missing value will use the argument default_val.
         default_val: Default value of an element when key_mode is "union". defaults to None.
+        default_val_fn: Function to return the default value according to a specific key. defaults to None.
+        list_fn: Optional function to build the values. defaults to identity.
     """
     if len(lst) <= 0:
         return {}
@@ -107,16 +128,22 @@ def list_dict_to_dict_list(
         msg = f"Invalid argument key_mode={key_mode}. (expected one of {KEY_MODES})"
         raise ValueError(msg)
 
+    if list_fn is None:
+        list_fn = identity  # type: ignore
+
     result = {
-        key: [
-            item.get(
-                key, default_val_fn(key) if default_val_fn is not None else default_val
-            )
-            for item in lst
-        ]
+        key: list_fn(
+            [  # type: ignore
+                item.get(
+                    key,
+                    default_val_fn(key) if default_val_fn is not None else default_val,
+                )
+                for item in lst
+            ]
+        )
         for key in keys
     }
-    return result
+    return result  # type: ignore
 
 
 @overload
@@ -609,7 +636,7 @@ def flatten(
     x: Any,
     start_dim: int = 0,
     end_dim: Optional[int] = None,
-    is_scalar_fn: Callable[[Any], TypeIs[T]] = is_builtin_scalar,
+    is_scalar_fn: Callable[[Any], TypeGuard[T]] = is_builtin_scalar,
 ) -> List[Any]:
     ...
 
@@ -618,7 +645,7 @@ def flatten(
     x: Any,
     start_dim: int = 0,
     end_dim: Optional[int] = None,
-    is_scalar_fn: Callable[[Any], TypeIs[T]] = is_builtin_scalar,
+    is_scalar_fn: Callable[[Any], TypeGuard[T]] = is_builtin_scalar,
 ) -> List[Any]:
     if end_dim is None:
         end_dim = sys.maxsize

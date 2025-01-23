@@ -41,7 +41,7 @@ from torch.types import Device
 from typing_extensions import TypeVar
 
 from torchoutil.core.dtype_enum import DTypeEnum
-from torchoutil.core.get import DeviceLike, DTypeLike, get_device, get_dtype
+from torchoutil.core.make import DeviceLike, DTypeLike, make_device, make_dtype
 from torchoutil.pyoutil import BuiltinNumber, T_BuiltinNumber
 
 _DEFAULT_T_DTYPE = Literal[None]
@@ -216,8 +216,8 @@ class _TensorNDBase(
         pin_memory: Union[bool, None] = False,
         requires_grad: Union[bool, None] = False,
     ) -> T_Tensor:
-        dtype = get_dtype(dtype)
-        device = get_device(device)
+        dtype = make_dtype(dtype)
+        device = make_device(device)
 
         gen = _get_generics(cls)  # type: ignore
         cls_dtype = gen.dtype

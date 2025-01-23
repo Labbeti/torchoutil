@@ -38,10 +38,11 @@ def extract_segments(x: Tensor) -> LongTensor:
 
     Returns:
         segments: (D+1, M) tensor, where M is the total number of segments
-            When D > 1, segments also contains indices of the source column for each start and end value. See Example 2 for detail.
+            When D > 1, segments also contains indices of the source column for each start and end value. See Example 2 for details.
     """
     if not isinstance(x, BoolTensor):
-        raise ValueError(f"Invalid argument {x=}. (expected BoolTensor)")
+        msg = f"Invalid argument {x=}. (expected BoolTensor)"
+        raise ValueError(msg)
 
     x = x.int()
     x = pad_dim(x, x.shape[-1] + 2, align="center", pad_value=0, dim=-1)

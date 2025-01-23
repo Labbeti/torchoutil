@@ -6,7 +6,7 @@ import math
 import torch
 from torch import Tensor, nn
 
-from torchoutil.core.get import DeviceLike, DTypeLike, get_device, get_dtype
+from torchoutil.core.make import DeviceLike, DTypeLike, make_device, make_dtype
 from torchoutil.types._typing import Tensor2D
 
 
@@ -42,8 +42,8 @@ def init_pos_emb(
     dtype: DTypeLike = None,
 ) -> Tensor2D:
     """Returns positional embedding tensor of shape (1, maxlen, emb_size)."""
-    device = get_device(device)
-    dtype = get_dtype(dtype)
+    device = make_device(device)
+    dtype = make_dtype(dtype)
 
     arange = torch.arange(0, emb_size, 2, device=device, dtype=dtype)
     den = (-arange * math.log(10000) / emb_size).exp()

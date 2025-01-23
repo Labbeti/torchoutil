@@ -8,8 +8,8 @@ from torch import Generator, Size, Tensor
 from torch.nn import functional as F
 from torch.types import Number
 
-from torchoutil.core.get import DeviceLike, get_device, get_generator
-from torchoutil.nn.functional.others import can_be_stacked
+from torchoutil.core.make import DeviceLike, make_device, make_generator
+from torchoutil.nn.functional.predicate import can_be_stacked
 from torchoutil.types import is_number_like
 
 PAD_ALIGNS = ("left", "right", "center", "random")
@@ -31,7 +31,7 @@ def pad_dim(
     """Generic function for pad a single dimension."""
     return pad_dims(
         x,
-        [target_length],
+        target_lengths=[target_length],
         dims=[dim],
         aligns=[align],
         pad_value=pad_value,
@@ -51,28 +51,16 @@ def pad_dims(
     generator: Union[int, Generator, None] = None,
 ) -> Tensor:
     """Generic function to pad multiple dimensions."""
-    generator = get_generator(generator)
-
-    target_lengths = list(target_lengths)
-    aligns = list(aligns)
-    dims = list(dims)
-
-    if len(dims) == 0:
-        msg = f"Invalid argument {dims=}. (cannot use an empty list of dimensions)"
-        raise ValueError(msg)
-
-    if len(target_lengths) != len(dims):
-        msg = f"Invalid number of targets lengths ({len(target_lengths)}) with the number of dimensions ({len(dims)})."
-        raise ValueError(msg)
-
-    if len(aligns) != len(dims):
-        msg = f"Invalid number of aligns ({len(aligns)}) with the number of dimensions ({len(dims)})."
-        raise ValueError(msg)
-
     if isinstance(pad_value, Callable):
         pad_value = pad_value(x)
 
-    pad_seq = __generate_pad_seq(x.shape, target_lengths, dims, aligns, generator)
+    pad_seq = __generate_pad_seq(
+        x.shape,
+        target_lengths=target_lengths,
+        dims=dims,
+        aligns=aligns,
+        generator=generator,
+    )
     x = F.pad(x, pad_seq, mode=mode, value=pad_value)
     return x
 
@@ -106,7 +94,7 @@ def pad_and_stack_rec(
     ValueError : Cannot pad sequence of tensors of differents number of dims.
 
     """
-    device = get_device(device)
+    device = make_device(device)
 
     def _impl(sequence: Union[Tensor, int, float, tuple, list]) -> Tensor:
         if isinstance(sequence, Tensor):
@@ -201,12 +189,39 @@ def cat_padded_batch(
 
 
 def __generate_pad_seq(
-    x_shape: Size,
-    target_lengths: List[int],
-    dims: List[int],
-    aligns: List[PadAlign],
-    generator: Union[None, Generator],
+    x_shape: Union[Size, Tuple[int, ...]],
+    target_lengths: Iterable[int],
+    *,
+    dims: Iterable[int] = (-1,),
+    aligns: Iterable[PadAlign] = ("left",),
+    generator: Union[int, Generator, None] = None,
 ) -> List[int]:
+    """Generate pad sequence for torch.nn.functional.pad from target lengths, dims, aligns and generator.
+
+    Args:
+        x_shape: Shape of the tensor to pad.
+        target_lengths: Expected lengths of each dim in the tensor.
+        dims: Specified dims indices. defaults to (-1,).
+        aligns: Alignment for each dim. defaults to ("left",).
+        generator: Optional generator when align="random". defaults to None.
+    """
+    target_lengths = list(target_lengths)
+    aligns = list(aligns)
+    dims = list(dims)
+    generator = make_generator(generator)
+
+    if len(dims) == 0:
+        msg = f"Invalid argument {dims=}. (cannot use an empty list of dimensions)"
+        raise ValueError(msg)
+
+    if len(target_lengths) != len(dims):
+        msg = f"Invalid number of targets lengths ({len(target_lengths)}) with the number of dimensions ({len(dims)})."
+        raise ValueError(msg)
+
+    if len(aligns) != len(dims):
+        msg = f"Invalid number of aligns ({len(aligns)}) with the number of dimensions ({len(dims)})."
+        raise ValueError(msg)
+
     pad_seq = [0 for _ in range(len(x_shape) * 2)]
     for target_length, dim, align in zip(target_lengths, dims, aligns):
         missing = max(target_length - x_shape[dim], 0)
@@ -223,7 +238,10 @@ def __generate_pad_seq(
         elif align == "random":
             missing_left = int(
                 torch.randint(
-                    low=0, high=missing + 1, size=(), generator=generator
+                    low=0,
+                    high=missing + 1,
+                    size=(),
+                    generator=generator,
                 ).item()
             )
             missing_right = missing - missing_left
