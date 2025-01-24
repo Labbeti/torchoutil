@@ -67,7 +67,7 @@ from .logging import (
     setup_logging_verbose,
     warn_once,
 )
-from .math import clamp, clip
+from .math import clamp, clip, nextafter, nextdown
 from .os import get_num_cpus_available, safe_rmdir, tree_iter
 from .re import (
     PatternLike,

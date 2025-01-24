@@ -3,6 +3,8 @@
 
 from typing import ClassVar, Dict, Type
 
+from typing_extensions import Self
+
 
 class Singleton(type):
     """Singleton metaclass.
@@ -17,9 +19,9 @@ class Singleton(type):
     ```
     """
 
-    _instances: ClassVar[Dict[Type, object]] = {}
+    _instances: ClassVar[Dict[Type, Self]] = {}
 
-    def __call__(cls, *args, **kwargs):
+    def __call__(cls, *args, **kwargs) -> Self:
         if cls not in cls._instances:
             cls._instances[cls] = super(Singleton, cls).__call__(*args, **kwargs)
         instance = cls._instances[cls]

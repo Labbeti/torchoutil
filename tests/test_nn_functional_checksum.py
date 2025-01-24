@@ -12,6 +12,7 @@ from torchoutil import pyoutil as po
 from torchoutil.core.packaging import _NUMPY_AVAILABLE
 from torchoutil.extras.numpy import np
 from torchoutil.nn.functional.checksum import checksum
+from torchoutil.pyoutil.math import nextafter
 
 
 class TestChecksum(TestCase):
@@ -40,7 +41,7 @@ class TestChecksum(TestCase):
 
     def test_smallest_diff(self) -> None:
         x0 = random.random()
-        x1 = math.nextafter(x0, 1.0)
+        x1 = nextafter(x0, 1.0)
         assert x0 != x1
         assert checksum(x0) != checksum(x1)
 

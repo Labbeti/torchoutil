@@ -31,9 +31,8 @@ class CosDecayRule:
             msg = f"Invalid argument {n_steps=} < 0 in {self.__class__.__name__}."
             raise ValueError(msg)
         elif n_steps == 0:
-            pylog.warning(
-                f"Replacing {n_steps=} by n_steps=1 in {self.__class__.__name__}."
-            )
+            msg = f"Replacing {n_steps=} by n_steps=1 in {self.__class__.__name__}."
+            pylog.warning(msg)
             n_steps = max(n_steps, 1)
 
         super().__init__()
