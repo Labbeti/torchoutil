@@ -11,6 +11,9 @@ from torchoutil.pyoutil.math import nextafter
 
 class TestPyoutilMath(TestCase):
     def test_nextafter_compat(self) -> None:
+        if not hasattr(math, "nextafter"):
+            return None
+
         examples = [
             math.nan,
             math.inf,
