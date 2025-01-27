@@ -31,11 +31,16 @@ class TestAllEqAllNe(TestCase):
         x = [1] * 10
         assert all_eq(x)
         assert all_eq([random.randint(0, 2**20)])
+        assert all_eq([])
+        assert all_eq(())
 
     def test_all_ne(self) -> None:
         lst = [random.randint(0, 10) for _ in range(100)]
+
         assert all_ne(set(lst))
         assert all_ne([random.randint(0, 2**20)])
+        assert all_ne([])
+        assert all_ne(())
 
 
 class TestDictListToListDict(TestCase):
