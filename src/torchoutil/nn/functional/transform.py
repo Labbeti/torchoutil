@@ -357,12 +357,14 @@ def to_tensor(data: Any, dtype: DTypeLike = None, device: DeviceLike = None) -> 
 
 
 def to_tensor(data: Any, dtype: DTypeLike = None, device: DeviceLike = None) -> Tensor:
-    """Convert arbitrary data to tensor. Unlike `torch.as_tensor`, it works recursively and stack sequences like List[Tensor].
+    """Convert arbitrary data to tensor.
+
+    Unlike `torch.as_tensor`, it works recursively and stack sequences like List[Tensor]. It also accept python generator objects.
 
     Args:
         data: Data to convert to tensor. Can be Tensor, np.ndarray, list, tuple or any number-like object.
-        dtype: Target torch dtype.
-        device: Target torch device.
+        dtype: Target torch dtype. defaults to None.
+        device: Target torch device. defaults to None.
 
     Returns:
         PyTorch tensor created from data.
@@ -372,10 +374,15 @@ def to_tensor(data: Any, dtype: DTypeLike = None, device: DeviceLike = None) -> 
         device = make_device(device)
         return torch.as_tensor(data, dtype=dtype, device=device)
 
-    elif isinstance(data, (list, tuple)):
+    elif isinstance(data, (list, tuple, PythonGenerator)):
+        dtype = make_dtype(dtype)
+        device = make_device(device)
         tensors: list[Tensor] = [
             to_tensor(data_i, dtype=dtype, device=device) for data_i in data
         ]
+        if len(tensors) == 0:
+            return torch.as_tensor(tensors, dtype=dtype, device=device)
+
         shapes = [tensor.shape for tensor in tensors]
         if not all_eq(shapes):
             uniq_shapes = tuple(set(shapes))
@@ -384,7 +391,7 @@ def to_tensor(data: Any, dtype: DTypeLike = None, device: DeviceLike = None) -> 
         return torch.stack(tensors)
 
     else:
-        EXPECTED = (Tensor, np.ndarray, NumberLike, list, tuple)
+        EXPECTED = (Tensor, np.ndarray, NumberLike, list, tuple, PythonGenerator)
         msg = f"Invalid argument type '{type(data)}'. (expected one of {EXPECTED})"
         raise TypeError(msg)
 
@@ -646,7 +653,7 @@ def move_to_rec(
     if "device" in kwargs:
         kwargs["device"] = make_device(kwargs["device"])
 
-    if isinstance(x, (str, float, int, bool, complex)):
+    if is_builtin_scalar(x, strict=True):
         return x
     elif isinstance(x, (Tensor, nn.Module)):
         if predicate is None or predicate(x):
@@ -661,6 +668,10 @@ def move_to_rec(
             return generator
         elif isinstance(x, tuple):
             return tuple(generator)
+        elif isinstance(x, set):
+            return set(generator)
+        elif isinstance(x, frozenset):
+            return frozenset(generator)
         else:
             return list(generator)
     else:
