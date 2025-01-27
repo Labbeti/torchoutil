@@ -23,7 +23,7 @@ from typing import (
     overload,
 )
 
-from typing_extensions import TypeGuard
+from typing_extensions import TypeGuard, TypeIs
 
 from torchoutil.pyoutil.functools import identity
 from torchoutil.pyoutil.typing import T_BuiltinScalar, is_builtin_scalar, is_mapping_str
@@ -367,7 +367,11 @@ def all_eq(it: Iterable[T], eq_fn: Optional[Callable[[T, T], bool]] = None) -> b
     Note: This function returns True for iterable that contains 0 or 1 element.
     """
     it = list(it)
-    first = it[0]
+    try:
+        first = next(iter(it))
+    except StopIteration:
+        return True
+
     if eq_fn is None:
         return all(first == elt for elt in it)
     else:
@@ -636,7 +640,9 @@ def flatten(
     x: Any,
     start_dim: int = 0,
     end_dim: Optional[int] = None,
-    is_scalar_fn: Callable[[Any], TypeGuard[T]] = is_builtin_scalar,
+    is_scalar_fn: Union[
+        Callable[[Any], TypeGuard[T]], Callable[[Any], TypeIs[T]]
+    ] = is_builtin_scalar,
 ) -> List[Any]:
     ...
 
@@ -645,7 +651,9 @@ def flatten(
     x: Any,
     start_dim: int = 0,
     end_dim: Optional[int] = None,
-    is_scalar_fn: Callable[[Any], TypeGuard[T]] = is_builtin_scalar,
+    is_scalar_fn: Union[
+        Callable[[Any], TypeGuard[T]], Callable[[Any], TypeIs[T]]
+    ] = is_builtin_scalar,
 ) -> List[Any]:
     if end_dim is None:
         end_dim = sys.maxsize
