@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import io
 from pathlib import Path
 from typing import (
     Any,
@@ -15,7 +16,7 @@ from typing import (
 )
 
 from torchoutil.core.packaging import _PANDAS_AVAILABLE
-from torchoutil.pyoutil.csv import ORIENT_VALUES, Orient
+from torchoutil.pyoutil.csv import ORIENT_VALUES, Orient, _setup_path
 from torchoutil.pyoutil.csv import load_csv as load_csv_base
 from torchoutil.pyoutil.csv import to_csv as to_csv_base
 from torchoutil.utils.saving.common import to_builtin
@@ -149,6 +150,7 @@ def to_csv(
     overwrite: bool = True,
     to_builtins: bool = False,
     make_parents: bool = True,
+    backend: CSVBackend = "csv",
     header: bool = True,
     **csv_writer_kwds,
 ) -> str:
@@ -156,11 +158,50 @@ def to_csv(
     if to_builtins:
         data = to_builtin(data)
 
-    return to_csv_base(
-        data,
-        fpath,
-        overwrite=overwrite,
-        make_parents=make_parents,
-        header=header,
-        **csv_writer_kwds,
-    )
+    if backend == "csv":
+        return to_csv_base(
+            data,
+            fpath,
+            overwrite=overwrite,
+            make_parents=make_parents,
+            header=header,
+            **csv_writer_kwds,
+        )
+
+    elif backend == "pandas":
+        return _to_csv_with_pandas(
+            data,
+            fpath,
+            overwrite=overwrite,
+            make_parents=make_parents,
+        )
+
+    else:
+        msg = f"Invalid argument {backend=}. (expected one of {CSV_BACKENDS})"
+        raise ValueError(msg)
+
+
+def _to_csv_with_pandas(
+    data: Union[Iterable[Mapping[str, Any]], Mapping[str, Iterable[Any]]],
+    fpath: Union[str, Path, None] = None,
+    *,
+    overwrite: bool = True,
+    make_parents: bool = True,
+) -> str:
+    backend = "pandas"
+    if not _PANDAS_AVAILABLE:
+        msg = f"Invalid argument {backend=} without pandas installed."
+        raise ValueError(msg)
+
+    fpath = _setup_path(fpath, overwrite, make_parents)
+    df = pd.DataFrame(data)  # type: ignore
+
+    file = io.StringIO()
+    df.to_csv(file)
+    content = file.getvalue()
+    file.close()
+
+    if fpath is not None:
+        fpath.write_text(content)
+
+    return content
