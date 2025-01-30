@@ -44,11 +44,11 @@ class Wrapper(Generic[T], Dataset[T]):
         self.dataset = dataset
 
     @abstractmethod
-    def __len__(self) -> int:
+    def __getitem__(self, idx, /) -> T:
         raise NotImplementedError
 
     @abstractmethod
-    def __getitem__(self, idx, /) -> T:
+    def __len__(self) -> int:
         raise NotImplementedError
 
     def unwrap(self, recursive: bool = True) -> Union[SupportsLenAndGetItem, Dataset]:
@@ -72,7 +72,7 @@ class IterableWrapper(Generic[T], IterableDataset[T], Wrapper[T]):
 
     @abstractmethod
     def __iter__(self) -> Iterator[T]:
-        ...
+        raise NotImplementedError
 
     def _get_dataset_iter(self) -> Iterator[T]:
         if hasattr(self.dataset, "__iter__"):
@@ -93,9 +93,6 @@ class TransformWrapper(Generic[T, U], Wrapper[T]):
         self._transform = transform
         self._condition = condition
 
-    def __len__(self) -> int:
-        return len(self.dataset)
-
     def __getitem__(self, idx) -> Union[T, U]:
         assert isinstance(idx, int)
         item = self.dataset[idx]
@@ -104,6 +101,9 @@ class TransformWrapper(Generic[T, U], Wrapper[T]):
         ):
             item = self._transform(item)
         return item
+
+    def __len__(self) -> int:
+        return len(self.dataset)
 
     @property
     def transform(self) -> Optional[Callable[[T], U]]:
@@ -125,9 +125,6 @@ class IterableTransformWrapper(IterableWrapper[T], Generic[T, U]):
         self._transform = transform
         self._condition = condition
 
-    def __len__(self) -> int:
-        return len(self.dataset)
-
     def __iter__(self) -> Iterator[Union[T, U]]:
         it = super()._get_dataset_iter()
         for i, item in enumerate(it):
@@ -137,6 +134,9 @@ class IterableTransformWrapper(IterableWrapper[T], Generic[T, U]):
                 item = self._transform(item)
             yield item
         return
+
+    def __len__(self) -> int:
+        return len(self.dataset)
 
     @property
     def transform(self) -> Optional[Callable[[T], U]]:
@@ -165,9 +165,6 @@ class IterableSubset(IterableWrapper[T], Generic[T]):
         super().__init__(dataset)
         self._indices = indices
 
-    def __len__(self) -> int:
-        return len(self._indices)
-
     def __iter__(self) -> Iterator[T]:
         it = super()._get_dataset_iter()
 
@@ -185,6 +182,9 @@ class IterableSubset(IterableWrapper[T], Generic[T]):
 
             yield item
         return
+
+    def __len__(self) -> int:
+        return len(self._indices)
 
 
 class Subset(Generic[T], TorchSubset[T], Wrapper[T]):

@@ -40,7 +40,7 @@ torchoutil-safe-rmdir = "torchoutil.entries:main_safe_rmdir"
 
 [tool.setuptools.packages.find]
 where = ["src"]  # list of folders that contain the packages (["."] by default)
-include = ["torchoutil*"]  # package names should match these glob patterns (["*"] by default)
+include = ["torchoutil", "pyoutil"]  # package names should match these glob patterns (["*"] by default)
 
 [tool.setuptools.dynamic]
 version = {attr = "torchoutil.__version__"}

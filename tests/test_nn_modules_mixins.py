@@ -10,7 +10,7 @@ from unittest import TestCase
 import torch
 
 from torchoutil import Tensor, nn
-from torchoutil.nn.modules.mixins import _DEFAULT_DEVICE_DETECT_MODE
+from torchoutil.nn.modules._mixins import _DEFAULT_DEVICE_DETECT_MODE
 
 
 class Intermediate(torch.nn.Module):

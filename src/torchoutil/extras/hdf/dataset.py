@@ -47,7 +47,7 @@ from torchoutil.pyoutil.typing import is_iterable_bytes_or_list, is_iterable_str
 from torchoutil.types._typing import ScalarLike
 from torchoutil.types.guards import is_scalar_like
 from torchoutil.utils.data import DatasetSlicer
-from torchoutil.utils.pack.common import _dict_to_tuple
+from torchoutil.extras.hdf.common import _dict_to_tuple
 from torchoutil.utils.saving import to_builtin
 
 T = TypeVar("T", covariant=True)
@@ -93,11 +93,11 @@ class HDFDataset(Generic[T, U], DatasetSlicer[U]):
 
         Args:
             hdf_fpath: The path to the HDF file.
-            transforms: The transform to apply values. default to None.
+            transform: The transform to apply values. default to None.
             keep_padding: Keys to keep padding values. defaults to ().
-            return_added_columns: Returns the columns added by pack_to_hdf(.) function.
+            return_added_columns: If True, returns the columns added by pack_to_hdf(.) function. defaults to False.
             open_hdf: If True, open the HDF file at start. defaults to True.
-            numpy_to_torch: If True, converts numpy array to PyTorch tensors. defaults to True.
+            cast: Cast policy when loading data. defaults to None.
             file_kwds: Options given to h5py file object. defaults to None.
         """
         hdf_fpath = Path(hdf_fpath).resolve().expanduser()
@@ -119,6 +119,7 @@ class HDFDataset(Generic[T, U], DatasetSlicer[U]):
             add_indices_support=False,
             add_mask_support=False,
             add_slice_support=False,
+            add_none_support=True,
         )
         self._hdf_fpath = hdf_fpath
         self._transform = transform

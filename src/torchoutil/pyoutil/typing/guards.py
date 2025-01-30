@@ -75,6 +75,22 @@ def is_dict_str_optional_int(x: Any) -> TypeIs[Dict[str, Optional[int]]]:
     )
 
 
+def is_dict_str_number(x: Any) -> TypeIs[Dict[str, Number]]:
+    return (
+        isinstance(x, dict)
+        and all(isinstance(key, str) for key in x.keys())
+        and all(isinstance(value, Number) for value in x.values())
+    )
+
+
+def is_dict_str_str(x: Any) -> TypeIs[Dict[str, str]]:
+    return (
+        isinstance(x, dict)
+        and all(isinstance(key, str) for key in x.keys())
+        and all(isinstance(value, str) for value in x.values())
+    )
+
+
 def is_iterable_bool(
     x: Any,
     *,

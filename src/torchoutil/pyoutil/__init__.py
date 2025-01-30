@@ -7,6 +7,7 @@ from .abc import Singleton
 from .argparse import (
     str_to_bool,
     str_to_optional_bool,
+    str_to_optional_float,
     str_to_optional_int,
     str_to_optional_str,
 )

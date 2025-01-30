@@ -6,7 +6,7 @@ from unittest import TestCase
 
 import torch
 
-from torchoutil.nn.modules.mixins import ESequential
+from torchoutil.nn.modules import ESequential
 from torchoutil.nn.modules.multiclass import (
     IndexToName,
     IndexToOnehot,

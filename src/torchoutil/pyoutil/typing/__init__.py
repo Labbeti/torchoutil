@@ -20,6 +20,8 @@ from .guards import (
     is_builtin_scalar,
     is_dataclass_instance,
     is_dict_str,
+    is_dict_str_number,
+    is_dict_str_str,
     is_dict_str_optional_int,
     is_iterable_bool,
     is_iterable_bytes_or_list,

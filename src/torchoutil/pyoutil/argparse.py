@@ -33,31 +33,6 @@ def str_to_bool(
     raise ValueError(f"Invalid argument '{x}'. (expected one of {values})")
 
 
-def str_to_optional_int(
-    x: str,
-    *,
-    case_sensitive: bool = False,
-    none_values: Union[str, Iterable[str]] = DEFAULT_NONE_VALUES,
-) -> Optional[int]:
-    none_values = _sanitize_values(none_values)
-    if _str_in(x, none_values, case_sensitive):
-        return None
-
-    return int(x)
-
-
-def str_to_optional_str(
-    x: str,
-    *,
-    case_sensitive: bool = False,
-    none_values: Union[str, Iterable[str]] = DEFAULT_NONE_VALUES,
-) -> Optional[str]:
-    none_values = _sanitize_values(none_values)
-    if _str_in(x, none_values, case_sensitive):
-        return None
-
-    return x
-
 
 def str_to_optional_bool(
     x: str,
@@ -81,6 +56,41 @@ def str_to_optional_bool(
 
     values = tuple(true_values + false_values + none_values)
     raise ValueError(f"Invalid argument '{x}'. (expected one of {values})")
+
+def str_to_optional_float(
+    x: str,
+    *,
+    case_sensitive: bool = False,
+    none_values: Union[str, Iterable[str]] = DEFAULT_NONE_VALUES,
+) -> Optional[float]:
+    none_values = _sanitize_values(none_values)
+    if _str_in(x, none_values, case_sensitive):
+        return None
+    return float(x)
+
+
+def str_to_optional_int(
+    x: str,
+    *,
+    case_sensitive: bool = False,
+    none_values: Union[str, Iterable[str]] = DEFAULT_NONE_VALUES,
+) -> Optional[int]:
+    none_values = _sanitize_values(none_values)
+    if _str_in(x, none_values, case_sensitive):
+        return None
+    return int(x)
+
+
+def str_to_optional_str(
+    x: str,
+    *,
+    case_sensitive: bool = False,
+    none_values: Union[str, Iterable[str]] = DEFAULT_NONE_VALUES,
+) -> Optional[str]:
+    none_values = _sanitize_values(none_values)
+    if _str_in(x, none_values, case_sensitive):
+        return None
+    return x
 
 
 def _sanitize_values(values: Union[str, Iterable[str]]) -> List[str]:

@@ -7,7 +7,8 @@ from .activation import LogSoftmaxMultidim, SoftmaxMultidim
 from .crop import CropDim, CropDims
 from .layer import PositionalEncoding
 from .mask import MaskedMean, MaskedSum
-from .mixins import EModule, EModuleDict, EModuleList, EModulePartial, ESequential
+from .container import EModuleDict, EModuleList, EModulePartial, ESequential
+from .module import EModule
 from .multiclass import (
     IndexToName,
     IndexToOnehot,

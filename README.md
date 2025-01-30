@@ -146,7 +146,7 @@ x3 = x2[inv_perm]
 # inv_perm are indices that allow us to get x3 from x2, i.e. x1 == x3 here
 ```
 
-### Pre-compute datasets to pickle or HDF files
+### Pre-compute datasets to HDF files
 
 Here is an example of pre-computing spectrograms of torchaudio `SPEECHCOMMANDS` dataset, using `pack_dataset` function:
 
@@ -154,10 +154,10 @@ Here is an example of pre-computing spectrograms of torchaudio `SPEECHCOMMANDS` 
 from torchaudio.datasets import SPEECHCOMMANDS
 from torchaudio.transforms import Spectrogram
 from torchoutil import nn
-from torchoutil.utils.pack import pack_dataset
+from torchoutil.extras.hdf import pack_to_hdf
 
 speech_commands_root = "path/to/speech_commands"
-packed_root = "path/to/packed_dataset"
+packed_root = "path/to/packed_dataset.hdf"
 
 dataset = SPEECHCOMMANDS(speech_commands_root, download=True, subset="validation")
 # dataset[0] is a tuple, contains waveform and other metadata
@@ -172,15 +172,15 @@ class MyTransform(nn.Module):
         spectrogram = self.spectrogram_extractor(waveform)
         return (spectrogram,) + item[1:]
 
-pack_dataset(dataset, packed_root, MyTransform())
+pack_to_hdf(dataset, packed_root, MyTransform())
 ```
 
-Then you can load the pre-computed dataset using `PackedDataset`:
+Then you can load the pre-computed dataset using `HDFDataset`:
 ```python
-from torchoutil.utils.pack import PackedDataset
+from torchoutil.extras.hdf import HDFDataset
 
-packed_root = "path/to/packed_dataset"
-packed_dataset = PackedDataset(packed_root)
+packed_root = "path/to/packed_dataset.hdf"
+packed_dataset = HDFDataset(packed_root)
 packed_dataset[0]  # == first transformed item, i.e. transform(dataset[0])
 ```
 

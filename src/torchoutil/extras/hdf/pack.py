@@ -53,7 +53,7 @@ from torchoutil.pyoutil.typing import is_dataclass_instance, is_dict_str
 from torchoutil.types import BuiltinScalar
 from torchoutil.utils.data.dataloader import get_auto_num_cpus
 from torchoutil.utils.data.dataset import IterableDataset, SizedDatasetLike
-from torchoutil.utils.pack.common import EXISTS_MODES, ExistsMode, _tuple_to_dict
+from torchoutil.extras.hdf.common import EXISTS_MODES, ExistsMode, _tuple_to_dict
 from torchoutil.utils.saving.common import to_builtin
 
 T = TypeVar("T", covariant=True)

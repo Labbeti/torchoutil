@@ -1,10 +1,18 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from typing import Any, Dict, List, Literal, TypedDict
+from typing import Any, Dict, List, Literal, TypedDict, Tuple, TypeVar
 
 import h5py
 import numpy as np
+
+T = TypeVar("T", covariant=True)
+
+HDFItemType = Literal["dict", "tuple"]
+ExistsMode = Literal["overwrite", "skip", "error"]
+
+HDF_ITEM_TYPES = ("dict", "tuple")
+EXISTS_MODES = ("overwrite", "skip", "error")
 
 # Force this encoding
 HDF_ENCODING = "utf-8"
@@ -14,9 +22,6 @@ SHAPE_SUFFIX = "__shape"
 HDF_STRING_DTYPE: np.dtype = h5py.string_dtype(HDF_ENCODING, None)
 # Type for empty lists
 HDF_VOID_DTYPE: np.dtype = h5py.opaque_dtype("V1")
-
-
-HDFItemType = Literal["dict", "tuple"]
 
 
 class HDFDatasetAttributes(TypedDict):
@@ -64,3 +69,11 @@ _DEFAULTS_RAW_HDF_ATTRIBUTES = {
     "user_attrs": "None",
     "torchoutil_version": "unknown",
 }
+
+
+def _tuple_to_dict(x: Tuple[T, ...]) -> Dict[str, T]:
+    return dict(zip(map(str, range(len(x))), x))
+
+
+def _dict_to_tuple(x: Dict[str, T]) -> Tuple[T, ...]:
+    return tuple(x.values())
