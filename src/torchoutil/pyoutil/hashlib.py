@@ -5,7 +5,7 @@ import hashlib
 import logging
 from io import BufferedReader
 from pathlib import Path
-from typing import Literal, Protocol, Union, runtime_checkable
+from typing import Literal, Protocol, Union, runtime_checkable, Optional
 
 from typing_extensions import Buffer
 
@@ -33,7 +33,7 @@ class Hasher(Protocol):
 def hash_file(
     fpath: Union[str, Path, BufferedReader],
     hash_type: Union[HashName, Hasher] = "md5",
-    chunk_size: int | None = DEFAULT_CHUNK_SIZE,
+    chunk_size: Optional[int] = DEFAULT_CHUNK_SIZE,
 ) -> str:
     """Return the hash value for a file.
 
