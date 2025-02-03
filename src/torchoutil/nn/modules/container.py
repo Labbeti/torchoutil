@@ -12,11 +12,10 @@ from typing import (
     Optional,
     OrderedDict,
     overload,
-    ParamSpec,
 )
 
 from torch import nn
-from typing_extensions import Concatenate
+from typing_extensions import Concatenate, ParamSpec
 
 from torchoutil.nn.modules._mixins import (
     InType,
