@@ -33,7 +33,6 @@ def str_to_bool(
     raise ValueError(f"Invalid argument '{x}'. (expected one of {values})")
 
 
-
 def str_to_optional_bool(
     x: str,
     *,
@@ -56,6 +55,7 @@ def str_to_optional_bool(
 
     values = tuple(true_values + false_values + none_values)
     raise ValueError(f"Invalid argument '{x}'. (expected one of {values})")
+
 
 def str_to_optional_float(
     x: str,

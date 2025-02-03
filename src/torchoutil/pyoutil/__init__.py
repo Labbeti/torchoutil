@@ -35,6 +35,8 @@ from .collections import (
     union_dicts,
     union_lists,
     unzip,
+    is_unique,
+    is_full,
 )
 from .csv import load_csv, to_csv
 from .dataclasses import get_defaults_values
@@ -44,10 +46,12 @@ from .enum import StrEnum
 from .functools import Compose, compose, filter_and_call, get_argnames, identity
 from .hashlib import hash_file
 from .importlib import (
-    package_is_available,
-    reload_globals_modules,
+    is_available_package,
     reload_submodules,
-    search_imported_submodules,
+    search_submodules,
+    reload_editable_packages,
+    is_editable_package,
+    package_is_available,
 )
 from .inspect import get_current_fn_name, get_fullname
 from .io import open_close_wrap

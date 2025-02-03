@@ -2,13 +2,15 @@
 # -*- coding: utf-8 -*-
 
 import importlib
-import inspect
 import logging
 import pkgutil
 import sys
 from importlib.util import find_spec
+import json
 from types import ModuleType
-from typing import Any, Iterable, List
+from typing import Any, List
+from importlib.metadata import Distribution, PackageNotFoundError
+
 
 DEFAULT_SKIPPED = (
     "reimport_all",
@@ -27,7 +29,7 @@ DEFAULT_SKIPPED = (
 pylog = logging.getLogger(__name__)
 
 
-def package_is_available(package: str) -> bool:
+def is_available_package(package: str) -> bool:
     """Returns True if package is installed in the current python environment."""
     try:
         return find_spec(package) is not None
@@ -39,86 +41,89 @@ def package_is_available(package: str) -> bool:
         return False
 
 
-def search_imported_submodules(
+package_is_available = is_available_package
+
+
+def is_editable_package(package: str) -> bool:
+    # TODO: check if this works with package containing - or _
+    try:
+        direct_url = Distribution.from_name(package).read_text("direct_url.json")
+    except PackageNotFoundError:
+        return False
+    if direct_url is None:
+        return False
+    editable = json.loads(direct_url).get("dir_info", {}).get("editable", False)
+    return editable
+
+
+def search_submodules(
     root: ModuleType,
-    parent_name: str = "",
+    only_editable: bool = True,
+    only_loaded: bool = False,
 ) -> List[ModuleType]:
     """Return the submodules already imported."""
-    if root.__package__ is None:
-        raise ValueError(f"Cannot search in module '{root}'. (found __package__=None)")
 
-    if parent_name != "":
-        parent_name = ".".join([parent_name, root.__package__])
-    else:
-        parent_name = root.__package__
+    def _impl(
+        root: ModuleType, accumulator: dict[ModuleType, None]
+    ) -> dict[ModuleType, None]:
+        attrs = [getattr(root, attr_name) for attr_name in dir(root)]
+        submodules = [
+            attr
+            for attr in attrs
+            if isinstance(attr, ModuleType) and attr not in accumulator
+        ]
+        submodules = {
+            submodule
+            for submodule in submodules
+            if (
+                (
+                    not only_editable
+                    or is_editable_package(submodule.__name__.split(".")[0])
+                )
+                and (not only_loaded or submodule.__name__ in sys.modules)
+            )
+        }
+        accumulator.update(submodules)
+        for submodule in submodules:
+            accumulator = _impl(submodule, accumulator)
+        return accumulator
 
-    if hasattr(root, "__path__"):
-        paths = root.__path__
-    elif root.__file__ is not None:
-        paths = [root.__file__]
-    else:
-        raise ValueError
-
-    module_infos = list(pkgutil.iter_modules(paths))
-    candidates = []
-
-    for info in module_infos:
-        if info.name == "__main__":
-            continue
-        fullname = f"{parent_name}.{info.name}"
-        candidate = sys.modules.get(fullname)
-        if candidate is None:
-            continue
-        sub_candidates = search_imported_submodules(candidate, parent_name)
-        candidates += sub_candidates + [candidate]
-
-    return candidates
+    submodules = _impl(root, {root})
+    submodules = list(submodules)[::-1]
+    return submodules
 
 
-def reload_submodules(root: ModuleType, verbose: int = 0) -> List[ModuleType]:
-    candidates = search_imported_submodules(root) + [root]
+def reload_submodules(
+    module: ModuleType,
+    *others: ModuleType,
+    verbose: int = 0,
+    only_editable: bool = True,
+    only_loaded: bool = False,
+) -> List[ModuleType]:
+    modules = (module,) + others
+    candidates = {}
+    for module in modules:
+        submodules = search_submodules(
+            module, only_editable=only_editable, only_loaded=only_loaded
+        )
+        candidates |= dict.fromkeys(submodules)
+
     for candidate in candidates:
         if verbose > 0:
-            pylog.info(f"Reload '{candidate}'")
+            pylog.info(f"Reload '{candidate}'...")
         importlib.reload(candidate)
-    return candidates
-
-
-def reload_globals_modules(
-    skipped: Iterable[str] = DEFAULT_SKIPPED,
-    verbose: int = 0,
-) -> List[ModuleType]:
-    """Re-import modules and functions in the caller context. This function does not work with builtins constants values."""
-    skipped = dict.fromkeys(skipped)
-
-    importlib.invalidate_caches()
-    caller_globals = dict(inspect.getmembers(inspect.stack()[1][0]))["f_globals"]
-    if verbose >= 1:
-        print(f"{caller_globals.keys()=}")
-
-    candidates = []
-
-    for k, v in caller_globals.items():
-        if k in skipped:
-            continue
-
-        if isinstance(v, ModuleType):
-            candidates += reload_submodules(v, verbose=verbose)
-            continue
-
-        v = inspect.getmodule(v)
-        if v is None or v.__name__ == "__main__":
-            continue
-
-        candidates += reload_submodules(v, verbose=verbose)
-
-        try:
-            caller_globals[k] = getattr(v, k)
-        except AttributeError:
-            if verbose >= 1:
-                print(f"Cannot set parent global value '{k}'.")
 
     return candidates
+
+
+def reload_editable_packages(*, verbose: int = 0) -> List[ModuleType]:
+    pkg_names = {name.split(".")[0] for name in sys.modules.keys()}
+    editable_packages = [
+        sys.modules[name] for name in pkg_names if is_editable_package(name)
+    ]
+    return reload_submodules(
+        *editable_packages, verbose=verbose, only_editable=True, only_loaded=False
+    )
 
 
 class Placeholder:

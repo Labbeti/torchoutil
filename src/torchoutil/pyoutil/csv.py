@@ -50,12 +50,14 @@ def to_csv(
 
     if header:
         writer_cls = DictWriter
-        if len(data_lst) == 0:
-            fieldnames = []
-        else:
-            fieldnames = [str(k) for k in data_lst[0].keys()]
     else:
         writer_cls = csv.writer
+
+    if len(data_lst) == 0:
+        fieldnames = []
+    elif header:
+        fieldnames = [str(k) for k in data_lst[0].keys()]
+    else:
         fieldnames = list(range(len(next(iter(data_lst)))))
 
     if align_content:
@@ -96,7 +98,9 @@ def to_csv(
 
 
 def _setup_path(
-    fpath: Union[str, Path, None], overwrite: bool, make_parents: bool
+    fpath: Union[str, Path, None],
+    overwrite: bool,
+    make_parents: bool,
 ) -> Optional[Path]:
     if fpath is None:
         return fpath
@@ -106,6 +110,7 @@ def _setup_path(
         raise FileExistsError(f"File {fpath} already exists.")
     elif make_parents:
         fpath.parent.mkdir(parents=True, exist_ok=True)
+
     return fpath
 
 

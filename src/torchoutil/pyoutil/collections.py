@@ -378,6 +378,9 @@ def all_eq(it: Iterable[T], eq_fn: Optional[Callable[[T, T], bool]] = None) -> b
         return all(eq_fn(first, elt) for elt in it)
 
 
+is_full = all_eq
+
+
 def all_ne(
     it: Iterable[T],
     ne_fn: Optional[Callable[[T, T], bool]] = None,
@@ -387,6 +390,8 @@ def all_ne(
 
     Note: This function returns True for iterable that contains 0 or 1 element.
     """
+    if isinstance(it, (set, frozenset, dict)):
+        return True
     if use_set and ne_fn is not None:
         raise ValueError(f"Cannot use arguments {use_set=} with {ne_fn=}.")
 
@@ -401,6 +406,9 @@ def all_ne(
         return all(
             ne_fn(it[i], it[j]) for i in range(len(it)) for j in range(i + 1, len(it))
         )
+
+
+is_unique = all_ne
 
 
 def flat_dict_of_dict(

@@ -7,7 +7,7 @@ import torch
 
 from torchoutil.core.semver import Version
 from torchoutil.pyoutil.functools import identity
-from torchoutil.pyoutil.importlib import package_is_available
+from torchoutil.pyoutil.importlib import is_available_package
 
 
 def _get_extra_version(name: str) -> Optional[str]:
@@ -30,7 +30,7 @@ _EXTRAS_PACKAGES = (
     "tqdm",
     "yaml",
 )
-_EXTRA_AVAILABLE = {name: package_is_available(name) for name in _EXTRAS_PACKAGES}
+_EXTRA_AVAILABLE = {name: is_available_package(name) for name in _EXTRAS_PACKAGES}
 _EXTRA_VERSION = {name: _get_extra_version(name) for name in _EXTRAS_PACKAGES}
 
 
@@ -52,7 +52,7 @@ def requires_packages(packages: Union[str, Iterable[str]]) -> Callable:
     else:
         packages = list(packages)
 
-    missing = [pkg for pkg in packages if not package_is_available(pkg)]
+    missing = [pkg for pkg in packages if not is_available_package(pkg)]
     if len(missing) == 0:
         return identity
 
