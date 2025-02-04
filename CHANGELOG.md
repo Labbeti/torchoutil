@@ -10,6 +10,9 @@ All notable changes to this project will be documented in this file.
 - Fix global import of `to.utils.return_types.shape` in python 3.9.
 - `checksum` function with non-cpu tensors.
 
+### Deleted
+- `pack_custom` function and classes.
+
 ## [0.5.0] 2024-11-28
 Major rework of `torchoutil` project folders.
 

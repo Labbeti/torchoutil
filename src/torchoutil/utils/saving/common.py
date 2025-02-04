@@ -40,25 +40,32 @@ K = TypeVar("K")
 V = TypeVar("V")
 
 UnkMode = Literal["identity", "error"]
-SavingBackends = Literal[
+SavingBackend = Literal[
     "csv",
     "json",
     "numpy",
     "pickle",
     "safetensors",
     "torch",
+    "torchaudio",
     "yaml",
 ]
 
 # Note: order matter here: last extension of a backend is the default/recommanded one
-EXTENSION_TO_BACKEND: Dict[str, SavingBackends] = {
+EXTENSION_TO_BACKEND: Dict[str, SavingBackend] = {
     "tsv": "csv",
     "csv": "csv",
     "json": "json",
     "pkl": "pickle",
     "pickle": "pickle",
     "torch": "torch",
+    "ckpt": "torch",
     "pt": "torch",
+    "mp3": "torchaudio",
+    "wav": "torchaudio",
+    "aac": "torchaudio",
+    "ogg": "torchaudio",
+    "flac": "torchaudio",
 }
 
 if _NUMPY_AVAILABLE:
@@ -74,7 +81,7 @@ if _YAML_AVAILABLE:
     EXTENSION_TO_BACKEND["yml"] = "yaml"
     EXTENSION_TO_BACKEND["yaml"] = "yaml"
 
-BACKEND_TO_EXTENSION: Dict[SavingBackends, str] = {
+BACKEND_TO_EXTENSION: Dict[SavingBackend, str] = {
     backend: ext for ext, backend in EXTENSION_TO_BACKEND.items()
 }
 UNK_MODES = ("identity", "error")

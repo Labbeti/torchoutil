@@ -298,7 +298,7 @@ def checksum_none(x: None, **kwargs) -> int:
 
 def checksum_ndarray(x: Union[np.ndarray, np.generic], **kwargs) -> int:
     if not _NUMPY_AVAILABLE:
-        msg = "Cannot call function 'checksum_ndarray' because optional dependancy 'numpy' is not installed. Please install it using 'pip install torchoutil[extras]'"
+        msg = "Cannot call function 'checksum_ndarray' because optional dependency 'numpy' is not installed. Please install it using 'pip install torchoutil[extras]'"
         raise NotImplementedError(msg)
 
     # Supports non-numeric numpy arrays (byte string, unicode string, object, void)

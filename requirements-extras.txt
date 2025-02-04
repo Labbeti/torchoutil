@@ -10,3 +10,4 @@ safetensors
 scipy
 tensorboard
 tqdm
+torchaudio

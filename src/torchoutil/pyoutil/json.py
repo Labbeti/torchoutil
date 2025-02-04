@@ -5,6 +5,8 @@ import json
 from pathlib import Path
 from typing import Any, Optional, Union
 
+from torchoutil.pyoutil.io import _setup_path
+
 
 def to_json(
     data: Any,
@@ -18,13 +20,7 @@ def to_json(
     **json_dump_kwds,
 ) -> str:
     """Dump content to JSON format."""
-    if fpath is not None:
-        fpath = Path(fpath).resolve().expanduser()
-        if not overwrite and fpath.exists():
-            raise FileExistsError(f"File {fpath} already exists.")
-        elif make_parents:
-            fpath.parent.mkdir(parents=True, exist_ok=True)
-
+    fpath = _setup_path(fpath, overwrite, make_parents)
     content = json.dumps(
         data,
         indent=indent,

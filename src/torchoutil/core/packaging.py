@@ -26,6 +26,7 @@ _EXTRAS_PACKAGES = (
     "pandas",
     "safetensors",
     "scipy",
+    "torchaudio",
     "tensorboard",
     "tqdm",
     "yaml",
@@ -41,6 +42,7 @@ _OMEGACONF_AVAILABLE: Final[bool] = _EXTRA_AVAILABLE["omegaconf"]
 _PANDAS_AVAILABLE: Final[bool] = _EXTRA_AVAILABLE["pandas"]
 _SAFETENSORS_AVAILABLE: Final[bool] = _EXTRA_AVAILABLE["safetensors"]
 _SCIPY_AVAILABLE: Final[bool] = _EXTRA_AVAILABLE["scipy"]
+_TORCHAUDIO_AVAILABLE: Final[bool] = _EXTRA_AVAILABLE["torchaudio"]
 _TENSORBOARD_AVAILABLE: Final[bool] = _EXTRA_AVAILABLE["tensorboard"]
 _TQDM_AVAILABLE: Final[bool] = _EXTRA_AVAILABLE["tqdm"]
 _YAML_AVAILABLE: Final[bool] = _EXTRA_AVAILABLE["yaml"]

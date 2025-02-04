@@ -126,10 +126,11 @@ from .types.tensor_subclasses import (
 from .types.variable_fns import as_tensor, empty, full, ones, rand, zeros
 from .utils.saving.common import to_builtin
 from .utils.saving.csv import load_csv, to_csv
-from .utils.saving.dump_fn import dump
+from .utils.saving.dump_fn import dump, save
 from .utils.saving.json import load_json, to_json
 from .utils.saving.load_fn import load
 from .utils.saving.pickle import load_pickle, to_pickle
+from .utils.saving.torch import to_torch, load_torch
 
 version = __version__
 version_info = Version(__version__)

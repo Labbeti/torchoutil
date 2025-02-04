@@ -22,6 +22,7 @@ from torchoutil.pyoutil.collections import (
     dict_list_to_list_dict,
     list_dict_to_dict_list,
 )
+from torchoutil.pyoutil.io import _setup_path
 
 T = TypeVar("T")
 
@@ -95,23 +96,6 @@ def to_csv(
         fpath.write_text(content)
 
     return content
-
-
-def _setup_path(
-    fpath: Union[str, Path, None],
-    overwrite: bool,
-    make_parents: bool,
-) -> Optional[Path]:
-    if fpath is None:
-        return fpath
-
-    fpath = Path(fpath).resolve().expanduser()
-    if not overwrite and fpath.exists():
-        raise FileExistsError(f"File {fpath} already exists.")
-    elif make_parents:
-        fpath.parent.mkdir(parents=True, exist_ok=True)
-
-    return fpath
 
 
 @overload

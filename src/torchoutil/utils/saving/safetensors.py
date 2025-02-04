@@ -2,12 +2,15 @@
 # -*- coding: utf-8 -*-
 
 from pathlib import Path
-from typing import Dict, Literal, Optional, Tuple, Union, overload
+from typing import Dict, Literal, Optional, Tuple, Union, overload, Any
 
 from safetensors import safe_open
-from safetensors.torch import save_file
+from safetensors.torch import save
 from torch import Tensor
 
+from torchoutil.nn.functional.transform import to_tensor
+from torchoutil.pyoutil.io import _setup_path
+from torchoutil.pyoutil.inspect import get_fullname
 from torchoutil.types.guards import is_dict_str_tensor
 
 
@@ -51,13 +54,49 @@ def load_safetensors(
     return result
 
 
+@overload
 def to_safetensors(
     tensors: Dict[str, Tensor],
-    fpath: Union[str, Path],
+    fpath: Union[str, Path, None] = None,
     metadata: Optional[Dict[str, str]] = None,
-) -> None:
-    if not is_dict_str_tensor(tensors):
-        msg = f"Invalid argument type {type(tensors)}."
+    *,
+    overwrite: bool = True,
+    make_parents: bool = True,
+    convert_to_tensor: Literal[False] = False,
+) -> bytes:
+    ...
+
+
+@overload
+def to_safetensors(
+    tensors: Dict[str, Any],
+    fpath: Union[str, Path, None] = None,
+    metadata: Optional[Dict[str, str]] = None,
+    *,
+    overwrite: bool = True,
+    make_parents: bool = True,
+    convert_to_tensor: Literal[True],
+) -> bytes:
+    ...
+
+
+def to_safetensors(
+    tensors: Dict[str, Tensor],
+    fpath: Union[str, Path, None] = None,
+    metadata: Optional[Dict[str, str]] = None,
+    *,
+    overwrite: bool = True,
+    make_parents: bool = True,
+    convert_to_tensor: bool = False,
+) -> bytes:
+    if convert_to_tensor:
+        tensors = {k: to_tensor(v) for k, v in tensors.items()}
+    elif not is_dict_str_tensor(tensors):
+        msg = f"Invalid argument type {type(tensors)}. (expected dict[str, Tensor] but found {get_fullname(type(tensors))})"
         raise TypeError(msg)
 
-    return save_file(tensors, fpath, metadata)
+    fpath = _setup_path(fpath, overwrite, make_parents)
+    content = save(tensors, fpath, metadata)
+    if fpath is not None:
+        fpath.write_bytes(content)
+    return content

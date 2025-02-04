@@ -27,7 +27,7 @@ from torchoutil.core.make import DeviceLike, make_device
 from torchoutil.pyoutil.hashlib import HashName, hash_file
 from torchoutil.pyoutil.logging import warn_once
 from torchoutil.utils.saving.json import load_json, to_json
-from torchoutil.utils.saving.load_fn import LOAD_FNS, LoadFnLike
+from torchoutil.utils.saving.load_fn import LOAD_FNS, LoadFnLike, load_torch
 
 T_Hashable = TypeVar("T_Hashable", bound=Hashable)
 
@@ -95,7 +95,7 @@ class RegistryHub(Generic[T_Hashable]):
         *,
         device: DeviceLike = None,
         offline: bool = False,
-        load_fn: LoadFnLike = torch.load,
+        load_fn: LoadFnLike = load_torch,
         load_kwds: Optional[Dict[str, Any]] = None,
         verbose: int = 0,
     ) -> Dict[str, Tensor]:

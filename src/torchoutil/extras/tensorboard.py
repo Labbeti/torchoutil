@@ -12,7 +12,7 @@ from typing_extensions import NotRequired
 from torchoutil.core.packaging import _TENSORBOARD_AVAILABLE
 
 if not _TENSORBOARD_AVAILABLE:
-    msg = "Cannot import tensorboard objects because optional dependancy 'tensorboard' is not installed. Please install it using 'pip install torchoutil[extras]'"
+    msg = "Cannot import tensorboard objects because optional dependency 'tensorboard' is not installed. Please install it using 'pip install torchoutil[extras]'"
     raise ImportError(msg)
 
 from tensorboard.backend.event_processing.event_file_loader import (  # type: ignore
