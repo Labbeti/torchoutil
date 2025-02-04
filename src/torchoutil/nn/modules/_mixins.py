@@ -20,6 +20,7 @@ from typing import (
     Union,
     overload,
     runtime_checkable,
+    Mapping,
 )
 
 import torch
@@ -29,7 +30,9 @@ from torch.nn.parameter import Parameter
 
 from torchoutil.pyoutil.collections import dump_dict
 from torchoutil.pyoutil.re import match_patterns
-from torchoutil.pyoutil.typing import NoneType, is_dict_str, is_mapping_str
+from torchoutil.pyoutil.typing import NoneType, isinstance_guard
+from torchoutil.nn.functional.checksum import checksum_module
+from torchoutil.nn.functional.others import count_parameters
 
 T = TypeVar("T", covariant=True)
 InType = TypeVar("InType", covariant=False, contravariant=True)
@@ -195,7 +198,9 @@ class ConfigModule(Generic[T_MutableMappingStr], nn.Module):
         if self.config == in_config:
             return None
 
-        if is_dict_str(in_config) and is_dict_str(self.config):
+        if isinstance_guard(in_config, Dict[str, Any]) and isinstance_guard(
+            self.config, Dict[str, Any]
+        ):
             MISSING = "<missing>"
             union = set(in_config.keys()).union(self.config.keys())
             msgs = []
@@ -225,7 +230,9 @@ class ConfigModule(Generic[T_MutableMappingStr], nn.Module):
             prefix = ""
         elif isinstance(value, ConfigModule):
             subconfig = value.config
-        elif hasattr(value, "_hparams") and is_mapping_str(value._hparams):
+        elif hasattr(value, "_hparams") and isinstance_guard(
+            value._hparams, Mapping[str, Any]
+        ):
             subconfig = dict(value._hparams.items())  # type: ignore
         elif isinstance(value, torch.nn.Module):
             subconfig = cls._detect_torch_module_subconfig(value)
@@ -284,32 +291,6 @@ class TypedModule(Generic[InType, OutType], nn.Module):
     def __call__(self, *args: InType, **kwargs: InType) -> OutType:
         return super().__call__(*args, **kwargs)
 
-    @overload
-    def chain(
-        self,
-        *others: TypedModuleLike[Any, OutType],
-    ) -> "ESequential[InType, OutType]":
-        ...
-
-    @overload
-    def chain(self, *others: nn.Module) -> "ESequential[InType, Any]":
-        ...
-
-    def chain(self, *others):
-        return ESequential(self, *others)
-
-    def __or__(
-        self,
-        other: TypedModuleLike[Any, OutType],
-    ) -> "ESequential[InType, OutType]":
-        return self.chain(other)
-
-    def __ror__(
-        self,
-        other: TypedModuleLike[InType, Any],
-    ) -> "ESequential[InType, OutType]":
-        return ESequential(other, self)
-
 
 class TypedSequential(
     Generic[InType, OutType],
@@ -354,3 +335,311 @@ class TypedSequential(
 
     def todict(self) -> Dict[str, nn.Module]:
         return copy.copy(self._modules)
+
+
+class EModule(
+    Generic[InType, OutType],
+    ConfigModule,
+    TypedModule[InType, OutType],
+    ProxyDeviceModule,
+):
+    """Enriched torch.nn.Module with proxy device, forward typing and automatic configuration detection from attributes.
+
+    The default behaviour is the same than PyTorch Module class.
+    """
+
+    def __init__(
+        self,
+        *,
+        strict_load: bool = False,
+        config_to_extra_repr: bool = False,
+        device_detect_mode: DeviceDetectMode = _DEFAULT_DEVICE_DETECT_MODE,
+    ) -> None:
+        """
+        Args:
+            strict_load: If True, Module config will be compared during load_state_dict(...) method call and raises a ValueError. defaults to False.
+            config_to_extra_repr: If True, add config to extra repr. defaults to False.
+            device_detect_mode: Enable automatic detection of the module device. defaults to "first_param".
+        """
+        # ConfigModule must be first
+        ConfigModule.__init__(
+            self,
+            strict_load=strict_load,
+            config_to_extra_repr=config_to_extra_repr,
+        )
+        TypedModule.__init__(self)
+        ProxyDeviceModule.__init__(
+            self,
+            device_detect_mode=device_detect_mode,
+        )
+
+    def count_parameters(
+        self,
+        *,
+        recurse: bool = True,
+        only_trainable: bool = False,
+        buffers: bool = False,
+    ) -> int:
+        """Returns the number of parameters in this module."""
+        return count_parameters(
+            self,
+            recurse=recurse,
+            only_trainable=only_trainable,
+            buffers=buffers,
+        )
+
+    def checksum(
+        self,
+        *,
+        only_trainable: bool = False,
+        with_names: bool = False,
+        buffers: bool = False,
+        training: bool = False,
+    ) -> int:
+        return checksum_module(
+            self,
+            only_trainable=only_trainable,
+            with_names=with_names,
+            buffers=buffers,
+            training=training,
+        )
+
+    @overload
+    def chain(
+        self,
+        *others: TypedModuleLike[Any, OutType],
+    ) -> "ESequential[InType, OutType]":
+        ...
+
+    @overload
+    def chain(self, *others: nn.Module) -> "ESequential[InType, Any]":
+        ...
+
+    def chain(self, *others):
+        return ESequential(self, *others)
+
+    def __or__(
+        self,
+        other: TypedModuleLike[Any, OutType],
+    ) -> "ESequential[InType, OutType]":
+        return self.chain(other)
+
+    def __ror__(
+        self,
+        other: TypedModuleLike[InType, Any],
+    ) -> "ESequential[InType, OutType]":
+        return ESequential(other, self)
+
+
+class ESequential(
+    Generic[InType, OutType],
+    EModule[InType, OutType],
+    TypedSequential[InType, OutType],
+):
+    """Enriched torch.nn.Sequential with proxy device, forward typing and automatic configuration detection from attributes.
+
+    Designed to work with `torchoutil.nn.EModule` instances.
+    The default behaviour is the same than PyTorch Sequential class.
+    """
+
+    @overload
+    def __init__(
+        self,
+        /,
+        *,
+        unpack_tuple: bool = False,
+        unpack_dict: bool = False,
+        strict_load: bool = False,
+        config_to_extra_repr: bool = False,
+        device_detect_mode: DeviceDetectMode = _DEFAULT_DEVICE_DETECT_MODE,
+    ) -> None:
+        ...
+
+    @overload
+    def __init__(
+        self,
+        arg0: TypedModuleLike[InType, OutType],
+        /,
+        *,
+        unpack_tuple: bool = False,
+        strict_load: bool = False,
+        config_to_extra_repr: bool = False,
+        device_detect_mode: DeviceDetectMode = _DEFAULT_DEVICE_DETECT_MODE,
+        unpack_dict: bool = False,
+    ) -> None:
+        ...
+
+    @overload
+    def __init__(
+        self,
+        arg0: TypedModuleLike[InType, Any],
+        arg1: TypedModuleLike[Any, OutType],
+        /,
+        *,
+        unpack_tuple: bool = False,
+        unpack_dict: bool = False,
+        strict_load: bool = False,
+        config_to_extra_repr: bool = False,
+        device_detect_mode: DeviceDetectMode = _DEFAULT_DEVICE_DETECT_MODE,
+    ) -> None:
+        ...
+
+    @overload
+    def __init__(
+        self,
+        arg0: TypedModuleLike[InType, Any],
+        arg1: TypedModuleLike[Any, Any],
+        arg2: TypedModuleLike[Any, OutType],
+        /,
+        *,
+        unpack_tuple: bool = False,
+        unpack_dict: bool = False,
+        strict_load: bool = False,
+        config_to_extra_repr: bool = False,
+        device_detect_mode: DeviceDetectMode = _DEFAULT_DEVICE_DETECT_MODE,
+    ) -> None:
+        ...
+
+    @overload
+    def __init__(
+        self,
+        arg0: TypedModuleLike[InType, Any],
+        arg1: TypedModuleLike[Any, Any],
+        arg2: TypedModuleLike[Any, Any],
+        arg3: TypedModuleLike[Any, OutType],
+        /,
+        *,
+        unpack_tuple: bool = False,
+        unpack_dict: bool = False,
+        strict_load: bool = False,
+        config_to_extra_repr: bool = False,
+        device_detect_mode: DeviceDetectMode = _DEFAULT_DEVICE_DETECT_MODE,
+    ) -> None:
+        ...
+
+    @overload
+    def __init__(
+        self,
+        arg0: TypedModuleLike[InType, Any],
+        arg1: TypedModuleLike[Any, Any],
+        arg2: TypedModuleLike[Any, Any],
+        arg3: TypedModuleLike[Any, Any],
+        arg4: TypedModuleLike[Any, OutType],
+        /,
+        *,
+        unpack_tuple: bool = False,
+        unpack_dict: bool = False,
+        strict_load: bool = False,
+        config_to_extra_repr: bool = False,
+        device_detect_mode: DeviceDetectMode = _DEFAULT_DEVICE_DETECT_MODE,
+    ) -> None:
+        ...
+
+    @overload
+    def __init__(
+        self,
+        arg0: TypedModuleLike[InType, Any],
+        arg1: TypedModuleLike[Any, Any],
+        arg2: TypedModuleLike[Any, Any],
+        arg3: TypedModuleLike[Any, Any],
+        arg4: TypedModuleLike[Any, Any],
+        arg5: TypedModuleLike[Any, OutType],
+        /,
+        *,
+        unpack_tuple: bool = False,
+        unpack_dict: bool = False,
+        strict_load: bool = False,
+        config_to_extra_repr: bool = False,
+        device_detect_mode: DeviceDetectMode = _DEFAULT_DEVICE_DETECT_MODE,
+    ) -> None:
+        ...
+
+    @overload
+    def __init__(
+        self,
+        arg0: TypedModuleLike[InType, Any],
+        arg1: TypedModuleLike[Any, Any],
+        arg2: TypedModuleLike[Any, Any],
+        arg3: TypedModuleLike[Any, Any],
+        arg4: TypedModuleLike[Any, Any],
+        arg5: TypedModuleLike[Any, Any],
+        arg6: TypedModuleLike[Any, OutType],
+        /,
+        *,
+        unpack_tuple: bool = False,
+        unpack_dict: bool = False,
+        strict_load: bool = False,
+        config_to_extra_repr: bool = False,
+        device_detect_mode: DeviceDetectMode = _DEFAULT_DEVICE_DETECT_MODE,
+    ) -> None:
+        ...
+
+    @overload
+    def __init__(
+        self,
+        arg: "OrderedDict[str, TypedModuleLike[InType, OutType]]",
+        /,
+        *,
+        unpack_tuple: bool = False,
+        unpack_dict: bool = False,
+        strict_load: bool = False,
+        config_to_extra_repr: bool = False,
+        device_detect_mode: DeviceDetectMode = _DEFAULT_DEVICE_DETECT_MODE,
+    ) -> None:
+        ...
+
+    @overload
+    def __init__(
+        self,
+        arg: "OrderedDict[str, nn.Module]",
+        /,
+        *,
+        unpack_tuple: bool = False,
+        unpack_dict: bool = False,
+        strict_load: bool = False,
+        config_to_extra_repr: bool = False,
+        device_detect_mode: DeviceDetectMode = _DEFAULT_DEVICE_DETECT_MODE,
+    ) -> None:
+        ...
+
+    @overload
+    def __init__(
+        self,
+        *args: nn.Module,
+        unpack_tuple: bool = False,
+        unpack_dict: bool = False,
+        strict_load: bool = False,
+        config_to_extra_repr: bool = False,
+        device_detect_mode: DeviceDetectMode = _DEFAULT_DEVICE_DETECT_MODE,
+    ) -> None:
+        ...
+
+    def __init__(
+        self,
+        *args,
+        unpack_tuple: bool = False,
+        unpack_dict: bool = False,
+        strict_load: bool = False,
+        config_to_extra_repr: bool = False,
+        device_detect_mode: DeviceDetectMode = _DEFAULT_DEVICE_DETECT_MODE,
+    ) -> None:
+        """
+        Args:
+            unpack_tuple: If True, the outputs of a module that returns a tuple at position i will be unpacked for positional arguments for the next module at position i+1. defaults to False.
+            unpack_tuple: If True, the outputs of a module that returns a dict at position i will be unpacked for keywords arguments for the next module at position i+1. defaults to False.
+            strict_load: If True, Module config will be compared during load_state_dict(...) method call and raises a ValueError. defaults to False.
+            config_to_extra_repr: If True, add config to extra repr. defaults to False.
+            device_detect_mode: Enable automatic detection of the module device. defaults to "first_param".
+        """
+        EModule.__init__(
+            self,
+            strict_load=strict_load,
+            config_to_extra_repr=config_to_extra_repr,
+            device_detect_mode=device_detect_mode,
+        )
+        TypedSequential.__init__(
+            self,
+            *args,
+            unpack_tuple=unpack_tuple,
+            unpack_dict=unpack_dict,
+        )
