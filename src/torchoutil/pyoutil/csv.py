@@ -43,10 +43,12 @@ def to_csv(
     """Dump content to CSV format."""
     fpath = _setup_path(fpath, overwrite, make_parents)
 
-    if isinstance(data, Mapping):
+    if is_mapping_str_iterable(data):
         data_lst = dict_list_to_list_dict(data)  # type: ignore
-    else:
+    elif iterable_mapping_str(data):
         data_lst = list(data)
+    else:
+        raise TypeError(f"Invalid argument type {type(data)}.")
     del data
 
     if header:

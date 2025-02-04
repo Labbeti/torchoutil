@@ -45,4 +45,7 @@ from .guards import (
     is_tuple_int,
     is_tuple_optional_int,
     is_tuple_str,
+    is_iterable_mapping_str,
+    is_mapping_str_iterable,
+    isinstance_guard,
 )

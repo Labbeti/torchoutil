@@ -4,11 +4,11 @@
 import re
 import sys
 from dataclasses import asdict, dataclass
-from typing import Any, Dict, Tuple, TypedDict, Union, overload
+from typing import Any, Dict, Tuple, TypedDict, Union, overload, Optional
 
 from typing_extensions import NotRequired, TypeIs
 
-from torchoutil.pyoutil.typing import NoneType, is_dict_str_optional_int
+from torchoutil.pyoutil.typing import NoneType, isinstance_guard
 
 # Pattern of https://semver.org/
 _VERSION_PATTERN = r"^(?P<major>0|[1-9]\d*)\.(?P<minor>0|[1-9]\d*)\.(?P<patch>0|[1-9]\d*)(?:-(?P<prerelease>(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+(?P<buildmetadata>[0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$"
@@ -90,7 +90,11 @@ class Version:
             version_dict = _parse_version_str(version_str)
 
         # Version dict
-        elif len(args) == 1 and len(kwargs) == 0 and is_dict_str_optional_int(args[0]):
+        elif (
+            len(args) == 1
+            and len(kwargs) == 0
+            and isinstance_guard(args[0], Dict[str, Optional[int]])
+        ):
             version_dict = args[0]
 
         # Version tuple
