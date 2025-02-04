@@ -187,6 +187,7 @@ def _to_csv_with_pandas(
     *,
     overwrite: bool = True,
     make_parents: bool = True,
+    **kwargs,
 ) -> str:
     backend = "pandas"
     if not _PANDAS_AVAILABLE:
@@ -197,7 +198,7 @@ def _to_csv_with_pandas(
     df = pd.DataFrame(data)  # type: ignore
 
     file = io.StringIO()
-    df.to_csv(file)
+    df.to_csv(file, **kwargs)
     content = file.getvalue()
     file.close()
 
