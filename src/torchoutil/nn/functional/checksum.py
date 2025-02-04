@@ -351,8 +351,8 @@ def checksum_int(x: int, **kwargs) -> int:
 
 
 def _interpret_float_as_int(x: float) -> int:
-    xbytes = struct.pack("!d", x)
-    xint = struct.unpack("l", xbytes)[0]
+    xbytes = struct.pack(">d", x)
+    xint = struct.unpack(">q", xbytes)[0]
     return xint
 
 
