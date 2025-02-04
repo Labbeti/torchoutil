@@ -41,7 +41,7 @@ class TestRegistryHub(TestCase):
         state_dict = register.load_state_dict(
             model_name,
             offline=True,
-            load_kwds=dict(map_location="cpu"),
+            load_kwds=dict(map_location="cpu", weights_only=False),
         )
 
         assert isinstance(state_dict, dict)
