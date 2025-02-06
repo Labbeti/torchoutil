@@ -2,7 +2,7 @@
 
 black==23.12.1
 coverage[toml]
-flake8==4.0.1
+flake8
 ipython
 numpy<2.0.0
 pre-commit
