@@ -51,6 +51,9 @@ def isinstance_guard(x: Any, target_type: Type[T]) -> TypeIs[T]:
         return isinstance(x, target_type)
 
     args = get_args(target_type)
+    if len(args) == 0:
+        return isinstance_guard(x, origin)
+
     if origin is Union:
         return any(isinstance_guard(x, arg) for arg in args)
 
@@ -58,8 +61,6 @@ def isinstance_guard(x: Any, target_type: Type[T]) -> TypeIs[T]:
         assert len(args) in (0, 2), f"{args=}"
         if not isinstance_guard(x, origin):
             return False
-        if len(args) == 0:
-            return True
         return all(isinstance_guard(k, args[0]) for k in x.keys()) and all(
             isinstance_guard(v, args[1]) for v in x.values()
         )
@@ -67,13 +68,21 @@ def isinstance_guard(x: Any, target_type: Type[T]) -> TypeIs[T]:
     if issubclass(origin, Iterable):
         if not isinstance_guard(x, origin):
             return False
-        if len(args) == 0:
-            return True
         return all(isinstance_guard(xi, args[0]) for xi in x)
+    
+    import inspect
+    from typing import Callable
 
-    raise NotImplementedError(
-        f"Unsupported type {target_type}. (expected unparametrized type, Union, Mapping or Iterable)"
-    )
+    if issubclass(origin, Callable):
+        if not isinstance_guard(x, origin):
+            return False
+        if x.__name__ == "<lambda>":
+            msg = f"Unsupported argument type {type(x)} with parametrized {target_type=}."
+            raise NotImplementedError(msg)
+        
+
+    msg = f"Unsupported type {target_type}. (expected unparametrized type or parametrized Union, Mapping or Iterable)"
+    raise NotImplementedError(msg)
 
 
 def is_builtin_obj(x: Any) -> bool:
