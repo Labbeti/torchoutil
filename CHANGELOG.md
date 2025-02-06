@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file.
 ## [0.5.1] UNRELEASED
 ### Added
 - Functions `unsqueeze`, `squeeze` and `one_hot`.
+- Function `isinstance_guard` to check parametrized types.
 
 ### Fixed
 - Fix global import of `to.utils.return_types.shape` in python 3.9.
