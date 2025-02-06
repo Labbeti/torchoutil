@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import io
+import warnings
 from pathlib import Path
 from typing import (
     Any,
@@ -24,8 +25,8 @@ from torchoutil.utils.saving.common import to_builtin
 if _PANDAS_AVAILABLE:
     import pandas as pd
 
-CSVBackend = Literal["csv", "pandas"]
-CSV_BACKENDS = ("csv", "pandas")
+CSVBackend = Literal["csv", "pandas", "auto"]
+CSV_BACKENDS = ("csv", "pandas", "auto")
 
 
 @overload
@@ -75,6 +76,12 @@ def load_csv(
     delimiter: Optional[str] = None,
     **csv_reader_kwds,
 ) -> Union[List[Dict[str, Any]], Dict[str, List[Any]]]:
+    if backend == "auto":
+        if _PANDAS_AVAILABLE:
+            backend = "pandas"
+        else:
+            backend = "csv"
+
     if backend == "csv":
         return load_csv_base(
             fpath,
@@ -150,12 +157,21 @@ def to_csv(
     overwrite: bool = True,
     to_builtins: bool = False,
     make_parents: bool = True,
-    backend: CSVBackend = "csv",
+    backend: CSVBackend = "auto",
     header: bool = True,
     **csv_writer_kwds,
 ) -> str:
     """Dump content to csv format."""
+    if backend == "auto":
+        if isinstance(data, pd.DataFrame):
+            backend = "pandas"
+        else:
+            backend = "csv"
+
     if to_builtins:
+        if isinstance(data, pd.DataFrame) and backend == "pandas":
+            msg = f"Invalid combinaison of arguments {to_builtins=}, {backend=} and {type(data)=}."
+            warnings.warn(msg, UserWarning)
         data = to_builtin(data)
 
     if backend == "csv":

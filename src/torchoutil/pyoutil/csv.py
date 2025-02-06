@@ -16,6 +16,8 @@ from typing import (
     TypeVar,
     Union,
     overload,
+    Mapping,
+    Iterable,
 )
 
 from torchoutil.pyoutil.collections import (
@@ -23,6 +25,7 @@ from torchoutil.pyoutil.collections import (
     list_dict_to_dict_list,
 )
 from torchoutil.pyoutil.io import _setup_path
+from torchoutil.pyoutil.typing import isinstance_guard
 
 T = TypeVar("T")
 
@@ -43,9 +46,9 @@ def to_csv(
     """Dump content to CSV format."""
     fpath = _setup_path(fpath, overwrite, make_parents)
 
-    if is_mapping_str_iterable(data):
+    if isinstance_guard(data, Mapping[str, Iterable]):
         data_lst = dict_list_to_list_dict(data)  # type: ignore
-    elif iterable_mapping_str(data):
+    elif isinstance_guard(data, Iterable[Mapping[str, Any]]):
         data_lst = list(data)
     else:
         raise TypeError(f"Invalid argument type {type(data)}.")
