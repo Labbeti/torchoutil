@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from functools import partial
 from numbers import Integral, Number
 from typing import (
     Any,
@@ -13,21 +12,11 @@ from typing import (
     Optional,
     Sequence,
     Tuple,
+    Type,
     Union,
 )
 
-from typing_extensions import (
-    Any,
-    TypeGuard,
-    Type,
-    TypeIs,
-    TypeVar,
-    Mapping,
-    Iterable,
-    get_args,
-    get_origin,
-)
-from typing_extensions import TypeGuard, TypeIs
+from typing_extensions import TypeGuard, TypeIs, TypeVar, get_args, get_origin
 
 from .classes import (
     BuiltinNumber,
@@ -69,17 +58,6 @@ def isinstance_guard(x: Any, target_type: Type[T]) -> TypeIs[T]:
         if not isinstance_guard(x, origin):
             return False
         return all(isinstance_guard(xi, args[0]) for xi in x)
-    
-    import inspect
-    from typing import Callable
-
-    if issubclass(origin, Callable):
-        if not isinstance_guard(x, origin):
-            return False
-        if x.__name__ == "<lambda>":
-            msg = f"Unsupported argument type {type(x)} with parametrized {target_type=}."
-            raise NotImplementedError(msg)
-        
 
     msg = f"Unsupported type {target_type}. (expected unparametrized type or parametrized Union, Mapping or Iterable)"
     raise NotImplementedError(msg)
@@ -168,7 +146,9 @@ def is_iterable_int(
 ) -> TypeIs[Iterable[int]]:
     if not accept_generator and isinstance(x, Generator):
         return False
-    return isinstance_guard(x, Iterable[int])
+    return isinstance_guard(x, Iterable[int]) and (
+        accept_bool or not isinstance_guard(x, Iterable[bool])
+    )
 
 
 def is_iterable_integral(
@@ -269,7 +249,7 @@ def is_sequence_bool(x: Any) -> TypeIs[Sequence[bool]]:
     return isinstance_guard(x, Sequence[bool])
 
 
-def is_sequence_int(x: Any) -> TypeIs[Sequence[float]]:
+def is_sequence_float(x: Any) -> TypeIs[Sequence[float]]:
     return isinstance_guard(x, Sequence[float])
 
 

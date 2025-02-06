@@ -1,8 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-"""Helper functions for conversion between classes indices, multihot, multi-names and probabilities for multilabel classification.
-"""
+"""Helper functions for conversion between classes indices, multihot, multi-names and probabilities for multilabel classification."""
 
 from typing import Hashable, Iterable, List, Mapping, Optional, Sequence, TypeVar, Union
 

@@ -579,14 +579,14 @@ def unzip(lst: Iterable[Tuple[T, U, V]]) -> Tuple[List[T], List[U], List[V]]:
 
 @overload
 def unzip(
-    lst: Iterable[Tuple[T, U, V, W]]
+    lst: Iterable[Tuple[T, U, V, W]],
 ) -> Tuple[List[T], List[U], List[V], List[W]]:
     ...
 
 
 @overload
 def unzip(
-    lst: Iterable[Tuple[T, U, V, W, X]]
+    lst: Iterable[Tuple[T, U, V, W, X]],
 ) -> Tuple[List[T], List[U], List[V], List[W], List[X]]:
     ...
 

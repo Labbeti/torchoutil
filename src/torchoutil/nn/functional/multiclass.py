@@ -1,8 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-"""Helper functions for conversion between classes indices, onehot, names and probabilities for multiclass classification.
-"""
+"""Helper functions for conversion between classes indices, onehot, names and probabilities for multiclass classification."""
 
 from typing import (
     Any,

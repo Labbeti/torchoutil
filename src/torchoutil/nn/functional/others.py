@@ -191,7 +191,7 @@ def shape(
     """
 
     def _impl(
-        x: Union[ScalarLike, Tensor, np.ndarray, Iterable]
+        x: Union[ScalarLike, Tensor, np.ndarray, Iterable],
     ) -> Tuple[bool, Tuple[int, ...]]:
         if is_scalar_like(x):
             return True, ()

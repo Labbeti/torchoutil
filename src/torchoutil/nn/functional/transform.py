@@ -581,7 +581,7 @@ def view_as_real(x: complex) -> Tuple[float, float]:
 
 
 def view_as_real(
-    x: Union[Tensor, np.ndarray, complex]
+    x: Union[Tensor, np.ndarray, complex],
 ) -> Union[Tensor, np.ndarray, Tuple[float, float]]:
     """Convert complex-valued input to floating-point object."""
     if isinstance(x, Tensor):
@@ -608,7 +608,7 @@ def view_as_complex(x: Tuple[float, float]) -> complex:
 
 
 def view_as_complex(
-    x: Union[Tensor, np.ndarray, Tuple[float, float]]
+    x: Union[Tensor, np.ndarray, Tuple[float, float]],
 ) -> Union[ComplexFloatingTensor, np.ndarray, complex]:
     """Convert floating-point input to complex-valued object."""
     if isinstance(x, Tensor):
