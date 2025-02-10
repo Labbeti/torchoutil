@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import functools
+import hashlib
 import itertools
 import math
 import pickle
@@ -16,7 +17,7 @@ from typing import Any, Callable, Iterable, Literal, Mapping, Union
 import torch
 from torch import Tensor, nn
 
-from torchoutil.core.packaging import _NUMPY_AVAILABLE
+from torchoutil.core.packaging import _NUMPY_AVAILABLE, _PANDAS_AVAILABLE
 from torchoutil.extras.numpy import np
 from torchoutil.nn.functional.predicate import is_complex, is_floating_point
 from torchoutil.pyoutil.inspect import get_fullname
@@ -27,6 +28,10 @@ from torchoutil.pyoutil.typing import (
     NamedTupleInstance,
     NoneType,
 )
+
+if _PANDAS_AVAILABLE:
+    import pandas as pd
+
 
 Checksumable = Union[
     int,
@@ -131,6 +136,8 @@ def checksum_any(
         return checksum_tensor(x, **kwargs)
     elif isinstance(x, (np.ndarray, np.generic)):
         return checksum_ndarray(x, **kwargs)
+    elif _PANDAS_AVAILABLE and isinstance(x, pd.DataFrame):
+        return checksum_dataframe(x, **kwargs)
     elif allow_protocol and isinstance(x, NamedTupleInstance):
         return checksum_namedtuple(x, **kwargs)
     elif allow_protocol and isinstance(x, DataclassInstance):
@@ -161,6 +168,16 @@ def checksum_dataclass(x: DataclassInstance, **kwargs) -> int:
     accumulator = kwargs.pop("accumulator", 0) + checksum_str(get_fullname(x), **kwargs)
     kwargs["accumulator"] = accumulator
     return checksum_mapping(asdict(x), **kwargs)
+
+
+def checksum_dataframe(x: pd.DataFrame, **kwargs) -> int:
+    if not _PANDAS_AVAILABLE:
+        msg = "Cannot call function 'checksum_dataframe' because optional dependency 'pandas' is not installed. Please install it using 'pip install torchoutil[extras]'"
+        raise NotImplementedError(msg)
+
+    hash_value = hashlib.sha1(pd.util.hash_pandas_object(x).values).hexdigest()
+    csum = checksum_str(hash_value, **kwargs)
+    return csum
 
 
 def checksum_iterable(x: Iterable[Any], **kwargs) -> int:
