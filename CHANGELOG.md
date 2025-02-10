@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 ### Added
 - Functions `unsqueeze`, `squeeze` and `one_hot`.
 - Function `isinstance_guard` to check parametrized types.
+- Function `randstr` to generate random strings.
 
 ### Fixed
 - Fix global import of `to.utils.return_types.shape` in python 3.9.

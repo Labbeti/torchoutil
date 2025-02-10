@@ -25,6 +25,8 @@ from .collections import (
     flat_list_of_list,
     flatten,
     intersect_lists,
+    is_full,
+    is_unique,
     list_dict_to_dict_list,
     prod,
     recursive_generator,
@@ -35,8 +37,6 @@ from .collections import (
     union_dicts,
     union_lists,
     unzip,
-    is_unique,
-    is_full,
 )
 from .csv import load_csv, to_csv
 from .dataclasses import get_defaults_values
@@ -47,11 +47,11 @@ from .functools import Compose, compose, filter_and_call, get_argnames, identity
 from .hashlib import hash_file
 from .importlib import (
     is_available_package,
-    reload_submodules,
-    search_submodules,
-    reload_editable_packages,
     is_editable_package,
     package_is_available,
+    reload_editable_packages,
+    reload_submodules,
+    search_submodules,
 )
 from .inspect import get_current_fn_name, get_fullname
 from .io import open_close_wrap
@@ -74,6 +74,7 @@ from .logging import (
 )
 from .math import clamp, clip, nextafter, nextdown
 from .os import get_num_cpus_available, safe_rmdir, tree_iter
+from .random import randstr
 from .re import (
     PatternLike,
     PatternListLike,
