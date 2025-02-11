@@ -6,6 +6,13 @@ from io import TextIOWrapper
 from pathlib import Path
 from typing import Any, Iterable, Literal, Mapping, Optional, Type, Union
 
+from torchoutil.core.packaging import _OMEGACONF_AVAILABLE, _YAML_AVAILABLE
+
+if not _YAML_AVAILABLE:
+    msg = f"Cannot use python module {__file__} since pyyaml package is not installed. Please install it with `pip install torchoutil[extras]`."
+    raise ImportError(msg)
+
+import yaml
 from yaml import (
     BaseLoader,
     CBaseLoader,
@@ -25,15 +32,8 @@ from yaml import (
 from yaml.parser import ParserError
 from yaml.scanner import ScannerError
 
-from torchoutil.core.packaging import _OMEGACONF_AVAILABLE, _YAML_AVAILABLE
 from torchoutil.pyoutil.typing import DataclassInstance, NamedTupleInstance
 from torchoutil.utils.saving.common import to_builtin
-
-if not _YAML_AVAILABLE:
-    msg = f"Cannot use python module {__file__} since pyyaml package is not installed."
-    raise ImportError(msg)
-
-import yaml
 
 if _OMEGACONF_AVAILABLE:
     from omegaconf import OmegaConf  # type: ignore
@@ -77,10 +77,11 @@ def to_yaml(
 ) -> str:
     """Dump content to yaml format."""
     if not _OMEGACONF_AVAILABLE and resolve:
-        raise ValueError(
+        msg = (
             "Cannot resolve yaml config without omegaconf package."
-            "Please use resolve=False or install omegaconf with 'pip install torchoutil[extras]'."
+            "Please use resolve=False or install omegaconf with `pip install torchoutil[extras]`."
         )
+        raise ValueError(msg)
 
     if fpath is not None:
         fpath = Path(fpath).resolve().expanduser()
