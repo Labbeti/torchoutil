@@ -2,15 +2,13 @@
 # -*- coding: utf-8 -*-
 
 import importlib
-import logging
-import pkgutil
-import sys
-from importlib.util import find_spec
 import json
+import logging
+import sys
+from importlib.metadata import Distribution, PackageNotFoundError
+from importlib.util import find_spec
 from types import ModuleType
 from typing import Any, List
-from importlib.metadata import Distribution, PackageNotFoundError
-
 
 DEFAULT_SKIPPED = (
     "reimport_all",
@@ -64,7 +62,8 @@ def search_submodules(
     """Return the submodules already imported."""
 
     def _impl(
-        root: ModuleType, accumulator: dict[ModuleType, None]
+        root: ModuleType,
+        accumulator: dict[ModuleType, None],
     ) -> dict[ModuleType, None]:
         attrs = [getattr(root, attr_name) for attr_name in dir(root)]
         submodules = [
@@ -89,7 +88,8 @@ def search_submodules(
         return accumulator
 
     submodules = _impl(root, {root})
-    submodules = list(submodules)[::-1]
+    submodules = list(submodules)
+    submodules = submodules[::-1]
     return submodules
 
 
@@ -121,8 +121,16 @@ def reload_editable_packages(*, verbose: int = 0) -> List[ModuleType]:
     editable_packages = [
         sys.modules[name] for name in pkg_names if is_editable_package(name)
     ]
+    if verbose >= 2:
+        pylog.debug(
+            f"{len(editable_packages)}/{len(pkg_names)} editable packages found: {editable_packages}"
+        )
+
     return reload_submodules(
-        *editable_packages, verbose=verbose, only_editable=True, only_loaded=False
+        *editable_packages,
+        verbose=verbose,
+        only_editable=True,
+        only_loaded=False,
     )
 
 
