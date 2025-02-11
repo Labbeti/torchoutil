@@ -14,6 +14,7 @@ from typing import (
     Tuple,
     Type,
     Union,
+    Literal,
 )
 
 from typing_extensions import TypeGuard, TypeIs, TypeVar, get_args, get_origin
@@ -30,6 +31,16 @@ T = TypeVar("T")
 
 
 def isinstance_guard(x: Any, target_type: Type[T]) -> TypeIs[T]:
+    """Improved isinstance(...) function that supports parametrized Union, Literal, Mapping or Iterable.
+    
+    Example 1::
+    -----------
+    ```
+    >>> isinstance_guard({"a": 1, "b": 2}, dict[str, int])  # True
+    >>> isinstance_guard({"a": 1, "b": 2}, dict[str, str])  # False
+    >>> isinstance_guard({"a": 1, "b": 2}, dict)  # True
+    ```
+    """
     if isinstance(x, type):
         return False
     if target_type is Any:
@@ -46,6 +57,9 @@ def isinstance_guard(x: Any, target_type: Type[T]) -> TypeIs[T]:
     if origin is Union:
         return any(isinstance_guard(x, arg) for arg in args)
 
+    if origin is Literal:
+        return x in args
+
     if issubclass(origin, Mapping):
         assert len(args) in (0, 2), f"{args=}"
         if not isinstance_guard(x, origin):
@@ -59,7 +73,7 @@ def isinstance_guard(x: Any, target_type: Type[T]) -> TypeIs[T]:
             return False
         return all(isinstance_guard(xi, args[0]) for xi in x)
 
-    msg = f"Unsupported type {target_type}. (expected unparametrized type or parametrized Union, Mapping or Iterable)"
+    msg = f"Unsupported type {target_type}. (expected unparametrized type or parametrized Union, Literal, Mapping or Iterable)"
     raise NotImplementedError(msg)
 
 

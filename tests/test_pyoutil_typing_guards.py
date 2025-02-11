@@ -16,6 +16,8 @@ from typing import (
     Sequence,
     Generator,
     Union,
+    Callable,
+    Literal
 )
 from unittest import TestCase
 
@@ -89,8 +91,41 @@ class TestTypeChecks(TestCase):
         assert not is_dataclass_instance(nt2)
 
 
-class TestIsInstanceGuardOldCompat(TestCase):
-    def test_isinstance_guard(self) -> None:
+class TestIsInstanceGuard(TestCase):
+    def test_example_1(self) -> None:
+        x = 1
+
+        assert isinstance_guard(x, int)
+        assert isinstance_guard(x, Number)
+        assert isinstance_guard(x, Optional[int])
+        assert isinstance_guard(x, Union[int, str])
+        assert isinstance_guard(x, Literal[1])
+        assert isinstance_guard(x, Literal[2, None, 1, "a"])
+
+        assert not isinstance_guard(x, float)
+        assert not isinstance_guard(x, Callable)
+        assert not isinstance_guard(x, Generator)
+        assert not isinstance_guard(x, Literal[2])
+
+    def test_example_2(self) -> None:
+        x = {"a": 2, "b": 10}
+
+        assert isinstance_guard(x, dict)
+        assert isinstance_guard(x, Dict)
+        assert isinstance_guard(x, Mapping)
+
+        assert isinstance_guard(x, Dict[str, int])
+        assert isinstance_guard(x, Dict[Any, int])
+        assert isinstance_guard(x, Dict[str, Any])
+        assert isinstance_guard(x, Iterable[str])
+        assert isinstance_guard(x, Mapping[str, int])
+        assert isinstance_guard(x, Dict[Literal["b", "a"], Literal[10, 2]])
+
+        assert not isinstance_guard(x, set)
+        assert not isinstance_guard(x, Dict[str, float])
+        assert not isinstance_guard(x, Dict[Literal["a"], Literal[10, 2]])
+
+    def test_old_compatibility(self) -> None:
         examples = [
             0,
             1.0,
