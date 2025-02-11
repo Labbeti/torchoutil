@@ -32,6 +32,12 @@ from torchoutil.pyoutil.typing import (
 if _PANDAS_AVAILABLE:
     import pandas as pd
 
+    DataFrame = pd.DataFrame
+else:
+
+    class DataFrame:
+        ...
+
 
 Checksumable = Union[
     int,
@@ -170,7 +176,7 @@ def checksum_dataclass(x: DataclassInstance, **kwargs) -> int:
     return checksum_mapping(asdict(x), **kwargs)
 
 
-def checksum_dataframe(x: pd.DataFrame, **kwargs) -> int:
+def checksum_dataframe(x: DataFrame, **kwargs) -> int:
     if not _PANDAS_AVAILABLE:
         msg = "Cannot call function 'checksum_dataframe' because optional dependency 'pandas' is not installed. Please install it using 'pip install torchoutil[extras]'"
         raise NotImplementedError(msg)
