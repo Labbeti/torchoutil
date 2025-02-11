@@ -48,7 +48,8 @@ from torchoutil.types.tensor_subclasses import Tensor2D, Tensor3D
 def multilabel_to_powerset(
     multilabel: Tensor,
     *,
-    mapping: Tensor,
+    num_classes: int,
+    max_set_size: int,
 ) -> Tensor3D:
     ...
 
@@ -57,8 +58,7 @@ def multilabel_to_powerset(
 def multilabel_to_powerset(
     multilabel: Tensor,
     *,
-    num_classes: int,
-    max_set_size: int,
+    mapping: Tensor,
 ) -> Tensor3D:
     ...
 
@@ -77,11 +77,11 @@ def multilabel_to_powerset(
     Returns:
         powerset: (batch_size, num_frames, num_powerset_classes) Tensor
     """
-    if mapping is not None:
-        num_powerset_classes, _num_classes = mapping.shape
-    elif num_classes is not None and max_set_size is not None:
+    if num_classes is not None and max_set_size is not None:
         mapping = build_powerset_mapping(num_classes, max_set_size)
         num_powerset_classes, _ = mapping.shape
+    elif mapping is not None:
+        num_powerset_classes, _num_classes = mapping.shape
     else:
         msg = "Either mapping or (num_classes and max_set_size) must be provided as arguments, but all of them are None."
         raise ValueError(msg)
@@ -104,7 +104,8 @@ def powerset_to_multilabel(
     powerset: Tensor,
     soft: bool = False,
     *,
-    mapping: Tensor,
+    num_classes: int,
+    max_set_size: int,
 ) -> Tensor3D:
     ...
 
@@ -114,8 +115,7 @@ def powerset_to_multilabel(
     powerset: Tensor,
     soft: bool = False,
     *,
-    num_classes: int,
-    max_set_size: int,
+    mapping: Tensor,
 ) -> Tensor3D:
     ...
 
@@ -135,10 +135,10 @@ def powerset_to_multilabel(
     Returns:
         multilabel: (batch_size, num_frames, num_classes) Tensor
     """
-    if mapping is not None:
-        pass
-    elif num_classes is not None and max_set_size is not None:
+    if num_classes is not None and max_set_size is not None:
         mapping = build_powerset_mapping(num_classes, max_set_size)
+    elif mapping is not None:
+        pass
     else:
         msg = "Either mapping or (num_classes and max_set_size) must be provided as arguments, but all of them are None."
         raise ValueError(msg)
