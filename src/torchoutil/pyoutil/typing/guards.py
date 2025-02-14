@@ -32,7 +32,7 @@ T = TypeVar("T")
 
 def isinstance_guard(x: Any, target_type: Type[T]) -> TypeIs[T]:
     """Improved isinstance(...) function that supports parametrized Union, Literal, Mapping or Iterable.
-    
+
     Example 1::
     -----------
     ```

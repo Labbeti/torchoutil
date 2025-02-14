@@ -17,7 +17,7 @@ from typing import (
     Generator,
     Union,
     Callable,
-    Literal
+    Literal,
 )
 from unittest import TestCase
 
