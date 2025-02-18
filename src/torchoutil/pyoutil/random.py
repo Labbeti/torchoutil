@@ -7,5 +7,4 @@ import string
 
 def randstr(size: int = 10, letters: str = string.ascii_letters) -> str:
     """Returns a randomly generated string."""
-    letters = string.ascii_letters
     return "".join(random.choice(letters) for _ in range(size))

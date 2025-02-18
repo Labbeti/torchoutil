@@ -204,6 +204,7 @@ class MkdirFileHandler(FileHandler):
         encoding: Optional[str] = None,
         delay: bool = True,
         errors: Optional[str] = None,
+        *,
         mkdir_parents: bool = True,
         mkdir_exist_ok: bool = True,
     ) -> None:

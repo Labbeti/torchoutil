@@ -74,6 +74,7 @@ from .logging import (
 )
 from .math import clamp, clip, nextafter, nextdown
 from .os import get_num_cpus_available, safe_rmdir, tree_iter
+from .pickle import load_pickle, to_pickle
 from .random import randstr
 from .re import (
     PatternLike,

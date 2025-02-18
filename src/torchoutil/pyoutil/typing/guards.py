@@ -8,13 +8,14 @@ from typing import (
     Generator,
     Iterable,
     List,
+    Literal,
     Mapping,
     Optional,
     Sequence,
     Tuple,
     Type,
+    TypedDict,
     Union,
-    Literal,
 )
 
 from typing_extensions import TypeGuard, TypeIs, TypeVar, get_args, get_origin
@@ -30,8 +31,12 @@ from .classes import (
 T = TypeVar("T")
 
 
+def is_typed_dict(x: Any) -> bool:
+    return hasattr(x, "__orig_bases__") and TypedDict in x.__orig_bases__
+
+
 def isinstance_guard(x: Any, target_type: Type[T]) -> TypeIs[T]:
-    """Improved isinstance(...) function that supports parametrized Union, Literal, Mapping or Iterable.
+    """Improved isinstance(...) function that supports parametrized Union, TypedDict, Literal, Mapping or Iterable.
 
     Example 1::
     -----------
@@ -45,6 +50,9 @@ def isinstance_guard(x: Any, target_type: Type[T]) -> TypeIs[T]:
         return False
     if target_type is Any:
         return True
+
+    if is_typed_dict(target_type):
+        return _isinstance_guard_typed_dict(x, target_type)
 
     origin = get_origin(target_type)
     if origin is None:
@@ -75,6 +83,18 @@ def isinstance_guard(x: Any, target_type: Type[T]) -> TypeIs[T]:
 
     msg = f"Unsupported type {target_type}. (expected unparametrized type or parametrized Union, Literal, Mapping or Iterable)"
     raise NotImplementedError(msg)
+
+
+def _isinstance_guard_typed_dict(x: Any, target_type: type) -> bool:
+    if not isinstance_guard(x, Dict[str, Any]):
+        return False
+    annotations = target_type.__annotations__
+    if set(x.keys()) != set(annotations.keys()):
+        return False
+    for k, v in x.items():
+        if not isinstance_guard(v, annotations[k]):
+            return False
+    return True
 
 
 def is_builtin_obj(x: Any) -> bool:
