@@ -32,6 +32,7 @@ from torchoutil.pyoutil.typing import (
     is_dataclass_instance,
     is_iterable_str,
     is_namedtuple_instance,
+    is_typed_dict,
     isinstance_guard,
 )
 
@@ -98,7 +99,7 @@ class TestTypeChecks(TestCase):
 
 
 class TestIsInstanceGuard(TestCase):
-    def test_example_1(self) -> None:
+    def test_example_1_int(self) -> None:
         x = 1
 
         assert isinstance_guard(x, int)
@@ -113,7 +114,7 @@ class TestIsInstanceGuard(TestCase):
         assert not isinstance_guard(x, Generator)
         assert not isinstance_guard(x, Literal[2])
 
-    def test_example_2(self) -> None:
+    def test_example_2_dict(self) -> None:
         x = {"a": 2, "b": 10}
 
         assert isinstance_guard(x, dict)
@@ -131,7 +132,12 @@ class TestIsInstanceGuard(TestCase):
         assert not isinstance_guard(x, Dict[str, float])
         assert not isinstance_guard(x, Dict[Literal["a"], Literal[10, 2]])
 
-    def test_example_3(self) -> None:
+    def test_example_3_typed_dict(self) -> None:
+        assert not is_typed_dict(dict)
+        assert not is_typed_dict(Dict)
+        assert not is_typed_dict(Dict[str, Any])
+        assert is_typed_dict(ExampleDict)
+
         x = {"a": 1, "b": "dnqzudh"}
 
         assert isinstance_guard(x, Dict[str, Any])

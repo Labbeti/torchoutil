@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import sys
 from numbers import Integral, Number
 from typing import (
     Any,
@@ -32,7 +33,10 @@ T = TypeVar("T")
 
 
 def is_typed_dict(x: Any) -> bool:
-    return hasattr(x, "__orig_bases__") and TypedDict in x.__orig_bases__
+    if sys.version_info.major == 3 and sys.version_info.minor < 9:
+        return x.__class__.__name__ == "_TypedDictMeta"
+    else:
+        return hasattr(x, "__orig_bases__") and TypedDict in x.__orig_bases__
 
 
 def isinstance_guard(x: Any, target_type: Type[T]) -> TypeIs[T]:
