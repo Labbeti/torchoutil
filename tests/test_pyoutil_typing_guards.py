@@ -134,42 +134,42 @@ class TestIsInstanceGuard(TestCase):
     def test_example_3(self) -> None:
         x = {"a": 1, "b": "dnqzudh"}
 
-        assert isinstance_guard(x, dict[str, Any])
-        assert not isinstance_guard(x, dict[str, int])
-        assert isinstance_guard(x, dict[str, Union[int, str]])
+        assert isinstance_guard(x, Dict[str, Any])
+        assert not isinstance_guard(x, Dict[str, int])
+        assert isinstance_guard(x, Dict[str, Union[int, str]])
         assert isinstance_guard(x, ExampleDict)
 
         x = {"a": 1, "b": 2}
 
-        assert isinstance_guard(x, dict[str, Any])
-        assert isinstance_guard(x, dict[str, int])
-        assert isinstance_guard(x, dict[str, Union[int, str]])
+        assert isinstance_guard(x, Dict[str, Any])
+        assert isinstance_guard(x, Dict[str, int])
+        assert isinstance_guard(x, Dict[str, Union[int, str]])
         assert not isinstance_guard(x, ExampleDict)
-        assert isinstance_guard(x, dict[Union[str, int], Union[int, str]])
+        assert isinstance_guard(x, Dict[Union[str, int], Union[int, str]])
 
         x = {"a": 1, "b": "dnqzudh", "c": 2}
 
-        assert isinstance_guard(x, dict[str, Any])
-        assert not isinstance_guard(x, dict[str, int])
-        assert isinstance_guard(x, dict[str, Union[int, str]])
+        assert isinstance_guard(x, Dict[str, Any])
+        assert not isinstance_guard(x, Dict[str, int])
+        assert isinstance_guard(x, Dict[str, Union[int, str]])
         assert not isinstance_guard(x, ExampleDict)
-        assert isinstance_guard(x, dict[Union[str, int], Union[int, str]])
+        assert isinstance_guard(x, Dict[Union[str, int], Union[int, str]])
 
         x = {"a": []}
 
-        assert isinstance_guard(x, dict[str, Any])
-        assert not isinstance_guard(x, dict[str, int])
-        assert not isinstance_guard(x, dict[str, Union[int, str]])
+        assert isinstance_guard(x, Dict[str, Any])
+        assert not isinstance_guard(x, Dict[str, int])
+        assert not isinstance_guard(x, Dict[str, Union[int, str]])
         assert not isinstance_guard(x, ExampleDict)
-        assert not isinstance_guard(x, dict[Union[str, int], Union[int, str]])
+        assert not isinstance_guard(x, Dict[Union[str, int], Union[int, str]])
 
         x = {1: 1, "b": "dnqzudh"}
 
-        assert not isinstance_guard(x, dict[str, Any])
-        assert not isinstance_guard(x, dict[str, int])
-        assert not isinstance_guard(x, dict[str, Union[int, str]])
+        assert not isinstance_guard(x, Dict[str, Any])
+        assert not isinstance_guard(x, Dict[str, int])
+        assert not isinstance_guard(x, Dict[str, Union[int, str]])
         assert not isinstance_guard(x, ExampleDict)
-        assert isinstance_guard(x, dict[Union[str, int], Union[int, str]])
+        assert isinstance_guard(x, Dict[Union[str, int], Union[int, str]])
 
     def test_old_compatibility(self) -> None:
         examples = [
