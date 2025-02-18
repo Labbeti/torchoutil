@@ -7,12 +7,15 @@ from pathlib import Path
 from typing import Union
 
 from torchoutil.extras.numpy import np
+from torchoutil.pyoutil.io import _setup_path
 
 
 def dump_numpy(
     obj: np.ndarray,
     fpath: Union[str, Path, None] = None,
     *args,
+    overwrite: bool = True,
+    make_parents: bool = True,
     **kwargs,
 ) -> bytes:
     if fpath.suffix == ".npy":
@@ -22,7 +25,7 @@ def dump_numpy(
     else:
         NUMPY_EXTENSIONS = (".npy", ".npz")
         msg = f"Unknown numpy extension '{fpath.suffix}'. (expected one of {NUMPY_EXTENSIONS})"
-        warnings.warn(msg, UserWarning)
+        warnings.warn(msg)
         save_fn = np.save
 
     buffer = BytesIO()
@@ -31,7 +34,7 @@ def dump_numpy(
     content = buffer.read()
 
     if fpath is not None:
-        fpath = Path(fpath)
+        fpath = _setup_path(fpath, overwrite=overwrite, make_parents=make_parents)
         fpath.write_bytes(content)
     return content
 

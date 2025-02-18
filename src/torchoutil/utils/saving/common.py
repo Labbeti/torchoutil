@@ -67,30 +67,38 @@ EXTENSION_TO_BACKEND: Dict[str, SavingBackend] = {
 if _NUMPY_AVAILABLE:
     import numpy as np
 
-    EXTENSION_TO_BACKEND |= {
-        "npz": "numpy",
-        "npy": "numpy",
-    }
+    EXTENSION_TO_BACKEND.update(
+        {
+            "npz": "numpy",
+            "npy": "numpy",
+        }
+    )
 
 if _SAFETENSORS_AVAILABLE:
-    EXTENSION_TO_BACKEND |= {
-        "safetensors": "safetensors",
-    }
+    EXTENSION_TO_BACKEND.update(
+        {
+            "safetensors": "safetensors",
+        }
+    )
 
 if _TORCHAUDIO_AVAILABLE:
-    EXTENSION_TO_BACKEND |= {
-        "mp3": "torchaudio",
-        "wav": "torchaudio",
-        "aac": "torchaudio",
-        "ogg": "torchaudio",
-        "flac": "torchaudio",
-    }
+    EXTENSION_TO_BACKEND.update(
+        {
+            "mp3": "torchaudio",
+            "wav": "torchaudio",
+            "aac": "torchaudio",
+            "ogg": "torchaudio",
+            "flac": "torchaudio",
+        }
+    )
 
 if _YAML_AVAILABLE:
-    EXTENSION_TO_BACKEND |= {
-        "yml": "yaml",
-        "yaml": "yaml",
-    }
+    EXTENSION_TO_BACKEND.update(
+        {
+            "yml": "yaml",
+            "yaml": "yaml",
+        }
+    )
 
 BACKEND_TO_EXTENSION: Dict[SavingBackend, str] = {
     backend: ext for ext, backend in EXTENSION_TO_BACKEND.items()

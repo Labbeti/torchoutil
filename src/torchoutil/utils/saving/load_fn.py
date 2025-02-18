@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import logging
 import os
 from pathlib import Path
 from typing import Any, Callable, Dict, Optional, TypeVar, Union
@@ -8,8 +9,8 @@ from typing import Any, Callable, Dict, Optional, TypeVar, Union
 from torchoutil.core.packaging import (
     _NUMPY_AVAILABLE,
     _SAFETENSORS_AVAILABLE,
-    _YAML_AVAILABLE,
     _TORCHAUDIO_AVAILABLE,
+    _YAML_AVAILABLE,
 )
 from torchoutil.utils.saving.common import EXTENSION_TO_BACKEND, SavingBackend
 from torchoutil.utils.saving.csv import load_csv
@@ -18,7 +19,7 @@ from torchoutil.utils.saving.pickle import load_pickle
 from torchoutil.utils.saving.torch import load_torch
 
 T = TypeVar("T", covariant=True)
-
+pylog = logging.getLogger(__name__)
 
 LoadFn = Callable[[Path], T]
 LoadFnLike = Union[LoadFn[T], SavingBackend]
@@ -74,6 +75,7 @@ def load(
             msg = f"Unknown extension file '{ext}'. (expected one of {tuple(EXTENSION_TO_BACKEND.keys())} or specify the backend argument with `to.load(..., backend=\"backend\")`)"
             raise ValueError(msg)
         saving_backend = EXTENSION_TO_BACKEND[ext]
+        pylog.debug(f"Loading file '{str(fpath)}' using {saving_backend=}.")
 
     elif saving_backend not in LOAD_FNS:
         msg = f"Invalid argument {saving_backend=}. (expected one of {tuple(LOAD_FNS.keys())})"

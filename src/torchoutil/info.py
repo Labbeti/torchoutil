@@ -4,7 +4,7 @@
 import platform
 import sys
 from pathlib import Path
-from typing import Any, Dict
+from typing import Dict, Union
 
 import torch
 
@@ -19,7 +19,7 @@ def get_package_repository_path() -> str:
     return str(Path(__file__).parent.parent.parent)
 
 
-def get_install_info() -> Dict[str, Any]:
+def get_install_info() -> Dict[str, Union[str, int]]:
     install_info = {
         "torchoutil": torchoutil.__version__,
         "python": f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}",
