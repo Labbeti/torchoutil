@@ -30,10 +30,12 @@ pip install torchoutil
 
 The main requirement is **[PyTorch](https://pytorch.org/)**.
 
-To check if the package is installed and show the package version, you can use the following command:
+To check if the package is installed and show the package version, you can use the following command in your terminal:
 ```bash
 torchoutil-info
 ```
+
+This library works on all Python versions from 3.8 to 3.13 and on Linux, Mac and Windows.
 
 ## Examples
 

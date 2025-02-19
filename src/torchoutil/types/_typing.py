@@ -108,7 +108,7 @@ TensorOrArray = Union[torch.Tensor, np.ndarray]
 
 T_TensorOrArray = TypeVar(
     "T_TensorOrArray",
-    bound=Union[torch.Tensor, np.ndarray],
+    bound=TensorOrArray,
     covariant=True,
 )
 
