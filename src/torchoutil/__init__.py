@@ -122,7 +122,17 @@ from .types.tensor_subclasses import (
     Tensor2D,
     Tensor3D,
 )
-from .types.variable_fns import as_tensor, empty, full, ones, rand, zeros
+from .types.variable_fns import (
+    arange,
+    as_tensor,
+    empty,
+    full,
+    ones,
+    rand,
+    randint,
+    randperm,
+    zeros,
+)
 from .utils.saving.common import to_builtin
 from .utils.saving.csv import load_csv, to_csv
 from .utils.saving.dump_fn import dump, save

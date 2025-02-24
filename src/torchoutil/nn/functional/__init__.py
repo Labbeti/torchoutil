@@ -57,10 +57,12 @@ from .others import (
     average_power,
     count_parameters,
     find,
+    mse,
     ndim,
     nelement,
     prod,
     ranks,
+    rmse,
     shape,
 )
 from .pad import cat_padded_batch, pad_and_stack_rec, pad_dim, pad_dims
@@ -74,6 +76,7 @@ from .predicate import (
     is_floating_point,
     is_full,
     is_sorted,
+    is_unique,
 )
 from .segments import extract_segments, segments_to_list
 from .transform import (

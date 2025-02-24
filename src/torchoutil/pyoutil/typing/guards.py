@@ -114,7 +114,7 @@ def is_builtin_number(x: Any, *, strict: bool = False) -> TypeIs[BuiltinNumber]:
 
     Args:
         x: Object to check.
-        strict: If True, it will not consider subtypes of builtins as builtin numbers.
+        strict: If True, it will not consider custom subtypes of builtins as builtin numbers. defaults to False.
     """
     if strict and not is_builtin_obj(x):
         return False

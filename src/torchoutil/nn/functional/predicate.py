@@ -148,14 +148,19 @@ def is_sorted(
             msg = f"Invalid number of dims in argument {x.ndim=}. (expected 1)"
             raise ValueError(msg)
 
+        prev = slice(None, -1)
+        next_ = slice(1, None)
+
         if not reverse and not strict:
-            result = (x[:-1] <= x[1:]).all().item()
+            result = x[prev] <= x[next_]
         elif not reverse and strict:
-            result = (x[:-1] < x[1:]).all().item()
+            result = x[prev] < x[next_]
         elif reverse and not strict:
-            result = (x[:-1] >= x[1:]).all().item()
+            result = x[prev] >= x[next_]
         else:  # reverse and strict
-            result = (x[:-1] > x[1:]).all().item()
+            result = x[prev] > x[next_]
+
+        result = result.all().item()
         return result  # type: ignore
 
     elif isinstance(x, Iterable):
@@ -226,6 +231,9 @@ def all_ne(x: Union[Tensor, np.ndarray, ScalarLike, Iterable]) -> bool:
         return builtin_all_ne(x)
     else:
         raise TypeError(f"Invalid argument type {type(x)=}.")
+
+
+is_unique = all_ne
 
 
 def is_full(x: TensorOrArray, target: Any = ...) -> bool:

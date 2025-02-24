@@ -7,10 +7,7 @@ from typing import Any, Dict, List, Optional, TypeVar
 import torch
 
 from torchoutil.nn.functional.pad import pad_and_stack_rec
-from torchoutil.nn.functional.predicate import (
-    can_be_converted_to_tensor,
-    can_be_stacked,
-)
+from torchoutil.nn.functional.predicate import is_convertible_to_tensor, is_stackable
 from torchoutil.pyoutil.collections import KeyMode, list_dict_to_dict_list
 from torchoutil.pyoutil.re import PatternListLike, match_patterns
 
@@ -74,9 +71,9 @@ class AdvancedCollateDict:
         for key, values in batch_dict.items():
             if key in self.pad_values:
                 values = pad_and_stack_rec(values, self.pad_values[key])
-            elif can_be_stacked(values):
+            elif is_stackable(values):
                 values = torch.stack(values)
-            elif can_be_converted_to_tensor(values):
+            elif is_convertible_to_tensor(values):
                 values = torch.as_tensor(values)
 
             result[key] = values

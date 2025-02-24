@@ -5,10 +5,17 @@ from typing import Any, Literal, Optional, Sequence, Tuple, Union, overload
 
 import torch
 from torch import Tensor
-from torch.types import Device, Number
+from torch.types import Number
 from typing_extensions import Never
 
-from torchoutil.core.make import make_device, make_dtype
+from torchoutil.core.make import (
+    DeviceLike,
+    DTypeLike,
+    GeneratorLike,
+    make_device,
+    make_dtype,
+    make_generator,
+)
 from torchoutil.pyoutil.typing import BuiltinNumber
 from torchoutil.types import (
     BoolTensor0D,
@@ -19,8 +26,6 @@ from torchoutil.types import (
     CFloatTensor1D,
     CFloatTensor2D,
     CFloatTensor3D,
-    DeviceLike,
-    DTypeLike,
     FloatTensor0D,
     FloatTensor1D,
     FloatTensor2D,
@@ -36,13 +41,92 @@ from torchoutil.types import (
 )
 
 __all__ = [
+    "arange",
     "as_tensor",
-    "zeros",
-    "ones",
-    "full",
     "empty",
+    "full",
     "rand",
+    "randint",
+    "randperm",
+    "ones",
+    "zeros",
 ]
+
+# ----------
+# arange
+# ----------
+
+
+@overload
+def arange(
+    end: int,
+    *,
+    out: Optional[Tensor] = None,
+    dtype: DTypeLike = None,
+    device: DeviceLike = None,
+    requires_grad: bool = False,
+    pin_memory: bool = False,
+) -> LongTensor1D:
+    ...
+
+
+@overload
+def arange(
+    start: int,
+    end: int,
+    *,
+    out: Optional[Tensor] = None,
+    dtype: DTypeLike = None,
+    device: DeviceLike = None,
+    requires_grad: bool = False,
+    pin_memory: bool = False,
+) -> LongTensor1D:
+    ...
+
+
+@overload
+def arange(
+    start: int,
+    end: int,
+    step: int,
+    *,
+    out: Optional[Tensor] = None,
+    dtype: DTypeLike = None,
+    device: DeviceLike = None,
+    requires_grad: bool = False,
+    pin_memory: bool = False,
+) -> LongTensor1D:
+    ...
+
+
+def arange(
+    start: Number,
+    end: Number,
+    step: Number,
+    *,
+    out: Optional[Tensor] = None,
+    dtype: DTypeLike = None,
+    device: DeviceLike = None,
+    requires_grad: bool = False,
+    pin_memory: bool = False,
+) -> Tensor1D:
+    dtype = make_dtype(dtype)
+    device = make_device(device)
+    return torch.arange(
+        start,
+        end,
+        step,
+        out=out,
+        dtype=dtype,
+        device=device,
+        requires_grad=requires_grad,
+        pin_memory=pin_memory,
+    )
+
+
+# ----------
+# as_tensor
+# ----------
 
 
 # Empty lists
@@ -268,264 +352,9 @@ def as_tensor(
     return torch.as_tensor(data, dtype=dtype, device=device)
 
 
-@overload
-def zeros(
-    size: Sequence[Never],
-    /,
-    *,
-    dtype: DTypeLike = None,
-    device: DeviceLike = None,
-    out: Union[torch.Tensor, None] = None,
-    layout: Union[torch.layout, None] = None,
-    pin_memory: Union[bool, None] = False,
-    requires_grad: Union[bool, None] = False,
-) -> Tensor0D:
-    ...
-
-
-@overload
-def zeros(
-    size: Tuple[int],
-    /,
-    *,
-    dtype: DTypeLike = None,
-    device: DeviceLike = None,
-    out: Union[torch.Tensor, None] = None,
-    layout: Union[torch.layout, None] = None,
-    pin_memory: Union[bool, None] = False,
-    requires_grad: Union[bool, None] = False,
-) -> Tensor1D:
-    ...
-
-
-@overload
-def zeros(
-    size: Tuple[int, int],
-    /,
-    *,
-    dtype: DTypeLike = None,
-    device: DeviceLike = None,
-    out: Union[torch.Tensor, None] = None,
-    layout: Union[torch.layout, None] = None,
-    pin_memory: Union[bool, None] = False,
-    requires_grad: Union[bool, None] = False,
-) -> Tensor2D:
-    ...
-
-
-@overload
-def zeros(
-    size: Tuple[int, int, int],
-    /,
-    *,
-    dtype: DTypeLike = None,
-    device: DeviceLike = None,
-    out: Union[torch.Tensor, None] = None,
-    layout: Union[torch.layout, None] = None,
-    pin_memory: Union[bool, None] = False,
-    requires_grad: Union[bool, None] = False,
-) -> Tensor3D:
-    ...
-
-
-@overload
-def zeros(
-    size0: int,
-    /,
-    *,
-    dtype: DTypeLike = None,
-    device: DeviceLike = None,
-    out: Union[torch.Tensor, None] = None,
-    layout: Union[torch.layout, None] = None,
-    pin_memory: Union[bool, None] = False,
-    requires_grad: Union[bool, None] = False,
-) -> Tensor1D:
-    ...
-
-
-@overload
-def zeros(
-    size0: int,
-    size1: int,
-    /,
-    *,
-    dtype: DTypeLike = None,
-    device: DeviceLike = None,
-    out: Union[torch.Tensor, None] = None,
-    layout: Union[torch.layout, None] = None,
-    pin_memory: Union[bool, None] = False,
-    requires_grad: Union[bool, None] = False,
-) -> Tensor2D:
-    ...
-
-
-@overload
-def zeros(
-    size0: int,
-    size1: int,
-    size2: int,
-    /,
-    *,
-    dtype: DTypeLike = None,
-    device: DeviceLike = None,
-    out: Union[torch.Tensor, None] = None,
-    layout: Union[torch.layout, None] = None,
-    pin_memory: Union[bool, None] = False,
-    requires_grad: Union[bool, None] = False,
-) -> Tensor3D:
-    ...
-
-
-def zeros(
-    *data,
-    dtype: DTypeLike = None,
-    device: DeviceLike = None,
-    out: Union[torch.Tensor, None] = None,
-    layout: Union[torch.layout, None] = None,
-    pin_memory: Union[bool, None] = False,
-    requires_grad: Union[bool, None] = False,
-) -> torch.Tensor:
-    dtype = make_dtype(dtype)
-    device = make_device(device)
-    return torch.zeros(
-        *data,
-        out=out,
-        dtype=dtype,
-        layout=layout,
-        device=device,
-        pin_memory=pin_memory,
-        requires_grad=requires_grad,
-    )
-
-
-@overload
-def ones(
-    size: Sequence[Never],
-    /,
-    *,
-    dtype: DTypeLike = None,
-    device: DeviceLike = None,
-    out: Union[torch.Tensor, None] = None,
-    layout: Union[torch.layout, None] = None,
-    pin_memory: Union[bool, None] = False,
-    requires_grad: Union[bool, None] = False,
-) -> Tensor0D:
-    ...
-
-
-@overload
-def ones(
-    size: Tuple[int],
-    /,
-    *,
-    dtype: DTypeLike = None,
-    device: DeviceLike = None,
-    out: Union[torch.Tensor, None] = None,
-    layout: Union[torch.layout, None] = None,
-    pin_memory: Union[bool, None] = False,
-    requires_grad: Union[bool, None] = False,
-) -> Tensor1D:
-    ...
-
-
-@overload
-def ones(
-    size: Tuple[int, int],
-    /,
-    *,
-    dtype: DTypeLike = None,
-    device: DeviceLike = None,
-    out: Union[torch.Tensor, None] = None,
-    layout: Union[torch.layout, None] = None,
-    pin_memory: Union[bool, None] = False,
-    requires_grad: Union[bool, None] = False,
-) -> Tensor2D:
-    ...
-
-
-@overload
-def ones(
-    size: Tuple[int, int, int],
-    /,
-    *,
-    dtype: DTypeLike = None,
-    device: DeviceLike = None,
-    out: Union[torch.Tensor, None] = None,
-    layout: Union[torch.layout, None] = None,
-    pin_memory: Union[bool, None] = False,
-    requires_grad: Union[bool, None] = False,
-) -> Tensor3D:
-    ...
-
-
-@overload
-def ones(
-    size0: int,
-    /,
-    *,
-    dtype: DTypeLike = None,
-    device: DeviceLike = None,
-    out: Union[torch.Tensor, None] = None,
-    layout: Union[torch.layout, None] = None,
-    pin_memory: Union[bool, None] = False,
-    requires_grad: Union[bool, None] = False,
-) -> Tensor1D:
-    ...
-
-
-@overload
-def ones(
-    size0: int,
-    size1: int,
-    /,
-    *,
-    dtype: DTypeLike = None,
-    device: DeviceLike = None,
-    out: Union[torch.Tensor, None] = None,
-    layout: Union[torch.layout, None] = None,
-    pin_memory: Union[bool, None] = False,
-    requires_grad: Union[bool, None] = False,
-) -> Tensor2D:
-    ...
-
-
-@overload
-def ones(
-    size0: int,
-    size1: int,
-    size2: int,
-    /,
-    *,
-    dtype: DTypeLike = None,
-    device: DeviceLike = None,
-    out: Union[torch.Tensor, None] = None,
-    layout: Union[torch.layout, None] = None,
-    pin_memory: Union[bool, None] = False,
-    requires_grad: Union[bool, None] = False,
-) -> Tensor3D:
-    ...
-
-
-def ones(
-    *data,
-    dtype: DTypeLike = None,
-    device: DeviceLike = None,
-    out: Union[torch.Tensor, None] = None,
-    layout: Union[torch.layout, None] = None,
-    pin_memory: Union[bool, None] = False,
-    requires_grad: Union[bool, None] = False,
-) -> torch.Tensor:
-    dtype = make_dtype(dtype)
-    device = make_device(device)
-    return torch.ones(
-        *data,
-        out=out,
-        dtype=dtype,
-        layout=layout,
-        device=device,
-        pin_memory=pin_memory,
-        requires_grad=requires_grad,
-    )
+# ----------
+# empty
+# ----------
 
 
 @overload
@@ -658,134 +487,9 @@ def empty(
     )
 
 
-@overload
-def rand(
-    size: Sequence[Never],
-    /,
-    *,
-    dtype: DTypeLike = None,
-    device: DeviceLike = None,
-    out: Union[torch.Tensor, None] = None,
-    layout: Union[torch.layout, None] = None,
-    pin_memory: Union[bool, None] = False,
-    requires_grad: Union[bool, None] = False,
-) -> Tensor0D:
-    ...
-
-
-@overload
-def rand(
-    size: Tuple[int],
-    /,
-    *,
-    dtype: DTypeLike = None,
-    device: DeviceLike = None,
-    out: Union[torch.Tensor, None] = None,
-    layout: Union[torch.layout, None] = None,
-    pin_memory: Union[bool, None] = False,
-    requires_grad: Union[bool, None] = False,
-) -> Tensor1D:
-    ...
-
-
-@overload
-def rand(
-    size: Tuple[int, int],
-    /,
-    *,
-    dtype: DTypeLike = None,
-    device: DeviceLike = None,
-    out: Union[torch.Tensor, None] = None,
-    layout: Union[torch.layout, None] = None,
-    pin_memory: Union[bool, None] = False,
-    requires_grad: Union[bool, None] = False,
-) -> Tensor2D:
-    ...
-
-
-@overload
-def rand(
-    size: Tuple[int, int, int],
-    /,
-    *,
-    dtype: DTypeLike = None,
-    device: DeviceLike = None,
-    out: Union[torch.Tensor, None] = None,
-    layout: Union[torch.layout, None] = None,
-    pin_memory: Union[bool, None] = False,
-    requires_grad: Union[bool, None] = False,
-) -> Tensor3D:
-    ...
-
-
-@overload
-def rand(
-    size0: int,
-    /,
-    *,
-    dtype: DTypeLike = None,
-    device: DeviceLike = None,
-    out: Union[torch.Tensor, None] = None,
-    layout: Union[torch.layout, None] = None,
-    pin_memory: Union[bool, None] = False,
-    requires_grad: Union[bool, None] = False,
-) -> Tensor1D:
-    ...
-
-
-@overload
-def rand(
-    size0: int,
-    size1: int,
-    /,
-    *,
-    dtype: DTypeLike = None,
-    device: DeviceLike = None,
-    out: Union[torch.Tensor, None] = None,
-    layout: Union[torch.layout, None] = None,
-    pin_memory: Union[bool, None] = False,
-    requires_grad: Union[bool, None] = False,
-) -> Tensor2D:
-    ...
-
-
-@overload
-def rand(
-    size0: int,
-    size1: int,
-    size2: int,
-    /,
-    *,
-    dtype: DTypeLike = None,
-    device: DeviceLike = None,
-    out: Union[torch.Tensor, None] = None,
-    layout: Union[torch.layout, None] = None,
-    pin_memory: Union[bool, None] = False,
-    requires_grad: Union[bool, None] = False,
-) -> Tensor3D:
-    ...
-
-
-def rand(
-    *data: Any,
-    dtype: DTypeLike = None,
-    device: DeviceLike = None,
-    out: Union[torch.Tensor, None] = None,
-    layout: Union[torch.layout, None] = None,
-    pin_memory: Union[bool, None] = False,
-    requires_grad: Union[bool, None] = False,
-) -> torch.Tensor:
-    dtype = make_dtype(dtype)
-    device = make_device(device)
-    return torch.rand(
-        *data,
-        out=out,
-        dtype=dtype,
-        layout=layout,
-        device=device,
-        pin_memory=pin_memory,
-        requires_grad=requires_grad,
-    )
+# ----------
+# full
+# ----------
 
 
 # bool
@@ -1118,13 +822,314 @@ def full(
     )
 
 
+# ----------
+# ones
+# ----------
+
+
 @overload
-def arange(
-    end: int,
+def ones(
+    size: Sequence[Never],
+    /,
     *,
-    out: Optional[Tensor] = None,
+    dtype: DTypeLike = None,
+    device: DeviceLike = None,
+    out: Union[torch.Tensor, None] = None,
+    layout: Union[torch.layout, None] = None,
+    pin_memory: Union[bool, None] = False,
+    requires_grad: Union[bool, None] = False,
+) -> Tensor0D:
+    ...
+
+
+@overload
+def ones(
+    size: Tuple[int],
+    /,
+    *,
+    dtype: DTypeLike = None,
+    device: DeviceLike = None,
+    out: Union[torch.Tensor, None] = None,
+    layout: Union[torch.layout, None] = None,
+    pin_memory: Union[bool, None] = False,
+    requires_grad: Union[bool, None] = False,
+) -> Tensor1D:
+    ...
+
+
+@overload
+def ones(
+    size: Tuple[int, int],
+    /,
+    *,
+    dtype: DTypeLike = None,
+    device: DeviceLike = None,
+    out: Union[torch.Tensor, None] = None,
+    layout: Union[torch.layout, None] = None,
+    pin_memory: Union[bool, None] = False,
+    requires_grad: Union[bool, None] = False,
+) -> Tensor2D:
+    ...
+
+
+@overload
+def ones(
+    size: Tuple[int, int, int],
+    /,
+    *,
+    dtype: DTypeLike = None,
+    device: DeviceLike = None,
+    out: Union[torch.Tensor, None] = None,
+    layout: Union[torch.layout, None] = None,
+    pin_memory: Union[bool, None] = False,
+    requires_grad: Union[bool, None] = False,
+) -> Tensor3D:
+    ...
+
+
+@overload
+def ones(
+    size0: int,
+    /,
+    *,
+    dtype: DTypeLike = None,
+    device: DeviceLike = None,
+    out: Union[torch.Tensor, None] = None,
+    layout: Union[torch.layout, None] = None,
+    pin_memory: Union[bool, None] = False,
+    requires_grad: Union[bool, None] = False,
+) -> Tensor1D:
+    ...
+
+
+@overload
+def ones(
+    size0: int,
+    size1: int,
+    /,
+    *,
+    dtype: DTypeLike = None,
+    device: DeviceLike = None,
+    out: Union[torch.Tensor, None] = None,
+    layout: Union[torch.layout, None] = None,
+    pin_memory: Union[bool, None] = False,
+    requires_grad: Union[bool, None] = False,
+) -> Tensor2D:
+    ...
+
+
+@overload
+def ones(
+    size0: int,
+    size1: int,
+    size2: int,
+    /,
+    *,
+    dtype: DTypeLike = None,
+    device: DeviceLike = None,
+    out: Union[torch.Tensor, None] = None,
+    layout: Union[torch.layout, None] = None,
+    pin_memory: Union[bool, None] = False,
+    requires_grad: Union[bool, None] = False,
+) -> Tensor3D:
+    ...
+
+
+def ones(
+    *data,
+    dtype: DTypeLike = None,
+    device: DeviceLike = None,
+    out: Union[torch.Tensor, None] = None,
+    layout: Union[torch.layout, None] = None,
+    pin_memory: Union[bool, None] = False,
+    requires_grad: Union[bool, None] = False,
+) -> torch.Tensor:
+    dtype = make_dtype(dtype)
+    device = make_device(device)
+    return torch.ones(
+        *data,
+        out=out,
+        dtype=dtype,
+        layout=layout,
+        device=device,
+        pin_memory=pin_memory,
+        requires_grad=requires_grad,
+    )
+
+
+# ----------
+# rand
+# ----------
+@overload
+def rand(
+    size: Sequence[Never],
+    /,
+    *,
+    dtype: DTypeLike = None,
+    device: DeviceLike = None,
+    generator: GeneratorLike = None,
+    out: Union[torch.Tensor, None] = None,
+    layout: Union[torch.layout, None] = None,
+    pin_memory: Union[bool, None] = False,
+    requires_grad: Union[bool, None] = False,
+) -> Tensor0D:
+    ...
+
+
+@overload
+def rand(
+    size: Tuple[int],
+    /,
+    *,
+    dtype: DTypeLike = None,
+    device: DeviceLike = None,
+    generator: GeneratorLike = None,
+    out: Union[torch.Tensor, None] = None,
+    layout: Union[torch.layout, None] = None,
+    pin_memory: Union[bool, None] = False,
+    requires_grad: Union[bool, None] = False,
+) -> Tensor1D:
+    ...
+
+
+@overload
+def rand(
+    size: Tuple[int, int],
+    /,
+    *,
+    dtype: DTypeLike = None,
+    device: DeviceLike = None,
+    generator: GeneratorLike = None,
+    out: Union[torch.Tensor, None] = None,
+    layout: Union[torch.layout, None] = None,
+    pin_memory: Union[bool, None] = False,
+    requires_grad: Union[bool, None] = False,
+) -> Tensor2D:
+    ...
+
+
+@overload
+def rand(
+    size: Tuple[int, int, int],
+    /,
+    *,
+    dtype: DTypeLike = None,
+    device: DeviceLike = None,
+    generator: GeneratorLike = None,
+    out: Union[torch.Tensor, None] = None,
+    layout: Union[torch.layout, None] = None,
+    pin_memory: Union[bool, None] = False,
+    requires_grad: Union[bool, None] = False,
+) -> Tensor3D:
+    ...
+
+
+@overload
+def rand(
+    size0: int,
+    /,
+    *,
+    dtype: DTypeLike = None,
+    device: DeviceLike = None,
+    generator: GeneratorLike = None,
+    out: Union[torch.Tensor, None] = None,
+    layout: Union[torch.layout, None] = None,
+    pin_memory: Union[bool, None] = False,
+    requires_grad: Union[bool, None] = False,
+) -> Tensor1D:
+    ...
+
+
+@overload
+def rand(
+    size0: int,
+    size1: int,
+    /,
+    *,
+    dtype: DTypeLike = None,
+    device: DeviceLike = None,
+    generator: GeneratorLike = None,
+    out: Union[torch.Tensor, None] = None,
+    layout: Union[torch.layout, None] = None,
+    pin_memory: Union[bool, None] = False,
+    requires_grad: Union[bool, None] = False,
+) -> Tensor2D:
+    ...
+
+
+@overload
+def rand(
+    size0: int,
+    size1: int,
+    size2: int,
+    /,
+    *,
+    dtype: DTypeLike = None,
+    device: DeviceLike = None,
+    generator: GeneratorLike = None,
+    out: Union[torch.Tensor, None] = None,
+    layout: Union[torch.layout, None] = None,
+    pin_memory: Union[bool, None] = False,
+    requires_grad: Union[bool, None] = False,
+) -> Tensor3D:
+    ...
+
+
+def rand(
+    *data: Any,
+    dtype: DTypeLike = None,
+    device: DeviceLike = None,
+    generator: GeneratorLike = None,
+    out: Union[torch.Tensor, None] = None,
+    layout: Union[torch.layout, None] = None,
+    pin_memory: Union[bool, None] = False,
+    requires_grad: Union[bool, None] = False,
+) -> torch.Tensor:
+    dtype = make_dtype(dtype)
+    device = make_device(device)
+    generator = make_generator(generator)
+
+    return torch.rand(
+        *data,
+        generator=generator,
+        out=out,
+        dtype=dtype,
+        layout=layout,
+        device=device,
+        pin_memory=pin_memory,
+        requires_grad=requires_grad,
+    )
+
+
+# ----------
+# randint
+# ----------
+
+
+@overload
+def randint(
+    low: int,
+    high: int,
+    size: Tuple[()],
+    *,
+    generator: GeneratorLike = None,
     dtype: Literal[None] = None,
-    device: Optional[Device] = None,
+    device: DeviceLike = None,
+    requires_grad: bool = False,
+    pin_memory: bool = False,
+) -> LongTensor0D:
+    ...
+
+
+@overload
+def randint(
+    low: int,
+    high: int,
+    size: Tuple[int],
+    *,
+    generator: GeneratorLike = None,
+    dtype: Literal[None] = None,
+    device: DeviceLike = None,
     requires_grad: bool = False,
     pin_memory: bool = False,
 ) -> LongTensor1D:
@@ -1132,52 +1137,296 @@ def arange(
 
 
 @overload
-def arange(
-    start: int,
-    end: int,
+def randint(
+    low: int,
+    high: int,
+    size: Tuple[int, int],
     *,
-    out: Optional[Tensor] = None,
+    generator: GeneratorLike = None,
     dtype: Literal[None] = None,
-    device: Optional[Device] = None,
+    device: DeviceLike = None,
     requires_grad: bool = False,
     pin_memory: bool = False,
-) -> LongTensor1D:
+) -> LongTensor2D:
     ...
 
 
 @overload
-def arange(
-    start: int,
-    end: int,
-    step: int,
+def randint(
+    low: int,
+    high: int,
+    size: Tuple[int, int, int],
     *,
-    out: Optional[Tensor] = None,
+    generator: GeneratorLike = None,
     dtype: Literal[None] = None,
-    device: Optional[Device] = None,
+    device: DeviceLike = None,
     requires_grad: bool = False,
     pin_memory: bool = False,
-) -> LongTensor1D:
+) -> LongTensor3D:
     ...
 
 
-def arange(
-    start: Number,
-    end: Number,
-    step: Number,
+@overload
+def randint(
+    low: int,
+    high: int,
+    size: Tuple[()],
     *,
-    out: Optional[Tensor] = None,
-    dtype: Optional[torch.dtype] = None,
-    device: Optional[Device] = None,
+    generator: GeneratorLike = None,
+    dtype: DTypeLike = None,
+    device: DeviceLike = None,
+    requires_grad: bool = False,
+    pin_memory: bool = False,
+) -> Tensor0D:
+    ...
+
+
+@overload
+def randint(
+    low: int,
+    high: int,
+    size: Tuple[int],
+    *,
+    generator: GeneratorLike = None,
+    dtype: DTypeLike = None,
+    device: DeviceLike = None,
     requires_grad: bool = False,
     pin_memory: bool = False,
 ) -> Tensor1D:
-    return torch.arange(
-        start,
-        end,
-        step,
-        out=out,
+    ...
+
+
+@overload
+def randint(
+    low: int,
+    high: int,
+    size: Tuple[int, int],
+    *,
+    generator: GeneratorLike = None,
+    dtype: DTypeLike = None,
+    device: DeviceLike = None,
+    requires_grad: bool = False,
+    pin_memory: bool = False,
+) -> Tensor2D:
+    ...
+
+
+@overload
+def randint(
+    low: int,
+    high: int,
+    size: Tuple[int, int, int],
+    *,
+    generator: GeneratorLike = None,
+    dtype: DTypeLike = None,
+    device: DeviceLike = None,
+    requires_grad: bool = False,
+    pin_memory: bool = False,
+) -> Tensor3D:
+    ...
+
+
+def randint(
+    low: int,
+    high: int,
+    size: Tuple[int, ...],
+    *,
+    generator: GeneratorLike = None,
+    dtype: DTypeLike = None,
+    device: DeviceLike = None,
+    requires_grad: bool = False,
+    pin_memory: bool = False,
+) -> Tensor:
+    dtype = make_dtype(dtype)
+    device = make_device(device)
+    generator = make_generator(generator)
+    return torch.randint(
+        low=low,
+        high=high,
+        size=size,
+        generator=generator,
         dtype=dtype,
         device=device,
         requires_grad=requires_grad,
         pin_memory=pin_memory,
+    )
+
+
+# ----------
+# randperm
+# ----------
+
+
+@overload
+def randperm(
+    n: int,
+    *,
+    generator: GeneratorLike = None,
+    out: Optional[Tensor] = None,
+    dtype: Literal[None] = None,
+    layout: Optional[torch.layout] = None,
+    device: DeviceLike = None,
+    pin_memory: Optional[bool] = False,
+    requires_grad: Optional[bool] = False,
+) -> LongTensor1D:
+    ...
+
+
+def randperm(
+    n: int,
+    *,
+    generator: GeneratorLike = None,
+    out: Optional[Tensor] = None,
+    dtype: DTypeLike = None,
+    layout: Optional[torch.layout] = None,
+    device: DeviceLike = None,
+    pin_memory: Optional[bool] = False,
+    requires_grad: Optional[bool] = False,
+) -> Tensor1D:
+    dtype = make_dtype(dtype)
+    device = make_device(device)
+    generator = make_generator(generator)
+    return torch.randperm(
+        n=n,
+        out=out,
+        dtype=dtype,
+        layout=layout,
+        device=device,
+        pin_memory=pin_memory,
+        requires_grad=requires_grad,
+    )
+
+
+# ----------
+# zeros
+# ----------
+
+
+@overload
+def zeros(
+    size: Sequence[Never],
+    /,
+    *,
+    dtype: DTypeLike = None,
+    device: DeviceLike = None,
+    out: Union[torch.Tensor, None] = None,
+    layout: Union[torch.layout, None] = None,
+    pin_memory: Union[bool, None] = False,
+    requires_grad: Union[bool, None] = False,
+) -> Tensor0D:
+    ...
+
+
+@overload
+def zeros(
+    size: Tuple[int],
+    /,
+    *,
+    dtype: DTypeLike = None,
+    device: DeviceLike = None,
+    out: Union[torch.Tensor, None] = None,
+    layout: Union[torch.layout, None] = None,
+    pin_memory: Union[bool, None] = False,
+    requires_grad: Union[bool, None] = False,
+) -> Tensor1D:
+    ...
+
+
+@overload
+def zeros(
+    size: Tuple[int, int],
+    /,
+    *,
+    dtype: DTypeLike = None,
+    device: DeviceLike = None,
+    out: Union[torch.Tensor, None] = None,
+    layout: Union[torch.layout, None] = None,
+    pin_memory: Union[bool, None] = False,
+    requires_grad: Union[bool, None] = False,
+) -> Tensor2D:
+    ...
+
+
+@overload
+def zeros(
+    size: Tuple[int, int, int],
+    /,
+    *,
+    dtype: DTypeLike = None,
+    device: DeviceLike = None,
+    out: Union[torch.Tensor, None] = None,
+    layout: Union[torch.layout, None] = None,
+    pin_memory: Union[bool, None] = False,
+    requires_grad: Union[bool, None] = False,
+) -> Tensor3D:
+    ...
+
+
+@overload
+def zeros(
+    size0: int,
+    /,
+    *,
+    dtype: DTypeLike = None,
+    device: DeviceLike = None,
+    out: Union[torch.Tensor, None] = None,
+    layout: Union[torch.layout, None] = None,
+    pin_memory: Union[bool, None] = False,
+    requires_grad: Union[bool, None] = False,
+) -> Tensor1D:
+    ...
+
+
+@overload
+def zeros(
+    size0: int,
+    size1: int,
+    /,
+    *,
+    dtype: DTypeLike = None,
+    device: DeviceLike = None,
+    out: Union[torch.Tensor, None] = None,
+    layout: Union[torch.layout, None] = None,
+    pin_memory: Union[bool, None] = False,
+    requires_grad: Union[bool, None] = False,
+) -> Tensor2D:
+    ...
+
+
+@overload
+def zeros(
+    size0: int,
+    size1: int,
+    size2: int,
+    /,
+    *,
+    dtype: DTypeLike = None,
+    device: DeviceLike = None,
+    out: Union[torch.Tensor, None] = None,
+    layout: Union[torch.layout, None] = None,
+    pin_memory: Union[bool, None] = False,
+    requires_grad: Union[bool, None] = False,
+) -> Tensor3D:
+    ...
+
+
+def zeros(
+    *data,
+    dtype: DTypeLike = None,
+    device: DeviceLike = None,
+    out: Union[torch.Tensor, None] = None,
+    layout: Union[torch.layout, None] = None,
+    pin_memory: Union[bool, None] = False,
+    requires_grad: Union[bool, None] = False,
+) -> torch.Tensor:
+    dtype = make_dtype(dtype)
+    device = make_device(device)
+    return torch.zeros(
+        *data,
+        out=out,
+        dtype=dtype,
+        layout=layout,
+        device=device,
+        pin_memory=pin_memory,
+        requires_grad=requires_grad,
     )

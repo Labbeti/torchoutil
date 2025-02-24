@@ -8,25 +8,35 @@ import torch
 from torch import Generator, Tensor
 
 from torchoutil.core.make import make_generator
+from torchoutil.nn.functional.transform import to_tensor
 from torchoutil.pyoutil.collections import flat_list_of_list
 
 
 def random_split(
-    num_samples: int,
+    num_samples_or_indices: Union[int, List[int], Tensor],
     lengths: Iterable[float],
     generator: Union[int, Generator, None] = None,
+    round_fn: Callable[[float], int] = math.floor,
 ) -> List[List[int]]:
     """Generate indices for a random dataset split.
 
     Args:
         num_samples: Number of total samples.
-        lengths: Ratios of the target splits.
+        lengths: Ratios of the target splits. Values should be in range [0, 1].
         generator: Torch Generator or seed to make this function deterministic. defaults to None.
+        round_fn: Function to round ratios to integer sizes. defaults to math.floor.
     """
-    lengths = _round_lengths(num_samples, lengths, math.floor)
+    if isinstance(num_samples_or_indices, int):
+        num_samples = num_samples_or_indices
+        indices = torch.randperm(num_samples, generator=generator)
+    else:
+        indices = to_tensor(num_samples_or_indices)
+        num_samples = len(indices)
+    del num_samples_or_indices
+
+    lengths = _round_lengths(num_samples, lengths, round_fn)
     generator = make_generator(generator)
 
-    indices = torch.randperm(num_samples, generator=generator)
     start = 0
     splits = []
     for length in lengths:
@@ -37,24 +47,28 @@ def random_split(
 
 
 def balanced_monolabel_split(
-    targets_indices: Tensor,
+    targets_indices: Union[Tensor, List[int]],
     num_classes: int,
     lengths: Iterable[float],
     generator: Union[int, Generator, None] = None,
+    round_fn: Callable[[float], int] = math.floor,
 ) -> List[List[int]]:
     """Generate indices for a random dataset split while keeping the same multiclass distribution.
 
     Args:
         targets: List of class indices of size (N,).
         num_classes: Number of classes.
-        lengths: Ratios of the target splits.
+        lengths: Ratios of the target splits. Values should be in range [0, 1].
         generator: Torch Generator or seed to make this function deterministic. defaults to None.
+        round_fn: Function to round ratios to integer sizes. defaults to math.floor.
     """
     assert (0 <= targets_indices).all(), "Target classes indices must be positive."
     assert (
         targets_indices < num_classes
     ).all(), f"Target classes indices must be lower than {num_classes=}."
 
+    if isinstance(targets_indices, list):
+        targets_indices = to_tensor(targets_indices)
     lengths = list(lengths)
     generator = make_generator(generator)
 
@@ -66,7 +80,7 @@ def balanced_monolabel_split(
         indices_per_class.append(indices)
 
     indices_per_class = _shuffle_indices_per_class(indices_per_class, generator)
-    splits = _split_indices_per_class(indices_per_class, lengths, math.floor)
+    splits = _split_indices_per_class(indices_per_class, lengths, round_fn)
     flatten = [flat_list_of_list(split)[0] for split in splits]
     return flatten
 

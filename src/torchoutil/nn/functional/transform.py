@@ -42,8 +42,16 @@ from torchoutil.pyoutil.typing import (
     T_BuiltinScalar,
     is_builtin_scalar,
 )
-from torchoutil.types import ComplexFloatingTensor, is_number_like, is_scalar_like
+from torchoutil.types import ComplexFloatingTensor, is_builtin_number, is_scalar_like
 from torchoutil.types._typing import (
+    FloatTensor0D,
+    FloatTensor1D,
+    FloatTensor2D,
+    FloatTensor3D,
+    LongTensor0D,
+    LongTensor1D,
+    LongTensor2D,
+    LongTensor3D,
     NumberLike,
     ScalarLike,
     T_TensorOrArray,
@@ -317,6 +325,78 @@ def flatten(
 
 @overload
 def to_tensor(
+    data: int,
+    dtype: DTypeLike = None,
+    device: DeviceLike = None,
+) -> LongTensor0D:
+    ...
+
+
+@overload
+def to_tensor(
+    data: Sequence[int],
+    dtype: DTypeLike = None,
+    device: DeviceLike = None,
+) -> LongTensor1D:
+    ...
+
+
+@overload
+def to_tensor(
+    data: Sequence[Sequence[int]],
+    dtype: DTypeLike = None,
+    device: DeviceLike = None,
+) -> LongTensor2D:
+    ...
+
+
+@overload
+def to_tensor(
+    data: Sequence[Sequence[Sequence[int]]],
+    dtype: DTypeLike = None,
+    device: DeviceLike = None,
+) -> LongTensor3D:
+    ...
+
+
+@overload
+def to_tensor(
+    data: float,
+    dtype: DTypeLike = None,
+    device: DeviceLike = None,
+) -> FloatTensor0D:
+    ...
+
+
+@overload
+def to_tensor(
+    data: Sequence[float],
+    dtype: DTypeLike = None,
+    device: DeviceLike = None,
+) -> FloatTensor1D:
+    ...
+
+
+@overload
+def to_tensor(
+    data: Sequence[Sequence[float]],
+    dtype: DTypeLike = None,
+    device: DeviceLike = None,
+) -> FloatTensor2D:
+    ...
+
+
+@overload
+def to_tensor(
+    data: Sequence[Sequence[Sequence[float]]],
+    dtype: DTypeLike = None,
+    device: DeviceLike = None,
+) -> FloatTensor3D:
+    ...
+
+
+@overload
+def to_tensor(
     data: BuiltinNumber,
     dtype: DTypeLike = None,
     device: DeviceLike = None,
@@ -369,7 +449,7 @@ def to_tensor(data: Any, dtype: DTypeLike = None, device: DeviceLike = None) -> 
     Returns:
         PyTorch tensor created from data.
     """
-    if isinstance(data, (Tensor, np.ndarray)) or is_number_like(data):
+    if isinstance(data, (Tensor, np.ndarray, np.number)) or is_builtin_number(data):
         dtype = make_dtype(dtype)
         device = make_device(device)
         return torch.as_tensor(data, dtype=dtype, device=device)

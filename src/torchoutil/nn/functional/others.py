@@ -290,3 +290,17 @@ def average_power(
 ) -> T_TensorOrArray:
     """Compute average power of a signal along a specified dim/axis."""
     return (abs(x) ** 2).mean(dim)  # type: ignore
+
+
+def mse(
+    x1: Tensor, x2: Tensor, *, dim: Union[int, Tuple[int, ...], None] = None
+) -> Tensor:
+    """Mean squared error function."""
+    return ((x1 - x2) ** 2).mean(dim).sqrt()
+
+
+def rmse(
+    x1: Tensor, x2: Tensor, *, dim: Union[int, Tuple[int, ...], None] = None
+) -> Tensor:
+    """Root mean squared error function."""
+    return mse(x1, x2, dim=dim).sqrt()
