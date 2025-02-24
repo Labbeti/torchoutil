@@ -2,6 +2,9 @@
 # -*- coding: utf-8 -*-
 
 from .make import (  # noqa: F401
+    DeviceLike,
+    DTypeLike,
+    GeneratorLike,
     get_device,
     get_dtype,
     get_generator,
