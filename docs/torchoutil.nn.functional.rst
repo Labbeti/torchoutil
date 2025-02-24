@@ -15,8 +15,8 @@ Submodules
    torchoutil.nn.functional.activation
    torchoutil.nn.functional.checksum
    torchoutil.nn.functional.crop
-   torchoutil.nn.functional.get
    torchoutil.nn.functional.indices
+   torchoutil.nn.functional.make
    torchoutil.nn.functional.mask
    torchoutil.nn.functional.multiclass
    torchoutil.nn.functional.multilabel
@@ -24,5 +24,6 @@ Submodules
    torchoutil.nn.functional.others
    torchoutil.nn.functional.pad
    torchoutil.nn.functional.powerset
+   torchoutil.nn.functional.predicate
    torchoutil.nn.functional.segments
    torchoutil.nn.functional.transform

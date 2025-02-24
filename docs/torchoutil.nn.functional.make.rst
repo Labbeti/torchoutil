@@ -1,7 +1,7 @@
-torchoutil.utils.pack.dataset module
+torchoutil.nn.functional.make module
 ====================================
 
-.. automodule:: torchoutil.utils.pack.dataset
+.. automodule:: torchoutil.nn.functional.make
    :members:
    :undoc-members:
    :show-inheritance:

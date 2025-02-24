@@ -1,7 +1,7 @@
-torchoutil.nn.functional.get module
+torchoutil.extras.torchaudio module
 ===================================
 
-.. automodule:: torchoutil.nn.functional.get
+.. automodule:: torchoutil.extras.torchaudio
    :members:
    :undoc-members:
    :show-inheritance:

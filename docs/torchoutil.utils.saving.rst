@@ -14,9 +14,12 @@ Submodules
 
    torchoutil.utils.saving.common
    torchoutil.utils.saving.csv
+   torchoutil.utils.saving.dump_fn
    torchoutil.utils.saving.json
    torchoutil.utils.saving.load_fn
+   torchoutil.utils.saving.numpy
    torchoutil.utils.saving.pickle
    torchoutil.utils.saving.safetensors
-   torchoutil.utils.saving.save_fn
+   torchoutil.utils.saving.torch
+   torchoutil.utils.saving.torchaudio
    torchoutil.utils.saving.yaml

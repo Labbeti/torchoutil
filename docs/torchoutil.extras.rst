@@ -23,4 +23,5 @@ Submodules
 
    torchoutil.extras.colorlog
    torchoutil.extras.tensorboard
+   torchoutil.extras.torchaudio
    torchoutil.extras.yaml

@@ -1,7 +1,7 @@
-torchoutil.utils.saving.save\_fn module
+torchoutil.utils.saving.dump\_fn module
 =======================================
 
-.. automodule:: torchoutil.utils.saving.save_fn
+.. automodule:: torchoutil.utils.saving.dump_fn
    :members:
    :undoc-members:
    :show-inheritance:

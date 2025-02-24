@@ -1,7 +1,7 @@
-torchoutil.utils.pack.common module
+torchoutil.nn.modules.module module
 ===================================
 
-.. automodule:: torchoutil.utils.pack.common
+.. automodule:: torchoutil.nn.modules.module
    :members:
    :undoc-members:
    :show-inheritance:
