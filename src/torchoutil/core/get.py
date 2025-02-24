@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 from .make import (  # noqa: F401
+    CUDA_IF_AVAILABLE,
     DeviceLike,
     DTypeLike,
     GeneratorLike,

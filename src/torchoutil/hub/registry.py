@@ -29,7 +29,7 @@ from torchoutil.pyoutil.logging import warn_once
 from torchoutil.utils.saving.json import load_json, to_json
 from torchoutil.utils.saving.load_fn import LOAD_FNS, LoadFnLike, load_torch
 
-T_Hashable = TypeVar("T_Hashable", bound=Hashable)
+T_Name = TypeVar("T_Hashable", bound=Hashable)
 
 pylog = logging.getLogger(__name__)
 
@@ -43,10 +43,10 @@ class RegistryEntry(TypedDict):
     architecture: NotRequired[str]
 
 
-class RegistryHub(Generic[T_Hashable]):
+class RegistryHub(Generic[T_Name]):
     def __init__(
         self,
-        infos: Mapping[T_Hashable, RegistryEntry],
+        infos: Mapping[T_Name, RegistryEntry],
         register_root: Union[str, Path, None] = None,
     ) -> None:
         """
@@ -65,7 +65,7 @@ class RegistryHub(Generic[T_Hashable]):
         self._ckpt_parent_path = register_root
 
     @property
-    def infos(self) -> Dict[T_Hashable, RegistryEntry]:
+    def infos(self) -> Dict[T_Name, RegistryEntry]:
         return self._infos
 
     @property
@@ -73,14 +73,15 @@ class RegistryHub(Generic[T_Hashable]):
         return self._ckpt_parent_path.resolve()
 
     @property
-    def names(self) -> List[T_Hashable]:
+    def names(self) -> List[T_Name]:
         return list(self._infos.keys())
 
     @property
     def paths(self) -> List[Path]:
         return [self.get_path(model_name) for model_name in self.names]
 
-    def get_path(self, name: T_Hashable) -> Path:
+    def get_path(self, name: T_Name) -> Path:
+        """Returns the expected filepath of an element."""
         if name not in self.names:
             msg = f"Invalid argument {name=}. (expected one of {self.names})"
             raise ValueError(msg)
@@ -91,7 +92,7 @@ class RegistryHub(Generic[T_Hashable]):
 
     def load_state_dict(
         self,
-        name_or_path: Union[T_Hashable, str, Path],
+        name_or_path: Union[T_Name, str, Path],
         *,
         device: DeviceLike = None,
         offline: bool = False,
@@ -144,10 +145,10 @@ class RegistryHub(Generic[T_Hashable]):
             if path.is_file():
                 pass
             elif offline:
-                msg = f"Cannot find checkpoint model file in '{path}' for model '{name_or_path}' with mode {offline=}."
+                msg = f"Cannot find checkpoint model file in '{path}' for model '{name}' with mode {offline=}."
                 raise FileNotFoundError(msg)
             else:
-                self.download_file(name_or_path, verbose=verbose)  # type: ignore
+                self.download_file(name, verbose=verbose)  # type: ignore
 
         del name_or_path
 
@@ -169,7 +170,7 @@ class RegistryHub(Generic[T_Hashable]):
 
     def download_file(
         self,
-        name: T_Hashable,
+        name: T_Name,
         force: bool = False,
         check_hash: bool = True,
         verbose: int = 0,
@@ -198,9 +199,20 @@ class RegistryHub(Generic[T_Hashable]):
         else:
             raise ValueError(f"Invalid hash for file '{model_path}'.")
 
+    def remove_file(
+        self,
+        name: T_Name,
+    ) -> None:
+        path = self.get_path(name)
+        if path.is_file():
+            os.remove(path)
+        elif path.exists():
+            msg = f"Invalid argument {name=}, which redirect to a non-file {path=}."
+            raise ValueError(msg)
+
     def is_valid_hash(
         self,
-        name: T_Hashable,
+        name: T_Name,
     ) -> bool:
         info = self.infos[name]
         if "hash_type" not in info or "hash_value" not in info:
@@ -230,7 +242,7 @@ class RegistryHub(Generic[T_Hashable]):
         args = load_json(path)
         return RegistryHub(**args)
 
-    def _get_name(self, path: Union[str, Path]) -> Optional[T_Hashable]:
+    def _get_name(self, path: Union[str, Path]) -> Optional[T_Name]:
         path_to_name = {
             path_i.resolve().expanduser(): name_i
             for path_i, name_i in zip(self.paths, self.names)

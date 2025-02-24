@@ -81,7 +81,11 @@ def one_hot(
 ) -> Tensor:
     """Alias of :func:`~torchoutil.nn.functional.multiclass.index_to_onehot`."""
     return index_to_onehot(
-        tensor, num_classes, padding_idx=padding_idx, device=device, dtype=dtype
+        tensor,
+        num_classes,
+        padding_idx=padding_idx,
+        device=device,
+        dtype=dtype,
     )
 
 

@@ -1,8 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import inspect
-from typing import Any, Callable, Generic, List, TypeVar, overload
+from typing import Any, Callable, Generic, TypeVar, overload
+
+from .inspect import get_argnames
 
 T = TypeVar("T")
 U = TypeVar("U")
@@ -89,22 +90,6 @@ class Compose(Generic[T, U]):
 
 
 compose = Compose  # type: ignore
-
-
-def get_argnames(fn: Callable) -> List[str]:
-    """Get arguments names of a method, function or callable object."""
-    if inspect.ismethod(fn):
-        # If method, remove 'self' arg
-        argnames = fn.__code__.co_varnames[1:]
-    elif inspect.isfunction(fn):
-        argnames = fn.__code__.co_varnames
-    elif inspect.isclass(fn):
-        argnames = fn.__init__.__code__.co_varnames[1:]
-    else:
-        argnames = fn.__call__.__code__.co_varnames
-
-    argnames = list(argnames)
-    return argnames
 
 
 def filter_and_call(fn: Callable[..., T], **kwargs: Any) -> T:

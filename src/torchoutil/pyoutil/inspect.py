@@ -2,7 +2,23 @@
 # -*- coding: utf-8 -*-
 
 import inspect
-from typing import Any, get_args
+from typing import Any, Callable, List, get_args
+
+
+def get_argnames(fn: Callable) -> List[str]:
+    """Get arguments names of a method, function or callable object."""
+    if inspect.ismethod(fn):
+        # If method, remove 'self' arg
+        argnames = fn.__code__.co_varnames[1:]
+    elif inspect.isfunction(fn):
+        argnames = fn.__code__.co_varnames
+    elif inspect.isclass(fn):
+        argnames = fn.__init__.__code__.co_varnames[1:]
+    else:
+        argnames = fn.__call__.__code__.co_varnames
+
+    argnames = list(argnames)
+    return argnames
 
 
 def get_current_fn_name() -> str:

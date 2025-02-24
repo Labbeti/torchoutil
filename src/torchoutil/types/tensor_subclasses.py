@@ -635,6 +635,11 @@ class Tensor3D(
     ...
 
 
+# ----------------------------------------
+# Concrete classes
+# ----------------------------------------
+
+
 class BoolTensor(
     _TensorNDBase[
         Literal[DTypeEnum.bool],
@@ -1920,6 +1925,11 @@ class CDoubleTensor3D(
 ):
     def tolist(self) -> List[List[List[complex]]]:
         return super().tolist()  # type: ignore
+
+
+# ----------------------------------------
+# Intermediate classes
+# ----------------------------------------
 
 
 class ComplexFloatingTensor(

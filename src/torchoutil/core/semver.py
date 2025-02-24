@@ -4,7 +4,7 @@
 import re
 import sys
 from dataclasses import asdict, dataclass
-from typing import Any, Dict, Tuple, TypedDict, Union, overload, Optional
+from typing import Any, Dict, Optional, Tuple, TypedDict, Union, overload
 
 from typing_extensions import NotRequired, TypeIs
 
@@ -84,21 +84,18 @@ class Version:
         ...
 
     def __init__(self, *args, **kwargs) -> None:
+        has_1_pos_arg = len(args) == 1 and len(kwargs) == 0
         # Version str
-        if len(args) == 1 and len(kwargs) == 0 and isinstance(args[0], str):
+        if has_1_pos_arg and isinstance(args[0], str):
             version_str = args[0]
             version_dict = _parse_version_str(version_str)
 
         # Version dict
-        elif (
-            len(args) == 1
-            and len(kwargs) == 0
-            and isinstance_guard(args[0], Dict[str, Optional[int]])
-        ):
+        elif has_1_pos_arg and isinstance_guard(args[0], Dict[str, Optional[int]]):
             version_dict = args[0]
 
         # Version tuple
-        elif len(args) == 1 and len(kwargs) == 0 and _is_version_tuple(args[0]):
+        elif has_1_pos_arg and _is_version_tuple(args[0]):
             version_tuple = args[0]
             version_dict = dict(zip(_VERSION_KEYS, version_tuple))
 
@@ -125,6 +122,7 @@ class Version:
 
     @classmethod
     def python(cls) -> "Version":
+        """Create an instance of Version with Python version."""
         return Version(
             sys.version_info.major,
             sys.version_info.minor,
@@ -175,6 +173,9 @@ class Version:
         if exclude_none:
             version_tuple = tuple(v for v in version_tuple if v is not None)
         return version_tuple  # type: ignore
+
+    def __str__(self) -> str:
+        return self.to_str()
 
     def __eq__(self, other: Any) -> bool:
         if isinstance(other, (dict, tuple, str)):

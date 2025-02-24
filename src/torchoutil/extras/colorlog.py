@@ -24,12 +24,20 @@ LOG_COLORS = {
 }
 
 
-def get_colored_formatter() -> ColoredFormatter:
+def get_colored_formatter(slurm_rank: bool = False) -> ColoredFormatter:
     if not _COLORLOG_AVAILABLE:
         msg = "Cannot call function get_colored_formatter because optional dependency 'colorlog' is not installed. Please install it using 'pip install torchoutil[extras]'"
         raise RuntimeError(msg)
 
-    rank = os.getenv("SLURM_PROCID", 0)
-    fmt = f"[%(purple)sRANK{rank}%(reset)s][%(cyan)s%(asctime)s%(reset)s][%(blue)s%(name)s%(reset)s][%(log_color)s%(levelname)s%(reset)s] - %(message)s"
+    if slurm_rank:
+        slurm_rank = os.getenv("SLURM_PROCID", 0)
+        rank_fmt = f"[%(purple)sRANK{slurm_rank}%(reset)s]"
+    else:
+        rank_fmt = ""
+
+    fmt = (
+        rank_fmt
+        + "[%(cyan)s%(asctime)s%(reset)s][%(blue)s%(name)s%(reset)s][%(log_color)s%(levelname)s%(reset)s] - %(message)s"
+    )
     formatter = ColoredFormatter(fmt=fmt, log_colors=LOG_COLORS)
     return formatter

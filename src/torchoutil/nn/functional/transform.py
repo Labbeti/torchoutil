@@ -52,7 +52,6 @@ from torchoutil.types._typing import (
     LongTensor1D,
     LongTensor2D,
     LongTensor3D,
-    NumberLike,
     ScalarLike,
     T_TensorOrArray,
     Tensor0D,
@@ -471,7 +470,15 @@ def to_tensor(data: Any, dtype: DTypeLike = None, device: DeviceLike = None) -> 
         return torch.stack(tensors)
 
     else:
-        EXPECTED = (Tensor, np.ndarray, NumberLike, list, tuple, PythonGenerator)
+        EXPECTED = (
+            Tensor,
+            np.ndarray,
+            np.number,
+            BuiltinNumber,
+            list,
+            tuple,
+            PythonGenerator,
+        )
         msg = f"Invalid argument type '{type(data)}'. (expected one of {EXPECTED})"
         raise TypeError(msg)
 
