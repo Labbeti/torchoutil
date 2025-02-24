@@ -19,7 +19,15 @@ from typing import (
     Union,
 )
 
-from typing_extensions import TypeGuard, TypeIs, TypeVar, get_args, get_origin
+from typing_extensions import (
+    NotRequired,
+    Required,
+    TypeGuard,
+    TypeIs,
+    TypeVar,
+    get_args,
+    get_origin,
+)
 
 from .classes import (
     BuiltinNumber,
@@ -73,9 +81,10 @@ def isinstance_guard(x: Any, target_type: Type[T]) -> TypeIs[T]:
         return x in args
 
     if issubclass(origin, Mapping):
-        assert len(args) in (0, 2), f"{args=}"
+        assert len(args) == 2, f"{args=}"
         if not isinstance_guard(x, origin):
             return False
+
         return all(isinstance_guard(k, args[0]) for k in x.keys()) and all(
             isinstance_guard(v, args[1]) for v in x.values()
         )
@@ -85,19 +94,54 @@ def isinstance_guard(x: Any, target_type: Type[T]) -> TypeIs[T]:
             return False
         return all(isinstance_guard(xi, args[0]) for xi in x)
 
-    msg = f"Unsupported type {target_type}. (expected unparametrized type or parametrized Union, Literal, Mapping or Iterable)"
+    msg = f"Unsupported type {target_type}. (expected unparametrized type or parametrized Union, TypedDict, Literal, Mapping or Iterable)"
     raise NotImplementedError(msg)
 
 
 def _isinstance_guard_typed_dict(x: Any, target_type: type) -> bool:
     if not isinstance_guard(x, Dict[str, Any]):
         return False
+
+    total: bool = target_type.__total__
     annotations = target_type.__annotations__
-    if set(x.keys()) != set(annotations.keys()):
+
+    required_annotations = {}
+    optional_annotations = {}
+    for k, v in annotations.items():
+        origin = get_origin(v)
+        if origin is Required:
+            required_annotations[k] = v
+        elif origin is NotRequired:
+            optional_annotations[k] = v
+        elif total:
+            required_annotations[k] = v
+        else:
+            optional_annotations[k] = v
+
+    if not set(required_annotations.keys()).issubset(x.keys()):
         return False
-    for k, v in x.items():
-        if not isinstance_guard(v, annotations[k]):
+    if not (
+        set(required_annotations.keys()) | set(optional_annotations.keys())
+    ).issuperset(x.keys()):
+        return False
+
+    for k, v in required_annotations.items():
+        origin = get_origin(v)
+        if origin is Required:
+            v = get_args(v)[0]
+
+        if not isinstance_guard(x[k], v):
             return False
+
+    for k, v in optional_annotations.items():
+        if k not in x:
+            continue
+        origin = get_origin(v)
+        if origin is NotRequired:
+            v = get_args(v)[0]
+        if not isinstance_guard(x[k], v):
+            return False
+
     return True
 
 

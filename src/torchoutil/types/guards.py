@@ -8,7 +8,11 @@ from torch import Tensor
 from typing_extensions import TypeGuard, TypeIs
 
 from torchoutil.extras.numpy import is_numpy_number_like, is_numpy_scalar_like, np
-from torchoutil.pyoutil.typing import is_builtin_number, is_builtin_scalar
+from torchoutil.pyoutil.typing import (
+    is_builtin_number,
+    is_builtin_scalar,
+    isinstance_guard,
+)
 from torchoutil.types._typing import (
     BoolTensor,
     BoolTensor1D,
@@ -16,53 +20,57 @@ from torchoutil.types._typing import (
     FloatingTensor,
     NumberLike,
     ScalarLike,
-    SignedIntegerTensor,
-    SignedIntegerTensor1D,
     Tensor0D,
+    Tensor1D,
     TensorOrArray,
 )
 
 
 def is_bool_tensor(x: Any) -> TypeIs[BoolTensor]:
+    """Deprecated: Use `isinstance(x, to.BoolTensor)` instead."""
     return isinstance(x, BoolTensor)
 
 
 def is_bool_tensor1d(x: Any) -> TypeIs[BoolTensor1D]:
-    return is_bool_tensor(x) and x.ndim == 1
+    """Deprecated: Use `isinstance(x, to.BoolTensor1D)` instead."""
+    return isinstance(x, BoolTensor1D)
 
 
 def is_complex_tensor(x: Any) -> TypeIs[ComplexFloatingTensor]:
-    return isinstance(x, Tensor) and x.is_complex()
+    """Deprecated: Use `isinstance(x, to.ComplexFloatingTensor)` instead."""
+    return isinstance(x, ComplexFloatingTensor)
 
 
 def is_dict_str_tensor(x: Any) -> TypeIs[Dict[str, Tensor]]:
-    return isinstance(x, dict) and all(
-        isinstance(k, str) and isinstance(v, Tensor) for k, v in x.items()
-    )
+    """Deprecated: Use `to.isinstance_guard(x, Dict[str, Tensor])` instead."""
+    return isinstance_guard(x, Dict[str, Tensor])
 
 
 def is_floating_tensor(x: Any) -> TypeIs[FloatingTensor]:
-    return isinstance(x, Tensor) and x.is_floating_point()
+    """Deprecated: Use `isinstance(x, to.FloatingTensor)` instead."""
+    return isinstance(x, FloatingTensor)
 
 
 def is_integral_dtype(dtype: torch.dtype) -> bool:
-    return not dtype.is_floating_point and not dtype.is_complex and dtype.is_signed
+    return not dtype.is_floating_point and not dtype.is_complex
 
 
-def is_integral_tensor(x: Any) -> TypeIs[SignedIntegerTensor]:
+def is_integral_tensor(x: Any) -> TypeIs[Tensor]:
     return isinstance(x, Tensor) and is_integral_dtype(x.dtype)
 
 
-def is_integral_tensor1d(x: Any) -> TypeIs[SignedIntegerTensor1D]:
+def is_integral_tensor1d(x: Any) -> TypeIs[Tensor1D]:
     return is_integral_tensor(x) and x.ndim == 1
 
 
 def is_iterable_tensor(x: Any) -> TypeIs[Iterable[Tensor]]:
-    return isinstance(x, Iterable) and all(isinstance(xi, Tensor) for xi in x)
+    """Deprecated: Use `to.isinstance_guard(x, Iterable[Tensor])` instead."""
+    return isinstance_guard(x, Iterable[Tensor])
 
 
 def is_list_tensor(x: Any) -> TypeIs[List[Tensor]]:
-    return isinstance(x, list) and all(isinstance(xi, Tensor) for xi in x)
+    """Deprecated: Use `to.isinstance_guard(x, List[Tensor])` instead."""
+    return isinstance_guard(x, List[Tensor])
 
 
 def is_number_like(x: Any) -> TypeGuard[NumberLike]:
@@ -91,7 +99,7 @@ def is_scalar_like(x: Any) -> TypeGuard[ScalarLike]:
 
 def is_tensor0d(x: Any) -> TypeIs[Tensor0D]:
     """Returns True if x is a zero-dimensional torch Tensor."""
-    return isinstance(x, Tensor) and x.ndim == 0
+    return isinstance(x, Tensor0D)
 
 
 def is_tensor_like(x: Any) -> TypeIs[TensorOrArray]:
@@ -99,4 +107,5 @@ def is_tensor_like(x: Any) -> TypeIs[TensorOrArray]:
 
 
 def is_tuple_tensor(x: Any) -> TypeIs[Tuple[Tensor, ...]]:
-    return isinstance(x, tuple) and all(isinstance(xi, Tensor) for xi in x)
+    """Deprecated: Use `to.isinstance_guard(x, Tuple[Tensor, ...])` instead."""
+    return isinstance_guard(x, Tuple[Tensor, ...])

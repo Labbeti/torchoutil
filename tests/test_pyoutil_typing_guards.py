@@ -22,7 +22,7 @@ from typing import (
 )
 from unittest import TestCase
 
-from typing_extensions import TypeGuard, TypeIs
+from typing_extensions import NotRequired, TypeGuard, TypeIs
 
 from torchoutil.pyoutil.typing import (
     BuiltinNumber,
@@ -40,6 +40,12 @@ from torchoutil.pyoutil.typing import (
 class ExampleDict(TypedDict):
     a: int = 0
     b: str = "b"
+
+
+class ExampleDict2(TypedDict):
+    a: int = 0
+    b: str = "b"
+    c: NotRequired[float] = 0.0
 
 
 class TestTypeChecks(TestCase):
@@ -137,45 +143,61 @@ class TestIsInstanceGuard(TestCase):
         assert not is_typed_dict(Dict)
         assert not is_typed_dict(Dict[str, Any])
         assert is_typed_dict(ExampleDict)
+        assert is_typed_dict(ExampleDict2)
 
         x = {"a": 1, "b": "dnqzudh"}
 
         assert isinstance_guard(x, Dict[str, Any])
         assert not isinstance_guard(x, Dict[str, int])
         assert isinstance_guard(x, Dict[str, Union[int, str]])
+        assert isinstance_guard(x, Dict[Union[str, int], Union[int, str]])
         assert isinstance_guard(x, ExampleDict)
+        assert isinstance_guard(x, ExampleDict2)
 
         x = {"a": 1, "b": 2}
 
         assert isinstance_guard(x, Dict[str, Any])
         assert isinstance_guard(x, Dict[str, int])
         assert isinstance_guard(x, Dict[str, Union[int, str]])
-        assert not isinstance_guard(x, ExampleDict)
         assert isinstance_guard(x, Dict[Union[str, int], Union[int, str]])
+        assert not isinstance_guard(x, ExampleDict)
+        assert not isinstance_guard(x, ExampleDict2)
 
         x = {"a": 1, "b": "dnqzudh", "c": 2}
 
         assert isinstance_guard(x, Dict[str, Any])
         assert not isinstance_guard(x, Dict[str, int])
         assert isinstance_guard(x, Dict[str, Union[int, str]])
-        assert not isinstance_guard(x, ExampleDict)
         assert isinstance_guard(x, Dict[Union[str, int], Union[int, str]])
+        assert not isinstance_guard(x, ExampleDict)
+        assert not isinstance_guard(x, ExampleDict2)
 
         x = {"a": []}
 
         assert isinstance_guard(x, Dict[str, Any])
         assert not isinstance_guard(x, Dict[str, int])
         assert not isinstance_guard(x, Dict[str, Union[int, str]])
-        assert not isinstance_guard(x, ExampleDict)
         assert not isinstance_guard(x, Dict[Union[str, int], Union[int, str]])
+        assert not isinstance_guard(x, ExampleDict)
+        assert not isinstance_guard(x, ExampleDict2)
 
         x = {1: 1, "b": "dnqzudh"}
 
         assert not isinstance_guard(x, Dict[str, Any])
         assert not isinstance_guard(x, Dict[str, int])
         assert not isinstance_guard(x, Dict[str, Union[int, str]])
-        assert not isinstance_guard(x, ExampleDict)
         assert isinstance_guard(x, Dict[Union[str, int], Union[int, str]])
+        assert not isinstance_guard(x, ExampleDict)
+        assert not isinstance_guard(x, ExampleDict2)
+
+        x = {"a": 1, "b": "dnqzudh", "c": 3.0}
+
+        assert isinstance_guard(x, Dict[str, Any])
+        assert not isinstance_guard(x, Dict[str, int])
+        assert not isinstance_guard(x, Dict[str, Union[int, str]])
+        assert not isinstance_guard(x, Dict[Union[str, int], Union[int, str]])
+        assert not isinstance_guard(x, ExampleDict)
+        assert isinstance_guard(x, ExampleDict2)
 
     def test_old_compatibility(self) -> None:
         examples = [

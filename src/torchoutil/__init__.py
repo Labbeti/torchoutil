@@ -35,6 +35,7 @@ from .core.make import (  # noqa: F401
 )
 from .core.semver import Version
 from .nn.functional import *
+from .pyoutil.typing.guards import isinstance_guard
 from .types.guards import (
     is_builtin_number,
     is_builtin_scalar,
