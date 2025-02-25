@@ -467,6 +467,7 @@ def to_tensor(data: Any, dtype: DTypeLike = None, device: DeviceLike = None) -> 
             uniq_shapes = tuple(set(shapes))
             msg = f"Cannot convert to tensor a list of elements with heterogeneous shapes. (found different shapes: {uniq_shapes})"
             raise ValueError(msg)
+
         return torch.stack(tensors)
 
     else:
@@ -648,7 +649,7 @@ def to_item(x: Union[ScalarLike, Tensor, np.ndarray, SizedIterable]) -> BuiltinS
     elif isinstance(x, SizedIterable) and len(x) == 1:
         return to_item(next(iter(x)))
     else:
-        msg = f"Invalid argument type {type(x)=}. (expected scalar-like object)"
+        msg = f"Invalid argument type {type(x)=}. (expected scalar-like object or an iterable containing only 1 element)"
         raise TypeError(msg)
 
 

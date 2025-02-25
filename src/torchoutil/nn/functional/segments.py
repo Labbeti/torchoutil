@@ -1,16 +1,19 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from typing import List, Tuple, Union
+from typing import Iterable, List, Tuple, Union
 
 import torch
 from torch import Tensor
 
-from torchoutil.nn.functional.pad import pad_dim
+from torchoutil import pyoutil as po
+from torchoutil.core.make import DeviceLike, make_device
+from torchoutil.nn.functional.pad import pad_and_stack_rec, pad_dim
+from torchoutil.nn.functional.transform import to_tensor
 from torchoutil.types import BoolTensor, LongTensor
 
 
-def extract_segments(x: Tensor) -> LongTensor:
+def activity_to_segments(x: Tensor) -> LongTensor:
     """Extracts segments start and end positions from a boolean activity/mask tensor.
 
     Example 1
@@ -55,7 +58,7 @@ def extract_segments(x: Tensor) -> LongTensor:
     return result  # type: ignore
 
 
-def segments_to_list(
+def segments_to_segments_list(
     segments: Tensor,
     maxsize: Union[int, Tuple[int, ...], None] = None,
 ) -> Union[List[Tuple[int, int]], list]:
@@ -80,7 +83,67 @@ def segments_to_list(
 
     arange = torch.arange(num_elems)
     result = [
-        segments_to_list(segments[1:, ..., segments[0] == idx], maxsize=next_maxsize)
+        segments_to_segments_list(
+            segments[1:, ..., segments[0] == idx], maxsize=next_maxsize
+        )
         for idx in arange
     ]
     return result
+
+
+def segments_list_to_activity(
+    segments_list: Union[List[Tuple[int, int]], list],
+    maxsize: Union[int, None] = None,
+    device: DeviceLike = None,
+) -> BoolTensor:
+    device = make_device(device)
+
+    if po.isinstance_guard(segments_list, Iterable[Iterable[int]]):
+        segments_list: list[tuple[int, int]] = list(map(tuple, segments_list))
+        if len(segments_list) == 0:
+            if maxsize is None:
+                num_elems = 0
+            else:
+                num_elems = maxsize
+
+            return torch.full((num_elems,), False, dtype=torch.bool, device=device)
+
+        starts, ends = to_tensor(segments_list).transpose(0, 1)
+
+        if maxsize is None:
+            num_elems = max(ends)
+        else:
+            num_elems = maxsize
+
+        arange = torch.arange(num_elems, device=device)[None]
+        activity = (starts[:, None] <= arange) & (arange < ends[:, None])
+        activity = activity.any(dim=0)
+        return activity
+
+    elif isinstance(segments_list, Iterable):
+        activities = [
+            segments_list_to_activity(segments_list_i)
+            for segments_list_i in segments_list
+        ]
+        return pad_and_stack_rec(activities, False)
+
+    else:
+        msg = f"Invalid argument type {type(segments_list)}."
+        raise TypeError(msg)
+
+
+def activity_to_segments_list(x: Tensor) -> Union[List[Tuple[int, int]], list]:
+    segments = activity_to_segments(x)
+    segments_lst = segments_to_segments_list(segments, x.shape[-1])
+    return segments_lst
+
+
+def segments_to_activity(x: Tensor) -> Union[List[Tuple[int, int]], list]:
+    segments_lst = segments_to_segments_list(x, x.shape[-1])
+    activity = segments_list_to_activity(segments_lst, x.shape[-1])
+    return activity
+
+
+# - Aliases
+extract_segments = activity_to_segments
+segments_to_list = segments_to_segments_list

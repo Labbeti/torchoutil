@@ -78,7 +78,15 @@ from .predicate import (
     is_sorted,
     is_unique,
 )
-from .segments import extract_segments, segments_to_list
+from .segments import (
+    activity_to_segments,
+    activity_to_segments_list,
+    extract_segments,
+    segments_list_to_activity,
+    segments_to_activity,
+    segments_to_list,
+    segments_to_segments_list,
+)
 from .transform import (
     flatten,
     identity,

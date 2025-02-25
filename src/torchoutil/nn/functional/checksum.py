@@ -328,6 +328,10 @@ def checksum_bytearray(x: bytearray, **kwargs) -> int:
     return _checksum_bytes_bytearray(x, **kwargs)
 
 
+def checksum_bytes(x: Union[bytes, bytearray], **kwargs) -> int:
+    return _checksum_bytes_bytearray(x, **kwargs)
+
+
 def checksum_complex(x: complex, **kwargs) -> int:
     kwargs["accumulator"] = kwargs.get("accumulator", 0) + __cached_checksum_str(
         get_fullname(x)
@@ -394,10 +398,6 @@ def checksum_bool(x: bool, **kwargs) -> int:
         get_fullname(x),
         **kwargs,
     )
-
-
-def checksum_bytes(x: Union[bytes, bytearray], **kwargs) -> int:
-    return _checksum_bytes_bytearray(x, **kwargs)
 
 
 def checksum_float(x: float, **kwargs) -> int:

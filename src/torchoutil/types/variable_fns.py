@@ -59,10 +59,10 @@ __all__ = [
 
 @overload
 def arange(
-    end: int,
+    end: Number,
     *,
     out: Optional[Tensor] = None,
-    dtype: DTypeLike = None,
+    dtype: Literal[None] = None,
     device: DeviceLike = None,
     requires_grad: bool = False,
     pin_memory: bool = False,
@@ -72,11 +72,11 @@ def arange(
 
 @overload
 def arange(
-    start: int,
-    end: int,
+    start: Number,
+    end: Number,
     *,
     out: Optional[Tensor] = None,
-    dtype: DTypeLike = None,
+    dtype: Literal[None] = None,
     device: DeviceLike = None,
     requires_grad: bool = False,
     pin_memory: bool = False,
@@ -86,12 +86,12 @@ def arange(
 
 @overload
 def arange(
-    start: int,
-    end: int,
-    step: int,
+    start: Number,
+    end: Number,
+    step: Number,
     *,
     out: Optional[Tensor] = None,
-    dtype: DTypeLike = None,
+    dtype: Literal[None] = None,
     device: DeviceLike = None,
     requires_grad: bool = False,
     pin_memory: bool = False,
@@ -99,6 +99,34 @@ def arange(
     ...
 
 
+@overload
+def arange(
+    end: Number,
+    *,
+    out: Optional[Tensor] = None,
+    dtype: DTypeLike = None,
+    device: DeviceLike = None,
+    requires_grad: bool = False,
+    pin_memory: bool = False,
+) -> Tensor1D:
+    ...
+
+
+@overload
+def arange(
+    start: Number,
+    end: Number,
+    *,
+    out: Optional[Tensor] = None,
+    dtype: DTypeLike = None,
+    device: DeviceLike = None,
+    requires_grad: bool = False,
+    pin_memory: bool = False,
+) -> Tensor1D:
+    ...
+
+
+@overload
 def arange(
     start: Number,
     end: Number,
@@ -110,12 +138,23 @@ def arange(
     requires_grad: bool = False,
     pin_memory: bool = False,
 ) -> Tensor1D:
+    ...
+
+
+def arange(
+    arg0: Number,
+    *args: Number,
+    out: Optional[Tensor] = None,
+    dtype: DTypeLike = None,
+    device: DeviceLike = None,
+    requires_grad: bool = False,
+    pin_memory: bool = False,
+) -> Tensor1D:
     dtype = make_dtype(dtype)
     device = make_device(device)
     return torch.arange(
-        start,
-        end,
-        step,
+        arg0,
+        *args,
         out=out,
         dtype=dtype,
         device=device,
