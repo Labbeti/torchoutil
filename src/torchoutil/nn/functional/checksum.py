@@ -10,9 +10,9 @@ import re
 import struct
 import zlib
 from dataclasses import asdict
-from functools import partial
+from functools import lru_cache
 from types import FunctionType, MethodType
-from typing import Any, Callable, Iterable, Literal, Mapping, Union
+from typing import Any, Callable, Iterable, Literal, Mapping, Union, get_args
 
 import torch
 from torch import Tensor, nn
@@ -91,7 +91,7 @@ UnkMode = Literal["pickle", "error"]
 UNK_MODES = ("pickle", "error")
 
 
-# Recursive functions
+# Recursive functions for union of types
 def checksum(
     x: Checksumable,
     *,
@@ -140,8 +140,10 @@ def checksum_any(
         return checksum_module(x, **kwargs)
     elif isinstance(x, Tensor):
         return checksum_tensor(x, **kwargs)
-    elif isinstance(x, (np.ndarray, np.generic)):
+    elif _NUMPY_AVAILABLE and isinstance(x, (np.ndarray, np.generic)):
         return checksum_ndarray(x, **kwargs)
+    elif isinstance(x, torch.dtype) or (_NUMPY_AVAILABLE and isinstance(x, np.dtype)):
+        return checksum_dtype(x, **kwargs)
     elif _PANDAS_AVAILABLE and isinstance(x, pd.DataFrame):
         return checksum_dataframe(x, **kwargs)
     elif allow_protocol and isinstance(x, NamedTupleInstance):
@@ -171,8 +173,9 @@ def checksum_any(
 
 
 def checksum_dataclass(x: DataclassInstance, **kwargs) -> int:
-    accumulator = kwargs.pop("accumulator", 0) + checksum_str(get_fullname(x), **kwargs)
-    kwargs["accumulator"] = accumulator
+    kwargs["accumulator"] = kwargs.get("accumulator", 0) + __cached_checksum_str(
+        get_fullname(x)
+    )
     return checksum_mapping(asdict(x), **kwargs)
 
 
@@ -186,8 +189,16 @@ def checksum_dataframe(x: DataFrame, **kwargs) -> int:
     return csum
 
 
+def checksum_dtype(x: Union[torch.dtype, np.dtype], **kwargs) -> int:
+    kwargs["accumulator"] = kwargs.get("accumulator", 0) + __cached_checksum_str(
+        get_fullname(x)
+    )
+    xstr = str(x)
+    return checksum_str(xstr, **kwargs)
+
+
 def checksum_iterable(x: Iterable[Any], **kwargs) -> int:
-    accumulator = kwargs.pop("accumulator", 0) + checksum_str(get_fullname(x), **kwargs)
+    accumulator = kwargs.pop("accumulator", 0) + __cached_checksum_str(get_fullname(x))
     csum = sum(
         checksum_any(xi, accumulator=accumulator + (i + 1), **kwargs) * (i + 1)
         for i, xi in enumerate(x)
@@ -196,6 +207,9 @@ def checksum_iterable(x: Iterable[Any], **kwargs) -> int:
 
 
 def checksum_mapping(x: Mapping[Any, Any], **kwargs) -> int:
+    kwargs["accumulator"] = kwargs.get("accumulator", 0) + __cached_checksum_str(
+        get_fullname(x)
+    )
     return checksum_iterable(x.items(), **kwargs)
 
 
@@ -249,22 +263,30 @@ def checksum_module(
 
 
 def checksum_namedtuple(x: NamedTupleInstance, **kwargs) -> int:
-    accumulator = kwargs.pop("accumulator", 0) + checksum_str(get_fullname(x), **kwargs)
-    kwargs["accumulator"] = accumulator
+    kwargs["accumulator"] = kwargs.get("accumulator", 0) + __cached_checksum_str(
+        get_fullname(x)
+    )
     return checksum_mapping(x._asdict(), **kwargs)
 
 
 def checksum_partial(x: functools.partial, **kwargs) -> int:
-    return checksum_iterable(("functools.partial", x.func, x.args, x.keywords))
+    kwargs["accumulator"] = kwargs.get("accumulator", 0) + __cached_checksum_str(
+        get_fullname(x)
+    )
+    return checksum_iterable((x.func, x.args, x.keywords), **kwargs)
 
 
 def checksum_pattern(x: re.Pattern, **kwargs) -> int:
-    kwargs["accumulator"] = checksum_type(type(x)) + kwargs.get("accumulator", 0)
+    kwargs["accumulator"] = kwargs.get("accumulator", 0) + __cached_checksum_str(
+        get_fullname(x)
+    )
     return checksum_str(str(x), **kwargs)
 
 
 def checksum_slice(x: slice, **kwargs) -> int:
-    kwargs["accumulator"] = checksum_type(type(x)) + kwargs.get("accumulator", 0)
+    kwargs["accumulator"] = kwargs.get("accumulator", 0) + __cached_checksum_str(
+        get_fullname(x)
+    )
     return checksum_iterable((x.start, x.stop, x.step), **kwargs)
 
 
@@ -281,10 +303,7 @@ def checksum_builtin_number(x: BuiltinNumber, **kwargs) -> int:
     elif isinstance(x, complex):
         return checksum_complex(x, **kwargs)
     else:
-        BUILTIN_NUMBER_TYPES = ("bool", "int", "float", "complex")
-        msg = (
-            f"Invalid argument type {type(x)}. (expected one of {BUILTIN_NUMBER_TYPES})"
-        )
+        msg = f"Invalid argument type {type(x)}. (expected one of {get_args(BuiltinNumber)})"
         raise TypeError(msg)
 
 
@@ -298,24 +317,35 @@ def checksum_builtin_scalar(x: BuiltinScalar, **kwargs) -> int:
     elif isinstance(x, str):
         return checksum_str(x, **kwargs)
     else:
-        msg = f"Invalid argument type {type(x)}. (expected int, bool, complex float, bytes, None, or str)"
+        msg = f"Invalid argument type {type(x)}. (expected one of {get_args(BuiltinScalar)})"
         raise TypeError(msg)
 
 
 def checksum_bytearray(x: bytearray, **kwargs) -> int:
-    accumulator = kwargs.pop("accumulator", 0) + checksum_str(get_fullname(x), **kwargs)
-    return _checksum_bytes_bytearray(x, accumulator=accumulator, **kwargs)
+    kwargs["accumulator"] = kwargs.get("accumulator", 0) + __cached_checksum_str(
+        get_fullname(x)
+    )
+    return _checksum_bytes_bytearray(x, **kwargs)
 
 
 def checksum_complex(x: complex, **kwargs) -> int:
+    kwargs["accumulator"] = kwargs.get("accumulator", 0) + __cached_checksum_str(
+        get_fullname(x)
+    )
     return checksum_tensor(torch.as_tensor([x.real, x.imag]), **kwargs)
 
 
 def checksum_function(x: FunctionType, **kwargs) -> int:
+    kwargs["accumulator"] = kwargs.get("accumulator", 0) + __cached_checksum_str(
+        get_fullname(x)
+    )
     return checksum_str(x.__qualname__, **kwargs)
 
 
 def checksum_none(x: None, **kwargs) -> int:
+    kwargs["accumulator"] = kwargs.get("accumulator", 0) + __cached_checksum_str(
+        get_fullname(x)
+    )
     return checksum_type(x.__class__, **kwargs) + kwargs.get("accumulator", 0)
 
 
@@ -331,12 +361,14 @@ def checksum_ndarray(x: Union[np.ndarray, np.generic], **kwargs) -> int:
     return _checksum_tensor_array_like(
         x,
         nan_to_num_fn=np.nan_to_num,
-        arange_fn=np.arange,
         **kwargs,
     )
 
 
 def checksum_str(x: str, **kwargs) -> int:
+    kwargs["accumulator"] = kwargs.get("accumulator", 0) + __cached_checksum_str(
+        get_fullname(x)
+    )
     return checksum_bytes(x.encode(), **kwargs)
 
 
@@ -346,7 +378,6 @@ def checksum_tensor(x: Tensor, **kwargs) -> int:
     return _checksum_tensor_array_like(
         x,
         nan_to_num_fn=torch.nan_to_num,
-        arange_fn=partial(torch.arange, device=x.device),
         **kwargs,
     )
 
@@ -357,7 +388,12 @@ def checksum_type(x: type, **kwargs) -> int:
 
 # Terminate functions
 def checksum_bool(x: bool, **kwargs) -> int:
-    return int(x) + kwargs.get("accumulator", 0)
+    xint = int(x)
+    return __terminate_checksum(
+        xint,
+        get_fullname(x),
+        **kwargs,
+    )
 
 
 def checksum_bytes(x: Union[bytes, bytearray], **kwargs) -> int:
@@ -366,11 +402,38 @@ def checksum_bytes(x: Union[bytes, bytearray], **kwargs) -> int:
 
 def checksum_float(x: float, **kwargs) -> int:
     xint = _interpret_float_as_int(x)
-    return xint + kwargs.get("accumulator", 0)
+    return __terminate_checksum(
+        xint,
+        get_fullname(x),
+        **kwargs,
+    )
 
 
 def checksum_int(x: int, **kwargs) -> int:
-    return x + kwargs.get("accumulator", 0)
+    xint = x
+    return __terminate_checksum(
+        xint,
+        get_fullname(x),
+        **kwargs,
+    )
+
+
+def _checksum_bytes_bytearray(x: Union[bytes, bytearray], **kwargs) -> int:
+    xint = zlib.crc32(x) % (1 << 32)
+    return __terminate_checksum(
+        xint,
+        get_fullname(x),
+        **kwargs,
+    )
+
+
+def __terminate_checksum(x: int, fullname: str, **kwargs) -> int:
+    return x + __cached_checksum_str(fullname) + kwargs.get("accumulator", 0)
+
+
+@lru_cache(maxsize=None)
+def __cached_checksum_str(x: str) -> int:
+    return zlib.crc32(x.encode()) % (1 << 32)
 
 
 def _interpret_float_as_int(x: float) -> int:
@@ -379,20 +442,12 @@ def _interpret_float_as_int(x: float) -> int:
     return xint
 
 
-def _checksum_bytes_bytearray(x: Union[bytes, bytearray], **kwargs) -> int:
-    return zlib.crc32(x) % (1 << 32) + kwargs.get("accumulator", 0)
-
-
 def _checksum_tensor_array_like(
     x: Union[Tensor, np.ndarray, np.generic],
     *,
     nan_to_num_fn: Callable,
-    arange_fn: Callable,
     **kwargs,
 ) -> int:
-    if x.ndim == 0:
-        return checksum_builtin_number(x.item(), **kwargs)
-
     if is_floating_point(x) or is_complex(x):
         nan_csum = checksum_float(math.nan, **kwargs)
         neginf_csum = checksum_float(-math.inf, **kwargs)
@@ -404,17 +459,12 @@ def _checksum_tensor_array_like(
             posinf=posinf_csum,
         )
 
-    shape = x.shape  # type: ignore
-    fullname = get_fullname(x)
-
     # Ensure that accumulator exists
     kwargs["accumulator"] = kwargs.get("accumulator", 0)
-    type_csum = checksum_str(fullname, **kwargs)
 
-    kwargs["accumulator"] += type_csum
-    shape_csum = checksum_iterable(shape, **kwargs)
-
-    kwargs["accumulator"] += shape_csum
+    kwargs["accumulator"] += checksum_dtype(x.dtype, **kwargs)
+    kwargs["accumulator"] += checksum_iterable(x.shape, **kwargs)
+    kwargs["accumulator"] += __cached_checksum_str(get_fullname(x))
 
     if isinstance(x, np.ndarray):
         xbytes = x.tobytes()

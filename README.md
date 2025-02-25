@@ -65,25 +65,25 @@ indices = to.multihot_to_indices(multihot)
 ### Typing
 
 ```python
-from torchoutil import Tensor2D
+import torchoutil as to
 
-x1 = torch.as_tensor([1, 2])
-print(isinstance(x1, Tensor2D))  # False
-x2 = torch.as_tensor([[1, 2], [3, 4]])
-print(isinstance(x2, Tensor2D))  # True
+x1 = to.as_tensor([1, 2])
+print(isinstance(x1, to.Tensor2D))  # False
+x2 = to.as_tensor([[1, 2], [3, 4]])
+print(isinstance(x2, to.Tensor2D))  # True
 ```
 
 ```python
-from torchoutil import SignedIntegerTensor
+import torchoutil as to
 
-x1 = torch.as_tensor([1, 2], dtype=torch.int)
-print(isinstance(x1, SignedIntegerTensor))  # True
+x1 = to.as_tensor([1, 2], dtype=to.int)
+print(isinstance(x1, to.SignedIntegerTensor))  # True
 
-x2 = torch.as_tensor([1, 2], dtype=torch.long)
-print(isinstance(x2, SignedIntegerTensor))  # True
+x2 = to.as_tensor([1, 2], dtype=to.long)
+print(isinstance(x2, to.SignedIntegerTensor))  # True
 
-x3 = torch.as_tensor([1, 2], dtype=torch.float)
-print(isinstance(x3, SignedIntegerTensor))  # False
+x3 = to.as_tensor([1, 2], dtype=to.float)
+print(isinstance(x3, to.SignedIntegerTensor))  # False
 ```
 
 ### Padding
@@ -91,7 +91,7 @@ print(isinstance(x3, SignedIntegerTensor))  # False
 ```python
 import torchoutil as to
 
-x1 = torch.rand(10, 3, 1)
+x1 = to.rand(10, 3, 1)
 x2 = to.pad_dim(x, target_length=5, dim=1, pad_value=-1)
 # x2 has shape (10, 5, 1)
 ```
@@ -99,7 +99,7 @@ x2 = to.pad_dim(x, target_length=5, dim=1, pad_value=-1)
 ```python
 import torchoutil as to
 
-tensors = [torch.rand(10, 2), torch.rand(5, 3), torch.rand(0, 5)]
+tensors = [to.rand(10, 2), to.rand(5, 3), to.rand(0, 5)]
 padded = to.pad_and_stack_rec(tensors, pad_value=0)
 # padded has shape (10, 5)
 ```

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from typing import Tuple, Union
+from typing import List, Tuple, Union
 
 import torch
 from torch import Tensor
@@ -57,16 +57,16 @@ def extract_segments(x: Tensor) -> LongTensor:
 
 def segments_to_list(
     segments: Tensor,
-    maxsize: Union[int, Tuple[int, ...], None],
-) -> list:
+    maxsize: Union[int, Tuple[int, ...], None] = None,
+) -> Union[List[Tuple[int, int]], list]:
     """Converts segments starts and ends to a list of (start, end) positions."""
-    if segments.shape[0] == 2:
-        starts, ends = segments.tolist()
-        return list(zip(starts, ends))
-
-    elif segments.shape[0] in (0, 1):
+    if segments.shape[0] in (0, 1):
         msg = f"Invalid argument shape {segments.shape=}. (expected first dim >= 2)"
         raise ValueError(msg)
+
+    elif segments.shape[0] == 2:
+        starts, ends = segments.tolist()
+        return list(zip(starts, ends))
 
     if maxsize is None:
         num_elems = segments[0].max().item() + 1
@@ -78,9 +78,9 @@ def segments_to_list(
         num_elems = maxsize
         next_maxsize = None
 
-    indices = torch.arange(num_elems)
+    arange = torch.arange(num_elems)
     result = [
         segments_to_list(segments[1:, ..., segments[0] == idx], maxsize=next_maxsize)
-        for idx in indices
+        for idx in arange
     ]
     return result
