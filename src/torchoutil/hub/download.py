@@ -5,7 +5,7 @@ import logging
 import urllib
 import warnings
 from email.message import Message
-from pathlib import Path, PosixPath
+from pathlib import Path
 from typing import Optional, Union
 from urllib.error import HTTPError, URLError
 
@@ -89,5 +89,5 @@ def _get_filename_from_url(url: str) -> str:
         filename = None
 
     if filename is None:
-        filename = PosixPath(url).name.split("?")[0]
+        filename = url.split("/")[-1].split("?")[0]
     return filename
