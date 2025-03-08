@@ -45,11 +45,26 @@ class TestVersion(TestCase):
             "buildmetadata": "test",
         }
 
+        v11 = Version("1.2.3-pre.2+build.4")
+        assert v11.to_dict() == {
+            "major": 1,
+            "minor": 2,
+            "patch": 3,
+            "prerelease": ["pre", 2],
+            "buildmetadata": ["build", 4],
+        }
+
         # Check if versions can be parsed
         Version(to.__version__)
         Version(torch.__version__)
 
+        v12 = Version(1, 2)
+        assert v12.to_tuple() == (1, 2, 0)
+
     def test_parse_invalid(self) -> None:
+        with self.assertRaises(ValueError):
+            Version()
+
         with self.assertRaises(ValueError):
             Version("")
 
@@ -71,6 +86,9 @@ class TestVersion(TestCase):
         with self.assertRaises(ValueError):
             Version("1.2.X")
 
+        with self.assertRaises(ValueError):
+            Version("1.02.X")
+
     def test_semver(self) -> None:
         assert Version("1.0.0") < Version("2.0.0") < Version("2.1.0") < Version("2.1.1")
         assert Version("1.0.0-alpha") < Version("1.0.0")
@@ -85,7 +103,24 @@ class TestVersion(TestCase):
             < Version("1.0.0-rc.1")
             < Version("1.0.0")
             < Version("2.0.0")
+            < Version("2.0.1")
+            < Version("2.1.0")
         )
+
+    def test_parse(self) -> None:
+        tests = [
+            "1.0.0-alpha",
+            "1.0.0-alpha.1",
+            "1.0.0-0.3.7",
+            "1.0.0-x.7.z.92",
+            "1.0.0-x-y-z.--",
+            "1.0.0-alpha+001",
+            "1.0.0+20130313144700",
+            "1.0.0-beta+exp.sha.5114f85",
+            "1.0.0+21AF26D3----117B344092BD",
+        ]
+        for version_str in tests:
+            _ = Version(version_str)
 
 
 if __name__ == "__main__":

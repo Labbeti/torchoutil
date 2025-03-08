@@ -4,9 +4,9 @@
 import re
 import sys
 from dataclasses import asdict, dataclass
-from typing import Any, Dict, Optional, Tuple, TypedDict, Union, overload
+from typing import Iterable, List, Mapping, Tuple, TypedDict, Union, overload
 
-from typing_extensions import NotRequired, TypeIs
+from typing_extensions import NotRequired
 
 from torchoutil.pyoutil.typing import NoneType, isinstance_guard
 
@@ -16,23 +16,26 @@ _VERSION_FORMAT = r"{major}.{minor}.{patch}"
 _VERSION_KEYS = ("major", "minor", "patch", "prerelease", "buildmetadata")
 
 
-PreRelease = Union[int, str, None, list]
-BuildMetadata = Union[int, str, None, list]
+PreRelease = Union[int, str, None, List[Union[int, str]]]
+BuildMetadata = Union[int, str, None, List[Union[int, str]]]
 
 
 class VersionDict(TypedDict):
     major: int
-    minor: int
-    patch: int
+    minor: NotRequired[int]
+    patch: NotRequired[int]
     prerelease: NotRequired[PreRelease]
     buildmetadata: NotRequired[BuildMetadata]
 
 
-VersionTupleLike = Union[
+VersionTuple = Union[
     Tuple[int, int, int],
     Tuple[int, int, int, PreRelease],
     Tuple[int, int, int, PreRelease, BuildMetadata],
 ]
+
+VersionDictLike = Mapping[str, Union[int, PreRelease, BuildMetadata]]
+VersionTupleLike = Iterable[Union[int, PreRelease, BuildMetadata]]
 
 
 @dataclass(init=False, eq=False)
@@ -45,8 +48,8 @@ class Version:
     major: int
     minor: int
     patch: int
-    prerelease: Union[int, str, None, list]
-    buildmetadata: Union[int, str, None, list]
+    prerelease: PreRelease
+    buildmetadata: BuildMetadata
 
     @overload
     def __init__(
@@ -59,7 +62,7 @@ class Version:
     @overload
     def __init__(
         self,
-        version_dict: Dict[str, Union[int, str, None, list]],
+        version_dict: VersionDictLike,
         /,
     ) -> None:
         ...
@@ -76,8 +79,8 @@ class Version:
     def __init__(
         self,
         major: int,
-        minor: int,
-        patch: int,
+        minor: int = 0,
+        patch: int = 0,
         prerelease: Union[int, str, None, list] = None,
         buildmetadata: Union[int, str, None, list] = None,
     ) -> None:
@@ -91,11 +94,11 @@ class Version:
             version_dict = _parse_version_str(version_str)
 
         # Version dict
-        elif has_1_pos_arg and isinstance_guard(args[0], Dict[str, Optional[int]]):
+        elif has_1_pos_arg and isinstance_guard(args[0], VersionDictLike):
             version_dict = args[0]
 
         # Version tuple
-        elif has_1_pos_arg and _is_version_tuple(args[0]):
+        elif has_1_pos_arg and isinstance_guard(args[0], VersionTupleLike):
             version_tuple = args[0]
             version_dict = dict(zip(_VERSION_KEYS, version_tuple))
 
@@ -108,9 +111,18 @@ class Version:
                 raise ValueError(msg)
             version_dict.update(kwargs)  # type: ignore
 
+            invalid = tuple(set(version_dict.keys()).difference(_VERSION_KEYS))
+            if len(invalid) > 0:
+                msg = f"Invalid arguments {kwargs=}. (invalid keys: {invalid})"
+                raise ValueError(msg)
+
+        if not isinstance_guard(version_dict, VersionDict):
+            msg = f"Invalid argument {args=} and {kwargs=}. (invalid argument types, expected (int, int, int, {PreRelease}, {BuildMetadata}))"
+            raise ValueError(msg)
+
         major = version_dict["major"]
-        minor = version_dict["minor"]
-        patch = version_dict["patch"]
+        minor = version_dict.get("minor", 0)
+        patch = version_dict.get("patch", 0)
         prerelease = version_dict.get("prerelease", None)
         buildmetadata = version_dict.get("buildmetadata", None)
 
@@ -124,13 +136,14 @@ class Version:
     def python(cls) -> "Version":
         """Create an instance of Version with Python version."""
         return Version(
-            sys.version_info.major,
-            sys.version_info.minor,
-            sys.version_info.micro,
+            major=sys.version_info.major,
+            minor=sys.version_info.minor,
+            patch=sys.version_info.micro,
+            buildmetadata=sys.version_info.releaselevel,
         )
 
     @classmethod
-    def from_dict(cls, version_dict: Dict[str, int]) -> "Version":
+    def from_dict(cls, version_dict: VersionDictLike) -> "Version":
         return Version(**version_dict)
 
     @classmethod
@@ -139,11 +152,17 @@ class Version:
         return Version(**version_dict)
 
     @classmethod
-    def from_tuple(
-        cls,
-        version_tuple: VersionTupleLike,
-    ) -> "Version":
+    def from_tuple(cls, version_tuple: VersionTupleLike) -> "Version":
         return Version(*version_tuple)
+
+    def next_major(self) -> "Version":
+        return Version(self.major + 1, 0, 0)
+
+    def next_minor(self) -> "Version":
+        return Version(self.major, self.minor + 1, 0)
+
+    def next_patch(self) -> "Version":
+        return Version(self.major, self.minor, self.patch + 1)
 
     def to_dict(self, exclude_none: bool = True) -> VersionDict:
         version_dict = asdict(self)
@@ -168,7 +187,7 @@ class Version:
     def to_tuple(
         self,
         exclude_none: bool = True,
-    ) -> VersionTupleLike:
+    ) -> VersionTuple:
         version_tuple = tuple(self.to_dict().values())
         if exclude_none:
             version_tuple = tuple(v for v in version_tuple if v is not None)
@@ -177,7 +196,9 @@ class Version:
     def __str__(self) -> str:
         return self.to_str()
 
-    def __eq__(self, other: Any) -> bool:
+    def __eq__(
+        self, other: Union["Version", str, VersionDictLike, VersionTupleLike]
+    ) -> bool:
         if isinstance(other, (dict, tuple, str)):
             other = Version(other)
         elif not isinstance(other, Version):
@@ -253,24 +274,3 @@ def _parse_version_str(version_str: str) -> VersionDict:
             v = v[0]
         result[k] = v
     return result  # type: ignore
-
-
-def _is_version_tuple(
-    x: Any,
-) -> TypeIs[VersionTupleLike]:
-    if not isinstance(x, tuple):
-        return False
-    if len(x) not in (1, 2, 3):
-        return False
-
-    if not isinstance(x[0], int):
-        return False
-    elif len(x) == 1:
-        return True
-
-    if not isinstance(x[1], int):
-        return False
-    elif len(x) == 2:
-        return True
-
-    return isinstance(x[2], int)

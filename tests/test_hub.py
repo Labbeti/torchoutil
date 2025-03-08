@@ -16,8 +16,14 @@ from torchoutil.hub.registry import RegistryHub
 class TestFilename(TestCase):
     def test_filename_from_url(self) -> None:
         tests = [
-            ("https://dl.fbaipublicfiles.com/pyslowfast/dataset/class_names/kinetics_classnames.json", "kinetics_classnames.json"),
-            ("https://zenodo.org/record/8020843/files/convnext_tiny_465mAP_BL_AC_70kit.pth?download=1", "convnext_tiny_465mAP_BL_AC_70kit.pth"),
+            (
+                "https://dl.fbaipublicfiles.com/pyslowfast/dataset/class_names/kinetics_classnames.json",
+                "kinetics_classnames.json",
+            ),
+            (
+                "https://zenodo.org/record/8020843/files/convnext_tiny_465mAP_BL_AC_70kit.pth?download=1",
+                "convnext_tiny_465mAP_BL_AC_70kit.pth",
+            ),
             ("random.test", "random.test"),
         ]
 
