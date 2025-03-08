@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import cgi
 import logging
 import urllib
 import warnings
+from email.message import Message
 from pathlib import Path, PosixPath
 from typing import Optional, Union
 from urllib.error import HTTPError, URLError
@@ -81,8 +81,10 @@ def download_file(
 def _get_filename_from_url(url: str) -> str:
     try:
         response = urllib.request.urlopen(url)
-        _, params = cgi.parse_header(response.headers.get("Content-Disposition", ""))
-        filename = params.get("filename")
+        header = response.headers.get("Content-Disposition", "")
+        message = Message()
+        message["content-type"] = header
+        filename = message.get_param("filename", None)
     except (URLError, ValueError):
         filename = None
 
