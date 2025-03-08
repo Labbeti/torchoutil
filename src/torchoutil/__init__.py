@@ -34,6 +34,7 @@ from .core.make import (  # noqa: F401
     make_generator,
 )
 from .core.semver import Version
+from .hub.download import download_file
 from .nn.functional import *
 from .pyoutil.typing.guards import isinstance_guard
 from .types.guards import (

@@ -9,7 +9,21 @@ from unittest import TestCase
 
 from torch import Tensor
 
+from torchoutil.hub.download import _get_filename_from_url
 from torchoutil.hub.registry import RegistryHub
+
+
+class TestFilename(TestCase):
+    def test_filename_from_url(self) -> None:
+        tests = [
+            ("https://dl.fbaipublicfiles.com/pyslowfast/dataset/class_names/kinetics_classnames.json", "kinetics_classnames.json"),
+            ("https://zenodo.org/record/8020843/files/convnext_tiny_465mAP_BL_AC_70kit.pth?download=1", "convnext_tiny_465mAP_BL_AC_70kit.pth"),
+            ("random.test", "random.test"),
+        ]
+
+        for input_, expected in tests:
+            result = _get_filename_from_url(input_)
+            assert result == expected
 
 
 class TestRegistryHub(TestCase):
