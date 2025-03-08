@@ -37,8 +37,10 @@ def download_file(
         verbose: Verbose level. defaults to 0.
     """
     if make_intermediate is not None:
-        warnings.warn(f"Deprecated argument {make_intermediate=}. Use make_parents={make_intermediate} instead.")
-        make_parents = make_intermediate 
+        warnings.warn(
+            f"Deprecated argument {make_intermediate=}. Use make_parents={make_intermediate} instead."
+        )
+        make_parents = make_intermediate
 
     if dst is None:
         dst = "."
@@ -47,11 +49,13 @@ def download_file(
 
     if dst.is_dir():
         fname = _get_filename_from_url(url)
-        fpath = dst.joinpath(filename)
+        fpath = dst.joinpath(fname)
     elif dst.is_file():
         fpath = dst
     elif dst.exists():
-        raise FileExistsError(f"Destination '{dst}' exists but is not a file or directory.")
+        raise FileExistsError(
+            f"Destination '{dst}' exists but is not a file or directory."
+        )
     del dst
 
     if make_parents:
@@ -77,8 +81,8 @@ def download_file(
 def _get_filename_from_url(url: str) -> str:
     try:
         response = urllib.request.urlopen(url)
-        _, params = cgi.parse_header(response.headers.get('Content-Disposition', ''))
-        filename = params.get('filename')
+        _, params = cgi.parse_header(response.headers.get("Content-Disposition", ""))
+        filename = params.get("filename")
     except (URLError, ValueError):
         filename = None
 
