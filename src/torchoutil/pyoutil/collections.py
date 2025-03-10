@@ -112,6 +112,7 @@ def list_dict_to_dict_list(
         return {}
 
     keys = set(lst[0].keys())
+
     if key_mode == "same":
         invalids = [list(item.keys()) for item in lst[1:] if keys != set(item.keys())]
         if len(invalids) > 0:

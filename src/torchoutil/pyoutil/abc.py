@@ -15,7 +15,7 @@ class Singleton(type):
     >>>     pass
     >>> a1 = MyClass()
     >>> a2 = MyClass()
-    >>> # a1 and a2 are the same object, i.e. id(a1) == id(a2)
+    >>> # a1 and a2 are exactly the same instance, i.e. id(a1) == id(a2)
     ```
     """
 
