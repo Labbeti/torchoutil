@@ -8,7 +8,7 @@ import sys
 from importlib.metadata import Distribution, PackageNotFoundError
 from importlib.util import find_spec
 from types import ModuleType
-from typing import Any, List
+from typing import Any, Dict, List
 
 DEFAULT_SKIPPED = (
     "reimport_all",
@@ -37,9 +37,6 @@ def is_available_package(package: str) -> bool:
     except (ImportError, ModuleNotFoundError):
         # Python >= 3.7
         return False
-
-
-package_is_available = is_available_package
 
 
 def is_editable_package(package: str) -> bool:
@@ -101,7 +98,7 @@ def reload_submodules(
     only_loaded: bool = False,
 ) -> List[ModuleType]:
     modules = (module,) + others
-    candidates = {}
+    candidates: Dict[ModuleType, None] = {}
     for module in modules:
         submodules = search_submodules(
             module, only_editable=only_editable, only_loaded=only_loaded
@@ -111,7 +108,13 @@ def reload_submodules(
     for candidate in candidates:
         if verbose > 0:
             pylog.info(f"Reload '{candidate}'...")
-        importlib.reload(candidate)
+        try:
+            importlib.reload(candidate)
+        except ModuleNotFoundError as err:
+            err.add_note(
+                f"Did the module '{candidate.__name__}' has been renamed after starting execution?"
+            )
+            raise err
 
     return candidates
 
@@ -122,9 +125,8 @@ def reload_editable_packages(*, verbose: int = 0) -> List[ModuleType]:
         sys.modules[name] for name in pkg_names if is_editable_package(name)
     ]
     if verbose >= 2:
-        pylog.debug(
-            f"{len(editable_packages)}/{len(pkg_names)} editable packages found: {editable_packages}"
-        )
+        msg = f"{len(editable_packages)}/{len(pkg_names)} editable packages found: {editable_packages}"
+        pylog.debug(msg)
 
     return reload_submodules(
         *editable_packages,
@@ -148,3 +150,7 @@ class Placeholder:
 
     def __getitem__(self, *args, **kwargs) -> Any:
         return self
+
+
+# Aliases
+package_is_available = is_available_package

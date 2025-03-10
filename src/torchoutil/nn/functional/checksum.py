@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 
 import functools
-import hashlib
 import itertools
 import math
 import pickle
@@ -12,7 +11,7 @@ import zlib
 from dataclasses import asdict
 from functools import lru_cache
 from types import FunctionType, MethodType
-from typing import Any, Callable, Iterable, Literal, Mapping, Union, get_args
+from typing import Callable, Iterable, Literal, Mapping, Union, get_args
 
 import torch
 from torch import Tensor, nn
@@ -115,7 +114,20 @@ def checksum_any(
     allow_protocol: bool = True,
     **kwargs,
 ) -> int:
-    """Compute checksum of an arbitrary python object."""
+    """Compute checksum of an arbitrary python object.
+
+    The property of a checksum is: for all any supported objects a and b, `(a == b) => checksum(a) == checksum(b)`.
+    This function is deterministic.
+
+    Args:
+        x: Object to checksum.
+        unk_mode: Defines behaviour when x is not a supported type OR contains elements that are not supported.
+            "error": raises a TypeError.
+            "pickle": convert object to bytes using pickle module. However, this conversion depends of the object implementation and might be not deterministic.
+            defaults to "error".
+        allow_protocol: Whether or not accept to use duck typing to detect NamedTuples, Dataclasses, Mappings or Iterables. defaults to True.
+        **kwargs: Optional arguments to customize object checksum.
+    """
     kwargs.update(
         dict(
             unk_mode=unk_mode,
@@ -150,9 +162,11 @@ def checksum_any(
         return checksum_namedtuple(x, **kwargs)
     elif allow_protocol and isinstance(x, DataclassInstance):
         return checksum_dataclass(x, **kwargs)
-    elif allow_protocol and isinstance(x, Mapping):
+    elif (allow_protocol and isinstance(x, Mapping)) or isinstance(x, dict):
         return checksum_mapping(x, **kwargs)
-    elif allow_protocol and isinstance(x, Iterable):
+    elif (allow_protocol and isinstance(x, Iterable)) or isinstance(
+        x, (list, tuple, set, frozenset, range)
+    ):
         return checksum_iterable(x, **kwargs)
     elif isinstance(x, MethodType):
         return checksum_method(x, **kwargs)
@@ -184,9 +198,13 @@ def checksum_dataframe(x: DataFrame, **kwargs) -> int:
         msg = "Cannot call function 'checksum_dataframe' because optional dependency 'pandas' is not installed. Please install it using 'pip install torchoutil[extras]'"
         raise NotImplementedError(msg)
 
-    hash_value = hashlib.sha1(pd.util.hash_pandas_object(x).values).hexdigest()
-    csum = checksum_str(hash_value, **kwargs)
-    return csum
+    # hash_value = hashlib.sha1(pd.util.hash_pandas_object(x).values).hexdigest()
+    # csum = checksum_str(hash_value, **kwargs)
+    kwargs["accumulator"] = kwargs.get("accumulator", 0) + __cached_checksum_str(
+        get_fullname(x)
+    )
+    x = x.to_dict()
+    return checksum_mapping(x, **kwargs)
 
 
 def checksum_dtype(x: Union[torch.dtype, np.dtype], **kwargs) -> int:
@@ -197,7 +215,7 @@ def checksum_dtype(x: Union[torch.dtype, np.dtype], **kwargs) -> int:
     return checksum_str(xstr, **kwargs)
 
 
-def checksum_iterable(x: Iterable[Any], **kwargs) -> int:
+def checksum_iterable(x: Iterable, **kwargs) -> int:
     accumulator = kwargs.pop("accumulator", 0) + __cached_checksum_str(get_fullname(x))
     csum = sum(
         checksum_any(xi, accumulator=accumulator + (i + 1), **kwargs) * (i + 1)
@@ -206,7 +224,7 @@ def checksum_iterable(x: Iterable[Any], **kwargs) -> int:
     return csum + accumulator
 
 
-def checksum_mapping(x: Mapping[Any, Any], **kwargs) -> int:
+def checksum_mapping(x: Mapping, **kwargs) -> int:
     kwargs["accumulator"] = kwargs.get("accumulator", 0) + __cached_checksum_str(
         get_fullname(x)
     )

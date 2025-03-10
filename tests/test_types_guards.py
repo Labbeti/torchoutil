@@ -20,7 +20,7 @@ from torchoutil.types import (
 )
 
 
-class TestIsNumber(TestCase):
+class TestGuards(TestCase):
     def test_example_1(self) -> None:
         tests = [
             (1, True),

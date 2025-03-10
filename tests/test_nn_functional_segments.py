@@ -43,6 +43,11 @@ class TestSegments(TestCase):
         activity = segments_list_to_activity(segments_lst, x.shape[-1])
         assert torch.equal(x, activity)
 
+    def test_example_3(self) -> None:
+        activity = segments_list_to_activity([], 5)
+        expected = torch.full((5,), False)
+        assert torch.equal(activity, expected)
+
 
 if __name__ == "__main__":
     unittest.main()

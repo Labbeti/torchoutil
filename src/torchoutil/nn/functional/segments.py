@@ -6,8 +6,8 @@ from typing import Iterable, List, Tuple, Union
 import torch
 from torch import Tensor
 
-from torchoutil import pyoutil as po
 from torchoutil.core.make import DeviceLike, make_device
+from torchoutil.nn import functional as F
 from torchoutil.nn.functional.pad import pad_and_stack_rec, pad_dim
 from torchoutil.nn.functional.transform import to_tensor
 from torchoutil.types import BoolTensor, LongTensor
@@ -92,13 +92,18 @@ def segments_to_segments_list(
 
 
 def segments_list_to_activity(
-    segments_list: Union[List[Tuple[int, int]], list],
+    segments_list: Union[List[Tuple[int, int]], Tensor, list],
     maxsize: Union[int, None] = None,
     device: DeviceLike = None,
 ) -> BoolTensor:
-    device = make_device(device)
+    if device is None and isinstance(segments_list, Tensor):
+        device = segments_list.device
+    else:
+        device = make_device(device)
 
-    if po.isinstance_guard(segments_list, Iterable[Iterable[int]]):
+    if F.ndim(segments_list) == 2 or (
+        F.ndim(segments_list) == 1 and len(segments_list) == 0
+    ):
         segments_list: list[tuple[int, int]] = list(map(tuple, segments_list))
         if len(segments_list) == 0:
             if maxsize is None:

@@ -210,8 +210,17 @@ class TestIsSorted(TestCase):
         x[0] = x_sorted[-1]
         x[-1] = x_sorted[0]
 
-        assert is_sorted(x_sorted)
-        assert not is_sorted(x)
+        tests = [
+            (x_sorted, True),
+            (x, False),
+            ([], True),
+            ([2], True),
+            ([2, 2], True),
+            ([2, 3], True),
+        ]
+
+        for input_, expected in tests:
+            assert is_sorted(input_) == expected
 
 
 if __name__ == "__main__":

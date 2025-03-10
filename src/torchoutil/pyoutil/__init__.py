@@ -26,6 +26,7 @@ from .collections import (
     flatten,
     intersect_lists,
     is_full,
+    is_sorted,
     is_unique,
     list_dict_to_dict_list,
     prod,
