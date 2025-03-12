@@ -20,7 +20,7 @@ if __version__ < TorchVersion("2.0.0"):
         indices: LongTensor
 
         def __init__(self, args: Sequence[Tensor]) -> None:
-            super().__init__(*args)
+            super().__init__(*args)  # type: ignore
 
     class min(namedtuple_values_indices):
         ...
