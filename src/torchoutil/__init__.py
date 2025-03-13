@@ -12,12 +12,12 @@ __status__ = "Development"
 __version__ = "0.5.0"
 
 
+# Import global functions and classes from torch
 from torch import *  # type: ignore
 
-# Re-import for language servers
+# Re-import torchoutil modules for language servers
 from . import core as core
 from . import extras as extras
-from . import fft as fft
 from . import hub as hub
 from . import nn as nn
 from . import optim as optim
@@ -150,5 +150,3 @@ from .utils.saving.torch import load_torch, to_torch
 
 version = __version__
 version_info = Version(__version__)
-
-del Version

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from typing import Callable, Final, Iterable, Optional, Union
+from typing import Callable, Final, Iterable, Union
 
 import torch
 
@@ -10,12 +10,14 @@ from torchoutil.pyoutil.functools import identity
 from torchoutil.pyoutil.importlib import is_available_package
 
 
-def _get_extra_version(name: str) -> Optional[str]:
+def _get_extra_version(name: str) -> str:
     try:
         module = __import__(name)
         return str(module.__version__)
-    except (ImportError, AttributeError):
-        return None
+    except ImportError:
+        return "not_installed"
+    except AttributeError:
+        return "unknown"
 
 
 _EXTRAS_PACKAGES = (
