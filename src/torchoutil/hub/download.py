@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 
 import logging
-import urllib
 import warnings
 from email.message import Message
 from pathlib import Path
@@ -15,7 +14,6 @@ from torch.hub import download_url_to_file
 # for backward compatibility
 from torchoutil.pyoutil.hashlib import hash_file  # noqa: F401
 from torchoutil.pyoutil.os import safe_rmdir  # noqa: F401
-
 
 pylog = logging.getLogger(__name__)
 
@@ -90,7 +88,9 @@ def _get_filename_from_url(url: str) -> str:
         message["content-type"] = header
         filename = message.get_param("filename", None)
     except (URLError, ValueError):
-        pylog.warning(f"Cannot get target filename from {url=}. Try to detect it from URL string.")
+        pylog.warning(
+            f"Cannot get target filename from {url=}. Try to detect it from URL string."
+        )
         filename = None
 
     if filename is None:
