@@ -21,6 +21,8 @@ from . import fft as fft
 from . import hub as hub
 from . import nn as nn
 from . import optim as optim
+from . import pyoutil as pyoutil
+from . import types as types
 from . import utils as utils
 
 # Global imports
