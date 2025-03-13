@@ -8,15 +8,14 @@ from typing import Any, Callable, Dict, Optional, TypeVar, Union
 from torchoutil.core.packaging import (
     _NUMPY_AVAILABLE,
     _SAFETENSORS_AVAILABLE,
-    _YAML_AVAILABLE,
     _TORCHAUDIO_AVAILABLE,
+    _YAML_AVAILABLE,
 )
 from torchoutil.utils.saving.common import EXTENSION_TO_BACKEND, SavingBackend
 from torchoutil.utils.saving.csv import to_csv
 from torchoutil.utils.saving.json import to_json
 from torchoutil.utils.saving.pickle import to_pickle
 from torchoutil.utils.saving.torch import to_torch
-
 
 T = TypeVar("T", covariant=True)
 
@@ -75,4 +74,5 @@ def dump(
     return result
 
 
+# Alias for dump
 save = dump
