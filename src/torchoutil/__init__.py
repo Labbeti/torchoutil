@@ -33,6 +33,7 @@ from .core.make import (  # noqa: F401
     DeviceLike,
     DTypeLike,
     GeneratorLike,
+    get_default_device,
     make_device,
     make_dtype,
     make_generator,

@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+# For backward compatibility only
 from .make import (  # noqa: F401
     CUDA_IF_AVAILABLE,
     DeviceLike,
@@ -9,7 +10,4 @@ from .make import (  # noqa: F401
     get_device,
     get_dtype,
     get_generator,
-    make_device,
-    make_dtype,
-    make_generator,
 )
