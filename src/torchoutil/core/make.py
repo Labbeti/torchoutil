@@ -24,7 +24,7 @@ def make_device(device: DeviceLike = CUDA_IF_AVAILABLE) -> Optional[torch.device
     elif device == CUDA_IF_AVAILABLE:
         return torch.device("cuda" if torch.cuda.is_available() else "cpu")
     elif isinstance(device, (str, int)):
-        device = torch.device(device)
+        return torch.device(device)
     else:
         msg = f"Invalid argument type {type(device)}. (expected torch.device, None, str, int or {CUDA_IF_AVAILABLE})"
         raise TypeError(msg)
