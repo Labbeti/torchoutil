@@ -8,12 +8,19 @@ All notable changes to this project will be documented in this file.
 - Function `isinstance_guard` to check parametrized types.
 - Function `randstr` to generate random strings.
 
+### Modified
+- Rename `get_device` to `make_device`.
+- Rename `get_dtype` to `make_dtype`.
+- Rename `get_generator` to `make_generator`.
+
 ### Fixed
-- Fix global import of `to.utils.return_types.shape` in python 3.9.
+- Global import of `to.utils.return_types.shape` in python 3.9 and 3.10.
 - `checksum` function with non-cpu tensors.
+- `make_device` now correctly instantiate concrete type with str and int arguments.
 
 ### Deleted
 - `pack_custom` function and classes.
+
 
 ## [0.5.0] 2024-11-28
 Major rework of `torchoutil` project folders.
