@@ -8,11 +8,14 @@ from email.message import Message
 from pathlib import Path
 from typing import Optional, Union
 from urllib.error import HTTPError, URLError
+from urllib.request import urlopen
 
 from torch.hub import download_url_to_file
 
+# for backward compatibility
 from torchoutil.pyoutil.hashlib import hash_file  # noqa: F401
 from torchoutil.pyoutil.os import safe_rmdir  # noqa: F401
+
 
 pylog = logging.getLogger(__name__)
 
@@ -35,11 +38,13 @@ def download_file(
         make_parents: If True, make intermediate directories to destination. defaults to False.
         make_intermediate: Deprecated: alias for 'make_parents'. If not None, overwrite any value of 'make_parents'. defaults to None.
         verbose: Verbose level. defaults to 0.
+
+    Returns:
+        Path to the downloaded file.
     """
     if make_intermediate is not None:
-        warnings.warn(
-            f"Deprecated argument {make_intermediate=}. Use make_parents={make_intermediate} instead."
-        )
+        msg = f"Deprecated argument {make_intermediate=}. Use make_parents={make_intermediate} instead."
+        warnings.warn(msg)
         make_parents = make_intermediate
 
     if dst is None:
@@ -50,12 +55,11 @@ def download_file(
     if dst.is_dir():
         fname = _get_filename_from_url(url)
         fpath = dst.joinpath(fname)
-    elif dst.is_file():
+    elif dst.exists() and not dst.is_file():
+        msg = f"Destination '{dst}' exists but is not a file or directory."
+        raise FileExistsError(msg)
+    else:
         fpath = dst
-    elif dst.exists():
-        raise FileExistsError(
-            f"Destination '{dst}' exists but is not a file or directory."
-        )
     del dst
 
     if make_parents:
@@ -80,14 +84,15 @@ def download_file(
 
 def _get_filename_from_url(url: str) -> str:
     try:
-        response = urllib.request.urlopen(url)
+        response = urlopen(url)
         header = response.headers.get("Content-Disposition", "")
         message = Message()
         message["content-type"] = header
         filename = message.get_param("filename", None)
     except (URLError, ValueError):
+        pylog.warning(f"Cannot get target filename from {url=}. Try to detect it from URL string.")
         filename = None
 
     if filename is None:
         filename = url.split("/")[-1].split("?")[0]
-    return filename
+    return str(filename)
