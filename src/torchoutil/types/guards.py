@@ -103,6 +103,10 @@ def is_tensor0d(x: Any) -> TypeIs[Tensor0D]:
 
 
 def is_tensor_like(x: Any) -> TypeIs[TensorOrArray]:
+    return is_tensor_or_array(x)
+
+
+def is_tensor_or_array(x: Any) -> TypeIs[TensorOrArray]:
     return isinstance(x, (Tensor, np.ndarray))
 
 

@@ -38,14 +38,14 @@ from torchoutil.pyoutil.typing import (
 
 
 class ExampleDict(TypedDict):
-    a: int = 0
-    b: str = "b"
+    a: int
+    b: str
 
 
 class ExampleDict2(TypedDict):
-    a: int = 0
-    b: str = "b"
-    c: NotRequired[float] = 0.0
+    a: int
+    b: str
+    c: NotRequired[float]
 
 
 class TestTypeChecks(TestCase):
@@ -359,7 +359,7 @@ def old_is_iterable_iterable_int(x: Any) -> TypeIs[Iterable[Iterable[int]]]:
 
 def old_is_iterable_mapping_str(x: Any) -> TypeIs[Iterable[Mapping[str, Any]]]:
     return isinstance(x, Iterable) and all(
-        isinstance(xi, Mapping) and all(isinstance(xik) for xik in xi.keys())
+        isinstance(xi, Mapping) and all(isinstance(xik, str) for xik in xi.keys())
         for xi in x
     )
 

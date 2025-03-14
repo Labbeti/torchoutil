@@ -104,7 +104,7 @@ def segments_list_to_activity(
     if F.ndim(segments_list) == 2 or (
         F.ndim(segments_list) == 1 and len(segments_list) == 0
     ):
-        segments_list: list[tuple[int, int]] = list(map(tuple, segments_list))
+        segments_list: List[tuple[int, int]] = list(map(tuple, segments_list))
         if len(segments_list) == 0:
             if maxsize is None:
                 num_elems = 0

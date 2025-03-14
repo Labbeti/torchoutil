@@ -44,6 +44,10 @@ from torchoutil.pyoutil.typing import (
 )
 from torchoutil.types import ComplexFloatingTensor, is_builtin_number, is_scalar_like
 from torchoutil.types._typing import (
+    BoolTensor0D,
+    BoolTensor1D,
+    BoolTensor2D,
+    BoolTensor3D,
     FloatTensor0D,
     FloatTensor1D,
     FloatTensor2D,
@@ -323,36 +327,72 @@ def flatten(
 
 
 @overload
-def to_tensor(
+def to_tensor(  # type: ignore
+    data: bool,
+    dtype: Literal[None] = None,
+    device: DeviceLike = None,
+) -> BoolTensor0D:
+    ...
+
+
+@overload
+def to_tensor(  # type: ignore
+    data: Sequence[bool],
+    dtype: Literal[None] = None,
+    device: DeviceLike = None,
+) -> BoolTensor1D:
+    ...
+
+
+@overload
+def to_tensor(  # type: ignore
+    data: Sequence[Sequence[bool]],
+    dtype: Literal[None] = None,
+    device: DeviceLike = None,
+) -> BoolTensor2D:
+    ...
+
+
+@overload
+def to_tensor(  # type: ignore
+    data: Sequence[Sequence[Sequence[bool]]],
+    dtype: Literal[None] = None,
+    device: DeviceLike = None,
+) -> BoolTensor3D:
+    ...
+
+
+@overload
+def to_tensor(  # type: ignore
     data: int,
-    dtype: DTypeLike = None,
+    dtype: Literal[None] = None,
     device: DeviceLike = None,
 ) -> LongTensor0D:
     ...
 
 
 @overload
-def to_tensor(
+def to_tensor(  # type: ignore
     data: Sequence[int],
-    dtype: DTypeLike = None,
+    dtype: Literal[None] = None,
     device: DeviceLike = None,
 ) -> LongTensor1D:
     ...
 
 
 @overload
-def to_tensor(
+def to_tensor(  # type: ignore
     data: Sequence[Sequence[int]],
-    dtype: DTypeLike = None,
+    dtype: Literal[None] = None,
     device: DeviceLike = None,
 ) -> LongTensor2D:
     ...
 
 
 @overload
-def to_tensor(
+def to_tensor(  # type: ignore
     data: Sequence[Sequence[Sequence[int]]],
-    dtype: DTypeLike = None,
+    dtype: Literal[None] = None,
     device: DeviceLike = None,
 ) -> LongTensor3D:
     ...
@@ -361,7 +401,7 @@ def to_tensor(
 @overload
 def to_tensor(
     data: float,
-    dtype: DTypeLike = None,
+    dtype: Literal[None] = None,
     device: DeviceLike = None,
 ) -> FloatTensor0D:
     ...
@@ -370,7 +410,7 @@ def to_tensor(
 @overload
 def to_tensor(
     data: Sequence[float],
-    dtype: DTypeLike = None,
+    dtype: Literal[None] = None,
     device: DeviceLike = None,
 ) -> FloatTensor1D:
     ...
@@ -379,7 +419,7 @@ def to_tensor(
 @overload
 def to_tensor(
     data: Sequence[Sequence[float]],
-    dtype: DTypeLike = None,
+    dtype: Literal[None] = None,
     device: DeviceLike = None,
 ) -> FloatTensor2D:
     ...
@@ -388,7 +428,7 @@ def to_tensor(
 @overload
 def to_tensor(
     data: Sequence[Sequence[Sequence[float]]],
-    dtype: DTypeLike = None,
+    dtype: Literal[None] = None,
     device: DeviceLike = None,
 ) -> FloatTensor3D:
     ...
@@ -456,7 +496,7 @@ def to_tensor(data: Any, dtype: DTypeLike = None, device: DeviceLike = None) -> 
     elif isinstance(data, (list, tuple, PythonGenerator)):
         dtype = make_dtype(dtype)
         device = make_device(device)
-        tensors: list[Tensor] = [
+        tensors: List[Tensor] = [
             to_tensor(data_i, dtype=dtype, device=device) for data_i in data
         ]
         if len(tensors) == 0:

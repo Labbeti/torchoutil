@@ -26,7 +26,12 @@ from typing import (
 from typing_extensions import TypeGuard, TypeIs
 
 from torchoutil.pyoutil.functools import identity
-from torchoutil.pyoutil.typing import T_BuiltinScalar, is_builtin_scalar, is_mapping_str
+from torchoutil.pyoutil.typing import (
+    T_BuiltinScalar,
+    is_builtin_scalar,
+    is_mapping_str,
+    SizedGetitemIter,
+)
 
 K = TypeVar("K", covariant=True)
 T = TypeVar("T", covariant=True)
@@ -42,7 +47,7 @@ KEY_MODES = ("same", "intersect", "union")
 
 @overload
 def list_dict_to_dict_list(
-    lst: Sequence[Mapping[K, V]],
+    lst: SizedGetitemIter[Mapping[K, V]],
     key_mode: Literal["intersect", "same"] = "same",
     default_val: Any = None,
     *,
@@ -54,7 +59,7 @@ def list_dict_to_dict_list(
 
 @overload
 def list_dict_to_dict_list(
-    lst: Sequence[Mapping[K, V]],
+    lst: SizedGetitemIter[Mapping[K, V]],
     key_mode: Literal["union"],
     default_val: Any = None,
     *,
@@ -66,7 +71,7 @@ def list_dict_to_dict_list(
 
 @overload
 def list_dict_to_dict_list(
-    lst: Sequence[Mapping[K, V]],
+    lst: SizedGetitemIter[Mapping[K, V]],
     key_mode: Literal["union"],
     default_val: W = None,
     *,
@@ -78,7 +83,7 @@ def list_dict_to_dict_list(
 
 @overload
 def list_dict_to_dict_list(
-    lst: Sequence[Mapping[K, V]],
+    lst: SizedGetitemIter[Mapping[K, V]],
     key_mode: KeyMode = "same",
     default_val: W = None,
     *,
@@ -89,7 +94,7 @@ def list_dict_to_dict_list(
 
 
 def list_dict_to_dict_list(
-    lst: Sequence[Mapping[K, V]],
+    lst: SizedGetitemIter[Mapping[K, V]],
     key_mode: KeyMode = "same",
     default_val: W = None,
     *,
@@ -111,10 +116,11 @@ def list_dict_to_dict_list(
     if len(lst) <= 0:
         return {}
 
-    keys = set(lst[0].keys())
+    item0 = lst[0]
+    keys = set(item0.keys())
 
     if key_mode == "same":
-        invalids = [list(item.keys()) for item in lst[1:] if keys != set(item.keys())]
+        invalids = [list(item.keys()) for item in lst if keys != set(item.keys())]
         if len(invalids) > 0:
             msg = f"Invalid dict keys for conversion from List[dict] to Dict[list]. (with {key_mode=}, {keys=} and {invalids=})"
             raise ValueError(msg)
@@ -134,14 +140,14 @@ def list_dict_to_dict_list(
 
     result = {
         key: list_fn(
-            [  # type: ignore
+            [
                 item.get(
                     key,
                     default_val_fn(key) if default_val_fn is not None else default_val,
                 )
                 for item in lst
             ]
-        )
+        )  # type: ignore
         for key in keys
     }
     return result  # type: ignore
