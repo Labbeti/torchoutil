@@ -33,7 +33,7 @@ ORIENT_VALUES = ("list", "dict")
 Orient = Literal["list", "dict"]
 
 
-def to_csv(
+def dump_csv(
     data: Union[Iterable[Mapping[str, Any]], Mapping[str, Iterable[Any]]],
     fpath: Union[str, Path, None] = None,
     *,

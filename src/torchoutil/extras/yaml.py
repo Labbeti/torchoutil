@@ -53,7 +53,7 @@ YamlLoaders = Union[
 ]
 
 
-def to_yaml(
+def dump_yaml(
     data: Union[
         Iterable[Any],
         Mapping[str, Any],

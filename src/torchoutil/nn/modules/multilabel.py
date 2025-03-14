@@ -6,6 +6,8 @@ from typing import Generic, List, Mapping, Optional, Union
 import torch
 from torch import Tensor, nn
 
+from torchoutil.types import LongTensor
+from torchoutil.nn.modules.module import Module
 from torchoutil.core.make import DeviceLike, DTypeLike
 from torchoutil.nn.functional.multilabel import (
     T_Name,
@@ -22,7 +24,7 @@ from torchoutil.nn.functional.multilabel import (
 from torchoutil.pyoutil.collections import dump_dict
 
 
-class IndicesToMultihot(nn.Module):
+class IndicesToMultihot(Module):
     """
     For more information, see :func:`~torchoutil.nn.functional.multilabel.indices_to_multihot`.
     """
@@ -101,7 +103,7 @@ class IndicesToMultinames(Generic[T_Name], nn.Module):
         )
 
 
-class MultihotToIndices(nn.Module):
+class MultihotToIndices(Module):
     """
     For more information, see :func:`~torchoutil.nn.functional.multilabel.multihot_to_indices`.
     """
@@ -113,9 +115,9 @@ class MultihotToIndices(nn.Module):
     def forward(
         self,
         multihot: Tensor,
-    ) -> List[List[int]]:
-        names = multihot_to_indices(multihot, padding_idx=self.padding_idx)
-        return names
+    ) -> Union[List, LongTensor]:
+        indices = multihot_to_indices(multihot, padding_idx=self.padding_idx)
+        return indices
 
     def extra_repr(self) -> str:
         return dump_dict(
@@ -205,7 +207,7 @@ class MultinamesToMultihot(Generic[T_Name], nn.Module):
         )
 
 
-class ProbsToIndices(nn.Module):
+class ProbsToIndices(Module):
     """
     For more information, see :func:`~torchoutil.nn.functional.multilabel.probs_to_indices`.
     """
@@ -223,12 +225,12 @@ class ProbsToIndices(nn.Module):
     def forward(
         self,
         probs: Tensor,
-    ) -> List[List[int]]:
+    ) -> Union[List, LongTensor]:
         indices = probs_to_indices(probs, self.threshold, padding_idx=self.padding_idx)
         return indices
 
 
-class ProbsToMultihot(nn.Module):
+class ProbsToMultihot(Module):
     """
     For more information, see :func:`~torchoutil.nn.functional.multilabel.probs_to_multihot`.
     """

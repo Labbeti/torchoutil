@@ -617,7 +617,7 @@ class HDFDataset(Generic[T, U], DatasetSlicer[U]):
         elif self._cast == "to_torch_or_builtin":
             valid = to.shape(hdf_values, return_valid=True).valid
             if valid and hdf_dtype.kind not in ("V", "S", "O"):
-                result = to.to_tensor(hdf_values)
+                result = to.as_tensor(hdf_values)
             elif isinstance(hdf_values, np.ndarray):
                 result = hdf_values.tolist()
             else:
@@ -626,7 +626,7 @@ class HDFDataset(Generic[T, U], DatasetSlicer[U]):
         elif self._cast == "to_torch_or_numpy":
             valid = to.shape(hdf_values, return_valid=True).valid
             if valid and hdf_dtype.kind not in ("V", "S", "O"):
-                result = to.to_tensor(hdf_values)
+                result = to.as_tensor(hdf_values)
             else:
                 result = np.array(hdf_values)
 
@@ -660,7 +660,7 @@ class HDFDataset(Generic[T, U], DatasetSlicer[U]):
                 hdf_values_view = hdf_values.view(target_np_dtype)
                 result = to.numpy_to_tensor(hdf_values_view)
             elif valid:
-                result = to.to_tensor(hdf_values, dtype=target_pt_dtype)
+                result = to.as_tensor(hdf_values, dtype=target_pt_dtype)
             else:
                 result = hdf_values
 

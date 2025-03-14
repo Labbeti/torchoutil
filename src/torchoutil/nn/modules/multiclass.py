@@ -6,6 +6,7 @@ from typing import Generic, List, Mapping, Optional, Sequence, Union
 import torch
 from torch import Tensor, nn
 
+from torchoutil.nn.modules.module import Module
 from torchoutil.core.make import DeviceLike, DTypeLike
 from torchoutil.nn.functional.multiclass import (
     T_Name,
@@ -22,7 +23,7 @@ from torchoutil.nn.functional.multiclass import (
 from torchoutil.pyoutil.collections import dump_dict
 
 
-class IndexToOnehot(nn.Module):
+class IndexToOnehot(Module):
     """
     For more information, see :func:`~torchoutil.nn.functional.multiclass.index_to_onehot`.
     """
@@ -86,7 +87,7 @@ class IndexToName(Generic[T_Name], nn.Module):
         return name
 
 
-class OnehotToIndex(nn.Module):
+class OnehotToIndex(Module):
     """
     For more information, see :func:`~torchoutil.nn.functional.multiclass.onehot_to_index`.
     """
@@ -190,7 +191,7 @@ class NameToOnehot(Generic[T_Name], nn.Module):
         )
 
 
-class ProbsToIndex(nn.Module):
+class ProbsToIndex(Module):
     """
     For more information, see :func:`~torchoutil.nn.functional.multiclass.probs_to_index`.
     """
@@ -210,7 +211,7 @@ class ProbsToIndex(nn.Module):
         return dump_dict(dict(dim=self.dim))
 
 
-class ProbsToOnehot(nn.Module):
+class ProbsToOnehot(Module):
     """
     For more information, see :func:`~torchoutil.nn.functional.multiclass.probs_to_onehot`.
     """

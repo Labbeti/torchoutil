@@ -21,6 +21,7 @@ from typing import (
     overload,
     runtime_checkable,
     Mapping,
+    OrderedDict,
 )
 
 import torch
@@ -324,7 +325,7 @@ class TypedSequential(
         for module in self:
             if self.__unpack_tuple and isinstance(x, tuple):
                 x = module(*x)
-            elif self.__unpack_dict and is_dict_str(x):
+            elif self.__unpack_dict and isinstance_guard(x, Dict[str, Any]):
                 x = module(**x)
             else:
                 x = module(x)

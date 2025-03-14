@@ -98,11 +98,17 @@ def is_scalar_like(x: Any) -> TypeGuard[ScalarLike]:
 
 
 def is_tensor0d(x: Any) -> TypeIs[Tensor0D]:
-    """Returns True if x is a zero-dimensional torch Tensor."""
+    """Deprecated: Use `isinstance(x, to.Tensor0D)` instead.
+
+    Returns True if x is a zero-dimensional torch Tensor."""
     return isinstance(x, Tensor0D)
 
 
 def is_tensor_like(x: Any) -> TypeIs[TensorOrArray]:
+    return is_tensor_or_array(x)
+
+
+def is_tensor_or_array(x: Any) -> TypeIs[TensorOrArray]:
     return isinstance(x, (Tensor, np.ndarray))
 
 

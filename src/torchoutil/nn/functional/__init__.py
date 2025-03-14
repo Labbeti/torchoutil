@@ -52,6 +52,16 @@ from .multilabel import (
     probs_to_multihot,
     probs_to_multinames,
 )
+from .new import (
+    arange,
+    empty,
+    full,
+    rand,
+    randint,
+    randperm,
+    ones,
+    zeros,
+)
 from .numpy import numpy_to_tensor, tensor_to_numpy, to_numpy
 from .others import (
     average_power,
@@ -101,11 +111,12 @@ from .transform import (
     squeeze_,
     squeeze_copy,
     to_item,
-    to_tensor,
+    as_tensor,
     transform_drop,
     unsqueeze,
     unsqueeze_,
     unsqueeze_copy,
     view_as_complex,
     view_as_real,
+    as_tensor,
 )

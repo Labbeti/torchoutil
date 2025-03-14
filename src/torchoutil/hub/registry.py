@@ -26,10 +26,10 @@ from typing_extensions import NotRequired
 from torchoutil.core.make import DeviceLike, make_device
 from torchoutil.pyoutil.hashlib import HashName, hash_file
 from torchoutil.pyoutil.logging import warn_once
-from torchoutil.utils.saving.json import load_json, to_json
+from torchoutil.utils.saving.json import load_json, dump_json
 from torchoutil.utils.saving.load_fn import LOAD_FNS, LoadFnLike, load_torch
 
-T_Name = TypeVar("T_Hashable", bound=Hashable)
+T_Hashable = TypeVar("T_Hashable", bound=Hashable)
 
 pylog = logging.getLogger(__name__)
 
@@ -43,10 +43,10 @@ class RegistryEntry(TypedDict):
     architecture: NotRequired[str]
 
 
-class RegistryHub(Generic[T_Name]):
+class RegistryHub(Generic[T_Hashable]):
     def __init__(
         self,
-        infos: Mapping[T_Name, RegistryEntry],
+        infos: Mapping[T_Hashable, RegistryEntry],
         register_root: Union[str, Path, None] = None,
     ) -> None:
         """
@@ -65,7 +65,7 @@ class RegistryHub(Generic[T_Name]):
         self._ckpt_parent_path = register_root
 
     @property
-    def infos(self) -> Dict[T_Name, RegistryEntry]:
+    def infos(self) -> Dict[T_Hashable, RegistryEntry]:
         return self._infos
 
     @property
@@ -73,14 +73,14 @@ class RegistryHub(Generic[T_Name]):
         return self._ckpt_parent_path.resolve()
 
     @property
-    def names(self) -> List[T_Name]:
+    def names(self) -> List[T_Hashable]:
         return list(self._infos.keys())
 
     @property
     def paths(self) -> List[Path]:
         return [self.get_path(model_name) for model_name in self.names]
 
-    def get_path(self, name: T_Name) -> Path:
+    def get_path(self, name: T_Hashable) -> Path:
         """Returns the expected filepath of an element."""
         if name not in self.names:
             msg = f"Invalid argument {name=}. (expected one of {self.names})"
@@ -92,7 +92,7 @@ class RegistryHub(Generic[T_Name]):
 
     def load_state_dict(
         self,
-        name_or_path: Union[T_Name, str, Path],
+        name_or_path: Union[T_Hashable, str, Path],
         *,
         device: DeviceLike = None,
         offline: bool = False,
@@ -170,7 +170,7 @@ class RegistryHub(Generic[T_Name]):
 
     def download_file(
         self,
-        name: T_Name,
+        name: T_Hashable,
         force: bool = False,
         check_hash: bool = True,
         verbose: int = 0,
@@ -201,7 +201,7 @@ class RegistryHub(Generic[T_Name]):
 
     def remove_file(
         self,
-        name: T_Name,
+        name: T_Hashable,
     ) -> None:
         path = self.get_path(name)
         if path.is_file():
@@ -212,7 +212,7 @@ class RegistryHub(Generic[T_Name]):
 
     def is_valid_hash(
         self,
-        name: T_Name,
+        name: T_Hashable,
     ) -> bool:
         info = self.infos[name]
         if "hash_type" not in info or "hash_value" not in info:
@@ -234,7 +234,7 @@ class RegistryHub(Generic[T_Name]):
             "infos": self._infos,
             "register_root": str(self._ckpt_parent_path),
         }
-        to_json(args, path)
+        dump_json(args, path)
 
     @classmethod
     def from_file(cls, path: Union[str, Path]) -> "RegistryHub":
@@ -242,7 +242,7 @@ class RegistryHub(Generic[T_Name]):
         args = load_json(path)
         return RegistryHub(**args)
 
-    def _get_name(self, path: Union[str, Path]) -> Optional[T_Name]:
+    def _get_name(self, path: Union[str, Path]) -> Optional[T_Hashable]:
         path_to_name = {
             path_i.resolve().expanduser(): name_i
             for path_i, name_i in zip(self.paths, self.names)

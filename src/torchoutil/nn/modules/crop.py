@@ -5,11 +5,12 @@ from typing import Iterable, Union
 
 from torch import Generator, Tensor, nn
 
+from torchoutil.nn.modules.module import Module
 from torchoutil.nn.functional.crop import CropAlign, crop_dim, crop_dims
 from torchoutil.pyoutil.collections import dump_dict
 
 
-class CropDim(nn.Module):
+class CropDim(Module):
     """
     For more information, see :func:`~torchoutil.nn.functional.crop.crop_dim`.
     """
@@ -46,7 +47,7 @@ class CropDim(nn.Module):
         )
 
 
-class CropDims(nn.Module):
+class CropDims(Module):
     """
     For more information, see :func:`~torchoutil.nn.functional.crop.crop_dims`.
     """

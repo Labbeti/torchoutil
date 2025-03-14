@@ -6,7 +6,7 @@ from typing import Iterable, List, Literal, Union
 import torch
 from torch import Generator, Tensor
 
-from torchoutil.core.make import make_generator
+from torchoutil.core.make import make_generator, GeneratorLike
 
 CROP_ALIGNS = ("left", "right", "center", "random")
 CropAlign = Literal["left", "right", "center", "random"]
@@ -18,7 +18,7 @@ def crop_dim(
     *,
     dim: int = -1,
     align: CropAlign = "left",
-    generator: Union[int, Generator, None] = None,
+    generator: GeneratorLike = None,
 ) -> Tensor:
     """Generic function to crop a single dimension."""
     return crop_dims(
@@ -36,7 +36,7 @@ def crop_dims(
     *,
     dims: Union[Iterable[int], Literal["auto"]] = "auto",
     aligns: Union[CropAlign, Iterable[CropAlign]] = "left",
-    generator: Union[int, Generator, None] = None,
+    generator: GeneratorLike = None,
 ) -> Tensor:
     """Generic function to crop multiple dimensions."""
 

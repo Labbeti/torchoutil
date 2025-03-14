@@ -8,7 +8,7 @@ from typing import Any, Optional, Union
 from torchoutil.pyoutil.io import _setup_path
 
 
-def to_json(
+def dump_json(
     data: Any,
     fpath: Union[str, Path, None] = None,
     *,

@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 
 from typing import (
-    Any,
     Callable,
     Dict,
     Generic,
@@ -10,7 +9,6 @@ from typing import (
     List,
     Mapping,
     Optional,
-    OrderedDict,
     overload,
 )
 
@@ -165,15 +163,15 @@ def __test_typing_1() -> None:
     import torch
     from torch import Tensor
 
-    class LayerA(TypedModule[Tensor, Tensor]):
+    class LayerA(EModule[Tensor, Tensor]):
         def forward(self, x: Tensor) -> Tensor:
             return x * x
 
-    class LayerB(TypedModule[Tensor, int]):
+    class LayerB(EModule[Tensor, int]):
         def forward(self, x: Tensor) -> int:
             return int(x.sum().item())
 
-    class LayerC(TypedModule[int, Tensor]):
+    class LayerC(EModule[int, Tensor]):
         def forward(self, x: int) -> Tensor:
             return torch.as_tensor(x)
 

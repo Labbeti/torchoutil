@@ -5,14 +5,17 @@ from abc import ABC, abstractmethod
 from typing import Any, Generic, Iterable, List, Tuple, TypeVar, Union, final, overload
 
 import torch
-from torch import Tensor
 from torch.utils.data.dataset import Dataset
 
+from torchoutil.nn.functional.transform import as_tensor
 from torchoutil.extras.numpy.functional import is_numpy_bool_array
-from torchoutil.pyoutil.typing import is_iterable_bool, is_iterable_integral
+from torchoutil.pyoutil.typing import (
+    is_iterable_bool,
+    isinstance_guard,
+)
 from torchoutil.pyoutil.typing.classes import SupportsLenAndGetItem
-from torchoutil.types import is_bool_tensor1d, is_integral_tensor1d, is_number_like
-from torchoutil.types._typing import BoolTensor, Tensor1D
+from torchoutil.types import is_bool_tensor1d, is_number_like, is_tensor_or_array
+from torchoutil.types._typing import Tensor1D, TensorOrArray
 from torchoutil.utils.data.dataset import Wrapper
 
 T = TypeVar("T", covariant=False)
@@ -46,17 +49,17 @@ class DatasetSlicer(Generic[T], ABC, Dataset[T]):
 
     @overload
     @final
-    def __getitem__(self, idx: int, /) -> T:
+    def __getitem__(self, idx: int, /) -> T:  # type: ignore
         ...
 
     @overload
     @final
-    def __getitem__(self, idx: Indices, /) -> List[T]:
+    def __getitem__(self, idx: Indices, /) -> List[T]:  # type: ignore
         ...
 
     @overload
     @final
-    def __getitem__(self, idx: Tuple[Any, ...], /) -> Any:
+    def __getitem__(self, idx: Tuple[Any, ...], /) -> Any:  # type: ignore
         ...
 
     @final
@@ -79,7 +82,7 @@ class DatasetSlicer(Generic[T], ABC, Dataset[T]):
         ):
             return self.get_items_mask(idx, *args)
 
-        elif is_iterable_integral(idx) or is_integral_tensor1d(idx):
+        elif isinstance_guard(idx, Iterable[int]) or is_tensor_or_array(idx):
             return self.get_items_indices(idx, *args)
 
         elif idx is None:
@@ -101,7 +104,7 @@ class DatasetSlicer(Generic[T], ABC, Dataset[T]):
 
     def get_items_indices(
         self,
-        indices: Union[Iterable[int], Tensor1D],
+        indices: Union[Iterable[int], TensorOrArray],
         *args,
     ) -> List[T]:
         if self._add_indices_support:
@@ -111,16 +114,16 @@ class DatasetSlicer(Generic[T], ABC, Dataset[T]):
 
     def get_items_mask(
         self,
-        mask: Union[Iterable[bool], Tensor],
+        mask: Union[Iterable[bool], TensorOrArray],
         *args,
     ) -> List[T]:
         if self._add_mask_support:
-            if not isinstance(mask, Tensor):
-                mask = torch.as_tensor(list(mask), dtype=torch.bool)  # type: ignore
+            mask = as_tensor(mask, dtype=torch.bool)
             if len(mask) > 0 and len(mask) != len(self):  # type: ignore
                 msg = f"Invalid mask size {len(mask)}. (expected {len(self)})"
                 raise ValueError(msg)
-            indices = _where_1d(mask)
+
+            indices = torch.where(mask)[0]
             return self.get_items_indices(indices, *args)
         else:
             return self.get_item(mask, *args)
@@ -141,7 +144,7 @@ class DatasetSlicer(Generic[T], ABC, Dataset[T]):
         *args,
     ) -> List[T]:
         if self._add_none_support:
-            return self.get_items_indices(slice(None), *args)
+            return self.get_items_slice(slice(None), *args)
         else:
             return self.get_item(none, *args)
 
@@ -174,9 +177,3 @@ class DatasetSlicerWrapper(Generic[T], DatasetSlicer[T], Wrapper[T]):
         else:
             # equivalent to self.dataset[idx, *args], but only in recent python versions
             return self.dataset.__getitem__((idx,) + args)
-
-
-def _where_1d(mask: Union[Iterable[bool], Tensor]) -> Tensor1D:
-    if not isinstance(mask, BoolTensor):
-        mask = torch.as_tensor(list(mask), dtype=torch.bool)  # type: ignore
-    return torch.where(mask)[0]  # type: ignore

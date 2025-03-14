@@ -2,6 +2,6 @@
 # -*- coding: utf-8 -*-
 
 from torchoutil.extras.torchaudio import (  # noqa: F401
-    to_torchaudio,
+    dump_torchaudio,
     load_torchaudio,
 )

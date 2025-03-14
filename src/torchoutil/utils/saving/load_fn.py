@@ -39,7 +39,7 @@ if _NUMPY_AVAILABLE:
 
 
 if _SAFETENSORS_AVAILABLE:
-    from .safetensors import load_safetensors
+    from ...extras.safetensors import load_safetensors
 
     LOAD_FNS["safetensors"] = load_safetensors
 

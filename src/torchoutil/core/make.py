@@ -7,8 +7,6 @@ import torch
 from torch import Generator
 from torch.types import Device
 
-from torchoutil.pyoutil.logging import warn_once
-
 from .dtype_enum import DTypeEnum, enum_dtype_to_torch_dtype, str_to_torch_dtype
 
 DeviceLike = Union[Device, Literal["default", "cuda_if_available"]]
@@ -64,27 +62,3 @@ def make_generator(generator: GeneratorLike = None) -> Optional[Generator]:
     else:
         msg = f"Invalid argument type {type(generator)}. (expected torch.Generator, None, int or 'default')"
         raise TypeError(msg)
-
-
-def get_device(device: DeviceLike = CUDA_IF_AVAILABLE) -> Optional[torch.device]:
-    """DEPRECATED: Use make_device instead.
-
-    Create concrete device object from device-like object."""
-    warn_once("Deprecated function get_device. Use make_device instead.")
-    return make_device(device)
-
-
-def get_dtype(dtype: DTypeLike = None) -> Optional[torch.dtype]:
-    """DEPRECATED: Use make_dtype instead.
-
-    Create concrete dtype object from dtype-like object."""
-    warn_once("Deprecated function get_dtype. Use make_dtype instead.")
-    return make_dtype(dtype)
-
-
-def get_generator(generator: GeneratorLike = None) -> Optional[Generator]:
-    """DEPRECATED: Use make_generator instead.
-
-    Create concrete generator object from generator-like object."""
-    warn_once("Deprecated function get_generator. Use make_generator instead.")
-    return make_generator(generator)

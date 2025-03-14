@@ -3,18 +3,19 @@
 
 """Module versions of tensor functions that do not already exists in PyTorch."""
 
-from typing import Any, List, Optional, Sequence, Tuple, Union, overload
+from typing import List, Optional, Sequence, Tuple, Union, overload
 
 import torch
-from torch import Tensor, nn
+from torch import Tensor
 from torch.nn import functional as F
-from torch.types import Device, Number
+from torch.types import Number
 
+from torchoutil.nn.modules.module import Module
 from torchoutil.pyoutil.collections import dump_dict
 from torchoutil.utils import return_types
 
 
-class Abs(nn.Module):
+class Abs(Module):
     """
     Module version of :func:`~torch.abs`.
     """
@@ -23,7 +24,7 @@ class Abs(nn.Module):
         return x.abs()
 
 
-class Angle(nn.Module):
+class Angle(Module):
     """
     Module version of :func:`~torch.angle`.
     """
@@ -32,35 +33,7 @@ class Angle(nn.Module):
         return x.angle()
 
 
-class AsTensor(nn.Module):
-    """
-    Module version of :func:`~torch.as_tensor`.
-    """
-
-    def __init__(
-        self,
-        *,
-        device: Device = None,
-        dtype: Optional[torch.dtype] = None,
-    ) -> None:
-        super().__init__()
-        self.device = device
-        self.dtype = dtype
-
-    def forward(self, x: Any) -> Tensor:
-        return torch.as_tensor(x, dtype=self.dtype, device=self.device)
-
-    def extra_repr(self) -> str:
-        return dump_dict(
-            dict(
-                dtype=self.dtype,
-                device=self.device,
-            ),
-            ignore_lst=(None,),
-        )
-
-
-class Exp(nn.Module):
+class Exp(Module):
     """
     Module version of :func:`~torch.exp`.
     """
@@ -69,7 +42,7 @@ class Exp(nn.Module):
         return x.exp()
 
 
-class Exp2(nn.Module):
+class Exp2(Module):
     """
     Module version of :func:`~torch.exp2`.
     """
@@ -78,7 +51,7 @@ class Exp2(nn.Module):
         return x.exp2()
 
 
-class FFT(nn.Module):
+class FFT(Module):
     """
     Module version of :func:`~torch.fft.fft`.
     """
@@ -87,7 +60,7 @@ class FFT(nn.Module):
         return torch.fft.fft(x)
 
 
-class IFFT(nn.Module):
+class IFFT(Module):
     """
     Module version of :func:`~torch.fft.ifft`.
     """
@@ -96,7 +69,7 @@ class IFFT(nn.Module):
         return torch.fft.ifft(x)
 
 
-class Imag(nn.Module):
+class Imag(Module):
     """
     Module version of :func:`~torch.Tensor.imag`.
     """
@@ -119,7 +92,7 @@ class Imag(nn.Module):
             return x.imag
 
 
-class Interpolate(nn.Module):
+class Interpolate(Module):
     """
     Module version of :func:`~torch.nn.functional.interpolate`.
     """
@@ -153,7 +126,7 @@ class Interpolate(nn.Module):
         )
 
 
-class Log(nn.Module):
+class Log(Module):
     """
     Module version of :func:`~torch.log`.
     """
@@ -162,7 +135,7 @@ class Log(nn.Module):
         return x.log()
 
 
-class Log10(nn.Module):
+class Log10(Module):
     """
     Module version of :func:`~torch.log10`.
     """
@@ -171,7 +144,7 @@ class Log10(nn.Module):
         return x.log10()
 
 
-class Log2(nn.Module):
+class Log2(Module):
     """
     Module version of :func:`~torch.log2`.
     """
@@ -180,7 +153,7 @@ class Log2(nn.Module):
         return x.log2()
 
 
-class Max(nn.Module):
+class Max(Module):
     """
     Module version of :func:`~torch.max`.
     """
@@ -235,7 +208,7 @@ class Max(nn.Module):
         )
 
 
-class Mean(nn.Module):
+class Mean(Module):
     """
     Module version of :func:`~torch.mean`.
     """
@@ -261,7 +234,7 @@ class Mean(nn.Module):
         )
 
 
-class Min(nn.Module):
+class Min(Module):
     """
     Module version of :func:`~torch.min`.
     """
@@ -316,7 +289,7 @@ class Min(nn.Module):
         )
 
 
-class Normalize(nn.Module):
+class Normalize(Module):
     """
     Module version of :func:`~torch.nn.functional.normalize`.
     """
@@ -345,7 +318,7 @@ class Normalize(nn.Module):
         )
 
 
-class Permute(nn.Module):
+class Permute(Module):
     """
     Module version of :func:`~torch.permute`.
     """
@@ -366,7 +339,7 @@ class Permute(nn.Module):
         )
 
 
-class Pow(nn.Module):
+class Pow(Module):
     """
     Module version of :func:`~torch.Tensor.pow`.
     """
@@ -382,7 +355,7 @@ class Pow(nn.Module):
         return dump_dict(dict(exponent=self.exponent))
 
 
-class Real(nn.Module):
+class Real(Module):
     """
     Module version of :func:`~torch.Tensor.real`.
     """
@@ -391,7 +364,7 @@ class Real(nn.Module):
         return x.real
 
 
-class Repeat(nn.Module):
+class Repeat(Module):
     """
     Module version of :func:`~torch.repeat`.
     """
@@ -407,7 +380,7 @@ class Repeat(nn.Module):
         return dump_dict(dict(repeats=self.repeats))
 
 
-class RepeatInterleave(nn.Module):
+class RepeatInterleave(Module):
     """
     Module version of :func:`~torch.repeat_interleave`.
     """
@@ -437,7 +410,7 @@ class RepeatInterleave(nn.Module):
         )
 
 
-class Reshape(nn.Module):
+class Reshape(Module):
     """
     Module version of :func:`~torch.reshape`.
     """
@@ -457,7 +430,7 @@ class Reshape(nn.Module):
         )
 
 
-class TensorTo(nn.Module):
+class TensorTo(Module):
     """
     Module version of :func:`~torch.Tensor.to`.
     """
@@ -473,7 +446,7 @@ class TensorTo(nn.Module):
         return dump_dict(dict(self.kwargs))
 
 
-class ToList(nn.Module):
+class ToList(Module):
     """
     Module version of :func:`~torch.Tensor.tolist`.
     """
@@ -482,7 +455,7 @@ class ToList(nn.Module):
         return x.tolist()
 
 
-class Topk(nn.Module):
+class Topk(Module):
     """
     Module version of :func:`~torch.Tensor.topk`.
     """
@@ -538,7 +511,7 @@ class Topk(nn.Module):
         )
 
 
-class Transpose(nn.Module):
+class Transpose(Module):
     """
     Module version of :func:`~torch.transpose`.
     """
@@ -565,7 +538,7 @@ class Transpose(nn.Module):
         )
 
 
-class View(nn.Module):
+class View(Module):
     @overload
     def __init__(self, dtype: torch.dtype, /) -> None:
         ...

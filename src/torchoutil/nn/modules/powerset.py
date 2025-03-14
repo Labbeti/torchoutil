@@ -3,8 +3,9 @@
 
 from typing import Optional
 
-from torch import Tensor, nn
+from torch import Tensor
 
+from torchoutil.nn.modules.module import Module
 from torchoutil.nn.functional.powerset import (
     build_powerset_mapping,
     multilabel_to_powerset,
@@ -13,7 +14,7 @@ from torchoutil.nn.functional.powerset import (
 from torchoutil.types import Tensor2D, Tensor3D
 
 
-class MultilabelToPowerset(nn.Module):
+class MultilabelToPowerset(Module):
     """
     Module version of :func:`~torchoutil.nn.functional.powerset.multilabel_to_powerset`.
     """
@@ -43,7 +44,7 @@ class MultilabelToPowerset(nn.Module):
         return self._mapping.shape[1]
 
 
-class PowersetToMultilabel(nn.Module):
+class PowersetToMultilabel(Module):
     """
     Module version of :func:`~torchoutil.nn.functional.powerset.powerset_to_multilabel`.
     """

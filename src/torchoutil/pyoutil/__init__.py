@@ -39,7 +39,7 @@ from .collections import (
     union_lists,
     unzip,
 )
-from .csv import load_csv, to_csv
+from .csv import load_csv, dump_csv
 from .dataclasses import get_defaults_values
 from .datetime import now_iso
 from .difflib import find_closest_in_list, sequence_matcher_ratio
@@ -56,7 +56,7 @@ from .importlib import (
 )
 from .inspect import get_current_fn_name, get_fullname
 from .io import open_close_wrap
-from .json import load_json, to_json
+from .json import load_json, dump_json
 from .logging import (
     VERBOSE_DEBUG,
     VERBOSE_ERROR,
@@ -75,7 +75,7 @@ from .logging import (
 )
 from .math import clamp, clip, nextafter, nextdown
 from .os import get_num_cpus_available, safe_rmdir, tree_iter
-from .pickle import load_pickle, to_pickle
+from .pickle import load_pickle, dump_pickle
 from .random import randstr
 from .re import (
     PatternLike,

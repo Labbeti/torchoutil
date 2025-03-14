@@ -18,7 +18,7 @@ from torchvision.datasets import CIFAR10
 
 from torchoutil.extras.hdf import HDFDataset, pack_to_hdf
 from torchoutil.nn import ESequential, IndexToOnehot, ToList, ToNumpy
-from torchoutil.nn.functional import to_tensor
+from torchoutil.nn.functional import as_tensor
 from torchoutil.pyoutil import dict_list_to_list_dict
 
 
@@ -128,8 +128,8 @@ class TestHDF(TestCase):
             hdf_dataset[indices, "data"],
             hdf_dataset[mask.tolist(), "data"],
             hdf_dataset[indices.tolist(), "data"],
-            hdf_dataset[to_tensor(mask), "data"],
-            hdf_dataset[to_tensor(indices), "data"],
+            hdf_dataset[as_tensor(mask), "data"],
+            hdf_dataset[as_tensor(indices), "data"],
             data[mask],
             data[indices],
         ):

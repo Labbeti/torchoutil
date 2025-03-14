@@ -8,7 +8,7 @@ from .crop import CropDim, CropDims
 from .layer import PositionalEncoding
 from .mask import MaskedMean, MaskedSum
 from .container import EModuleDict, EModuleList, EModulePartial, ESequential
-from .module import EModule
+from .module import EModule, Module
 from .multiclass import (
     IndexToName,
     IndexToOnehot,
@@ -39,7 +39,6 @@ from .tensor import (
     IFFT,
     Abs,
     Angle,
-    AsTensor,
     Exp,
     Exp2,
     Imag,
@@ -79,4 +78,5 @@ from .transform import (
     Unsqueeze,
     ViewAsComplex,
     ViewAsReal,
+    AsTensor,
 )

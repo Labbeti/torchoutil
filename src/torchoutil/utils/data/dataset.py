@@ -31,7 +31,7 @@ T_SizedIterableDataset = TypeVar(
 class EmptyDataset(Dataset[None]):
     """Dataset placeholder. Raises StopIteration if __getitem__ is called."""
 
-    def __getitem__(self, idx, /) -> None:
+    def __getitem__(self, idx, /) -> None:  # type: ignore
         raise StopIteration
 
     def __len__(self) -> int:
@@ -44,7 +44,7 @@ class Wrapper(Generic[T], Dataset[T]):
         self.dataset = dataset
 
     @abstractmethod
-    def __getitem__(self, idx, /) -> T:
+    def __getitem__(self, idx, /) -> T:  # type: ignore
         raise NotImplementedError
 
     @abstractmethod
@@ -93,7 +93,7 @@ class TransformWrapper(Generic[T, U], Wrapper[T]):
         self._transform = transform
         self._condition = condition
 
-    def __getitem__(self, idx) -> Union[T, U]:
+    def __getitem__(self, idx) -> Union[T, U]:  # type: ignore
         assert isinstance(idx, int)
         item = self.dataset[idx]
         if self._transform is not None and (
@@ -125,7 +125,7 @@ class IterableTransformWrapper(IterableWrapper[T], Generic[T, U]):
         self._transform = transform
         self._condition = condition
 
-    def __iter__(self) -> Iterator[Union[T, U]]:
+    def __iter__(self) -> Iterator[Union[T, U]]:  # type: ignore
         it = super()._get_dataset_iter()
         for i, item in enumerate(it):
             if self._transform is not None and (

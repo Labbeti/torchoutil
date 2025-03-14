@@ -141,11 +141,11 @@ from .types.variable_fns import (
     zeros,
 )
 from .utils.saving.common import to_builtin
-from .utils.saving.csv import load_csv, to_csv
+from .utils.saving.csv import load_csv, dump_csv
 from .utils.saving.dump_fn import dump, save
-from .utils.saving.json import load_json, to_json
+from .utils.saving.json import load_json, dump_json
 from .utils.saving.load_fn import load
-from .utils.saving.pickle import load_pickle, to_pickle
+from .utils.saving.pickle import load_pickle, dump_pickle
 from .utils.saving.torch import load_torch, to_torch
 
 version = __version__

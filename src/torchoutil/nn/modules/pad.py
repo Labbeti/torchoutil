@@ -4,10 +4,11 @@
 from typing import Iterable, Union
 
 import torch
-from torch import Generator, Tensor, nn
+from torch import Generator, Tensor
 from torch.types import Number
 
-from torchoutil.core.make import DeviceLike
+from torchoutil.nn.modules.module import Module
+from torchoutil.core.make import DeviceLike, DTypeLike
 from torchoutil.nn.functional.pad import (
     PadAlign,
     PadMode,
@@ -19,7 +20,7 @@ from torchoutil.nn.functional.pad import (
 from torchoutil.pyoutil.collections import dump_dict
 
 
-class PadDim(nn.Module):
+class PadDim(Module):
     """
     For more information, see :func:`~torchoutil.nn.functional.pad.pad_dim`.
     """
@@ -67,7 +68,7 @@ class PadDim(nn.Module):
         )
 
 
-class PadDims(nn.Module):
+class PadDims(Module):
     """
     For more information, see :func:`~torchoutil.nn.functional.pad.pad_dims`.
     """
@@ -115,7 +116,7 @@ class PadDims(nn.Module):
         )
 
 
-class PadAndStackRec(nn.Module):
+class PadAndStackRec(Module):
     """
     For more information, see :func:`~torchoutil.nn.functional.pad.pad_and_stack_rec`.
     """
@@ -126,11 +127,11 @@ class PadAndStackRec(nn.Module):
         *,
         align: PadAlign = "left",
         device: DeviceLike = None,
-        dtype: Union[None, torch.dtype] = None,
+        dtype: DTypeLike = None,
     ) -> None:
         super().__init__()
         self.pad_value = pad_value
-        self.align = align
+        self.align: PadAlign = align
         self.device = device
         self.dtype = dtype
 

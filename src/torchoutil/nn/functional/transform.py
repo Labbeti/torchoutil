@@ -19,10 +19,12 @@ from typing import (
 
 import torch
 from torch import Generator, Tensor, nn
+from typing_extensions import Never
 
 from torchoutil.core.make import (
     DeviceLike,
     DTypeLike,
+    GeneratorLike,
     make_device,
     make_dtype,
     make_generator,
@@ -44,10 +46,18 @@ from torchoutil.pyoutil.typing import (
 )
 from torchoutil.types import ComplexFloatingTensor, is_builtin_number, is_scalar_like
 from torchoutil.types._typing import (
+    BoolTensor0D,
+    BoolTensor1D,
+    BoolTensor2D,
+    BoolTensor3D,
     FloatTensor0D,
     FloatTensor1D,
     FloatTensor2D,
     FloatTensor3D,
+    CFloatTensor0D,
+    CFloatTensor1D,
+    CFloatTensor2D,
+    CFloatTensor3D,
     LongTensor0D,
     LongTensor1D,
     LongTensor2D,
@@ -218,7 +228,7 @@ def pad_and_crop_dim(
     pad_value: PadValue = 0.0,
     dim: int = -1,
     mode: PadMode = "constant",
-    generator: Union[int, Generator, None] = None,
+    generator: GeneratorLike = None,
 ) -> Tensor:
     """Pad and crop along the specified dimension."""
     x = pad_dim(
@@ -320,168 +330,6 @@ def flatten(
             return x.reshape(*shape)
     else:
         return builtin_flatten(x, start_dim, end_dim, is_scalar_fn=is_scalar_like)
-
-
-@overload
-def to_tensor(
-    data: int,
-    dtype: DTypeLike = None,
-    device: DeviceLike = None,
-) -> LongTensor0D:
-    ...
-
-
-@overload
-def to_tensor(
-    data: Sequence[int],
-    dtype: DTypeLike = None,
-    device: DeviceLike = None,
-) -> LongTensor1D:
-    ...
-
-
-@overload
-def to_tensor(
-    data: Sequence[Sequence[int]],
-    dtype: DTypeLike = None,
-    device: DeviceLike = None,
-) -> LongTensor2D:
-    ...
-
-
-@overload
-def to_tensor(
-    data: Sequence[Sequence[Sequence[int]]],
-    dtype: DTypeLike = None,
-    device: DeviceLike = None,
-) -> LongTensor3D:
-    ...
-
-
-@overload
-def to_tensor(
-    data: float,
-    dtype: DTypeLike = None,
-    device: DeviceLike = None,
-) -> FloatTensor0D:
-    ...
-
-
-@overload
-def to_tensor(
-    data: Sequence[float],
-    dtype: DTypeLike = None,
-    device: DeviceLike = None,
-) -> FloatTensor1D:
-    ...
-
-
-@overload
-def to_tensor(
-    data: Sequence[Sequence[float]],
-    dtype: DTypeLike = None,
-    device: DeviceLike = None,
-) -> FloatTensor2D:
-    ...
-
-
-@overload
-def to_tensor(
-    data: Sequence[Sequence[Sequence[float]]],
-    dtype: DTypeLike = None,
-    device: DeviceLike = None,
-) -> FloatTensor3D:
-    ...
-
-
-@overload
-def to_tensor(
-    data: BuiltinNumber,
-    dtype: DTypeLike = None,
-    device: DeviceLike = None,
-) -> Tensor0D:
-    ...
-
-
-@overload
-def to_tensor(
-    data: Sequence[BuiltinNumber],
-    dtype: DTypeLike = None,
-    device: DeviceLike = None,
-) -> Tensor1D:
-    ...
-
-
-@overload
-def to_tensor(
-    data: Sequence[Sequence[BuiltinNumber]],
-    dtype: DTypeLike = None,
-    device: DeviceLike = None,
-) -> Tensor2D:
-    ...
-
-
-@overload
-def to_tensor(
-    data: Sequence[Sequence[Sequence[BuiltinNumber]]],
-    dtype: DTypeLike = None,
-    device: DeviceLike = None,
-) -> Tensor3D:
-    ...
-
-
-@overload
-def to_tensor(data: Any, dtype: DTypeLike = None, device: DeviceLike = None) -> Tensor:
-    ...
-
-
-def to_tensor(data: Any, dtype: DTypeLike = None, device: DeviceLike = None) -> Tensor:
-    """Convert arbitrary data to tensor.
-
-    Unlike `torch.as_tensor`, it works recursively and stack sequences like List[Tensor]. It also accept python generator objects.
-
-    Args:
-        data: Data to convert to tensor. Can be Tensor, np.ndarray, list, tuple or any number-like object.
-        dtype: Target torch dtype. defaults to None.
-        device: Target torch device. defaults to None.
-
-    Returns:
-        PyTorch tensor created from data.
-    """
-    if isinstance(data, (Tensor, np.ndarray, np.number)) or is_builtin_number(data):
-        dtype = make_dtype(dtype)
-        device = make_device(device)
-        return torch.as_tensor(data, dtype=dtype, device=device)
-
-    elif isinstance(data, (list, tuple, PythonGenerator)):
-        dtype = make_dtype(dtype)
-        device = make_device(device)
-        tensors: list[Tensor] = [
-            to_tensor(data_i, dtype=dtype, device=device) for data_i in data
-        ]
-        if len(tensors) == 0:
-            return torch.as_tensor(tensors, dtype=dtype, device=device)
-
-        shapes = [tensor.shape for tensor in tensors]
-        if not all_eq(shapes):
-            uniq_shapes = tuple(set(shapes))
-            msg = f"Cannot convert to tensor a list of elements with heterogeneous shapes. (found different shapes: {uniq_shapes})"
-            raise ValueError(msg)
-
-        return torch.stack(tensors)
-
-    else:
-        EXPECTED = (
-            Tensor,
-            np.ndarray,
-            np.number,
-            BuiltinNumber,
-            list,
-            tuple,
-            PythonGenerator,
-        )
-        msg = f"Invalid argument type '{type(data)}'. (expected one of {EXPECTED})"
-        raise TypeError(msg)
 
 
 def squeeze(
@@ -764,3 +612,288 @@ def move_to_rec(
             return list(generator)
     else:
         return x
+
+
+# ----------
+# as_tensor
+# ----------
+
+
+# Empty lists
+@overload
+def as_tensor(  # type: ignore
+    data: Sequence[Never],
+    dtype: Literal[None] = None,
+    device: DeviceLike = None,
+) -> Tensor1D:
+    ...
+
+
+@overload
+def as_tensor(
+    data: Sequence[Sequence[Never]],
+    dtype: Literal[None] = None,
+    device: DeviceLike = None,
+) -> Tensor2D:
+    ...
+
+
+@overload
+def as_tensor(
+    data: Sequence[Sequence[Sequence[Never]]],
+    dtype: Literal[None] = None,
+    device: DeviceLike = None,
+) -> Tensor3D:
+    ...
+
+
+# bool
+@overload
+def as_tensor(  # type: ignore
+    data: bool,
+    dtype: Literal[None, "bool"] = None,
+    device: DeviceLike = None,
+) -> BoolTensor0D:
+    ...
+
+
+@overload
+def as_tensor(  # type: ignore
+    data: Sequence[bool],
+    dtype: Literal[None, "bool"] = None,
+    device: DeviceLike = None,
+) -> BoolTensor1D:
+    ...
+
+
+@overload
+def as_tensor(
+    data: Sequence[Sequence[bool]],
+    dtype: Literal[None, "bool"] = None,
+    device: DeviceLike = None,
+) -> BoolTensor2D:
+    ...
+
+
+@overload
+def as_tensor(
+    data: Sequence[Sequence[Sequence[bool]]],
+    dtype: Literal[None, "bool"] = None,
+    device: DeviceLike = None,
+) -> BoolTensor3D:
+    ...
+
+
+# int
+@overload
+def as_tensor(
+    data: int,
+    dtype: Literal[None, "int64", "long"] = None,
+    device: DeviceLike = None,
+) -> LongTensor0D:
+    ...
+
+
+@overload
+def as_tensor(
+    data: Sequence[int],
+    dtype: Literal[None, "int64", "long"] = None,
+    device: DeviceLike = None,
+) -> LongTensor1D:
+    ...
+
+
+@overload
+def as_tensor(
+    data: Sequence[Sequence[int]],
+    dtype: Literal[None, "int64", "long"] = None,
+    device: DeviceLike = None,
+) -> LongTensor2D:
+    ...
+
+
+@overload
+def as_tensor(
+    data: Sequence[Sequence[Sequence[int]]],
+    dtype: Literal[None, "int64", "long"] = None,
+    device: DeviceLike = None,
+) -> LongTensor3D:
+    ...
+
+
+# float
+@overload
+def as_tensor(
+    data: float,
+    dtype: Literal[None, "float32", "float"] = None,
+    device: DeviceLike = None,
+) -> FloatTensor0D:
+    ...
+
+
+@overload
+def as_tensor(
+    data: Sequence[float],
+    dtype: Literal[None, "float32", "float"] = None,
+    device: DeviceLike = None,
+) -> FloatTensor1D:
+    ...
+
+
+@overload
+def as_tensor(
+    data: Sequence[Sequence[float]],
+    dtype: Literal[None, "float32", "float"] = None,
+    device: DeviceLike = None,
+) -> FloatTensor2D:
+    ...
+
+
+@overload
+def as_tensor(
+    data: Sequence[Sequence[Sequence[float]]],
+    dtype: Literal[None, "float32", "float"] = None,
+    device: DeviceLike = None,
+) -> FloatTensor3D:
+    ...
+
+
+# complex
+@overload
+def as_tensor(
+    data: complex,
+    dtype: Literal[None, "complex64", "cfloat"] = None,
+    device: DeviceLike = None,
+) -> CFloatTensor0D:
+    ...
+
+
+@overload
+def as_tensor(
+    data: Sequence[complex],
+    dtype: Literal[None, "complex64", "cfloat"] = None,
+    device: DeviceLike = None,
+) -> CFloatTensor1D:
+    ...
+
+
+@overload
+def as_tensor(
+    data: Sequence[Sequence[complex]],
+    dtype: Literal[None, "complex64", "cfloat"] = None,
+    device: DeviceLike = None,
+) -> CFloatTensor2D:
+    ...
+
+
+@overload
+def as_tensor(
+    data: Sequence[Sequence[Sequence[complex]]],
+    dtype: Literal[None, "complex64", "cfloat"] = None,
+    device: DeviceLike = None,
+) -> CFloatTensor3D:
+    ...
+
+
+# BuiltinNumber
+@overload
+def as_tensor(
+    data: BuiltinNumber,
+    dtype: DTypeLike = None,
+    device: DeviceLike = None,
+) -> Tensor0D:
+    ...
+
+
+@overload
+def as_tensor(
+    data: Sequence[BuiltinNumber],
+    dtype: DTypeLike = None,
+    device: DeviceLike = None,
+) -> Tensor1D:
+    ...
+
+
+@overload
+def as_tensor(
+    data: Sequence[Sequence[BuiltinNumber]],
+    dtype: DTypeLike = None,
+    device: DeviceLike = None,
+) -> Tensor2D:
+    ...
+
+
+@overload
+def as_tensor(
+    data: Sequence[Sequence[Sequence[BuiltinNumber]]],
+    dtype: DTypeLike = None,
+    device: DeviceLike = None,
+) -> Tensor3D:
+    ...
+
+
+@overload
+def as_tensor(
+    data: Any,
+    dtype: DTypeLike = None,
+    device: DeviceLike = None,
+) -> torch.Tensor:
+    ...
+
+
+def as_tensor(
+    data: Any,
+    dtype: DTypeLike = None,
+    device: DeviceLike = None,
+) -> torch.Tensor:
+    """Convert arbitrary data to tensor.
+
+    Unlike `torch.as_tensor`, it works recursively and stack sequences like List[Tensor]. It also accept python generator objects.
+
+    Args:
+        data: Data to convert to tensor. Can be Tensor, np.ndarray, list, tuple or any number-like object.
+        dtype: Target torch dtype. defaults to None.
+        device: Target torch device. defaults to None.
+
+    Returns:
+        PyTorch tensor created from data.
+    """
+    if isinstance(data, (Tensor, np.ndarray, np.number)) or is_builtin_number(data):
+        dtype = make_dtype(dtype)
+        device = make_device(device)
+        return torch.as_tensor(data, dtype=dtype, device=device)
+
+    elif isinstance(data, (list, tuple, PythonGenerator)):
+        dtype = make_dtype(dtype)
+        device = make_device(device)
+
+        tensors: List[Tensor] = [
+            as_tensor(data_i, dtype=dtype, device=device) for data_i in data
+        ]
+        if len(tensors) == 0:
+            return torch.as_tensor(tensors, dtype=dtype, device=device)
+
+        shapes = [tensor.shape for tensor in tensors]
+        if not all_eq(shapes):
+            uniq_shapes = tuple(set(shapes))
+            msg = f"Cannot convert to tensor a list of elements with heterogeneous shapes. (found different shapes: {uniq_shapes})"
+            raise ValueError(msg)
+
+        return torch.stack(tensors)
+
+    else:
+        EXPECTED = (
+            Tensor,
+            np.ndarray,
+            np.number,
+            BuiltinNumber,
+            list,
+            tuple,
+            PythonGenerator,
+        )
+        msg = f"Invalid argument type '{type(data)}'. (expected one of {EXPECTED})"
+        raise TypeError(msg)
+
+
+# Aliases
+to_tensor = as_tensor

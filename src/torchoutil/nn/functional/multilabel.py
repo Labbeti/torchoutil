@@ -11,7 +11,7 @@ from torch import Tensor
 from torchoutil.core.make import DeviceLike, DTypeLike, make_device, make_dtype
 from torchoutil.nn.functional.pad import pad_and_stack_rec
 from torchoutil.nn.functional.predicate import can_be_stacked
-from torchoutil.nn.functional.transform import to_item, to_tensor
+from torchoutil.nn.functional.transform import to_item, as_tensor
 from torchoutil.pyoutil.typing import is_sequence_int
 from torchoutil.types import LongTensor, is_number_like, is_tensor_like
 from torchoutil.types._typing import TensorOrArray
@@ -129,7 +129,7 @@ def multihot_to_indices(
         padding_idx: Class index fill value. When none, output will not be padded. defaults to None.
         dim: Dimension of classes. defaults to -1.
     """
-    multihot = to_tensor(multihot)
+    multihot = as_tensor(multihot)
     multihot = multihot.transpose(dim, -1)
 
     if not _is_valid_indices(multihot):
@@ -271,7 +271,7 @@ def probs_to_multihot(
         device: PyTorch device of the output tensor.
         dtype: PyTorch DType of the output tensor.
     """
-    probs = to_tensor(probs)
+    probs = as_tensor(probs)
     if probs.ndim == 0:
         msg = f"Invalid argument ndim {probs.ndim=}. (expected at least 1 dim)."
         raise ValueError(msg)

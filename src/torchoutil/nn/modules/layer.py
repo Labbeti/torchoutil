@@ -6,11 +6,12 @@ import math
 import torch
 from torch import Tensor, nn
 
+from torchoutil.nn.modules.module import Module
 from torchoutil.core.make import DeviceLike, DTypeLike, make_device, make_dtype
 from torchoutil.types._typing import Tensor2D
 
 
-class PositionalEncoding(nn.Module):
+class PositionalEncoding(Module):
     def __init__(
         self,
         emb_size: int,

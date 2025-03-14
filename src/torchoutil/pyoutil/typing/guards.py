@@ -40,7 +40,7 @@ from .classes import (
 T = TypeVar("T")
 
 
-def is_typed_dict(x: Any) -> bool:
+def is_typed_dict(x: Any) -> TypeGuard[type]:
     if sys.version_info.major == 3 and sys.version_info.minor < 9:
         return x.__class__.__name__ == "_TypedDictMeta"
     else:

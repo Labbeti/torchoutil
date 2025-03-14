@@ -8,7 +8,7 @@ import torch
 from torch import Generator, Tensor
 
 from torchoutil.core.make import make_generator
-from torchoutil.nn.functional.transform import to_tensor
+from torchoutil.nn.functional.transform import as_tensor
 from torchoutil.pyoutil.collections import flat_list_of_list
 
 
@@ -30,7 +30,7 @@ def random_split(
         num_samples = num_samples_or_indices
         indices = torch.randperm(num_samples, generator=generator)
     else:
-        indices = to_tensor(num_samples_or_indices)
+        indices = as_tensor(num_samples_or_indices)
         num_samples = len(indices)
     del num_samples_or_indices
 
@@ -68,7 +68,7 @@ def balanced_monolabel_split(
     ).all(), f"Target classes indices must be lower than {num_classes=}."
 
     if isinstance(targets_indices, list):
-        targets_indices = to_tensor(targets_indices)
+        targets_indices = as_tensor(targets_indices)
     lengths = list(lengths)
     generator = make_generator(generator)
 

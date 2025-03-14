@@ -8,7 +8,14 @@ from torch import Generator, Size, Tensor
 from torch.nn import functional as F
 from torch.types import Number
 
-from torchoutil.core.make import DeviceLike, make_device, make_generator
+from torchoutil.core.make import (
+    DeviceLike,
+    make_device,
+    make_generator,
+    GeneratorLike,
+    DTypeLike,
+    make_dtype,
+)
 from torchoutil.nn.functional.predicate import can_be_stacked
 from torchoutil.types import is_number_like
 
@@ -26,7 +33,7 @@ def pad_dim(
     align: PadAlign = "left",
     pad_value: PadValue = 0.0,
     mode: PadMode = "constant",
-    generator: Union[int, Generator, None] = None,
+    generator: GeneratorLike = None,
 ) -> Tensor:
     """Generic function for pad a single dimension."""
     return pad_dims(
@@ -48,7 +55,7 @@ def pad_dims(
     aligns: Iterable[PadAlign] = ("left",),
     pad_value: PadValue = 0.0,
     mode: PadMode = "constant",
-    generator: Union[int, Generator, None] = None,
+    generator: GeneratorLike = None,
 ) -> Tensor:
     """Generic function to pad multiple dimensions."""
     if isinstance(pad_value, Callable):
@@ -71,7 +78,7 @@ def pad_and_stack_rec(
     *,
     align: PadAlign = "left",
     device: DeviceLike = None,
-    dtype: Union[None, torch.dtype] = None,
+    dtype: DTypeLike = None,
 ) -> Tensor:
     """Recursive version of torch.nn.utils.rnn.pad_sequence, with padding of Tensors.
 
@@ -95,6 +102,7 @@ def pad_and_stack_rec(
 
     """
     device = make_device(device)
+    dtype = make_dtype(dtype)
 
     def _impl(sequence: Union[Tensor, int, float, tuple, list]) -> Tensor:
         if isinstance(sequence, Tensor):
@@ -194,7 +202,7 @@ def __generate_pad_seq(
     *,
     dims: Iterable[int] = (-1,),
     aligns: Iterable[PadAlign] = ("left",),
-    generator: Union[int, Generator, None] = None,
+    generator: GeneratorLike = None,
 ) -> List[int]:
     """Generate pad sequence for torch.nn.functional.pad from target lengths, dims, aligns and generator.
 

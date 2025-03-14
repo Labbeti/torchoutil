@@ -18,12 +18,16 @@ from typing import (
 
 from torchoutil.core.packaging import _PANDAS_AVAILABLE
 from torchoutil.pyoutil.csv import ORIENT_VALUES, Orient, _setup_path
-from torchoutil.pyoutil.csv import load_csv as load_csv_base
-from torchoutil.pyoutil.csv import to_csv as to_csv_base
+from torchoutil.pyoutil.csv import load_csv as _load_csv_base
+from torchoutil.pyoutil.csv import dump_csv as _dump_csv_base
 from torchoutil.utils.saving.common import to_builtin
 
 if _PANDAS_AVAILABLE:
     import pandas as pd
+
+    DataFrame = pd.DataFrame
+else:
+    DataFrame = type("DataFrame")
 
 CSVBackend = Literal["csv", "pandas", "auto"]
 CSV_BACKENDS = ("csv", "pandas", "auto")
@@ -83,7 +87,7 @@ def load_csv(
             backend = "csv"
 
     if backend == "csv":
-        return load_csv_base(
+        return _load_csv_base(
             fpath,
             orient=orient,
             header=header,
@@ -150,7 +154,7 @@ def _load_csv_with_pandas(
         raise ValueError(msg)
 
 
-def to_csv(
+def dump_csv(
     data: Union[Iterable[Mapping[str, Any]], Mapping[str, Iterable[Any]]],
     fpath: Union[str, Path, None] = None,
     *,
@@ -163,19 +167,19 @@ def to_csv(
 ) -> str:
     """Dump content to csv format."""
     if backend == "auto":
-        if isinstance(data, pd.DataFrame):
+        if isinstance(data, DataFrame):
             backend = "pandas"
         else:
             backend = "csv"
 
     if to_builtins:
-        if isinstance(data, pd.DataFrame) and backend == "pandas":
+        if isinstance(data, DataFrame) and backend == "pandas":
             msg = f"Invalid combinaison of arguments {to_builtins=}, {backend=} and {type(data)=}."
             warnings.warn(msg, UserWarning)
         data = to_builtin(data)
 
     if backend == "csv":
-        return to_csv_base(
+        return _dump_csv_base(
             data,
             fpath,
             overwrite=overwrite,
@@ -185,7 +189,7 @@ def to_csv(
         )
 
     elif backend == "pandas":
-        return _to_csv_with_pandas(
+        return _dump_csv_with_pandas(
             data,
             fpath,
             overwrite=overwrite,
@@ -197,7 +201,7 @@ def to_csv(
         raise ValueError(msg)
 
 
-def _to_csv_with_pandas(
+def _dump_csv_with_pandas(
     data: Union[Iterable[Mapping[str, Any]], Mapping[str, Iterable[Any]]],
     fpath: Union[str, Path, None] = None,
     *,

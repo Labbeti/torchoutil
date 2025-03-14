@@ -20,9 +20,9 @@ import torchaudio
 from torchaudio.io import CodecConfig
 
 
-def to_torchaudio(
-    uri: Union[BinaryIO, str, os.PathLike],
+def dump_torchaudio(
     src: torch.Tensor,
+    uri: Union[BinaryIO, str, Path, os.PathLike, None],
     sample_rate: int,
     channels_first: bool = True,
     format: Optional[str] = None,
@@ -35,15 +35,20 @@ def to_torchaudio(
     overwrite: bool = True,
     make_parents: bool = True,
 ) -> bytes:
-    if isinstance(f, (str, Path, os.PathLike, NoneType)):
-        f = _setup_path(f, overwrite, make_parents)
+    if sample_rate <= 0:
+        msg = f"Invalid argument {sample_rate=}. (expected positive value)"
+        raise ValueError(msg)
+
+    buffer: Union[BinaryIO, io.BytesIO]
+    if isinstance(uri, (str, Path, os.PathLike, NoneType)):
+        uri = _setup_path(uri, overwrite, make_parents)
         buffer = io.BytesIO()
     else:
-        buffer = f
+        buffer = uri
 
     torchaudio.save(
+        buffer,
         src,
-        uri,
         sample_rate,
         channels_first,
         format,
@@ -54,15 +59,19 @@ def to_torchaudio(
         compression,
     )
 
-    content = buffer.getvalue()
-    if isinstance(f, Path):
-        f.write_bytes(content)
+    if isinstance(buffer, io.BytesIO):
+        content = buffer.getvalue()
+    else:
+        content = buffer.read()
+
+    if isinstance(uri, Path):
+        uri.write_bytes(content)
 
     return content
 
 
 def load_torchaudio(
-    uri: Union[BinaryIO, str, os.PathLike],
+    uri: Union[BinaryIO, str, os.PathLike, Path],
     frame_offset: int = 0,
     num_frames: int = -1,
     normalize: bool = True,

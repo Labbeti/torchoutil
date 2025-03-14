@@ -3,7 +3,7 @@
 
 import os
 from pathlib import Path
-from typing import Any, Callable, Dict, Optional, TypeVar, Union
+from typing import Any, Callable, Dict, Optional, Union
 
 from torchoutil.core.packaging import (
     _NUMPY_AVAILABLE,
@@ -12,21 +12,20 @@ from torchoutil.core.packaging import (
     _YAML_AVAILABLE,
 )
 from torchoutil.utils.saving.common import EXTENSION_TO_BACKEND, SavingBackend
-from torchoutil.utils.saving.csv import to_csv
-from torchoutil.utils.saving.json import to_json
-from torchoutil.utils.saving.pickle import to_pickle
+from torchoutil.utils.saving.csv import dump_csv
+from torchoutil.utils.saving.json import dump_json
+from torchoutil.utils.saving.pickle import dump_pickle
 from torchoutil.utils.saving.torch import to_torch
 
-T = TypeVar("T", covariant=True)
 
-DumpFn = Callable[[T, Path], Union[str, bytes]]
-DumpFnLike = Union[DumpFn[T], SavingBackend]
+DumpFn = Callable[..., Union[str, bytes]]
+DumpFnLike = Union[DumpFn, SavingBackend]
 
 
-DUMP_FNS: Dict[str, DumpFn[Any]] = {
-    "csv": to_csv,  # type: ignore
-    "json": to_json,
-    "pickle": to_pickle,
+DUMP_FNS: Dict[str, DumpFn] = {
+    "csv": dump_csv,  # type: ignore
+    "json": dump_json,
+    "pickle": dump_pickle,
     "torch": to_torch,
 }
 
@@ -36,19 +35,19 @@ if _NUMPY_AVAILABLE:
     DUMP_FNS["numpy"] = dump_numpy
 
 if _SAFETENSORS_AVAILABLE:
-    from .safetensors import to_safetensors
+    from ...extras.safetensors import dump_safetensors
 
-    DUMP_FNS["safetensors"] = to_safetensors
+    DUMP_FNS["safetensors"] = dump_safetensors
 
 if _TORCHAUDIO_AVAILABLE:
-    from .torchaudio import to_torchaudio
+    from .torchaudio import dump_torchaudio
 
-    DUMP_FNS["torchaudio"] = to_torchaudio
+    DUMP_FNS["torchaudio"] = dump_torchaudio
 
 if _YAML_AVAILABLE:
-    from .yaml import to_yaml
+    from .yaml import dump_yaml
 
-    DUMP_FNS["yaml"] = to_yaml
+    DUMP_FNS["yaml"] = dump_yaml
 
 
 def dump(
@@ -63,6 +62,10 @@ def dump(
         fpath = Path(fpath)
 
     if saving_backend is None:
+        if fpath is None:
+            msg = f"Invalid combinaison of arguments {fpath=} and {saving_backend=}."
+            raise ValueError(msg)
+
         ext = fpath.suffix[1:]
         if ext not in EXTENSION_TO_BACKEND.keys():
             msg = f"Unknown extension file {ext}. (expected one of {tuple(EXTENSION_TO_BACKEND.keys())})"

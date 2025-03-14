@@ -49,7 +49,7 @@ class NamedTupleInstance(Protocol):
 
 
 @runtime_checkable
-class SizedIterable(Protocol[T]):
+class SupportsIterLen(Protocol[T]):
     def __iter__(self) -> T:
         ...
 
@@ -58,7 +58,7 @@ class SizedIterable(Protocol[T]):
 
 
 @runtime_checkable
-class SupportsLenAndGetItem(Protocol[T]):
+class SupportsGetitemLen(Protocol[T]):
     def __getitem__(self, idx, /) -> T:
         ...
 
@@ -67,7 +67,7 @@ class SupportsLenAndGetItem(Protocol[T]):
 
 
 @runtime_checkable
-class SupportsLenAndGetItemAndIter(Protocol[T]):
+class SupportsGetitemIterLen(Protocol[T]):
     def __getitem__(self, idx, /) -> T:
         ...
 
@@ -83,5 +83,15 @@ class SupportsBool(Protocol):
     def __bool__(self) -> bool:
         ...
 
+
+# Aliases for backward compatibility
+SizedIter = SupportsIterLen
+SizedIterable = SupportsIterLen
+
+SizedGetitem = SupportsGetitemLen
+SupportsLenAndGetItem = SupportsGetitemLen
+
+SizedGetitemIter = SupportsGetitemIterLen
+SupportsLenAndGetItemAndIter = SupportsGetitemIterLen
 
 BoolLike = Union[bool, int, SupportsBool, Sized]

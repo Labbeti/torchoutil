@@ -9,7 +9,6 @@ from torch import Tensor
 from torchoutil.core.make import DeviceLike, make_device
 from torchoutil.nn import functional as F
 from torchoutil.nn.functional.pad import pad_and_stack_rec, pad_dim
-from torchoutil.nn.functional.transform import to_tensor
 from torchoutil.types import BoolTensor, LongTensor
 
 
@@ -104,33 +103,32 @@ def segments_list_to_activity(
     if F.ndim(segments_list) == 2 or (
         F.ndim(segments_list) == 1 and len(segments_list) == 0
     ):
-        segments_list: list[tuple[int, int]] = list(map(tuple, segments_list))
         if len(segments_list) == 0:
             if maxsize is None:
                 num_elems = 0
             else:
                 num_elems = maxsize
 
-            return torch.full((num_elems,), False, dtype=torch.bool, device=device)
+            return F.full((num_elems,), False, dtype=torch.bool, device=device)  # type: ignore
 
-        starts, ends = to_tensor(segments_list).transpose(0, 1)
+        starts, ends = F.as_tensor(segments_list).transpose(0, 1)
 
         if maxsize is None:
-            num_elems = max(ends)
+            num_elems = ends.max().item()
         else:
             num_elems = maxsize
 
-        arange = torch.arange(num_elems, device=device)[None]
+        arange = F.arange(num_elems, device=device)[None]
         activity = (starts[:, None] <= arange) & (arange < ends[:, None])
         activity = activity.any(dim=0)
-        return activity
+        return activity  # type: ignore
 
     elif isinstance(segments_list, Iterable):
         activities = [
-            segments_list_to_activity(segments_list_i)
+            segments_list_to_activity(segments_list_i)  # type: ignore
             for segments_list_i in segments_list
         ]
-        return pad_and_stack_rec(activities, False)
+        return pad_and_stack_rec(activities, False)  # type: ignore
 
     else:
         msg = f"Invalid argument type {type(segments_list)}."
@@ -143,7 +141,7 @@ def activity_to_segments_list(x: Tensor) -> Union[List[Tuple[int, int]], list]:
     return segments_lst
 
 
-def segments_to_activity(x: Tensor) -> Union[List[Tuple[int, int]], list]:
+def segments_to_activity(x: Tensor) -> BoolTensor:
     segments_lst = segments_to_segments_list(x, x.shape[-1])
     activity = segments_list_to_activity(segments_lst, x.shape[-1])
     return activity

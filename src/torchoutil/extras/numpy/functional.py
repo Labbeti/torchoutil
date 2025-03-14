@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from typing import Any, Iterable, Tuple, Union, overload
+from typing import Any, Iterable, Tuple, Union, overload, Literal, List
 
 import torch
 from torch import Tensor
@@ -9,13 +9,14 @@ from typing_extensions import TypeGuard
 
 from torchoutil.core.make import DeviceLike, DTypeLike, make_device, make_dtype
 from torchoutil.core.packaging import torch_version_ge_1_13
-from torchoutil.extras.numpy.definitions import NumpyNumberLike, NumpyScalarLike, np
 from torchoutil.pyoutil import (
     BuiltinScalar,
     get_current_fn_name,
     is_builtin_scalar,
     prod,
 )
+
+from .definitions import NumpyNumberLike, NumpyScalarLike, np
 
 
 def to_numpy(
@@ -172,7 +173,7 @@ def numpy_item(x: Union[np.ndarray, np.generic, BuiltinScalar]) -> np.generic:
     if isinstance(x, np.generic):
         return x
     if is_builtin_scalar(x, strict=True):
-        return np.array(x)[()]
+        return np.array(x)[()]  # type: ignore
     if prod(x.shape) != 1:
         msg = f"Invalid argument shape {x.shape=}. (expected nd-array with 1 element)"
         raise ValueError(msg)
@@ -184,7 +185,7 @@ def numpy_item(x: Union[np.ndarray, np.generic, BuiltinScalar]) -> np.generic:
 @overload
 def numpy_all_eq(
     x: Union[np.generic, np.ndarray],
-    dim: None = None,
+    dim: Literal[None] = None,
 ) -> bool:
     ...
 
@@ -200,19 +201,22 @@ def numpy_all_eq(
 def numpy_all_eq(
     x: Union[np.generic, np.ndarray],
     dim: Union[int, None] = None,
-) -> bool:
-    if dim is None:
+) -> Union[bool, np.ndarray]:
+    if isinstance(x, np.generic):
+        return True
+
+    elif dim is None:
         if x.ndim == 0 or prod(x.shape) == 0:
             return True
         else:
             return (x.flat[0] == x.flat[1:]).all()
 
     else:
-        slices = [slice(None) for _ in range(x.ndim)]
-        slices[dim] = 0
-        slices.insert(dim + 1, None)
-        slices = tuple(slices)
-        return (x == x[slices]).all(dim)
+        indexer: List[Union[int, slice, None]] = [slice(None) for _ in range(x.ndim)]
+        indexer[dim] = 0
+        indexer.insert(dim + 1, None)
+        indexer_tuple = tuple(indexer)
+        return (x == x[indexer_tuple]).all(dim)
 
 
 def numpy_all_ne(x: Union[np.generic, np.ndarray]) -> bool:

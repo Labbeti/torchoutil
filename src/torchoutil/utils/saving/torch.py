@@ -40,7 +40,11 @@ def to_torch(
         _disable_byteorder_record,
     )
 
-    content = buffer.getvalue()
+    if isinstance(buffer, io.BytesIO):
+        content = buffer.getvalue()
+    else:
+        content = buffer.read()
+
     if isinstance(f, Path):
         f.write_bytes(content)
 

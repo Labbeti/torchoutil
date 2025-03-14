@@ -5,5 +5,5 @@ from torchoutil.extras.yaml import (  # noqa: F401
     IgnoreTagLoader,
     SafeLoader,
     load_yaml,
-    to_yaml,
+    dump_yaml,
 )

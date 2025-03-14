@@ -108,7 +108,7 @@ class _GenericsValues(NamedTuple):
 
 
 def _get_generics(
-    cls: Union[Type["_TensorNDMeta"], Type["_TensorNDBase"]],
+    cls: Union["_TensorNDMeta", "_TensorNDBase"],
 ) -> _GenericsValues:
     if not hasattr(cls, "__orig_class__"):
         return _GenericsValues()
@@ -342,39 +342,39 @@ class _TensorNDBase(
         ...
 
     @overload
-    def __eq__(self, other: Any) -> "BoolTensor":
+    def __eq__(self, other: Any) -> "BoolTensor":  # type: ignore
         ...
 
     @overload
-    def __getitem__(self: "Tensor1D", /, idx: int) -> "Tensor0D":
+    def __getitem__(self: "Tensor1D", idx: int, /) -> "Tensor0D":  # type: ignore
         ...
 
     @overload
-    def __getitem__(self: "Tensor2D", /, idx: int) -> "Tensor1D":
+    def __getitem__(self: "Tensor2D", idx: int, /) -> "Tensor1D":
         ...
 
     @overload
-    def __getitem__(self: "Tensor3D", /, idx: int) -> "Tensor2D":
+    def __getitem__(self: "Tensor3D", idx: int, /) -> "Tensor2D":
         ...
 
     @overload
-    def __getitem__(self: "Tensor0D", /, idx: None) -> "Tensor1D":
+    def __getitem__(self: "Tensor0D", idx: None, /) -> "Tensor1D":
         ...
 
     @overload
-    def __getitem__(self: "Tensor1D", /, idx: None) -> "Tensor2D":
+    def __getitem__(self: "Tensor1D", idx: None, /) -> "Tensor2D":
         ...
 
     @overload
-    def __getitem__(self: "Tensor2D", /, idx: None) -> "Tensor3D":
+    def __getitem__(self: "Tensor2D", idx: None, /) -> "Tensor3D":
         ...
 
     @overload
-    def __getitem__(self: "Tensor3D", /, idx: None) -> "Tensor":
+    def __getitem__(self: "Tensor3D", idx: None, /) -> "Tensor":
         ...
 
     @overload
-    def __getitem__(self: T_Tensor, /, sl: slice) -> T_Tensor:
+    def __getitem__(self: T_Tensor, sl: slice, /) -> T_Tensor:
         ...
 
     @overload
@@ -382,15 +382,31 @@ class _TensorNDBase(
         ...
 
     @overload
-    def __ne__(self, other: Any) -> "BoolTensor":
+    def __ne__(self, other: Any) -> "BoolTensor":  # type: ignore
         ...
 
     @overload
-    def abs(self: T_Tensor) -> T_Tensor:
+    def abs(self: T_Tensor) -> T_Tensor:  # type: ignore
         ...
 
     @overload
-    def contiguous(self: T_Tensor) -> T_Tensor:
+    def all(self, dim: Literal[None] = None) -> "BoolTensor0D":  # type: ignore
+        ...
+
+    @overload
+    def all(self, dim: Union[int, Tuple[int, ...]], keepdim: bool = False) -> "BoolTensor":  # type: ignore
+        ...
+
+    @overload
+    def any(self, dim: Literal[None] = None) -> "BoolTensor0D":  # type: ignore
+        ...
+
+    @overload
+    def any(self, dim: Union[int, Tuple[int, ...]], keepdim: bool = False) -> "BoolTensor":  # type: ignore
+        ...
+
+    @overload
+    def contiguous(self: T_Tensor) -> T_Tensor:  # type: ignore
         ...
 
     @overload
@@ -410,7 +426,11 @@ class _TensorNDBase(
         ...
 
     @overload
-    def mean(self, dim: Literal[None] = None) -> "Tensor0D":
+    def mean(self, dim: Literal[None] = None) -> "Tensor0D":  # type: ignore
+        ...
+
+    @overload
+    def mean(self: "Tensor0D", dim: int) -> "Tensor0D":
         ...
 
     @overload
@@ -426,15 +446,15 @@ class _TensorNDBase(
         ...
 
     @overload
-    def mean(self, dim: Optional[int] = None) -> "Tensor":
+    def mean(self, dim: int) -> "Tensor":  # type: ignore
         ...
 
     @overload
-    def reshape(self, size: Tuple[()]) -> "Tensor0D":
+    def reshape(self, size: Tuple[()]) -> "Tensor0D":  # type: ignore
         ...
 
     @overload
-    def reshape(self, size: Tuple[int]) -> "Tensor1D":
+    def reshape(self, size: Tuple[int]) -> "Tensor1D":  # type: ignore
         ...
 
     @overload
@@ -585,6 +605,8 @@ class _TensorNDBase(
     __getitem__ = torch.Tensor.__getitem__  # noqa: F811  # type: ignore
     __ne__ = torch.Tensor.__ne__  # noqa: F811  # type: ignore
     abs = torch.Tensor.abs  # noqa: F811  # type: ignore
+    all = torch.Tensor.all  # noqa: F811  # type: ignore
+    any = torch.Tensor.any  # noqa: F811  # type: ignore
     contiguous = torch.Tensor.contiguous  # noqa: F811  # type: ignore
     is_complex = torch.Tensor.is_complex  # noqa: F811  # type: ignore
     is_floating_point = torch.Tensor.is_floating_point  # noqa: F811  # type: ignore
