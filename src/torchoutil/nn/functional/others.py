@@ -27,6 +27,13 @@ from torchoutil.types._typing import LongTensor, ScalarLike, T_TensorOrArray
 from torchoutil.types.guards import is_scalar_like
 from torchoutil.utils import return_types
 
+# backward compatibility
+from torchoutil.core.get import (  # noqa: F401
+    get_device,
+    get_dtype,
+    get_generator,
+)
+
 T = TypeVar("T")
 U = TypeVar("U")
 
