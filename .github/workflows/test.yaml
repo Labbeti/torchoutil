@@ -117,7 +117,7 @@ jobs:
             torch-version: "unspecified"
           - os: ubuntu-latest
             python-version: 3.8
-            torch-version: 1.10
+            torch-version: '1.10'
           - os: ubuntu-latest
             python-version: 3.8
             torch-version: 1.11
@@ -129,7 +129,7 @@ jobs:
             torch-version: 1.13
           - os: ubuntu-latest
             python-version: 3.8
-            torch-version: 2.0
+            torch-version: '2.0'
           - os: ubuntu-latest
             python-version: 3.8
             torch-version: 2.1
