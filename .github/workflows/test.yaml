@@ -24,16 +24,21 @@ jobs:
       matrix:
         os: [ubuntu-latest]
         python-version: ["3.8", "3.13"]
+        torch-version: ["unspecified"]
         include:
           - os: windows-latest
             python-version: 3.8
+            torch-version: "unspecified"
           - os: windows-latest
             # Do not use python 3.13 on windows yet because it is not entirely supported by numpy (18/02/2025)
             python-version: 3.12
+            torch-version: "unspecified"
           - os: macos-13
             python-version: 3.8
+            torch-version: "unspecified"
           - os: macos-latest
             python-version: 3.13
+            torch-version: "unspecified"
 
     steps:
     # --- INSTALLATIONS ---
@@ -45,6 +50,12 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
         cache: 'pip'
+
+    - name: Install PyTorch
+      if: matrix.torch-version != 'unspecified'
+      shell: bash
+      run: |
+        python -m pip install torch==${{ matrix.torch-version }}
 
     - name: Install package
       shell: bash
@@ -89,16 +100,51 @@ jobs:
       matrix:
         os: [ubuntu-latest]
         python-version: ["3.8", "3.9", "3.10", "3.11", "3.12", "3.13"]
+        torch-version: ["unspecified"]
         include:
           - os: windows-latest
             python-version: 3.8
+            torch-version: "unspecified"
           - os: windows-latest
             # Do not use python 3.13 on windows yet because it is not entirely supported by numpy (18/02/2025)
             python-version: 3.12
+            torch-version: "unspecified"
           - os: macos-13
             python-version: 3.8
+            torch-version: "unspecified"
           - os: macos-latest
             python-version: 3.13
+            torch-version: "unspecified"
+          - os: ubuntu-latest
+            python-version: 3.8
+            torch-version: 1.10
+          - os: ubuntu-latest
+            python-version: 3.8
+            torch-version: 1.11
+          - os: ubuntu-latest
+            python-version: 3.8
+            torch-version: 1.12
+          - os: ubuntu-latest
+            python-version: 3.8
+            torch-version: 1.13
+          - os: ubuntu-latest
+            python-version: 3.8
+            torch-version: 2.0
+          - os: ubuntu-latest
+            python-version: 3.8
+            torch-version: 2.1
+          - os: ubuntu-latest
+            python-version: 3.8
+            torch-version: 2.2
+          - os: ubuntu-latest
+            python-version: 3.8
+            torch-version: 2.3
+          - os: ubuntu-latest
+            python-version: 3.8
+            torch-version: 2.4
+          - os: ubuntu-latest
+            python-version: 3.8
+            torch-version: 2.5
 
     steps:
     # --- INSTALLATIONS ---
@@ -110,6 +156,12 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
         cache: 'pip'
+
+    - name: Install PyTorch
+      if: matrix.torch-version != 'unspecified'
+      shell: bash
+      run: |
+        python -m pip install torch==${{ matrix.torch-version }}
 
     - name: Install package
       shell: bash
