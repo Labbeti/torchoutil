@@ -3,7 +3,9 @@
 
 import os
 from pathlib import Path
-from typing import Any, Callable, Dict, Literal, Optional, TypeAlias, Union, overload
+from typing import Any, Callable, Dict, Literal, Optional, Union, overload
+
+from typing_extensions import TypeAlias
 
 from torchoutil.core.packaging import (
     _NUMPY_AVAILABLE,

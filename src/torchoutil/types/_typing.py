@@ -1,9 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from typing import TypeAlias, TypeVar, Union
+from typing import TypeVar, Union
 
 import torch
+from typing_extensions import TypeAlias
 
 from torchoutil.extras.numpy.definitions import (  # noqa: F401
     NumpyNumberLike,

@@ -4,9 +4,10 @@
 import io
 import os
 from pathlib import Path
-from typing import Any, BinaryIO, Optional, TypeAlias, Union
+from typing import Any, BinaryIO, Optional, Union
 
 import torch
+from typing_extensions import TypeAlias
 
 from torchoutil.core.packaging import _TORCHAUDIO_AVAILABLE
 from torchoutil.pyoutil.io import _setup_path

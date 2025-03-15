@@ -8,7 +8,9 @@ from functools import lru_cache
 from logging import FileHandler, Formatter, Logger, StreamHandler
 from pathlib import Path
 from types import ModuleType
-from typing import IO, List, Literal, Optional, Sequence, TypeAlias, TypeVar, Union
+from typing import IO, List, Literal, Optional, Sequence, TypeVar, Union
+
+from typing_extensions import TypeAlias
 
 from .importlib import reload_submodules
 

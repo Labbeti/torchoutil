@@ -4,7 +4,9 @@
 import logging
 import os
 from pathlib import Path
-from typing import Any, Callable, Dict, Optional, TypeAlias, TypeVar, Union
+from typing import Any, Callable, Dict, Optional, TypeVar, Union
+
+from typing_extensions import TypeAlias
 
 from torchoutil.core.packaging import (
     _NUMPY_AVAILABLE,

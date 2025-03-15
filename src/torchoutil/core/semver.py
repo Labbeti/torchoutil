@@ -4,9 +4,9 @@
 import re
 import sys
 from dataclasses import asdict, dataclass
-from typing import Iterable, List, Mapping, Tuple, TypeAlias, TypedDict, Union, overload
+from typing import Iterable, List, Mapping, Tuple, TypedDict, Union, overload
 
-from typing_extensions import NotRequired
+from typing_extensions import NotRequired, TypeAlias
 
 from torchoutil.pyoutil.typing import NoneType, isinstance_guard
 

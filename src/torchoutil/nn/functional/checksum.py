@@ -11,10 +11,11 @@ import zlib
 from dataclasses import asdict
 from functools import lru_cache
 from types import FunctionType, MethodType
-from typing import Callable, Iterable, Literal, Mapping, TypeAlias, Union, get_args
+from typing import Callable, Iterable, Literal, Mapping, Union, get_args
 
 import torch
 from torch import Tensor, nn
+from typing_extensions import TypeAlias
 
 from torchoutil.core.packaging import _NUMPY_AVAILABLE, _PANDAS_AVAILABLE
 from torchoutil.extras.numpy import np

@@ -5,7 +5,9 @@ import logging
 import re
 from functools import partial
 from re import Pattern
-from typing import Any, Callable, Iterable, List, Optional, TypeAlias, TypeVar, Union
+from typing import Any, Callable, Iterable, List, Optional, TypeVar, Union
+
+from typing_extensions import TypeAlias
 
 from torchoutil.pyoutil.collections import find
 

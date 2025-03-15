@@ -4,7 +4,9 @@
 from argparse import Namespace
 from io import TextIOWrapper
 from pathlib import Path
-from typing import Any, Iterable, Literal, Mapping, Optional, Type, TypeAlias, Union
+from typing import Any, Iterable, Literal, Mapping, Optional, Type, Union
+
+from typing_extensions import TypeAlias
 
 from torchoutil.core.packaging import _OMEGACONF_AVAILABLE, _YAML_AVAILABLE
 

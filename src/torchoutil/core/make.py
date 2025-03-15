@@ -1,11 +1,12 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from typing import Literal, Optional, TypeAlias, Union
+from typing import Literal, Optional, Union
 
 import torch
 from torch import Generator
 from torch.types import Device
+from typing_extensions import TypeAlias
 
 from .dtype_enum import DTypeEnum, enum_dtype_to_torch_dtype, str_to_torch_dtype
 

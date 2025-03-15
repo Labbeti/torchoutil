@@ -6,11 +6,12 @@ import io
 import os
 import pickle
 from pathlib import Path
-from typing import IO, Any, BinaryIO, Callable, Dict, Optional, TypeAlias, Union
+from typing import IO, Any, BinaryIO, Callable, Dict, Optional, Union
 
 import torch
 from torch.serialization import DEFAULT_PROTOCOL
 from torch.types import Storage
+from typing_extensions import TypeAlias
 
 from torchoutil.core.semver import Version
 from torchoutil.pyoutil.io import _setup_path
