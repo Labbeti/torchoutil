@@ -156,7 +156,7 @@ def arange(
 
     kwds = {}
     if Version(torch.__version__) >= Version("2.0.0"):
-        kwds |= {"pin_memory": pin_memory}
+        kwds.update(pin_memory=pin_memory)
 
     return torch.arange(
         *args,
@@ -630,7 +630,7 @@ def full(
     device = make_device(device)
     kwds = {}
     if Version(torch.__version__) >= Version("2.0.0"):
-        kwds |= {"pin_memory": pin_memory}
+        kwds.update(pin_memory=pin_memory)
     elif layout is None:
         layout = torch.strided
 
@@ -916,7 +916,7 @@ def rand(
 
     kwds = {}
     if Version(torch.__version__) >= Version("2.0.0"):
-        kwds |= {"pin_memory": pin_memory}
+        kwds.update(pin_memory=pin_memory)
 
     return torch.rand(
         *data,
@@ -1072,7 +1072,7 @@ def randint(
 
     kwds = {}
     if Version(torch.__version__) >= Version("2.0.0"):
-        kwds |= {"pin_memory": pin_memory}
+        kwds.update(pin_memory=pin_memory)
 
     return torch.randint(
         low=low,

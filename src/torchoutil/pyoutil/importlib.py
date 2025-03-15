@@ -103,7 +103,7 @@ def reload_submodules(
         submodules = search_submodules(
             module, only_editable=only_editable, only_loaded=only_loaded
         )
-        candidates |= dict.fromkeys(submodules)
+        candidates.update(dict.fromkeys(submodules))
 
     for candidate in candidates:
         if verbose > 0:

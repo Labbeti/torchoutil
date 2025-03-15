@@ -10,10 +10,10 @@ from typing_extensions import TypeAlias
 
 from torchoutil.extras.numpy.functional import is_numpy_bool_array
 from torchoutil.nn.functional.transform import as_tensor
-from torchoutil.pyoutil.typing import is_iterable_bool, isinstance_guard
+from torchoutil.pyoutil.typing import isinstance_guard
 from torchoutil.pyoutil.typing.classes import SupportsLenAndGetItem
-from torchoutil.types import is_bool_tensor1d, is_number_like, is_tensor_or_array
-from torchoutil.types._typing import Tensor1D, TensorOrArray
+from torchoutil.types import is_number_like, is_tensor_or_array
+from torchoutil.types._typing import BoolTensor1D, Tensor1D, TensorOrArray
 from torchoutil.utils.data.dataset import Wrapper
 
 T = TypeVar("T", covariant=False)
@@ -74,8 +74,8 @@ class DatasetSlicer(Generic[T], ABC, Dataset[T]):
             return self.get_items_slice(idx, *args)
 
         elif (
-            is_iterable_bool(idx)
-            or is_bool_tensor1d(idx)
+            isinstance_guard(idx, Iterable[bool])
+            or isinstance(idx, BoolTensor1D)
             or (is_numpy_bool_array(idx) and idx.ndim == 1)
         ):
             return self.get_items_mask(idx, *args)

@@ -75,7 +75,7 @@ def load_torch(
 ) -> Any:
     kwds = {}
     if Version(torch.__version__) >= Version("2.0.0"):
-        kwds |= dict(
+        kwds.update(
             weights_only=weights_only,
             mmap=mmap,
         )
