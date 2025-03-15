@@ -142,8 +142,9 @@ jobs:
           - os: ubuntu-latest
             python-version: 3.8
             torch-version: 2.4
+            # note: torch 2.5 is not available for python<=3.8
           - os: ubuntu-latest
-            python-version: 3.8
+            python-version: 3.9
             torch-version: 2.5
 
     steps:
