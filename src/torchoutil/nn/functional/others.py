@@ -17,6 +17,8 @@ from typing import (
 import torch
 from torch import Tensor, nn
 
+# backward compatibility
+from torchoutil.core.get import get_dtype, get_generator, make_device  # noqa: F401
 from torchoutil.extras.numpy import np
 from torchoutil.pyoutil.collections import all_eq as builtin_all_eq
 from torchoutil.pyoutil.collections import prod as builtin_prod
@@ -26,13 +28,6 @@ from torchoutil.pyoutil.typing import T_BuiltinNumber
 from torchoutil.types._typing import LongTensor, ScalarLike, T_TensorOrArray
 from torchoutil.types.guards import is_scalar_like
 from torchoutil.utils import return_types
-
-# backward compatibility
-from torchoutil.core.get import (  # noqa: F401
-    get_device,
-    get_dtype,
-    get_generator,
-)
 
 T = TypeVar("T")
 U = TypeVar("U")

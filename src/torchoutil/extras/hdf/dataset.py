@@ -235,6 +235,10 @@ class HDFDataset(Generic[T, U], DatasetSlicer[U]):
         return self.attrs["load_as_complex"]
 
     # Public methods
+    def at(self, *args, **kwargs) -> Any:
+        """Deprecated: Use get_item method instead."""
+        return self.get_item(*args, **kwargs)
+
     @overload
     def get_item(
         self,
@@ -310,6 +314,7 @@ class HDFDataset(Generic[T, U], DatasetSlicer[U]):
                 result = self._transform(result)  # type: ignore
             return result  # type: ignore
 
+        assert isinstance(column, str)
         if column not in self.all_columns:
             closest = find_closest_in_list(column, self.all_columns)  # type: ignore
             msg = f"Invalid argument {column=}. (did you mean '{closest}'? Expected one of {tuple(self.all_columns)})"
