@@ -12,16 +12,17 @@ from typing import (
     Iterator,
     List,
     Literal,
+    Mapping,
     MutableMapping,
     Optional,
+    OrderedDict,
     Protocol,
     Tuple,
+    TypeAlias,
     TypeVar,
     Union,
     overload,
     runtime_checkable,
-    Mapping,
-    OrderedDict,
 )
 
 import torch
@@ -29,11 +30,11 @@ import torch.utils
 from torch import Tensor, nn
 from torch.nn.parameter import Parameter
 
+from torchoutil.nn.functional.checksum import checksum_module
+from torchoutil.nn.functional.others import count_parameters
 from torchoutil.pyoutil.collections import dump_dict
 from torchoutil.pyoutil.re import match_patterns
 from torchoutil.pyoutil.typing import NoneType, isinstance_guard
-from torchoutil.nn.functional.checksum import checksum_module
-from torchoutil.nn.functional.others import count_parameters
 
 T = TypeVar("T", covariant=True)
 InType = TypeVar("InType", covariant=False, contravariant=True)
@@ -59,7 +60,7 @@ class SupportsTypedForward(Protocol[InType, OutType]):
         ...
 
 
-TypedModuleLike = Union[
+TypedModuleLike: TypeAlias = Union[
     SupportsTypedForward[InType, OutType],
     "TypedModule[InType, OutType]",
 ]

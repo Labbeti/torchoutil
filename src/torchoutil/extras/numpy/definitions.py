@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from typing import Union
+from typing import TypeAlias, Union
 
 from torchoutil.core.packaging import _NUMPY_AVAILABLE
 
@@ -31,5 +31,5 @@ else:
     )
 
 
-NumpyNumberLike = Union[np.ndarray, np.number]
-NumpyScalarLike = Union[np.ndarray, np.generic]
+NumpyNumberLike: TypeAlias = Union[np.ndarray, np.number]
+NumpyScalarLike: TypeAlias = Union[np.ndarray, np.generic]

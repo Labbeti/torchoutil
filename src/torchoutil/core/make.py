@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from typing import Literal, Optional, Union
+from typing import Literal, Optional, TypeAlias, Union
 
 import torch
 from torch import Generator
@@ -9,9 +9,9 @@ from torch.types import Device
 
 from .dtype_enum import DTypeEnum, enum_dtype_to_torch_dtype, str_to_torch_dtype
 
-DeviceLike = Union[Device, Literal["default", "cuda_if_available"]]
-DTypeLike = Union[torch.dtype, None, Literal["default"], str, DTypeEnum]
-GeneratorLike = Union[int, Generator, None, Literal["default"]]
+DeviceLike: TypeAlias = Union[Device, Literal["default", "cuda_if_available"]]
+DTypeLike: TypeAlias = Union[torch.dtype, None, Literal["default"], str, DTypeEnum]
+GeneratorLike: TypeAlias = Union[int, Generator, None, Literal["default"]]
 
 CUDA_IF_AVAILABLE = "cuda_if_available"
 

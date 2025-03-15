@@ -5,14 +5,14 @@ import logging
 import re
 from functools import partial
 from re import Pattern
-from typing import Any, Callable, Iterable, List, Optional, TypeVar, Union
+from typing import Any, Callable, Iterable, List, Optional, TypeAlias, TypeVar, Union
 
 from torchoutil.pyoutil.collections import find
 
 T = TypeVar("T")
 
-PatternLike = Union[str, Pattern]
-PatternListLike = Union[PatternLike, Iterable[PatternLike]]
+PatternLike: TypeAlias = Union[str, Pattern]
+PatternListLike: TypeAlias = Union[PatternLike, Iterable[PatternLike]]
 
 pylog = logging.getLogger(__name__)
 

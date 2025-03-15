@@ -4,7 +4,7 @@
 """Type used for backward compatibility."""
 
 import sys
-from typing import Generic, NamedTuple, Sequence
+from typing import Generic, NamedTuple
 
 from torch import LongTensor, Tensor, __version__
 from torch.torch_version import TorchVersion
@@ -15,12 +15,14 @@ T = TypeVar("T")
 
 if __version__ < TorchVersion("2.0.0"):
 
-    class namedtuple_values_indices(NamedTuple):
-        values: Tensor
-        indices: LongTensor
+    class namedtuple_values_indices(tuple):
+        @property
+        def values(self) -> Tensor:
+            return self[0]
 
-        def __init__(self, args: Sequence[Tensor]) -> None:
-            super().__init__(*args)  # type: ignore
+        @property
+        def indices(self) -> LongTensor:
+            return self[1]
 
     class min(namedtuple_values_indices):
         ...

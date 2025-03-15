@@ -8,14 +8,16 @@ from functools import lru_cache
 from logging import FileHandler, Formatter, Logger, StreamHandler
 from pathlib import Path
 from types import ModuleType
-from typing import IO, List, Literal, Optional, Sequence, TypeVar, Union
+from typing import IO, List, Literal, Optional, Sequence, TypeAlias, TypeVar, Union
 
 from .importlib import reload_submodules
 
 T = TypeVar("T", covariant=True)
 
-PackageOrLogger = Union[str, ModuleType, None, Logger, Literal["__parent_file__"]]
-PackageOrLoggerList = Union[PackageOrLogger, Sequence[PackageOrLogger]]
+PackageOrLogger: TypeAlias = Union[
+    str, ModuleType, None, Logger, Literal["__parent_file__"]
+]
+PackageOrLoggerList: TypeAlias = Union[PackageOrLogger, Sequence[PackageOrLogger]]
 
 _PARENT_FILE_KEY = "__parent_file__"
 DEFAULT_FMT = "[%(asctime)s][%(name)s][%(levelname)s] - %(message)s"

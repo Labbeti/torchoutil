@@ -84,9 +84,8 @@ class TestModuleTensorCompat(TestCase):
             elif isinstance(result, Tensor) and isinstance(expected, Tensor):
                 assert torch.equal(result, expected)
             else:
-                assert (
-                    result == expected
-                ), f"{result=} ; {expected=} from {module_cls.__qualname__} and {base_module.__name__}.{fn_name}"
+                msg = f"{result=} ; {expected=} from {module_cls.__qualname__} and {base_module.__name__}.{fn_name}"
+                assert result == expected, msg
 
         print(f"Total base coverage hit: {len(tested_modules)}")
         print(f"Hit_: {tested_modules}")

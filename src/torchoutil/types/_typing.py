@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from typing import TypeVar, Union
+from typing import TypeAlias, TypeVar, Union
 
 import torch
 
@@ -102,9 +102,9 @@ from .tensor_subclasses import (  # noqa: F401
 r"""/!\ The following type hints are meant for type annotation only, not for runtime checks.
 """
 
-NumberLike = Union[BuiltinNumber, NumpyNumberLike, Tensor0D]
-ScalarLike = Union[BuiltinScalar, NumpyScalarLike, Tensor0D]
-TensorOrArray = Union[torch.Tensor, np.ndarray]
+NumberLike: TypeAlias = Union[BuiltinNumber, NumpyNumberLike, Tensor0D]
+ScalarLike: TypeAlias = Union[BuiltinScalar, NumpyScalarLike, Tensor0D]
+TensorOrArray: TypeAlias = Union[torch.Tensor, np.ndarray]
 
 T_TensorOrArray = TypeVar(
     "T_TensorOrArray",

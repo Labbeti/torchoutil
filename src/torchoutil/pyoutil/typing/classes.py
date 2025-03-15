@@ -9,17 +9,18 @@ from typing import (
     Protocol,
     Sized,
     Tuple,
+    TypeAlias,
     TypeVar,
     Union,
     runtime_checkable,
 )
 
-NoneType = type(None)
-EllipsisType = type(...)
+NoneType: TypeAlias = type(None)  # type: ignore
+EllipsisType: TypeAlias = type(...)  # type: ignore
 
-BuiltinCollection = Union[list, tuple, dict, set, frozenset]
-BuiltinNumber = Union[bool, int, float, complex]
-BuiltinScalar = Union[bool, int, float, complex, NoneType, str, bytes]
+BuiltinCollection: TypeAlias = Union[list, tuple, dict, set, frozenset]
+BuiltinNumber: TypeAlias = Union[bool, int, float, complex]
+BuiltinScalar: TypeAlias = Union[bool, int, float, complex, NoneType, str, bytes]
 
 T = TypeVar("T", covariant=True)
 T_BuiltinNumber = TypeVar("T_BuiltinNumber", bound=BuiltinNumber)

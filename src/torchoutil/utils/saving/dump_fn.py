@@ -3,7 +3,7 @@
 
 import os
 from pathlib import Path
-from typing import Any, Callable, Dict, Optional, Union, overload, Literal
+from typing import Any, Callable, Dict, Literal, Optional, TypeAlias, Union, overload
 
 from torchoutil.core.packaging import (
     _NUMPY_AVAILABLE,
@@ -17,9 +17,8 @@ from torchoutil.utils.saving.json import dump_json
 from torchoutil.utils.saving.pickle import dump_pickle
 from torchoutil.utils.saving.torch import to_torch
 
-
-DumpFn = Callable[..., Union[str, bytes]]
-DumpFnLike = Union[DumpFn, SavingBackend]
+DumpFn: TypeAlias = Callable[..., Union[str, bytes]]
+DumpFnLike: TypeAlias = Union[DumpFn, SavingBackend]
 
 
 DUMP_FNS: Dict[str, DumpFn] = {

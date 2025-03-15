@@ -18,6 +18,7 @@ from typing import (
     Optional,
     Set,
     Tuple,
+    TypeAlias,
     TypeVar,
     Union,
 )
@@ -34,11 +35,14 @@ import torchoutil as to
 from torchoutil import nn
 from torchoutil.extras.hdf.common import (
     _DUMPED_JSON_KEYS,
+    EXISTS_MODES,
     HDF_ENCODING,
     HDF_STRING_DTYPE,
     HDF_VOID_DTYPE,
     SHAPE_SUFFIX,
+    ExistsMode,
     HDFItemType,
+    _tuple_to_dict,
 )
 from torchoutil.extras.hdf.dataset import HDFDataset
 from torchoutil.extras.numpy import (
@@ -53,13 +57,12 @@ from torchoutil.pyoutil.typing import is_dataclass_instance, is_dict_str
 from torchoutil.types import BuiltinScalar
 from torchoutil.utils.data.dataloader import get_auto_num_cpus
 from torchoutil.utils.data.dataset import IterableDataset, SizedDatasetLike
-from torchoutil.extras.hdf.common import EXISTS_MODES, ExistsMode, _tuple_to_dict
 from torchoutil.utils.saving.common import to_builtin
 
 T = TypeVar("T", covariant=True)
 T_DictOrTuple = TypeVar("T_DictOrTuple", tuple, dict, covariant=True)
 
-HDFDType = Union[np.dtype, Literal["b", "i", "u", "f", "c"], type]
+HDFDType: TypeAlias = Union[np.dtype, Literal["b", "i", "u", "f", "c"], type]
 
 
 pylog = logging.getLogger(__name__)

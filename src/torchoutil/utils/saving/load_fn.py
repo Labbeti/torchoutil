@@ -4,7 +4,7 @@
 import logging
 import os
 from pathlib import Path
-from typing import Any, Callable, Dict, Optional, TypeVar, Union
+from typing import Any, Callable, Dict, Optional, TypeAlias, TypeVar, Union
 
 from torchoutil.core.packaging import (
     _NUMPY_AVAILABLE,
@@ -21,8 +21,8 @@ from torchoutil.utils.saving.torch import load_torch
 T = TypeVar("T", covariant=True)
 pylog = logging.getLogger(__name__)
 
-LoadFn = Callable[[Path], T]
-LoadFnLike = Union[LoadFn[T], SavingBackend]
+LoadFn: TypeAlias = Callable[[Path], T]
+LoadFnLike: TypeAlias = Union[LoadFn[T], SavingBackend]
 
 
 LOAD_FNS: Dict[SavingBackend, LoadFn[Any]] = {

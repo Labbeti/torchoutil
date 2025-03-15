@@ -4,7 +4,7 @@
 from argparse import Namespace
 from io import TextIOWrapper
 from pathlib import Path
-from typing import Any, Iterable, Literal, Mapping, Optional, Type, Union
+from typing import Any, Iterable, Literal, Mapping, Optional, Type, TypeAlias, Union
 
 from torchoutil.core.packaging import _OMEGACONF_AVAILABLE, _YAML_AVAILABLE
 
@@ -39,7 +39,7 @@ if _OMEGACONF_AVAILABLE:
     from omegaconf import OmegaConf  # type: ignore
 
 
-YamlLoaders = Union[
+YamlLoaders: TypeAlias = Union[
     Type[Loader],
     Type[BaseLoader],
     Type[FullLoader],

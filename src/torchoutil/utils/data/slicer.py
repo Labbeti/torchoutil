@@ -2,17 +2,25 @@
 # -*- coding: utf-8 -*-
 
 from abc import ABC, abstractmethod
-from typing import Any, Generic, Iterable, List, Tuple, TypeVar, Union, final, overload
+from typing import (
+    Any,
+    Generic,
+    Iterable,
+    List,
+    Tuple,
+    TypeAlias,
+    TypeVar,
+    Union,
+    final,
+    overload,
+)
 
 import torch
 from torch.utils.data.dataset import Dataset
 
-from torchoutil.nn.functional.transform import as_tensor
 from torchoutil.extras.numpy.functional import is_numpy_bool_array
-from torchoutil.pyoutil.typing import (
-    is_iterable_bool,
-    isinstance_guard,
-)
+from torchoutil.nn.functional.transform import as_tensor
+from torchoutil.pyoutil.typing import is_iterable_bool, isinstance_guard
 from torchoutil.pyoutil.typing.classes import SupportsLenAndGetItem
 from torchoutil.types import is_bool_tensor1d, is_number_like, is_tensor_or_array
 from torchoutil.types._typing import Tensor1D, TensorOrArray
@@ -21,7 +29,7 @@ from torchoutil.utils.data.dataset import Wrapper
 T = TypeVar("T", covariant=False)
 U = TypeVar("U", covariant=False)
 
-Indices = Union[Iterable[bool], Iterable[int], None, slice, Tensor1D]
+Indices: TypeAlias = Union[Iterable[bool], Iterable[int], None, slice, Tensor1D]
 
 
 class DatasetSlicer(Generic[T], ABC, Dataset[T]):

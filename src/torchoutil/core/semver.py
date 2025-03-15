@@ -4,7 +4,7 @@
 import re
 import sys
 from dataclasses import asdict, dataclass
-from typing import Iterable, List, Mapping, Tuple, TypedDict, Union, overload
+from typing import Iterable, List, Mapping, Tuple, TypeAlias, TypedDict, Union, overload
 
 from typing_extensions import NotRequired
 
@@ -16,8 +16,8 @@ _VERSION_FORMAT = r"{major}.{minor}.{patch}"
 _VERSION_KEYS = ("major", "minor", "patch", "prerelease", "buildmetadata")
 
 
-PreRelease = Union[int, str, None, List[Union[int, str]]]
-BuildMetadata = Union[int, str, None, List[Union[int, str]]]
+PreRelease: TypeAlias = Union[int, str, None, List[Union[int, str]]]
+BuildMetadata: TypeAlias = Union[int, str, None, List[Union[int, str]]]
 
 
 class VersionDict(TypedDict):
@@ -28,7 +28,7 @@ class VersionDict(TypedDict):
     buildmetadata: NotRequired[BuildMetadata]
 
 
-VersionTuple = Union[
+VersionTuple: TypeAlias = Union[
     Tuple[int, int, int],
     Tuple[int, int, int, PreRelease],
     Tuple[int, int, int, PreRelease, BuildMetadata],

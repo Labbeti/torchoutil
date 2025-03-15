@@ -4,7 +4,7 @@
 import io
 import os
 from pathlib import Path
-from typing import Any, Optional, Union, BinaryIO
+from typing import Any, BinaryIO, Optional, TypeAlias, Union
 
 import torch
 
@@ -17,7 +17,11 @@ if not _TORCHAUDIO_AVAILABLE:
     raise ImportError(msg)
 
 import torchaudio
-from torchaudio.io import CodecConfig
+
+try:
+    from torchaudio.io import CodecConfig
+except ImportError:
+    CodecConfig: TypeAlias = int
 
 
 def dump_torchaudio(

@@ -1,22 +1,29 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import inspect
 import io
 import os
 import pickle
 from pathlib import Path
-from typing import Any, Optional
+from typing import IO, Any, BinaryIO, Callable, Dict, Optional, TypeAlias, Union
 
 import torch
-from torch.serialization import FILE_LIKE, MAP_LOCATION, DEFAULT_PROTOCOL
+from torch.serialization import DEFAULT_PROTOCOL
+from torch.types import Storage
 
+from torchoutil.core.semver import Version
 from torchoutil.pyoutil.io import _setup_path
-from torchoutil.pyoutil.typing import NoneType
+
+FileLike: TypeAlias = Union[str, os.PathLike, BinaryIO, IO[bytes]]
+MapLocationLike: TypeAlias = Optional[
+    Union[Callable[[Storage, str], Storage], torch.device, str, Dict[str, str]]
+]
 
 
 def to_torch(
     obj: object,
-    f: Optional[FILE_LIKE] = None,
+    f: Optional[FileLike] = None,
     pickle_module: Any = pickle,
     pickle_protocol: int = DEFAULT_PROTOCOL,
     _use_new_zipfile_serialization: bool = True,
@@ -25,11 +32,16 @@ def to_torch(
     overwrite: bool = True,
     make_parents: bool = True,
 ) -> bytes:
-    if isinstance(f, (str, Path, os.PathLike, NoneType)):
+    if isinstance(f, (str, Path, os.PathLike)) or f is None:
         f = _setup_path(f, overwrite, make_parents)
         buffer = io.BytesIO()
     else:
         buffer = f
+
+    if "_disable_byteorder_record" in inspect.getargs(torch.save.__code__).args:
+        kwds = dict(_disable_byteorder_record=_disable_byteorder_record)
+    else:
+        kwds = {}
 
     torch.save(
         obj,
@@ -37,7 +49,7 @@ def to_torch(
         pickle_module,
         pickle_protocol,
         _use_new_zipfile_serialization,
-        _disable_byteorder_record,
+        **kwds,
     )
 
     if isinstance(buffer, io.BytesIO):
@@ -52,19 +64,27 @@ def to_torch(
 
 
 def load_torch(
-    f: FILE_LIKE,
-    map_location: MAP_LOCATION = None,
+    f: FileLike,
+    map_location: MapLocationLike = None,
     pickle_module: Any = None,
     *,
     weights_only: bool = False,
     mmap: Optional[bool] = None,
     **pickle_load_args: Any,
 ) -> Any:
+    kwds = {}
+    if Version(torch.__version__) >= Version("2.0.0"):
+        kwds |= dict(
+            weights_only=weights_only,
+            mmap=mmap,
+        )
+    else:
+        pickle_module = pickle
+
     return torch.load(
         f,
         map_location,
         pickle_module,
-        weights_only=weights_only,
-        mmap=mmap,
+        **kwds,
         **pickle_load_args,
     )

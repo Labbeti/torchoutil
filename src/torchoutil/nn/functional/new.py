@@ -17,6 +17,7 @@ from torchoutil.core.make import (
     make_dtype,
     make_generator,
 )
+from torchoutil.core.semver import Version
 from torchoutil.pyoutil.typing import BuiltinNumber
 from torchoutil.types import (
     BoolTensor0D,
@@ -153,6 +154,10 @@ def arange(
     dtype = make_dtype(dtype)
     device = make_device(device)
 
+    kwds = {}
+    if Version(torch.__version__) >= Version("2.0.0"):
+        kwds |= {"pin_memory": pin_memory}
+
     return torch.arange(
         *args,
         **kwargs,
@@ -160,7 +165,7 @@ def arange(
         dtype=dtype,
         device=device,
         requires_grad=requires_grad,
-        pin_memory=pin_memory,
+        **kwds,
     )
 
 
@@ -288,14 +293,15 @@ def empty(
 ) -> torch.Tensor:
     dtype = make_dtype(dtype)
     device = make_device(device)
+
     return torch.empty(
         *data,
         out=out,
         dtype=dtype,
         layout=layout,
         device=device,
-        pin_memory=pin_memory,
         requires_grad=requires_grad,
+        pin_memory=pin_memory,
     )
 
 
@@ -622,15 +628,21 @@ def full(
 ) -> torch.Tensor:
     dtype = make_dtype(dtype)
     device = make_device(device)
+    kwds = {}
+    if Version(torch.__version__) >= Version("2.0.0"):
+        kwds |= {"pin_memory": pin_memory}
+    elif layout is None:
+        layout = torch.strided
+
     return torch.full(
         size,
-        fill_value=fill_value,
+        fill_value,
         out=out,
         dtype=dtype,
         layout=layout,
         device=device,
-        pin_memory=pin_memory,
         requires_grad=requires_grad,
+        **kwds,
     )
 
 
@@ -758,14 +770,15 @@ def ones(
 ) -> torch.Tensor:
     dtype = make_dtype(dtype)
     device = make_device(device)
+
     return torch.ones(
         *data,
         out=out,
         dtype=dtype,
         layout=layout,
         device=device,
-        pin_memory=pin_memory,
         requires_grad=requires_grad,
+        pin_memory=pin_memory,
     )
 
 
@@ -901,6 +914,10 @@ def rand(
     device = make_device(device)
     generator = make_generator(generator)
 
+    kwds = {}
+    if Version(torch.__version__) >= Version("2.0.0"):
+        kwds |= {"pin_memory": pin_memory}
+
     return torch.rand(
         *data,
         generator=generator,
@@ -908,8 +925,8 @@ def rand(
         dtype=dtype,
         layout=layout,
         device=device,
-        pin_memory=pin_memory,
         requires_grad=requires_grad,
+        pin_memory=pin_memory,
     )
 
 
@@ -1053,6 +1070,10 @@ def randint(
     device = make_device(device)
     generator = make_generator(generator)
 
+    kwds = {}
+    if Version(torch.__version__) >= Version("2.0.0"):
+        kwds |= {"pin_memory": pin_memory}
+
     return torch.randint(
         low=low,
         high=high,
@@ -1061,7 +1082,7 @@ def randint(
         dtype=dtype,
         device=device,
         requires_grad=requires_grad,
-        pin_memory=pin_memory,
+        **kwds,
     )
 
 

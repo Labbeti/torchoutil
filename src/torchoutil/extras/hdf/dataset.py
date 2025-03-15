@@ -20,6 +20,7 @@ from typing import (
     Literal,
     Optional,
     Tuple,
+    TypeAlias,
     TypeVar,
     Union,
     overload,
@@ -37,6 +38,7 @@ from torchoutil.extras.hdf.common import (
     _DUMPED_JSON_KEYS,
     HDFDatasetAttributes,
     HDFItemType,
+    _dict_to_tuple,
 )
 from torchoutil.extras.numpy.scan_info import numpy_dtype_to_torch_dtype
 from torchoutil.nn.functional.indices import get_inverse_perm
@@ -47,14 +49,13 @@ from torchoutil.pyoutil.typing import is_iterable_bytes_or_list, is_iterable_str
 from torchoutil.types._typing import ScalarLike
 from torchoutil.types.guards import is_scalar_like
 from torchoutil.utils.data import DatasetSlicer
-from torchoutil.extras.hdf.common import _dict_to_tuple
 from torchoutil.utils.saving import to_builtin
 
 T = TypeVar("T", covariant=True)
 U = TypeVar("U", covariant=False)
 
-IndexLike = Union[int, Iterable[int], Tensor, slice, None]
-ColumnLike = Union[str, Iterable[str], None]
+IndexLike: TypeAlias = Union[int, Iterable[int], Tensor, slice, None]
+ColumnLike: TypeAlias = Union[str, Iterable[str], None]
 CastMode = Literal[
     "to_torch_or_builtin",
     "to_torch_or_numpy",

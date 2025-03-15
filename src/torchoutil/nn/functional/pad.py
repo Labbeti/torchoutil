@@ -1,28 +1,40 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from typing import Any, Callable, Dict, Iterable, List, Literal, Sized, Tuple, Union
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    Iterable,
+    List,
+    Literal,
+    Sized,
+    Tuple,
+    TypeAlias,
+    Union,
+)
 
 import torch
-from torch import Generator, Size, Tensor
+from torch import Size, Tensor
 from torch.nn import functional as F
 from torch.types import Number
 
 from torchoutil.core.make import (
     DeviceLike,
-    make_device,
-    make_generator,
-    GeneratorLike,
     DTypeLike,
+    GeneratorLike,
+    make_device,
     make_dtype,
+    make_generator,
 )
 from torchoutil.nn.functional.predicate import can_be_stacked
 from torchoutil.types import is_number_like
 
+PadAlign: TypeAlias = Literal["left", "right", "center", "random"]
+PadValue: TypeAlias = Union[Number, Callable[[Tensor], Number]]
+PadMode: TypeAlias = Literal["constant", "reflect", "replicate", "circular"]
+
 PAD_ALIGNS = ("left", "right", "center", "random")
-PadAlign = Literal["left", "right", "center", "random"]
-PadValue = Union[Number, Callable[[Tensor], Number]]
-PadMode = Literal["constant", "reflect", "replicate", "circular"]
 
 
 def pad_dim(

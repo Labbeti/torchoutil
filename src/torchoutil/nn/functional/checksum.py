@@ -11,7 +11,7 @@ import zlib
 from dataclasses import asdict
 from functools import lru_cache
 from types import FunctionType, MethodType
-from typing import Callable, Iterable, Literal, Mapping, Union, get_args
+from typing import Callable, Iterable, Literal, Mapping, TypeAlias, Union, get_args
 
 import torch
 from torch import Tensor, nn
@@ -31,14 +31,14 @@ from torchoutil.pyoutil.typing import (
 if _PANDAS_AVAILABLE:
     import pandas as pd
 
-    DataFrame = pd.DataFrame
+    DataFrame = pd.DataFrame  # type: ignore
 else:
 
     class DataFrame:
         ...
 
 
-Checksumable = Union[
+Checksumable: TypeAlias = Union[
     int,
     bool,
     complex,
