@@ -18,7 +18,6 @@ from typing import (
     Optional,
     Set,
     Tuple,
-    TypeAlias,
     TypeVar,
     Union,
 )
@@ -29,6 +28,7 @@ import torch
 import tqdm
 from h5py import Dataset as HDFRawDataset
 from torch.utils.data.dataloader import DataLoader
+from typing_extensions import TypeAlias
 
 import pyoutil as po
 import torchoutil as to

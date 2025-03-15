@@ -2,21 +2,11 @@
 # -*- coding: utf-8 -*-
 
 from abc import ABC, abstractmethod
-from typing import (
-    Any,
-    Generic,
-    Iterable,
-    List,
-    Tuple,
-    TypeAlias,
-    TypeVar,
-    Union,
-    final,
-    overload,
-)
+from typing import Any, Generic, Iterable, List, Tuple, TypeVar, Union, final, overload
 
 import torch
 from torch.utils.data.dataset import Dataset
+from typing_extensions import TypeAlias
 
 from torchoutil.extras.numpy.functional import is_numpy_bool_array
 from torchoutil.nn.functional.transform import as_tensor

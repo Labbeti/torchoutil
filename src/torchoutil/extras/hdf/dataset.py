@@ -20,7 +20,6 @@ from typing import (
     Literal,
     Optional,
     Tuple,
-    TypeAlias,
     TypeVar,
     Union,
     overload,
@@ -30,7 +29,7 @@ import h5py
 import numpy as np
 from h5py import Dataset as HDFRawDataset
 from torch import Tensor
-from typing_extensions import override
+from typing_extensions import TypeAlias, override
 
 import torchoutil as to
 from torchoutil.extras.hdf.common import (

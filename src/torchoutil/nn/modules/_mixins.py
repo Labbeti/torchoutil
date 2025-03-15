@@ -18,7 +18,6 @@ from typing import (
     OrderedDict,
     Protocol,
     Tuple,
-    TypeAlias,
     TypeVar,
     Union,
     overload,
@@ -29,6 +28,7 @@ import torch
 import torch.utils
 from torch import Tensor, nn
 from torch.nn.parameter import Parameter
+from typing_extensions import TypeAlias
 
 from torchoutil.nn.functional.checksum import checksum_module
 from torchoutil.nn.functional.others import count_parameters

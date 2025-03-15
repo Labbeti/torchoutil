@@ -9,11 +9,12 @@ from typing import (
     Protocol,
     Sized,
     Tuple,
-    TypeAlias,
     TypeVar,
     Union,
     runtime_checkable,
 )
+
+from typing_extensions import TypeAlias
 
 NoneType: TypeAlias = type(None)  # type: ignore
 EllipsisType: TypeAlias = type(...)  # type: ignore

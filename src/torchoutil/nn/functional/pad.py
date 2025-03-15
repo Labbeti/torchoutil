@@ -1,23 +1,13 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from typing import (
-    Any,
-    Callable,
-    Dict,
-    Iterable,
-    List,
-    Literal,
-    Sized,
-    Tuple,
-    TypeAlias,
-    Union,
-)
+from typing import Any, Callable, Dict, Iterable, List, Literal, Sized, Tuple, Union
 
 import torch
 from torch import Size, Tensor
 from torch.nn import functional as F
 from torch.types import Number
+from typing_extensions import TypeAlias
 
 from torchoutil.core.make import (
     DeviceLike,
