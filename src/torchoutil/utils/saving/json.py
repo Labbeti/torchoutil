@@ -4,8 +4,8 @@
 from pathlib import Path
 from typing import Any, Optional, Union
 
-from torchoutil.pyoutil.json import load_json  # noqa: F401
 from torchoutil.pyoutil.json import dump_json as _dump_json_base
+from torchoutil.pyoutil.json import load_json  # noqa: F401
 from torchoutil.utils.saving.common import to_builtin
 
 
@@ -34,3 +34,6 @@ def dump_json(
         ensure_ascii=ensure_ascii,
         **json_dump_kwds,
     )
+
+
+to_json = dump_json

@@ -18,8 +18,8 @@ from typing import (
 
 from torchoutil.core.packaging import _PANDAS_AVAILABLE
 from torchoutil.pyoutil.csv import ORIENT_VALUES, Orient, _setup_path
-from torchoutil.pyoutil.csv import load_csv as _load_csv_base
 from torchoutil.pyoutil.csv import dump_csv as _dump_csv_base
+from torchoutil.pyoutil.csv import load_csv as _load_csv_base
 from torchoutil.utils.saving.common import to_builtin
 
 if _PANDAS_AVAILABLE:
@@ -226,3 +226,6 @@ def _dump_csv_with_pandas(
         fpath.write_text(content)
 
     return content
+
+
+to_csv = dump_csv

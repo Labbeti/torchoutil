@@ -22,7 +22,7 @@ MapLocationLike: TypeAlias = Optional[
 ]
 
 
-def to_torch(
+def dump_torch(
     obj: object,
     f: Optional[FileLike] = None,
     pickle_module: Any = pickle,
@@ -89,3 +89,6 @@ def load_torch(
         **kwds,
         **pickle_load_args,
     )
+
+
+to_torch = dump_torch

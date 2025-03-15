@@ -2,15 +2,15 @@
 # -*- coding: utf-8 -*-
 
 from pathlib import Path
-from typing import Dict, Literal, Optional, Tuple, Union, overload, Any
+from typing import Any, Dict, Literal, Optional, Tuple, Union, overload
 
 from safetensors import safe_open
 from safetensors.torch import save
 from torch import Tensor
 
 from torchoutil.nn.functional.transform import as_tensor
-from torchoutil.pyoutil.io import _setup_path
 from torchoutil.pyoutil.inspect import get_fullname
+from torchoutil.pyoutil.io import _setup_path
 from torchoutil.types.guards import is_dict_str_tensor
 
 
@@ -100,3 +100,6 @@ def dump_safetensors(
     if fpath is not None:
         fpath.write_bytes(content)
     return content
+
+
+to_safetensors = dump_safetensors

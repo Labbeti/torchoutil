@@ -4,4 +4,5 @@
 from torchoutil.extras.torchaudio import (  # noqa: F401
     dump_torchaudio,
     load_torchaudio,
+    to_torchaudio,
 )
