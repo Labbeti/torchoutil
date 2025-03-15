@@ -57,7 +57,8 @@ def dump(
     *args,
     saving_backend: Optional[SavingBackend] = None,
     **kwargs,
-) -> Union[str, bytes]: ...
+) -> Union[str, bytes]:
+    ...
 
 
 @overload
@@ -67,7 +68,8 @@ def dump(
     *args,
     saving_backend: SavingBackend,
     **kwargs,
-) -> Union[str, bytes]: ...
+) -> Union[str, bytes]:
+    ...
 
 
 def dump(
