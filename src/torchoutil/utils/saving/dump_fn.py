@@ -3,7 +3,7 @@
 
 import os
 from pathlib import Path
-from typing import Any, Callable, Dict, Optional, Union
+from typing import Any, Callable, Dict, Optional, Union, overload, Literal
 
 from torchoutil.core.packaging import (
     _NUMPY_AVAILABLE,
@@ -48,6 +48,26 @@ if _YAML_AVAILABLE:
     from .yaml import dump_yaml
 
     DUMP_FNS["yaml"] = dump_yaml
+
+
+@overload
+def dump(
+    obj: Any,
+    fpath: Union[str, Path, os.PathLike],
+    *args,
+    saving_backend: Optional[SavingBackend] = None,
+    **kwargs,
+) -> Union[str, bytes]: ...
+
+
+@overload
+def dump(
+    obj: Any,
+    fpath: Literal[None] = None,
+    *args,
+    saving_backend: SavingBackend,
+    **kwargs,
+) -> Union[str, bytes]: ...
 
 
 def dump(
