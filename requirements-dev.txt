@@ -10,6 +10,6 @@ pytest
 soundfile
 sphinx
 sphinx-press-theme>=0.8.0
-torchaudio>=0.12.1
+torchaudio
 torchvision>=0.11.0
 twine
