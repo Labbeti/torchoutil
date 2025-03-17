@@ -25,6 +25,7 @@ from typing import (
 
 from typing_extensions import TypeGuard, TypeIs
 
+from torchoutil.pyoutil.typing.classes import SupportsOr
 from torchoutil.pyoutil.functools import identity
 from torchoutil.pyoutil.typing import (
     T_BuiltinScalar,
@@ -40,6 +41,7 @@ V = TypeVar("V", covariant=True)
 W = TypeVar("W", covariant=True)
 X = TypeVar("X", covariant=True)
 Y = TypeVar("Y", covariant=True)
+T_Union = TypeVar("T_Union", bound=SupportsOr)
 
 KeyMode = Literal["intersect", "same", "union"]
 KEY_MODES = ("same", "intersect", "union")
@@ -642,7 +644,7 @@ def flatten(
 
 
 @overload
-def flatten(
+def flatten(  # type: ignore
     x: Iterable[T_BuiltinScalar],
     start_dim: int = 0,
     end_dim: Optional[int] = None,
@@ -761,7 +763,10 @@ def argmax(x: Iterable) -> int:
 
 
 def shuffled(
-    x: MutableSequence[T], *, seed: Optional[int] = None, deep: bool = False
+    x: MutableSequence[T],
+    *,
+    seed: Optional[int] = None,
+    deep: bool = False,
 ) -> MutableSequence[T]:
     if deep:
         x = copy.deepcopy(x)
@@ -776,5 +781,14 @@ def shuffled(
         random.seed(seed)
         random.shuffle(x)
         state = random.setstate(state)
-
         return x
+
+
+def union(
+    arg0: T_Union,
+    *args: T_Union,
+) -> T_Union:
+    result = copy.copy(arg0)
+    for arg in args:
+        result |= arg
+    return result

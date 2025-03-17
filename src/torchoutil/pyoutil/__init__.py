@@ -38,6 +38,7 @@ from .collections import (
     union_dicts,
     union_lists,
     unzip,
+    union,
 )
 from .csv import load_csv, dump_csv
 from .dataclasses import get_defaults_values

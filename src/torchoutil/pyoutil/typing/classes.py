@@ -41,49 +41,67 @@ class NamedTupleInstance(Protocol):
     _field_defaults: Dict[str, Any]
 
     def _asdict(self) -> Dict[str, Any]:
-        ...
+        raise NotImplementedError
 
     def __getitem__(self, idx, /):
-        ...
+        raise NotImplementedError
 
     def __len__(self) -> int:
-        ...
+        raise NotImplementedError
 
 
 @runtime_checkable
 class SupportsIterLen(Protocol[T]):
     def __iter__(self) -> T:
-        ...
+        raise NotImplementedError
 
     def __len__(self) -> int:
-        ...
+        raise NotImplementedError
 
 
 @runtime_checkable
 class SupportsGetitemLen(Protocol[T]):
     def __getitem__(self, idx, /) -> T:
-        ...
+        raise NotImplementedError
 
     def __len__(self) -> int:
-        ...
+        raise NotImplementedError
 
 
 @runtime_checkable
 class SupportsGetitemIterLen(Protocol[T]):
     def __getitem__(self, idx, /) -> T:
-        ...
+        raise NotImplementedError
 
     def __iter__(self) -> Iterator[T]:
-        ...
+        raise NotImplementedError
 
     def __len__(self) -> int:
-        ...
+        raise NotImplementedError
 
 
 @runtime_checkable
 class SupportsBool(Protocol):
     def __bool__(self) -> bool:
-        ...
+        raise NotImplementedError
+
+
+@runtime_checkable
+class SupportsOr(Protocol):
+    def __ior__(self, other, /):
+        raise NotImplementedError
+
+    def __or__(self, other, /):
+        raise NotImplementedError
+
+
+@runtime_checkable
+class SupportsAnd(Protocol):
+    def __iand__(self, other, /):
+        raise NotImplementedError
+
+    def __and__(self, other, /):
+        raise NotImplementedError
 
 
 # Aliases for backward compatibility
