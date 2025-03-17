@@ -8,14 +8,18 @@ Note: torchoutil.FloatTensor != torch.FloatTensor but issubclass(torchoutil.Floa
 Here is an overview of the valid tensor subclasses tree:
                                                                             Tensor
                                                                               |
-                  +---------------------------------------+-------------------+-----------------------+-------------------------------------+
-                  |                                       |                                           |                                     |
-        ComplexFloatingTensor                       FloatingTensor                            SignedIntegerTensor                  UnsignedIntegerTensor
-                  |                                       |                                           |                                     |
-     +------------+------------+              +-----------+-----------+             +-----------+-----+-----+-----------+             +-----+-----+
-     |            |            |              |           |           |             |           |           |           |             |           |
-CHalfTensor CFloatTensor CDoubleTensor    HalfTensor FloatTensor DoubleTensor   CharTensor  ShortTensor  IntTensor  LongTensor    ByteTensor  BoolTensor
-   (c32)        (c64)       (c128)          (f16)       (f32)       (f64)          (i8)       (i16)       (i32)       (i64)          (u8)       (bool)
+                  +---------------------------------------+-------------------+------------------------------------+
+                  |                                       |                                                        |
+        ComplexFloatingTensor                       FloatingTensor                                           IntegralTensor
+                  |                                       |                                                        |
+     +------------+------------+              +-----------+-----------+                         +------------------+------------------+
+     |            |            |              |           |           |                         |                                     |
+CHalfTensor CFloatTensor CDoubleTensor    HalfTensor FloatTensor DoubleTensor          SignedIntegerTensor                  UnsignedIntegerTensor
+   (c32)        (c64)       (c128)          (f16)       (f32)       (f64)                       |                                     |
+                                                                              +-----------+-----+-----+-----------+             +-----+-----+
+                                                                              |           |           |           |             |           |
+                                                                          CharTensor  ShortTensor  IntTensor  LongTensor    ByteTensor  BoolTensor
+                                                                             (i8)       (i16)       (i32)       (i64)          (u8)       (bool)
 """
 
 from typing import (
@@ -159,17 +163,17 @@ class _TensorNDMeta(
     Generic[T_DType, T_NDim, T_BuiltinNumber, T_Floating, T_Complex, T_Signed],
     _TensorMeta,
 ):
-    def __instancecheck__(cls, instance: Any) -> bool:
+    def __instancecheck__(self, instance: Any) -> bool:
         """Called method to check isinstance(instance, self)"""
         if not isinstance(instance, torch.Tensor):
             return False
 
-        gen = _get_generics(cls)
+        gen = _get_generics(self)
         return gen.is_compatible_with_tensor(instance)
 
-    def __subclasscheck__(cls, subclass: Any) -> bool:
+    def __subclasscheck__(self, subclass: Any) -> bool:
         """Called method to check issubclass(subclass, cls)"""
-        self_generics = _get_generics(cls)
+        self_generics = _get_generics(self)
         other_generics = _get_generics(subclass)
         return self_generics.is_compatible_with_generic(other_generics)
 
@@ -350,27 +354,27 @@ class _TensorNDBase(
         ...
 
     @overload
-    def __getitem__(self: "Tensor2D", idx: int, /) -> "Tensor1D":
+    def __getitem__(self: "Tensor2D", idx: int, /) -> "Tensor1D":  # type: ignore
         ...
 
     @overload
-    def __getitem__(self: "Tensor3D", idx: int, /) -> "Tensor2D":
+    def __getitem__(self: "Tensor3D", idx: int, /) -> "Tensor2D":  # type: ignore
         ...
 
     @overload
-    def __getitem__(self: "Tensor0D", idx: None, /) -> "Tensor1D":
+    def __getitem__(self: "Tensor0D", idx: None, /) -> "Tensor1D":  # type: ignore
         ...
 
     @overload
-    def __getitem__(self: "Tensor1D", idx: None, /) -> "Tensor2D":
+    def __getitem__(self: "Tensor1D", idx: None, /) -> "Tensor2D":  # type: ignore
         ...
 
     @overload
-    def __getitem__(self: "Tensor2D", idx: None, /) -> "Tensor3D":
+    def __getitem__(self: "Tensor2D", idx: None, /) -> "Tensor3D":  # type: ignore
         ...
 
     @overload
-    def __getitem__(self: "Tensor3D", idx: None, /) -> "Tensor":
+    def __getitem__(self: "Tensor3D", idx: None, /) -> "Tensor":  # type: ignore
         ...
 
     @overload
@@ -434,15 +438,15 @@ class _TensorNDBase(
         ...
 
     @overload
-    def mean(self: "Tensor1D", dim: int) -> "Tensor0D":
+    def mean(self: "Tensor1D", dim: int) -> "Tensor0D":  # type: ignore
         ...
 
     @overload
-    def mean(self: "Tensor2D", dim: int) -> "Tensor1D":
+    def mean(self: "Tensor2D", dim: int) -> "Tensor1D":  # type: ignore
         ...
 
     @overload
-    def mean(self: "Tensor3D", dim: int) -> "Tensor2D":
+    def mean(self: "Tensor3D", dim: int) -> "Tensor2D":  # type: ignore
         ...
 
     @overload
@@ -494,11 +498,11 @@ class _TensorNDBase(
         ...
 
     @overload
-    def sum(self: "Tensor2D", dim: int) -> "Tensor1D":
+    def sum(self: "Tensor2D", dim: int) -> "Tensor1D":  # type: ignore
         ...
 
     @overload
-    def sum(self: "Tensor3D", dim: int) -> "Tensor2D":
+    def sum(self: "Tensor3D", dim: int) -> "Tensor2D":  # type: ignore
         ...
 
     @overload
@@ -548,15 +552,15 @@ class _TensorNDBase(
         ...
 
     @overload
-    def unsqueeze(self: "Tensor1D", dim: int) -> "Tensor2D":
+    def unsqueeze(self: "Tensor1D", dim: int) -> "Tensor2D":  # type: ignore
         ...
 
     @overload
-    def unsqueeze(self: "Tensor2D", dim: int) -> "Tensor3D":
+    def unsqueeze(self: "Tensor2D", dim: int) -> "Tensor3D":  # type: ignore
         ...
 
     @overload
-    def unsqueeze(self, dim: int) -> "Tensor":
+    def unsqueeze(self, dim: int) -> "Tensor":  # type: ignore
         ...
 
     @overload
@@ -2398,3 +2402,115 @@ class UnsignedIntegerTensor3D(
     ],
 ):
     _DEFAULT_DTYPE = DTypeEnum.uint8
+
+
+class IntegralTensor(
+    _TensorNDBase[
+        Literal[None],
+        int,
+        int,
+        Literal[False],
+        Literal[False],
+        bool,
+    ],
+    metaclass=_TensorNDMeta[
+        Literal[None],
+        int,
+        int,
+        Literal[False],
+        Literal[False],
+        bool,
+    ],
+):
+    """Intermediate class for checking and typing integer data type (integer-like) tensors.
+    - Concrete subclasses are: CharTensor, ShortTensor, IntTensor, LongTensor, BoolTensor, ByteTensor.
+    - Properties are: is_floating_point=False, is_complex=False.
+    - By default, instantiate this class will create an LongTensor.
+    - BoolTensor is a subclass of UnsignedIntegerTensor.
+    """
+
+    _DEFAULT_DTYPE = DTypeEnum.long
+
+
+class IntegralTensor0D(
+    _TensorNDBase[
+        Literal[None],
+        Literal[0],
+        int,
+        Literal[False],
+        Literal[False],
+        bool,
+    ],
+    metaclass=_TensorNDMeta[
+        Literal[None],
+        Literal[0],
+        int,
+        Literal[False],
+        Literal[False],
+        bool,
+    ],
+):
+    _DEFAULT_DTYPE = DTypeEnum.long
+
+
+class IntegralTensor1D(
+    _TensorNDBase[
+        Literal[None],
+        Literal[1],
+        int,
+        Literal[False],
+        Literal[False],
+        bool,
+    ],
+    metaclass=_TensorNDMeta[
+        Literal[None],
+        Literal[1],
+        int,
+        Literal[False],
+        Literal[False],
+        bool,
+    ],
+):
+    _DEFAULT_DTYPE = DTypeEnum.long
+
+
+class IntegralTensor2D(
+    _TensorNDBase[
+        Literal[None],
+        Literal[2],
+        int,
+        Literal[False],
+        Literal[False],
+        bool,
+    ],
+    metaclass=_TensorNDMeta[
+        Literal[None],
+        Literal[2],
+        int,
+        Literal[False],
+        Literal[False],
+        bool,
+    ],
+):
+    _DEFAULT_DTYPE = DTypeEnum.long
+
+
+class IntegralTensor3D(
+    _TensorNDBase[
+        Literal[None],
+        Literal[3],
+        int,
+        Literal[False],
+        Literal[False],
+        bool,
+    ],
+    metaclass=_TensorNDMeta[
+        Literal[None],
+        Literal[3],
+        int,
+        Literal[False],
+        Literal[False],
+        bool,
+    ],
+):
+    _DEFAULT_DTYPE = DTypeEnum.long

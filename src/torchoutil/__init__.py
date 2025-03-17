@@ -128,6 +128,16 @@ from .types.tensor_subclasses import (
     Tensor1D,
     Tensor2D,
     Tensor3D,
+    UnsignedIntegerTensor,
+    UnsignedIntegerTensor0D,
+    UnsignedIntegerTensor1D,
+    UnsignedIntegerTensor2D,
+    UnsignedIntegerTensor3D,
+    IntegralTensor,
+    IntegralTensor0D,
+    IntegralTensor1D,
+    IntegralTensor2D,
+    IntegralTensor3D,
 )
 from .types.variable_fns import (
     arange,

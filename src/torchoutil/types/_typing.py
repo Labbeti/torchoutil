@@ -98,6 +98,11 @@ from .tensor_subclasses import (  # noqa: F401
     UnsignedIntegerTensor1D,
     UnsignedIntegerTensor2D,
     UnsignedIntegerTensor3D,
+    IntegralTensor,
+    IntegralTensor0D,
+    IntegralTensor1D,
+    IntegralTensor2D,
+    IntegralTensor3D,
 )
 
 r"""/!\ The following type hints are meant for type annotation only, not for runtime checks.
