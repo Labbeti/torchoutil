@@ -168,8 +168,10 @@ jobs:
     - name: Install package with specific PyTorch
       if: matrix.torch-version != 'unspecified'
       shell: bash
+      # note: ${GITHUB_REF##*/} gives the branch name
+      # note 2: dev is NOT the branch here, but the dev dependencies
       run: |
-        python -m pip install .[dev] torch==${{ matrix.torch-version }}
+        python -m pip install torch==${{ matrix.torch-version }} 'torchoutil[dev] @ git+https://github.com/Labbeti/torchoutil@${GITHUB_REF##*/}'
 
     - name: Additional install soundfile (Ubuntu)
       if: matrix.os == 'ubuntu-latest'
