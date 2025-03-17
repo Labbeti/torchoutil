@@ -158,16 +158,16 @@ jobs:
         python-version: ${{ matrix.python-version }}
         cache: 'pip'
 
+    - name: Install package
+      shell: bash
+      run: |
+        python -m pip install -e .[dev]
+
     - name: Install PyTorch
       if: matrix.torch-version != 'unspecified'
       shell: bash
       run: |
         python -m pip install torch==${{ matrix.torch-version }}
-
-    - name: Install package
-      shell: bash
-      run: |
-        python -m pip install -e .[dev]
 
     - name: Additional install soundfile (Ubuntu)
       if: matrix.os == 'ubuntu-latest'
