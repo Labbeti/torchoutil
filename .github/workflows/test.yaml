@@ -33,8 +33,8 @@ jobs:
             # Do not use python 3.13 on windows yet because it is not entirely supported by numpy (18/02/2025)
             python-version: 3.12
             torch-version: "unspecified"
-          - os: macos-13
-            python-version: 3.8
+          - os: macos-latest
+            python-version: 3.9
             torch-version: "unspecified"
           - os: macos-latest
             python-version: 3.13
