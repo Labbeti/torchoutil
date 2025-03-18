@@ -11,5 +11,5 @@ soundfile
 sphinx
 sphinx-press-theme>=0.8.0
 torchaudio
-torchvision>=0.11.0
+torchvision
 twine
