@@ -9,12 +9,13 @@ __author_email__ = "labbeti.pub@gmail.com"
 __license__ = "MIT"
 __maintainer__ = "Étienne Labbé (Labbeti)"
 __status__ = "Development"
-__version__ = "0.5.0"
+__version__ = "0.6.0"
 
 # Import global functions and classes from torch
 from torch import *  # type: ignore
 
 # Re-import torchoutil modules for language servers
+from . import core as core
 from . import extras as extras
 from . import hub as hub
 from . import nn as nn
