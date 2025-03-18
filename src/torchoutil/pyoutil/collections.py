@@ -809,3 +809,49 @@ def is_full(*args, **kwargs):
 @function_alias(all_ne)
 def is_unique(*args, **kwargs):
     ...
+
+
+@overload
+def reduce_or(*args: T_SupportsOr, start: T_SupportsOr) -> T_SupportsOr:
+    ...
+
+
+@overload
+def reduce_or(
+    arg0: T_SupportsOr, /, *args: T_SupportsOr, start: Any = None
+) -> T_SupportsOr:
+    ...
+
+
+@overload
+def reduce_or(args: Iterable[T_SupportsOr], /, *, start: T_SupportsOr) -> T_SupportsOr:
+    ...
+
+
+def reduce_or(*args, start=None):
+    it = iter(args)
+
+    try:
+        first = next(it)
+        argname = "args[0]"
+    except StopIteration:
+        if start is None:
+            msg = f"Invalid combinaison of arguments {args=} and {start=}. (expected at least 1 non-empty argument or start != None)"
+            raise ValueError(msg)
+        first = start
+        argname = "start"
+
+    if isinstance(first, SupportsOr):
+        pass
+    elif isinstance(first, Iterable):
+        it = iter(first)
+    else:
+        msg = (
+            f"Invalid argument {argname}={first}. (expected {SupportsOr} or {Iterable})"
+        )
+        raise TypeError(msg)
+
+    result = copy.copy(first)
+    for arg in it:
+        result |= arg
+    return start
