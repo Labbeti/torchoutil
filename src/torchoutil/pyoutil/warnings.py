@@ -40,6 +40,7 @@ def warn_once(
     stacklevel: int = 1,
     source: Any = None,
 ) -> None:
+    """Warn message once using warnings module."""
     warnings.warn(message, category, stacklevel, source)
 
 

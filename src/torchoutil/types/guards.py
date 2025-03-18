@@ -39,7 +39,7 @@ def is_number_like(x: Any) -> TypeGuard[NumberLike]:
     - Numpy numbers
     - PyTorch zero-dimensional tensors
     """
-    return is_builtin_number(x) or is_numpy_number_like(x) or is_tensor0d(x)
+    return is_builtin_number(x) or is_numpy_number_like(x) or isinstance(x, Tensor0D)
 
 
 def is_scalar_like(x: Any) -> TypeGuard[ScalarLike]:
@@ -51,7 +51,7 @@ def is_scalar_like(x: Any) -> TypeGuard[ScalarLike]:
     - Numpy generic
     - PyTorch zero-dimensional tensors
     """
-    return is_builtin_scalar(x) or is_numpy_scalar_like(x) or is_tensor0d(x)
+    return is_builtin_scalar(x) or is_numpy_scalar_like(x) or isinstance(x, Tensor0D)
 
 
 def is_tensor_or_array(x: Any) -> TypeIs[TensorOrArray]:

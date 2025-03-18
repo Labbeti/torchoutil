@@ -20,7 +20,8 @@ from torchoutil.pyoutil.collections import all_eq as builtin_all_eq
 from torchoutil.pyoutil.collections import all_ne as builtin_all_ne
 from torchoutil.pyoutil.collections import is_sorted as builtin_is_sorted
 from torchoutil.pyoutil.functools import function_alias
-from torchoutil.pyoutil.typing import is_builtin_number
+from torchoutil.pyoutil.typing import is_builtin_number, isinstance_guard
+from torchoutil.pyoutil.warnings import deprecated_alias
 from torchoutil.types._typing import (
     ComplexFloatingTensor,
     FloatingTensor,
@@ -28,43 +29,25 @@ from torchoutil.types._typing import (
     T_TensorOrArray,
     TensorOrArray,
 )
-from torchoutil.types.guards import is_list_tensor, is_scalar_like, is_tuple_tensor
+from torchoutil.types.guards import is_scalar_like
 
 T = TypeVar("T")
 U = TypeVar("U")
-
-
-def can_be_stacked(
-    tensors: Union[List[Any], Tuple[Any, ...]],
-) -> TypeGuard[Union[List[Tensor], Tuple[Tensor, ...]]]:
-    """Returns True if inputs can be passed to `torch.stack` function, i.e. contains a list or tuple of tensors with the same shape.
-
-    Alias of :func:`~torchoutil.nn.functional.others.is_stackable`.
-    """
-    return is_stackable(tensors)
 
 
 def is_stackable(
     tensors: Union[List[Any], Tuple[Any, ...]],
 ) -> TypeGuard[Union[List[Tensor], Tuple[Tensor, ...]]]:
     """Returns True if inputs can be passed to `torch.stack` function, i.e. contains a list or tuple of tensors with the same shape."""
-    if not is_list_tensor(tensors) and not is_tuple_tensor(tensors):
+    if not isinstance_guard(tensors, List[Tensor]) and not isinstance_guard(
+        tensors, Tuple[Tensor, ...]
+    ):
         return False
     if len(tensors) == 0:
         return False
     shape0 = tensors[0].shape
     result = all(tensor.shape == shape0 for tensor in tensors[1:])
     return result
-
-
-def can_be_converted_to_tensor(x: Any) -> bool:
-    """Returns True if inputs can be passed to `torch.as_tensor` function.
-
-    Alias of :func:`~torchoutil.nn.functional.others.is_convertible_to_tensor`.
-
-    This function returns False for heterogeneous inputs like `[[], 1]`, but this kind of value can be accepted by `torch.as_tensor`.
-    """
-    return is_convertible_to_tensor(x)
 
 
 def is_convertible_to_tensor(x: Any) -> bool:
@@ -249,3 +232,13 @@ def is_full(x: TensorOrArray, target: Any = ...) -> bool:
     indices = tuple([0] * x.ndim)
     first_elem = x[indices]
     return (target is ... or first_elem == target) and all_eq(x)
+
+
+@deprecated_alias(is_stackable)
+def can_be_stacked(*args, **kwargs):
+    ...
+
+
+@deprecated_alias(is_convertible_to_tensor)
+def can_be_converted_to_tensor(*args, **kwargs):
+    ...

@@ -11,12 +11,16 @@ import torch
 from torchoutil.core.packaging import _NUMPY_AVAILABLE
 from torchoutil.extras.numpy import np
 from torchoutil.nn import functional as F
-from torchoutil.pyoutil.typing import is_builtin_number, is_builtin_scalar
+from torchoutil.pyoutil.typing import (
+    is_builtin_number,
+    is_builtin_scalar,
+    isinstance_guard,
+)
 from torchoutil.types import (
+    Tensor0D,
     is_number_like,
     is_numpy_number_like,
     is_scalar_like,
-    is_tensor0d,
 )
 
 
@@ -59,7 +63,7 @@ class TestGuards(TestCase):
 
         for x, expected in tests:
             x_is_number = is_number_like(x)
-            msg = f"{x=} ({is_builtin_number(x)}, {is_tensor0d(x)}, {is_numpy_number_like(x)})"
+            msg = f"{x=} ({is_builtin_number(x)}, {isinstance_guard(x, Tensor0D)}, {is_numpy_number_like(x)})"
             assert x_is_number == expected, msg
 
             x_is_scalar = is_scalar_like(x)
