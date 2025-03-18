@@ -48,7 +48,7 @@ def is_typed_dict(x: Any) -> TypeGuard[type]:
         return hasattr(x, "__orig_bases__") and TypedDict in x.__orig_bases__
 
 
-def isinstance_guard(x: Any, target_type: Type[T]) -> TypeIs[T]:
+def isinstance_guard(x: Any, target_type: Optional[Type[T]]) -> TypeIs[T]:
     """Improved isinstance(...) function that supports parametrized Union, TypedDict, Literal, Mapping or Iterable.
 
     Example 1::
@@ -63,6 +63,8 @@ def isinstance_guard(x: Any, target_type: Type[T]) -> TypeIs[T]:
         return False
     if target_type is Any:
         return True
+    elif target_type is None:
+        return x is None
 
     if is_typed_dict(target_type):
         return _isinstance_guard_typed_dict(x, target_type)
@@ -89,6 +91,17 @@ def isinstance_guard(x: Any, target_type: Type[T]) -> TypeIs[T]:
         return all(isinstance_guard(k, args[0]) for k in x.keys()) and all(
             isinstance_guard(v, args[1]) for v in x.values()
         )
+
+    if issubclass(origin, Tuple):
+        if not isinstance_guard(x, origin):
+            return False
+        elif len(args) == 1 and args[0] == ():
+            return len(x) == 0
+        elif len(args) == 2 and args[1] is ...:
+            args = tuple([args[0]] * len(x))
+        elif len(x) != len(args):
+            return False
+        return all(isinstance_guard(xi, ti) for xi, ti in zip(x, args))
 
     if issubclass(origin, Iterable):
         if not isinstance_guard(x, origin):
@@ -178,6 +191,19 @@ def is_builtin_scalar(x: Any, *, strict: bool = False) -> TypeIs[BuiltinScalar]:
     return isinstance(x, (int, float, bool, complex, NoneType, str, bytes))
 
 
+def is_dataclass_instance(x: Any) -> TypeIs[DataclassInstance]:
+    """Returns True if argument is a dataclass.
+
+    Unlike function `dataclasses.is_dataclass`, this function returns False for a dataclass type.
+    """
+    return isinstance_guard(x, DataclassInstance)
+
+
+def is_namedtuple_instance(x: Any) -> TypeIs[NamedTupleInstance]:
+    """Returns True if argument is a NamedTuple."""
+    return isinstance_guard(x, NamedTupleInstance)
+
+
 def is_iterable_str(
     x: Any,
     *,
@@ -259,11 +285,6 @@ def is_sequence_str(
 # -----------------------
 # Old aliases
 # -----------------------
-def is_dataclass_instance(x: Any) -> TypeIs[DataclassInstance]:
-    """Returns True if argument is a dataclass. Unlike function `dataclasses.is_dataclass`, this function returns False for a dataclass type."""
-    return isinstance_guard(x, DataclassInstance)
-
-
 @deprecated_function("Deprecated: Use `isinstance_guard(x, Dict[str, Any])` instead.")
 def is_dict_str(x: Any) -> TypeIs[Dict[str, Any]]:
     return isinstance_guard(x, Dict[str, Any])
@@ -351,13 +372,6 @@ def is_mapping_str(x: Any) -> TypeIs[Mapping[str, Any]]:
 )
 def is_mapping_str_iterable(x: Any) -> TypeIs[Mapping[str, Iterable[Any]]]:
     return isinstance_guard(x, Mapping[str, Iterable[Any]])
-
-
-@deprecated_function(
-    "Deprecated: Use `isinstance_guard(x, NamedTupleInstance)` instead."
-)
-def is_namedtuple_instance(x: Any) -> TypeIs[NamedTupleInstance]:
-    return isinstance_guard(x, NamedTupleInstance)
 
 
 @deprecated_function("Deprecated: Use `isinstance_guard(x, Sequence[bool])` instead.")

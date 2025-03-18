@@ -87,20 +87,20 @@ class SupportsBool(Protocol):
 
 
 @runtime_checkable
-class SupportsOr(Protocol):
-    def __ior__(self, other, /):
-        raise NotImplementedError
-
-    def __or__(self, other, /):
+class SupportsAnd(Protocol):
+    def __and__(self, other, /):
         raise NotImplementedError
 
 
 @runtime_checkable
-class SupportsAnd(Protocol):
-    def __iand__(self, other, /):
+class SupportsMul(Protocol):
+    def __mul__(self, other, /):
         raise NotImplementedError
 
-    def __and__(self, other, /):
+
+@runtime_checkable
+class SupportsOr(Protocol):
+    def __or__(self, other, /):
         raise NotImplementedError
 
 

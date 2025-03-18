@@ -112,13 +112,13 @@ class TestIsInstanceGuard(TestCase):
         assert isinstance_guard(x, Number)
         assert isinstance_guard(x, Optional[int])
         assert isinstance_guard(x, Union[int, str])
-        assert isinstance_guard(x, Literal[1])
+        assert isinstance_guard(x, Literal[1])  # type: ignore
         assert isinstance_guard(x, Literal[2, None, 1, "a"])
 
         assert not isinstance_guard(x, float)
-        assert not isinstance_guard(x, Callable)
+        assert not isinstance_guard(x, Callable)  # type: ignore
         assert not isinstance_guard(x, Generator)
-        assert not isinstance_guard(x, Literal[2])
+        assert not isinstance_guard(x, Literal[2])  # type: ignore
 
     def test_example_2_dict(self) -> None:
         x = {"a": 2, "b": 10}
@@ -198,6 +198,45 @@ class TestIsInstanceGuard(TestCase):
         assert not isinstance_guard(x, Dict[Union[str, int], Union[int, str]])
         assert not isinstance_guard(x, ExampleDict)
         assert isinstance_guard(x, ExampleDict2)
+
+    def test_tuple(self) -> None:
+        examples = [
+            ((), Tuple[()], True),
+            ((1,), Tuple[()], False),
+            ((1, 2), Tuple[()], False),
+            ((), Tuple[int], False),
+            ((1,), Tuple[int], True),
+            ((1, 2), Tuple[int], False),
+            ((), Tuple[int, ...], True),
+            ((1,), Tuple[int, ...], True),
+            ((1, 2), Tuple[int, ...], True),
+            (("a", 2), Tuple[str, int], True),
+            (("a", 2), Tuple[int, str], False),
+            (("a", 2), Tuple[Union[str, int], ...], True),
+            (("a", 2), Tuple[str, ...], False),
+        ]
+        for example, type_, expected in examples:
+            assert isinstance_guard(example, type_) == expected, f"{example=}, {type_}"
+
+    def test_none(self) -> None:
+        examples = [
+            (1, int, True),
+            (1, None, False),
+            (1, NoneType, False),
+            (1, Optional[int], True),
+            (1, Union[int, None], True),
+            (1, Union[int, NoneType], True),
+            (None, int, False),
+            (None, None, True),
+            (None, NoneType, True),
+            (None, Optional[int], True),
+            (None, Union[int, None], True),
+            (None, Union[int, NoneType], True),
+            (2.5, Optional[int], False),
+            ("", Optional[int], False),
+        ]
+        for example, type_, expected in examples:
+            assert isinstance_guard(example, type_) == expected, f"{example=}, {type_}"
 
     def test_old_compatibility(self) -> None:
         examples = [

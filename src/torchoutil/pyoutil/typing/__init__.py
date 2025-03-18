@@ -10,10 +10,12 @@ from .classes import (
     EllipsisType,
     NamedTupleInstance,
     NoneType,
-    SizedIter,
     SizedGetitem,
     SizedGetitemIter,
+    SizedIter,
     SizedIterable,
+    SupportsAnd,
+    SupportsOr,
     T_BuiltinNumber,
     T_BuiltinScalar,
 )
