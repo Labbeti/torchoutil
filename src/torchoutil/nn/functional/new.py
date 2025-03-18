@@ -17,7 +17,7 @@ from torchoutil.core.make import (
     make_dtype,
     make_generator,
 )
-from torchoutil.core.semver import Version
+from torchoutil.pyoutil.semver import Version
 from torchoutil.pyoutil.typing import BuiltinNumber
 from torchoutil.types import (
     BoolTensor0D,

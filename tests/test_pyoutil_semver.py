@@ -58,12 +58,9 @@ class TestVersion(TestCase):
         Version(to.__version__)
         Version(torch.__version__)
 
-        v12 = Version(1, 2)
-        assert v12.to_tuple() == (1, 2, 0)
-
     def test_parse_invalid(self) -> None:
         with self.assertRaises(ValueError):
-            Version()
+            Version()  # type: ignore
 
         with self.assertRaises(ValueError):
             Version("")
@@ -88,6 +85,9 @@ class TestVersion(TestCase):
 
         with self.assertRaises(ValueError):
             Version("1.02.X")
+
+        with self.assertRaises(KeyError):
+            Version(1, 2)  # type: ignore
 
     def test_semver(self) -> None:
         assert Version("1.0.0") < Version("2.0.0") < Version("2.1.0") < Version("2.1.1")

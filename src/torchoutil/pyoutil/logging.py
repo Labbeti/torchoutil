@@ -13,6 +13,7 @@ from typing import IO, List, Literal, Optional, Sequence, TypeVar, Union
 from typing_extensions import TypeAlias
 
 from .importlib import reload_submodules
+from .semver import Version
 
 T = TypeVar("T", covariant=True)
 
@@ -215,7 +216,10 @@ class MkdirFileHandler(FileHandler):
         filename = Path(filename)
         filename.parent.mkdir(parents=mkdir_parents, exist_ok=mkdir_exist_ok)
 
-        super().__init__(filename, mode, encoding, delay, errors)
+        if Version.python() < Version("3.9.0"):
+            super().__init__(filename, mode, encoding, delay)
+        else:
+            super().__init__(filename, mode, encoding, delay, errors)  # type: ignore
 
 
 def _verbose_to_logging_level(verbose: int) -> int:

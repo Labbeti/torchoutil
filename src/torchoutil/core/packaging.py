@@ -5,9 +5,9 @@ from typing import Callable, Final, Iterable, Union
 
 import torch
 
-from torchoutil.core.semver import Version
 from torchoutil.pyoutil.functools import identity
 from torchoutil.pyoutil.importlib import is_available_package
+from torchoutil.pyoutil.semver import Version
 
 
 def _get_extra_version(name: str) -> str:

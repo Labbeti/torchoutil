@@ -37,9 +37,9 @@ from .core.make import (  # noqa: F401
     make_dtype,
     make_generator,
 )
-from .core.semver import Version
 from .hub.download import download_file
 from .nn.functional import *
+from .pyoutil.semver import Version
 from .pyoutil.typing.guards import isinstance_guard
 from .types.guards import (
     is_builtin_number,

@@ -13,8 +13,8 @@ from torch.serialization import DEFAULT_PROTOCOL
 from torch.types import Storage
 from typing_extensions import TypeAlias
 
-from torchoutil.core.semver import Version
 from torchoutil.pyoutil.io import _setup_path
+from torchoutil.pyoutil.semver import Version
 
 FileLike: TypeAlias = Union[str, os.PathLike, BinaryIO, IO[bytes]]
 MapLocationLike: TypeAlias = Optional[
