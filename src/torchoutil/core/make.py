@@ -22,6 +22,14 @@ def get_default_device() -> torch.device:
     return torch.empty((0,)).device
 
 
+def get_default_dtype() -> torch.dtype:
+    return torch.get_default_dtype()
+
+
+def get_default_generator() -> Generator:
+    return torch.default_generator
+
+
 def make_device(device: DeviceLike = CUDA_IF_AVAILABLE) -> Optional[torch.device]:
     """Create concrete device object from device-like object."""
     if isinstance(device, (torch.device, type(None))):
@@ -42,7 +50,7 @@ def make_dtype(dtype: DTypeLike = None) -> Optional[torch.dtype]:
     if isinstance(dtype, (torch.dtype, type(None))):
         return dtype
     elif dtype == "default":
-        return torch.get_default_dtype()
+        return get_default_dtype()
     elif isinstance(dtype, DTypeEnum):
         return enum_dtype_to_torch_dtype(dtype)
     elif isinstance(dtype, str):
@@ -59,7 +67,7 @@ def make_generator(generator: GeneratorLike = None) -> Optional[Generator]:
     elif isinstance(generator, int):
         return Generator().manual_seed(generator)
     elif generator == "default":
-        return torch.default_generator
+        return get_default_generator()
     else:
         msg = f"Invalid argument type {type(generator)}. (expected torch.Generator, None, int or 'default')"
         raise TypeError(msg)
