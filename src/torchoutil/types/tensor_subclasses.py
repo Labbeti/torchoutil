@@ -277,13 +277,18 @@ class _TensorNDBase(
             raise ValueError(msg)
         del args
 
-        if layout is None:  # supports older PyTorch versions
+        # Supports older PyTorch versions
+        if layout is None:
             layout = torch.strided
+        if pin_memory is None:
+            pin_memory = False
+        if requires_grad is None:
+            requires_grad = False
 
         if data is not None:
             result = torch.as_tensor(
                 data=data,
-                dtype=dtype,
+                dtype=dtype,  # type: ignore
                 device=device,
             )
             if cls_ndim is not None and result.ndim != cls_ndim:
@@ -294,7 +299,7 @@ class _TensorNDBase(
         elif size is not None:
             return torch.empty(
                 size,
-                dtype=dtype,
+                dtype=dtype,  # type: ignore
                 device=device,
                 memory_format=memory_format,
                 out=out,
@@ -1735,113 +1740,111 @@ class CFloatTensor3D(
         return super().tolist()  # type: ignore
 
 
-class CHalfTensor(
-    _TensorNDBase[
-        Literal[DTypeEnum.chalf],
-        int,
-        complex,
-        Literal[False],
-        Literal[True],
-        Literal[True],
-    ],
-    metaclass=_TensorNDMeta[
-        Literal[DTypeEnum.chalf],
-        int,
-        complex,
-        Literal[False],
-        Literal[True],
-        Literal[True],
-    ],
-):
-    ...
+if hasattr(torch, "complex32"):
 
+    class CHalfTensor(
+        _TensorNDBase[
+            Literal[DTypeEnum.chalf],
+            int,
+            complex,
+            Literal[False],
+            Literal[True],
+            Literal[True],
+        ],
+        metaclass=_TensorNDMeta[
+            Literal[DTypeEnum.chalf],
+            int,
+            complex,
+            Literal[False],
+            Literal[True],
+            Literal[True],
+        ],
+    ):
+        ...
 
-class CHalfTensor0D(
-    _TensorNDBase[
-        Literal[DTypeEnum.chalf],
-        Literal[0],
-        complex,
-        Literal[False],
-        Literal[True],
-        Literal[True],
-    ],
-    metaclass=_TensorNDMeta[
-        Literal[DTypeEnum.chalf],
-        Literal[0],
-        complex,
-        Literal[False],
-        Literal[True],
-        Literal[True],
-    ],
-):
-    def tolist(self) -> complex:
-        return super().tolist()  # type: ignore
+    class CHalfTensor0D(
+        _TensorNDBase[
+            Literal[DTypeEnum.chalf],
+            Literal[0],
+            complex,
+            Literal[False],
+            Literal[True],
+            Literal[True],
+        ],
+        metaclass=_TensorNDMeta[
+            Literal[DTypeEnum.chalf],
+            Literal[0],
+            complex,
+            Literal[False],
+            Literal[True],
+            Literal[True],
+        ],
+    ):
+        def tolist(self) -> complex:
+            return super().tolist()  # type: ignore
 
+    class CHalfTensor1D(
+        _TensorNDBase[
+            Literal[DTypeEnum.chalf],
+            Literal[1],
+            complex,
+            Literal[False],
+            Literal[True],
+            Literal[True],
+        ],
+        metaclass=_TensorNDMeta[
+            Literal[DTypeEnum.chalf],
+            Literal[1],
+            complex,
+            Literal[False],
+            Literal[True],
+            Literal[True],
+        ],
+    ):
+        def tolist(self) -> List[complex]:
+            return super().tolist()  # type: ignore
 
-class CHalfTensor1D(
-    _TensorNDBase[
-        Literal[DTypeEnum.chalf],
-        Literal[1],
-        complex,
-        Literal[False],
-        Literal[True],
-        Literal[True],
-    ],
-    metaclass=_TensorNDMeta[
-        Literal[DTypeEnum.chalf],
-        Literal[1],
-        complex,
-        Literal[False],
-        Literal[True],
-        Literal[True],
-    ],
-):
-    def tolist(self) -> List[complex]:
-        return super().tolist()  # type: ignore
+    class CHalfTensor2D(
+        _TensorNDBase[
+            Literal[DTypeEnum.chalf],
+            Literal[2],
+            complex,
+            Literal[False],
+            Literal[True],
+            Literal[True],
+        ],
+        metaclass=_TensorNDMeta[
+            Literal[DTypeEnum.chalf],
+            Literal[2],
+            complex,
+            Literal[False],
+            Literal[True],
+            Literal[True],
+        ],
+    ):
+        def tolist(self) -> List[List[complex]]:
+            return super().tolist()  # type: ignore
 
-
-class CHalfTensor2D(
-    _TensorNDBase[
-        Literal[DTypeEnum.chalf],
-        Literal[2],
-        complex,
-        Literal[False],
-        Literal[True],
-        Literal[True],
-    ],
-    metaclass=_TensorNDMeta[
-        Literal[DTypeEnum.chalf],
-        Literal[2],
-        complex,
-        Literal[False],
-        Literal[True],
-        Literal[True],
-    ],
-):
-    def tolist(self) -> List[List[complex]]:
-        return super().tolist()  # type: ignore
-
-
-class CHalfTensor3D(
-    _TensorNDBase[
-        Literal[DTypeEnum.chalf],
-        Literal[3],
-        complex,
-        Literal[False],
-        Literal[True],
-        Literal[True],
-    ],
-    metaclass=_TensorNDMeta[
-        Literal[DTypeEnum.chalf],
-        Literal[3],
-        complex,
-        Literal[False],
-        Literal[True],
-        Literal[True],
-    ],
-):
-    def tolist(self) -> List[List[List[complex]]]:
-        return super().tolist()  # type: ignore
+    class CHalfTensor3D(
+        _TensorNDBase[
+            Literal[DTypeEnum.chalf],
+            Literal[3],
+            complex,
+            Literal[False],
+            Literal[True],
+            Literal[True],
+        ],
+        metaclass=_TensorNDMeta[
+            Literal[DTypeEnum.chalf],
+            Literal[3],
+            complex,
+            Literal[False],
+            Literal[True],
+            Literal[True],
+        ],
+    ):
+        def tolist(self) -> List[List[List[complex]]]:
+            return super().tolist()  # type: ignore
 
 
 class CDoubleTensor(
