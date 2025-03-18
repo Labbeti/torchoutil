@@ -31,7 +31,7 @@ def download_file(
 
     Args:
         url: Target URL.
-        dst: Target filepath or directory.
+        dst: Target filepath or directory. None means current working directory. defaults to ".".
         hash_prefix: Optional hash prefix present in destination filename. defaults to None.
         make_parents: If True, make intermediate directories to destination. defaults to False.
         make_intermediate: Deprecated: alias for 'make_parents'. If not None, overwrite any value of 'make_parents'. defaults to None.
@@ -67,7 +67,7 @@ def download_file(
     try:
         download_url_to_file(
             url,
-            fpath,  # type: ignore
+            str(fpath),
             hash_prefix=hash_prefix,
             progress=verbose > 0,
         )

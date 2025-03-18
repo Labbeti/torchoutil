@@ -96,4 +96,4 @@ from .re import (
     sort_with_patterns,
 )
 from .typing import *
-from .warnings import deprecated, deprecated_alias, warn_once
+from .warnings import deprecated_alias, deprecated_function, warn_once

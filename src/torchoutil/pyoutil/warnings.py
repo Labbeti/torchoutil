@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import warnings
-from functools import lru_cache
+from functools import lru_cache, partial
 from typing import Any, Callable, Optional, Type, TypeVar, Union, overload
 
 from typing_extensions import ParamSpec
@@ -46,8 +46,9 @@ def warn_once(
 def deprecated_alias(
     alternative: Callable[P, U],
     msg_fmt: str = "Deprecated call to '{fn_name}', use '{alternative_name}' instead.",
-    warn_fn: Callable[[str], Any] = warn_once,
+    warn_fn: Callable[[str], Any] = partial(warn_once, category=DeprecationWarning),
 ) -> Callable[..., Callable[P, U]]:
+    """Decorator to wrap deprecated aliases."""
     alternative_name = alternative.__name__ if alternative is not None else "None"
 
     def pre_fn(fn, *args, **kwargs):
@@ -57,10 +58,12 @@ def deprecated_alias(
     return _alias(alternative, pre_fn=pre_fn)
 
 
-def deprecated(
+def deprecated_function(
     msg_fmt: str = "Deprecated call to '{fn_name}'.",
-    warn_fn: Callable[[str], Any] = warn_once,
+    warn_fn: Callable[[str], Any] = partial(warn_once, category=DeprecationWarning),
 ) -> Callable[[Callable[P, U]], Callable[P, U]]:
+    """Decorator to wrap deprecated functions."""
+
     def pre_fn(fn, *args, **kwargs):
         msg = msg_fmt.format(fn_name=fn.__name__)
         warn_fn(msg)

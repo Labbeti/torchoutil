@@ -14,6 +14,7 @@ from typing_extensions import TypeAlias
 
 from .importlib import reload_submodules
 from .semver import Version
+from .warnings import deprecated_function
 
 T = TypeVar("T", covariant=True)
 
@@ -37,6 +38,14 @@ VERBOSE_WARNING = 0
 VERBOSE_ERROR = -1
 
 pylog = logging.getLogger(__name__)
+
+
+@lru_cache(maxsize=None)
+@deprecated_function(
+    "Deprecated: Use `torchoutil.pyoutil.logging.log_once` or `torchoutil.pyoutil.warnings.warn_once` instead."
+)
+def warn_once(*args, **kwargs):
+    return log_once(*args, **kwargs)
 
 
 @lru_cache(maxsize=None)
@@ -169,6 +178,7 @@ def get_current_file_logger(
         return default
 
 
+@lru_cache(maxsize=None)
 def get_null_logger() -> Logger:
     logger = logging.getLogger("null_logger")
     logger.addHandler(logging.NullHandler())
