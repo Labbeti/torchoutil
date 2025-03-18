@@ -54,6 +54,14 @@ class Version:
     @overload
     def __init__(
         self,
+        version: "Version",
+        /,
+    ) -> None:
+        ...
+
+    @overload
+    def __init__(
+        self,
         version_str: str,
         /,
     ) -> None:
@@ -88,8 +96,13 @@ class Version:
 
     def __init__(self, *args, **kwargs) -> None:
         has_1_pos_arg = len(args) == 1 and len(kwargs) == 0
+        # Version
+        if has_1_pos_arg and isinstance(args[0], Version):
+            version = args[0]
+            version_dict = version.to_dict(exclude_none=False)
+
         # Version str
-        if has_1_pos_arg and isinstance(args[0], str):
+        elif has_1_pos_arg and isinstance(args[0], str):
             version_str = args[0]
             version_dict = _parse_version_str(version_str)
 
