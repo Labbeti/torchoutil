@@ -11,6 +11,7 @@ from typing import (
     Dict,
     Generator,
     Iterable,
+    Iterator,
     List,
     Literal,
     Mapping,
@@ -18,6 +19,7 @@ from typing import (
     Optional,
     Sequence,
     Tuple,
+    Type,
     TypeVar,
     Union,
     overload,
@@ -26,7 +28,14 @@ from typing import (
 from typing_extensions import TypeGuard, TypeIs
 
 from .functools import function_alias, identity
-from .typing.classes import SizedGetitemIter, SupportsAnd, SupportsOr, T_BuiltinScalar
+from .semver import Version
+from .typing.classes import (
+    SizedGetitemIter,
+    SupportsAnd,
+    SupportsMul,
+    SupportsOr,
+    T_BuiltinScalar,
+)
 from .typing.guards import is_builtin_scalar, isinstance_guard
 
 K = TypeVar("K", covariant=True)
@@ -38,6 +47,7 @@ X = TypeVar("X", covariant=True)
 Y = TypeVar("Y", covariant=True)
 
 T_SupportsAnd = TypeVar("T_SupportsAnd", bound=SupportsAnd)
+T_SupportsMul = TypeVar("T_SupportsMul", bound=SupportsMul)
 T_SupportsOr = TypeVar("T_SupportsOr", bound=SupportsOr)
 
 KeyMode = Literal["intersect", "same", "union"]
@@ -608,13 +618,6 @@ def unzip(lst):
     return tuple(map(list, zip(*lst)))
 
 
-def prod(x: Iterable[T], /, start: T = 1) -> T:
-    result = copy.copy(start)
-    for xi in x:
-        result = result * xi  # type: ignore
-    return result
-
-
 def sorted_dict(
     x: Mapping[K, V],
     /,
@@ -739,6 +742,9 @@ def is_sorted(
 
 
 def union_dicts(dicts: Iterable[Dict[K, V]]) -> Dict[K, V]:
+    if Version.python() >= Version("3.9.0"):
+        return reduce_or(dicts)  # type: ignore
+
     it = iter(dicts)
     try:
         dic0 = next(it)
@@ -781,24 +787,129 @@ def shuffled(
         return x
 
 
-def intersect(
-    arg0: T_SupportsAnd,
+@overload
+def reduce_and(
     *args: T_SupportsAnd,
+    start: T_SupportsAnd,
 ) -> T_SupportsAnd:
-    result = copy.copy(arg0)
-    for arg in args:
-        result &= arg
-    return result
+    ...
 
 
-def union(
-    arg0: T_SupportsOr,
+@overload
+def reduce_and(
+    arg0: T_SupportsAnd,
+    /,
+    *args: T_SupportsAnd,
+    start: Optional[T_SupportsAnd] = None,
+) -> T_SupportsAnd:
+    ...
+
+
+@overload
+def reduce_and(
+    args: Iterable[T_SupportsAnd],
+    /,
+    *,
+    start: T_SupportsAnd,
+) -> T_SupportsAnd:
+    ...
+
+
+def reduce_and(*args, start=None):
+    return _reduce(*args, start=start, op_fn=operator.and_, type_=SupportsAnd)
+
+
+@overload
+def reduce_mul(
+    *args: T_SupportsMul,
+    start: T_SupportsMul,
+) -> T_SupportsMul:
+    ...
+
+
+@overload
+def reduce_mul(
+    arg0: T_SupportsMul,
+    /,
+    *args: T_SupportsMul,
+    start: Optional[T_SupportsMul] = None,
+) -> T_SupportsMul:
+    ...
+
+
+@overload
+def reduce_mul(
+    args: Iterable[T_SupportsMul],
+    /,
+    *,
+    start: T_SupportsMul,
+) -> T_SupportsMul:
+    ...
+
+
+def reduce_mul(*args, start=None):
+    return _reduce(*args, start=start, op_fn=operator.mul, type_=SupportsMul)
+
+
+@overload
+def reduce_or(
     *args: T_SupportsOr,
+    start: T_SupportsOr,
 ) -> T_SupportsOr:
-    result = copy.copy(arg0)
-    for arg in args:
-        result |= arg
-    return result
+    ...
+
+
+@overload
+def reduce_or(
+    arg0: T_SupportsOr,
+    /,
+    *args: T_SupportsOr,
+    start: Optional[T_SupportsOr] = None,
+) -> T_SupportsOr:
+    ...
+
+
+@overload
+def reduce_or(
+    args: Iterable[T_SupportsOr],
+    /,
+    *,
+    start: T_SupportsOr,
+) -> T_SupportsOr:
+    ...
+
+
+def reduce_or(*args, start=None):
+    return _reduce(*args, start=start, op_fn=operator.or_, type_=SupportsOr)
+
+
+def _reduce(
+    *args, start: Optional[T] = None, op_fn: Callable[[T, T], T], type_: Type[T]
+) -> T:
+    if isinstance_guard(args, Tuple[type_, ...]):
+        it_or_args = args
+    elif isinstance_guard(args, Tuple[Iterable[type_]]):
+        it_or_args = args[0]
+    else:
+        msg = f"Invalid positional arguments {args}. (expected {Tuple[type_, ...]} or {Tuple[Iterable[type_]]})"
+        raise TypeError(msg)
+
+    it: Iterator[T] = iter(it_or_args)
+
+    if isinstance(start, type_):
+        accumulator = start
+    elif start is None:
+        try:
+            accumulator = next(it)
+        except StopIteration:
+            msg = f"Invalid combinaison of arguments {args=} and {start=}. (expected at least 1 non-empty argument or start that supports or operator.)"
+            raise ValueError(msg)
+    else:
+        raise TypeError(f"Invalid argument type {type(start)}.")
+
+    for arg in it:
+        accumulator = op_fn(accumulator, arg)
+    return accumulator
 
 
 @function_alias(all_eq)
@@ -811,47 +922,16 @@ def is_unique(*args, **kwargs):
     ...
 
 
-@overload
-def reduce_or(*args: T_SupportsOr, start: T_SupportsOr) -> T_SupportsOr:
+@function_alias(reduce_and)
+def intersect(*args, **kwargs):
     ...
 
 
-@overload
-def reduce_or(
-    arg0: T_SupportsOr, /, *args: T_SupportsOr, start: Any = None
-) -> T_SupportsOr:
+@function_alias(reduce_mul)
+def prod(*args, **kwargs):
     ...
 
 
-@overload
-def reduce_or(args: Iterable[T_SupportsOr], /, *, start: T_SupportsOr) -> T_SupportsOr:
+@function_alias(reduce_or)
+def union(*args, **kwargs):
     ...
-
-
-def reduce_or(*args, start=None):
-    it = iter(args)
-
-    try:
-        first = next(it)
-        argname = "args[0]"
-    except StopIteration:
-        if start is None:
-            msg = f"Invalid combinaison of arguments {args=} and {start=}. (expected at least 1 non-empty argument or start != None)"
-            raise ValueError(msg)
-        first = start
-        argname = "start"
-
-    if isinstance(first, SupportsOr):
-        pass
-    elif isinstance(first, Iterable):
-        it = iter(first)
-    else:
-        msg = (
-            f"Invalid argument {argname}={first}. (expected {SupportsOr} or {Iterable})"
-        )
-        raise TypeError(msg)
-
-    result = copy.copy(first)
-    for arg in it:
-        result |= arg
-    return start
