@@ -11,7 +11,6 @@ __maintainer__ = "Étienne Labbé (Labbeti)"
 __status__ = "Development"
 __version__ = "0.5.0"
 
-
 # Import global functions and classes from torch
 from torch import *  # type: ignore
 
@@ -104,6 +103,11 @@ from .types.tensor_subclasses import (
     HalfTensor1D,
     HalfTensor2D,
     HalfTensor3D,
+    IntegralTensor,
+    IntegralTensor0D,
+    IntegralTensor1D,
+    IntegralTensor2D,
+    IntegralTensor3D,
     IntTensor,
     IntTensor0D,
     IntTensor1D,
@@ -133,11 +137,6 @@ from .types.tensor_subclasses import (
     UnsignedIntegerTensor1D,
     UnsignedIntegerTensor2D,
     UnsignedIntegerTensor3D,
-    IntegralTensor,
-    IntegralTensor0D,
-    IntegralTensor1D,
-    IntegralTensor2D,
-    IntegralTensor3D,
 )
 from .types.variable_fns import (
     arange,
@@ -151,11 +150,11 @@ from .types.variable_fns import (
     zeros,
 )
 from .utils.saving.common import to_builtin
-from .utils.saving.csv import load_csv, dump_csv
+from .utils.saving.csv import dump_csv, load_csv
 from .utils.saving.dump_fn import dump, save
-from .utils.saving.json import load_json, dump_json
+from .utils.saving.json import dump_json, load_json
 from .utils.saving.load_fn import load
-from .utils.saving.pickle import load_pickle, dump_pickle
+from .utils.saving.pickle import dump_pickle, load_pickle
 from .utils.saving.torch import load_torch, to_torch
 
 version = __version__

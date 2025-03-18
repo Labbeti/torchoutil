@@ -16,8 +16,6 @@ from typing import (
     TypeVar,
     Union,
     overload,
-    Mapping,
-    Iterable,
 )
 
 from torchoutil.pyoutil.collections import (

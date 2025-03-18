@@ -5,9 +5,9 @@ import math
 from typing import Callable, Iterable, List, Optional, Union
 
 import torch
-from torch import Generator, Tensor
+from torch import Tensor
 
-from torchoutil.core.make import make_generator
+from torchoutil.core.make import GeneratorLike, make_generator
 from torchoutil.nn.functional.transform import as_tensor
 from torchoutil.pyoutil.collections import flat_list_of_list
 
@@ -15,7 +15,7 @@ from torchoutil.pyoutil.collections import flat_list_of_list
 def random_split(
     num_samples_or_indices: Union[int, List[int], Tensor],
     lengths: Iterable[float],
-    generator: Union[int, Generator, None] = None,
+    generator: GeneratorLike = None,
     round_fn: Callable[[float], int] = math.floor,
 ) -> List[List[int]]:
     """Generate indices for a random dataset split.
@@ -26,6 +26,8 @@ def random_split(
         generator: Torch Generator or seed to make this function deterministic. defaults to None.
         round_fn: Function to round ratios to integer sizes. defaults to math.floor.
     """
+    generator = make_generator(generator)
+
     if isinstance(num_samples_or_indices, int):
         num_samples = num_samples_or_indices
         indices = torch.randperm(num_samples, generator=generator)
@@ -50,7 +52,7 @@ def balanced_monolabel_split(
     targets_indices: Union[Tensor, List[int]],
     num_classes: int,
     lengths: Iterable[float],
-    generator: Union[int, Generator, None] = None,
+    generator: GeneratorLike = None,
     round_fn: Callable[[float], int] = math.floor,
 ) -> List[List[int]]:
     """Generate indices for a random dataset split while keeping the same multiclass distribution.
@@ -62,13 +64,14 @@ def balanced_monolabel_split(
         generator: Torch Generator or seed to make this function deterministic. defaults to None.
         round_fn: Function to round ratios to integer sizes. defaults to math.floor.
     """
+    if isinstance(targets_indices, list):
+        targets_indices = as_tensor(targets_indices)
+
     assert (0 <= targets_indices).all(), "Target classes indices must be positive."
     assert (
         targets_indices < num_classes
     ).all(), f"Target classes indices must be lower than {num_classes=}."
 
-    if isinstance(targets_indices, list):
-        targets_indices = as_tensor(targets_indices)
     lengths = list(lengths)
     generator = make_generator(generator)
 
@@ -100,7 +103,7 @@ def _round_lengths(
 
 def _shuffle_indices_per_class(
     indices_per_class: List[List[int]],
-    generator: Optional[Generator],
+    generator: Optional[torch.Generator],
 ) -> List[List[int]]:
     shuffled = []
     for indices in indices_per_class:

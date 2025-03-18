@@ -15,7 +15,7 @@ T = TypeVar("T")
 
 if __version__ < TorchVersion("2.0.0"):
 
-    class namedtuple_values_indices(tuple):
+    class _namedtuple_values_indices(tuple):
         @property
         def values(self) -> Tensor:
             return self[0]
@@ -24,13 +24,13 @@ if __version__ < TorchVersion("2.0.0"):
         def indices(self) -> LongTensor:
             return self[1]
 
-    class min(namedtuple_values_indices):
+    class min(_namedtuple_values_indices):
         ...
 
-    class max(namedtuple_values_indices):
+    class max(_namedtuple_values_indices):
         ...
 
-    class topk(namedtuple_values_indices):
+    class topk(_namedtuple_values_indices):
         ...
 
 else:

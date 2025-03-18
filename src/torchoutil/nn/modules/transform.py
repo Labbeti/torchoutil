@@ -4,7 +4,6 @@
 from typing import (
     Any,
     Callable,
-    Generic,
     Iterable,
     List,
     Optional,
@@ -15,10 +14,9 @@ from typing import (
 )
 
 import torch
-from torch import Generator, Tensor, nn
+from torch import Tensor, nn
 
-from torchoutil.nn.modules.module import Module
-from torchoutil.core.make import DeviceLike, DTypeLike
+from torchoutil.core.make import DeviceLike, DTypeLike, GeneratorLike
 from torchoutil.extras.numpy import np
 from torchoutil.nn.functional.transform import (
     PadCropAlign,
@@ -26,6 +24,7 @@ from torchoutil.nn.functional.transform import (
     PadValue,
     SqueezeMode,
     T_BuiltinScalar,
+    as_tensor,
     flatten,
     identity,
     move_to_rec,
@@ -37,12 +36,12 @@ from torchoutil.nn.functional.transform import (
     shuffled,
     squeeze,
     to_item,
-    as_tensor,
     transform_drop,
     unsqueeze,
     view_as_complex,
     view_as_real,
 )
+from torchoutil.nn.modules.module import Module
 from torchoutil.pyoutil.collections import dump_dict
 from torchoutil.pyoutil.typing import BuiltinScalar, SizedIterable
 from torchoutil.types._typing import ComplexFloatingTensor, ScalarLike, T_TensorOrArray
@@ -88,7 +87,7 @@ class Flatten(Module):
         self.end_dim = end_dim
 
     @overload
-    def forward(self, x: Tensor) -> Tensor:
+    def forward(self, x: Tensor) -> Tensor:  # type: ignore
         ...
 
     @overload
@@ -100,7 +99,7 @@ class Flatten(Module):
         ...
 
     @overload
-    def forward(self, x: Iterable[T_BuiltinScalar]) -> List[T_BuiltinScalar]:
+    def forward(self, x: Iterable[T_BuiltinScalar]) -> List[T_BuiltinScalar]:  # type: ignore
         ...
 
     def forward(self, x: Any) -> Any:
@@ -155,7 +154,7 @@ class PadAndCropDim(Module):
         pad_value: PadValue = 0.0,
         dim: int = -1,
         mode: PadMode = "constant",
-        generator: Union[int, Generator, None] = None,
+        generator: GeneratorLike = None,
     ) -> None:
         """
         For more information, see :func:`~torchoutil.nn.functional.transform.pad_and_crop_dim`.
@@ -166,7 +165,7 @@ class PadAndCropDim(Module):
         self.pad_value = pad_value
         self.dim = dim
         self.mode: PadMode = mode
-        self.generator = generator
+        self.generator: GeneratorLike = generator
 
     def forward(self, x: Tensor) -> Tensor:
         return pad_and_crop_dim(
@@ -325,14 +324,14 @@ class Shuffled(Module):
     def __init__(
         self,
         dims: Union[int, Iterable[int]],
-        generator: Union[int, Generator, None],
+        generator: GeneratorLike,
     ) -> None:
         """
         For more information, see :func:`~torchoutil.nn.functional.transform.shuffled`.
         """
         super().__init__()
         self.dims = dims
-        self.generator = generator
+        self.generator: GeneratorLike = generator
 
     def forward(self, x: Tensor) -> Tensor:
         return shuffled(x, dims=self.dims, generator=self.generator)
@@ -347,7 +346,8 @@ class ToItem(Module):
     """
 
     def forward(
-        self, x: Union[ScalarLike, Tensor, np.ndarray, SizedIterable]
+        self,
+        x: Union[ScalarLike, Tensor, np.ndarray, SizedIterable],
     ) -> BuiltinScalar:
         return to_item(x)  # type: ignore
 
@@ -357,7 +357,7 @@ class TransformDrop(Module[T, T]):
         self,
         transform: Callable[[T], T],
         p: float,
-        generator: Union[int, Generator, None] = None,
+        generator: GeneratorLike = None,
     ) -> None:
         """
         For more information, see :func:`~torchoutil.nn.functional.transform.transform_drop`.
@@ -365,7 +365,7 @@ class TransformDrop(Module[T, T]):
         super().__init__()
         self.transform = transform
         self.p = p
-        self.generator = generator
+        self.generator: GeneratorLike = generator
 
     def forward(self, x: T) -> T:
         return transform_drop(

@@ -4,9 +4,9 @@
 from typing import Iterable, List, Literal, Union
 
 import torch
-from torch import Generator, Tensor
+from torch import Tensor
 
-from torchoutil.core.make import make_generator, GeneratorLike
+from torchoutil.core.make import GeneratorLike, make_generator
 
 CROP_ALIGNS = ("left", "right", "center", "random")
 CropAlign = Literal["left", "right", "center", "random"]

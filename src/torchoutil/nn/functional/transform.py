@@ -18,7 +18,7 @@ from typing import (
 )
 
 import torch
-from torch import Generator, Tensor, nn
+from torch import Tensor, nn
 from typing_extensions import Never
 
 from torchoutil.core.make import (
@@ -50,14 +50,14 @@ from torchoutil.types._typing import (
     BoolTensor1D,
     BoolTensor2D,
     BoolTensor3D,
-    FloatTensor0D,
-    FloatTensor1D,
-    FloatTensor2D,
-    FloatTensor3D,
     CFloatTensor0D,
     CFloatTensor1D,
     CFloatTensor2D,
     CFloatTensor3D,
+    FloatTensor0D,
+    FloatTensor1D,
+    FloatTensor2D,
+    FloatTensor3D,
     LongTensor0D,
     LongTensor1D,
     LongTensor2D,
@@ -195,7 +195,7 @@ def transform_drop(
     transform: Callable[[T], T],
     x: T,
     p: float,
-    generator: Union[int, Generator, None] = None,
+    generator: GeneratorLike = None,
 ) -> T:
     """Apply a transform on a tensor with a probability of p.
 
@@ -253,7 +253,7 @@ def pad_and_crop_dim(
 def shuffled(
     x: Tensor,
     dims: Union[int, Iterable[int]] = -1,
-    generator: Union[int, Generator, None] = None,
+    generator: GeneratorLike = None,
 ) -> Tensor:
     """Returns a shuffled version of the input tensor along specific dimension(s)."""
     if isinstance(dims, int):
@@ -271,7 +271,7 @@ def shuffled(
 
 
 @overload
-def flatten(
+def flatten(  # type: ignore
     x: Tensor,
     start_dim: int = 0,
     end_dim: Optional[int] = None,
@@ -298,7 +298,7 @@ def flatten(
 
 
 @overload
-def flatten(
+def flatten(  # type: ignore
     x: Iterable[T_BuiltinScalar],
     start_dim: int = 0,
     end_dim: Optional[int] = None,
@@ -484,7 +484,7 @@ def to_item(x: T_BuiltinScalar) -> T_BuiltinScalar:
 
 
 @overload
-def to_item(x: Union[Tensor, np.ndarray, SizedIterable]) -> BuiltinScalar:
+def to_item(x: Union[Tensor, np.ndarray, SizedIterable]) -> BuiltinScalar:  # type: ignore
     ...
 
 

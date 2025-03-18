@@ -25,14 +25,14 @@ from typing import (
 
 from typing_extensions import TypeGuard, TypeIs
 
-from torchoutil.pyoutil.typing.classes import SupportsOr
 from torchoutil.pyoutil.functools import identity
-from torchoutil.pyoutil.typing import (
-    T_BuiltinScalar,
-    is_builtin_scalar,
-    is_mapping_str,
+from torchoutil.pyoutil.typing.classes import (
     SizedGetitemIter,
+    SupportsAnd,
+    SupportsOr,
+    T_BuiltinScalar,
 )
+from torchoutil.pyoutil.typing.guards import is_builtin_scalar, is_mapping_str
 
 K = TypeVar("K", covariant=True)
 T = TypeVar("T", covariant=True)
@@ -41,7 +41,9 @@ V = TypeVar("V", covariant=True)
 W = TypeVar("W", covariant=True)
 X = TypeVar("X", covariant=True)
 Y = TypeVar("Y", covariant=True)
-T_Union = TypeVar("T_Union", bound=SupportsOr)
+
+T_SupportsAnd = TypeVar("T_SupportsAnd", bound=SupportsAnd)
+T_SupportsOr = TypeVar("T_SupportsOr", bound=SupportsOr)
 
 KeyMode = Literal["intersect", "same", "union"]
 KEY_MODES = ("same", "intersect", "union")
@@ -745,11 +747,15 @@ def is_sorted(
     return True
 
 
-def union_dicts(dicts: Iterable[Mapping[K, V]]) -> Dict[K, V]:
-    result = {}
-    for dic in dicts:
-        result.update(dic)
-    return result
+def union_dicts(dicts: Iterable[Dict[K, V]]) -> Dict[K, V]:
+    it = iter(dicts)
+    try:
+        dic0 = next(it)
+    except StopIteration:
+        return {}
+    for dic in it:
+        dic0.update(dic)
+    return dic0
 
 
 def argmin(x: Iterable) -> int:
@@ -784,10 +790,20 @@ def shuffled(
         return x
 
 
+def intersect(
+    arg0: T_SupportsAnd,
+    *args: T_SupportsAnd,
+) -> T_SupportsAnd:
+    result = copy.copy(arg0)
+    for arg in args:
+        result &= arg
+    return result
+
+
 def union(
-    arg0: T_Union,
-    *args: T_Union,
-) -> T_Union:
+    arg0: T_SupportsOr,
+    *args: T_SupportsOr,
+) -> T_SupportsOr:
     result = copy.copy(arg0)
     for arg in args:
         result |= arg

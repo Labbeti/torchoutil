@@ -52,16 +52,7 @@ from .multilabel import (
     probs_to_multihot,
     probs_to_multinames,
 )
-from .new import (
-    arange,
-    empty,
-    full,
-    rand,
-    randint,
-    randperm,
-    ones,
-    zeros,
-)
+from .new import arange, empty, full, ones, rand, randint, randperm, zeros
 from .numpy import numpy_to_tensor, tensor_to_numpy, to_numpy
 from .others import (
     average_power,
@@ -97,7 +88,8 @@ from .segments import (
     segments_to_list,
     segments_to_segments_list,
 )
-from .transform import (
+from .transform import (  # noqa: F811
+    as_tensor,
     flatten,
     identity,
     move_to_rec,
@@ -111,12 +103,11 @@ from .transform import (
     squeeze_,
     squeeze_copy,
     to_item,
-    as_tensor,
+    to_tensor,
     transform_drop,
     unsqueeze,
     unsqueeze_,
     unsqueeze_copy,
     view_as_complex,
     view_as_real,
-    as_tensor,
 )

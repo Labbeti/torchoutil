@@ -2,7 +2,9 @@
 # -*- coding: utf-8 -*-
 
 import inspect
-from typing import Any, Callable, List, get_args
+from typing import Any, Callable, List, TypeVar, Union, get_args
+
+T = TypeVar("T")
 
 
 def get_argnames(fn: Callable) -> List[str]:
@@ -15,17 +17,17 @@ def get_argnames(fn: Callable) -> List[str]:
     elif inspect.isclass(fn):
         argnames = fn.__init__.__code__.co_varnames[1:]
     else:
-        argnames = fn.__call__.__code__.co_varnames
+        argnames = fn.__call__.__code__.co_varnames  # type: ignore
 
     argnames = list(argnames)
     return argnames
 
 
-def get_current_fn_name() -> str:
+def get_current_fn_name(*, default: T = "") -> Union[str, T]:
     try:
         return inspect.currentframe().f_back.f_code.co_name  # type: ignore
     except AttributeError:
-        return ""
+        return default
 
 
 def get_fullname(x: Any, *, inst_suffix: str = "(...)") -> str:

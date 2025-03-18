@@ -60,8 +60,8 @@ def search_submodules(
 
     def _impl(
         root: ModuleType,
-        accumulator: dict[ModuleType, None],
-    ) -> dict[ModuleType, None]:
+        accumulator: Dict[ModuleType, None],
+    ) -> Dict[ModuleType, None]:
         attrs = [getattr(root, attr_name) for attr_name in dir(root)]
         submodules = [
             attr
@@ -79,12 +79,13 @@ def search_submodules(
                 and (not only_loaded or submodule.__name__ in sys.modules)
             )
         }
-        accumulator.update(submodules)
+        accumulator.update(dict.fromkeys(submodules))
+
         for submodule in submodules:
             accumulator = _impl(submodule, accumulator)
         return accumulator
 
-    submodules = _impl(root, {root})
+    submodules = _impl(root, {root: None})
     submodules = list(submodules)
     submodules = submodules[::-1]
     return submodules
@@ -111,12 +112,11 @@ def reload_submodules(
         try:
             importlib.reload(candidate)
         except ModuleNotFoundError as err:
-            err.add_note(
-                f"Did the module '{candidate.__name__}' has been renamed after starting execution?"
-            )
+            msg = f"Did the module '{candidate.__name__}' has been renamed after starting execution?"
+            pylog.warning(msg)
             raise err
 
-    return candidates
+    return list(candidates)
 
 
 def reload_editable_packages(*, verbose: int = 0) -> List[ModuleType]:

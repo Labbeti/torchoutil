@@ -3,12 +3,10 @@
 
 from typing import Iterable, Union
 
-import torch
-from torch import Generator, Tensor
+from torch import Tensor
 from torch.types import Number
 
-from torchoutil.nn.modules.module import Module
-from torchoutil.core.make import DeviceLike, DTypeLike
+from torchoutil.core.make import DeviceLike, DTypeLike, GeneratorLike
 from torchoutil.nn.functional.pad import (
     PadAlign,
     PadMode,
@@ -17,6 +15,7 @@ from torchoutil.nn.functional.pad import (
     pad_dim,
     pad_dims,
 )
+from torchoutil.nn.modules.module import Module
 from torchoutil.pyoutil.collections import dump_dict
 
 
@@ -28,11 +27,12 @@ class PadDim(Module):
     def __init__(
         self,
         target_length: int,
+        *,
         dim: int = -1,
         align: PadAlign = "left",
         pad_value: PadValue = 0.0,
         mode: PadMode = "constant",
-        generator: Union[int, Generator, None] = None,
+        generator: GeneratorLike = None,
     ) -> None:
         super().__init__()
         self.target_length = target_length
@@ -40,7 +40,7 @@ class PadDim(Module):
         self.align: PadAlign = align
         self.pad_value = pad_value
         self.mode: PadMode = mode
-        self.generator = generator
+        self.generator: GeneratorLike = generator
 
     def forward(
         self,
@@ -76,11 +76,12 @@ class PadDims(Module):
     def __init__(
         self,
         target_lengths: Iterable[int],
+        *,
         dims: Iterable[int] = (-1,),
         aligns: Iterable[PadAlign] = ("left",),
         pad_value: PadValue = 0.0,
         mode: PadMode = "constant",
-        generator: Union[int, Generator, None] = None,
+        generator: GeneratorLike = None,
     ) -> None:
         super().__init__()
         self.target_lengths = target_lengths
@@ -88,7 +89,7 @@ class PadDims(Module):
         self.pad_value = pad_value
         self.dims = dims
         self.mode: PadMode = mode
-        self.generator = generator
+        self.generator: GeneratorLike = generator
 
     def forward(
         self,

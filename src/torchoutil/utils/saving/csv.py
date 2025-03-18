@@ -20,14 +20,18 @@ from torchoutil.core.packaging import _PANDAS_AVAILABLE
 from torchoutil.pyoutil.csv import ORIENT_VALUES, Orient, _setup_path
 from torchoutil.pyoutil.csv import dump_csv as _dump_csv_base
 from torchoutil.pyoutil.csv import load_csv as _load_csv_base
+from torchoutil.pyoutil.importlib import Placeholder
 from torchoutil.utils.saving.common import to_builtin
 
 if _PANDAS_AVAILABLE:
-    import pandas as pd
+    import pandas as pd  # type: ignore
 
-    DataFrame = pd.DataFrame
+    DataFrame = pd.DataFrame  # type: ignore
 else:
-    DataFrame = type("DataFrame")
+
+    class DataFrame(Placeholder):
+        ...
+
 
 CSVBackend = Literal["csv", "pandas", "auto"]
 CSV_BACKENDS = ("csv", "pandas", "auto")

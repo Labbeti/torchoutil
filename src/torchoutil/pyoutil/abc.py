@@ -1,9 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from typing import ClassVar, Dict, Type
-
-from typing_extensions import Self
+from typing import Any, ClassVar, Dict, Type
 
 
 class Singleton(type):
@@ -19,9 +17,9 @@ class Singleton(type):
     ```
     """
 
-    _instances: ClassVar[Dict[Type, Self]] = {}
+    _instances: ClassVar[Dict[Type, Any]] = {}
 
-    def __call__(cls, *args, **kwargs) -> Self:
+    def __call__(cls, *args, **kwargs) -> Any:
         if cls not in cls._instances:
             instance = super().__call__(*args, **kwargs)
             cls._instances[cls] = instance

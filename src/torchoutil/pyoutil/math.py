@@ -3,16 +3,21 @@
 
 import math
 import struct
-from typing import TypeVar
+from numbers import Real
+from typing import Optional, TypeVar
 
-T = TypeVar("T")
-
-
-def clip(x: T, xmin: T = -math.inf, xmax: T = math.inf) -> T:
-    return min(max(x, xmin), xmax)
+T = TypeVar("T", bound=Real)
 
 
-def clamp(x: T, xmin: T = -math.inf, xmax: T = math.inf) -> T:
+def clip(x: T, xmin: Optional[T] = None, xmax: Optional[T] = None) -> T:
+    if xmin is not None:
+        x = max(x, xmin)
+    if xmax is not None:
+        x = min(x, xmax)
+    return x
+
+
+def clamp(x: T, xmin: Optional[T] = None, xmax: Optional[T] = None) -> T:
     return clip(x, xmin, xmax)
 
 

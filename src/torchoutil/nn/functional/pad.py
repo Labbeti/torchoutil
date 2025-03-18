@@ -54,7 +54,7 @@ def pad_dims(
     target_lengths: Iterable[int],
     *,
     dims: Iterable[int] = (-1,),
-    aligns: Iterable[PadAlign] = ("left",),
+    aligns: Union[PadAlign, Iterable[PadAlign]] = ("left",),
     pad_value: PadValue = 0.0,
     mode: PadMode = "constant",
     generator: GeneratorLike = None,
@@ -62,6 +62,8 @@ def pad_dims(
     """Generic function to pad multiple dimensions."""
     if isinstance(pad_value, Callable):
         pad_value = pad_value(x)
+    if isinstance(aligns, str):
+        aligns = [aligns]
 
     pad_seq = __generate_pad_seq(
         x.shape,

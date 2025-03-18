@@ -19,6 +19,7 @@ from torchoutil.core.packaging import (
     _TORCHAUDIO_AVAILABLE,
     _YAML_AVAILABLE,
 )
+from torchoutil.pyoutil.importlib import Placeholder
 from torchoutil.pyoutil.typing import (
     BuiltinNumber,
     DataclassInstance,
@@ -33,7 +34,13 @@ if _OMEGACONF_AVAILABLE:
     from omegaconf import DictConfig, ListConfig, OmegaConf  # type: ignore
 
 if _PANDAS_AVAILABLE:
-    from pandas import DataFrame
+    import pandas as pd  # type: ignore
+
+    DataFrame = pd.DataFrame  # type: ignore
+else:
+
+    class DataFrame(Placeholder):
+        ...
 
 
 T = TypeVar("T")
@@ -108,15 +115,6 @@ UNK_MODES = ("identity", "error")
 
 @overload
 def to_builtin(
-    x: T_BuiltinScalar,
-    *,
-    unk_mode: UnkMode = "error",
-) -> T_BuiltinScalar:
-    ...
-
-
-@overload
-def to_builtin(
     x: Enum,
     *,
     unk_mode: UnkMode = "error",
@@ -184,6 +182,15 @@ def to_builtin(
     *,
     unk_mode: UnkMode = "error",
 ) -> Dict[str, Any]:
+    ...
+
+
+@overload
+def to_builtin(
+    x: T_BuiltinScalar,
+    *,
+    unk_mode: UnkMode = "error",
+) -> T_BuiltinScalar:
     ...
 
 
