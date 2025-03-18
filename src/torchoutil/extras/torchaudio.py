@@ -7,11 +7,11 @@ from pathlib import Path
 from typing import Any, BinaryIO, Optional, Union
 
 import torch
-from typing_extensions import TypeAlias
 
 from torchoutil.core.packaging import _TORCHAUDIO_AVAILABLE
+from torchoutil.pyoutil.importlib import Placeholder
 from torchoutil.pyoutil.io import _setup_path
-from torchoutil.pyoutil.typing import NoneType
+from torchoutil.pyoutil.warnings import deprecated_alias
 
 if not _TORCHAUDIO_AVAILABLE:
     msg = f"Cannot use python module {__file__} since torchaudio package is not installed."
@@ -20,12 +20,14 @@ if not _TORCHAUDIO_AVAILABLE:
 import torchaudio
 
 try:
-    from torchaudio.io import CodecConfig
-except ImportError:
-    CodecConfig: TypeAlias = int
+    from torchaudio.io import CodecConfig  # type: ignore
+except (ImportError, AttributeError):
+
+    class CodecConfig(Placeholder):
+        ...
 
 
-def load_torchaudio(
+def load_with_torchaudio(
     uri: Union[BinaryIO, str, os.PathLike, Path],
     frame_offset: int = 0,
     num_frames: int = -1,
@@ -47,7 +49,7 @@ def load_torchaudio(
     )
 
 
-def dump_torchaudio(
+def dump_with_torchaudio(
     src: torch.Tensor,
     uri: Union[BinaryIO, str, Path, os.PathLike, None],
     sample_rate: int,
@@ -62,12 +64,13 @@ def dump_torchaudio(
     overwrite: bool = True,
     make_parents: bool = True,
 ) -> bytes:
+    """Dump tensors to audio waveform. Requires torchaudio package installed."""
     if sample_rate <= 0:
         msg = f"Invalid argument {sample_rate=}. (expected positive value)"
         raise ValueError(msg)
 
     buffer: Union[BinaryIO, io.BytesIO]
-    if isinstance(uri, (str, Path, os.PathLike, NoneType)):
+    if isinstance(uri, (str, Path, os.PathLike)) or uri is None:
         uri = _setup_path(uri, overwrite, make_parents)
         buffer = io.BytesIO()
     else:
@@ -83,7 +86,7 @@ def dump_torchaudio(
         bits_per_sample,
         buffer_size,
         backend,
-        compression,
+        compression,  # type: ignore
     )
 
     if isinstance(buffer, io.BytesIO):
@@ -97,4 +100,6 @@ def dump_torchaudio(
     return content
 
 
-to_torchaudio = dump_torchaudio
+@deprecated_alias(dump_with_torchaudio)
+def to_torchaudio(*args, **kwargs):
+    ...

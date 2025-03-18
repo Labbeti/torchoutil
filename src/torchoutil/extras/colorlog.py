@@ -30,8 +30,8 @@ def get_colored_formatter(slurm_rank: bool = False) -> ColoredFormatter:
         raise RuntimeError(msg)
 
     if slurm_rank:
-        slurm_rank = os.getenv("SLURM_PROCID", 0)
-        rank_fmt = f"[%(purple)sRANK{slurm_rank}%(reset)s]"
+        rank = os.getenv("SLURM_PROCID", "0")
+        rank_fmt = f"[%(purple)sRANK{rank}%(reset)s]"
     else:
         rank_fmt = ""
 

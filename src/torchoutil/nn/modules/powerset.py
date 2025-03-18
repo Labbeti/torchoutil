@@ -5,13 +5,14 @@ from typing import Optional
 
 from torch import Tensor
 
-from torchoutil.nn.modules.module import Module
 from torchoutil.nn.functional.powerset import (
     build_powerset_mapping,
     multilabel_to_powerset,
     powerset_to_multilabel,
 )
 from torchoutil.types import Tensor2D, Tensor3D
+
+from .module import Module
 
 
 class MultilabelToPowerset(Module):

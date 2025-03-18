@@ -6,7 +6,7 @@ import pickle
 from pathlib import Path
 from typing import Any, Union
 
-from torchoutil.pyoutil.io import _setup_path
+from .io import _setup_path
 
 
 def load_pickle(fpath: Union[str, Path]) -> Any:

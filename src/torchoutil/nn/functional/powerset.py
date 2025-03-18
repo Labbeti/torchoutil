@@ -40,7 +40,7 @@ from torch.nn import functional as F
 
 from torchoutil.core.make import DTypeLike, make_dtype
 from torchoutil.nn.functional.multiclass import probs_to_onehot
-from torchoutil.pyoutil.logging import warn_once
+from torchoutil.pyoutil.warnings import warn_once
 from torchoutil.types.tensor_subclasses import Tensor2D, Tensor3D
 
 
@@ -89,7 +89,7 @@ def multilabel_to_powerset(
     if not multilabel.is_floating_point():
         tgt_dtype = mapping.dtype
         msg = f"Implicit multilabel conversion from {multilabel.dtype} to {tgt_dtype} in multilabel_to_powerset fn."
-        warn_once(msg, __name__)
+        warn_once(msg)
         multilabel = multilabel.to(dtype=tgt_dtype)
 
     powerset = F.one_hot(

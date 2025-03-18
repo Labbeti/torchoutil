@@ -25,14 +25,9 @@ from typing import (
 
 from typing_extensions import TypeGuard, TypeIs
 
-from torchoutil.pyoutil.functools import identity
-from torchoutil.pyoutil.typing.classes import (
-    SizedGetitemIter,
-    SupportsAnd,
-    SupportsOr,
-    T_BuiltinScalar,
-)
-from torchoutil.pyoutil.typing.guards import is_builtin_scalar, is_mapping_str
+from .functools import function_alias, identity
+from .typing.classes import SizedGetitemIter, SupportsAnd, SupportsOr, T_BuiltinScalar
+from .typing.guards import is_builtin_scalar, isinstance_guard
 
 K = TypeVar("K", covariant=True)
 T = TypeVar("T", covariant=True)
@@ -255,7 +250,7 @@ def dump_dict(
     fmt: str = "{key}={value}",
     ignore_lst: Iterable[T] = (),
 ) -> str:
-    """Custom dictionary of scalars to string function to customize representation.
+    """Dump dictionary of scalars to string function to customize representation.
 
     Example 1:
     ----------
@@ -389,9 +384,6 @@ def all_eq(it: Iterable[T], eq_fn: Optional[Callable[[T, T], bool]] = None) -> b
         return all(eq_fn(first, elt) for elt in it)
 
 
-is_full = all_eq
-
-
 def all_ne(
     it: Iterable[T],
     ne_fn: Optional[Callable[[T, T], bool]] = None,
@@ -417,9 +409,6 @@ def all_ne(
         return all(
             ne_fn(it[i], it[j]) for i in range(len(it)) for j in range(i + 1, len(it))
         )
-
-
-is_unique = all_ne
 
 
 def flat_dict_of_dict(
@@ -463,7 +452,7 @@ def flat_dict_of_dict(
     def _impl(nested_dic: Mapping[str, Any]) -> Dict[str, Any]:
         output = {}
         for k, v in nested_dic.items():
-            if is_mapping_str(v):
+            if isinstance_guard(v, Mapping[str, Any]):
                 v = _impl(v)
                 v = {f"{k}{sep}{kv}": vv for kv, vv in v.items()}
                 output.update(v)
@@ -710,7 +699,9 @@ def recursive_generator(x: Any) -> Generator[Tuple[Any, int, int], None, None]:
         i: int,
         deep: int,
     ) -> Generator[Tuple[Any, int, int], None, None]:
-        if isinstance(x, Iterable):
+        if is_builtin_scalar(x):
+            yield x, i, deep
+        elif isinstance(x, Iterable):
             for j, xj in enumerate(x):
                 if xj == x:
                     yield xj, i, deep
@@ -808,3 +799,13 @@ def union(
     for arg in args:
         result |= arg
     return result
+
+
+@function_alias(all_eq)
+def is_full(*args, **kwargs):
+    ...
+
+
+@function_alias(all_ne)
+def is_unique(*args, **kwargs):
+    ...

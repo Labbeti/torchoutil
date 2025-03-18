@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+from torch.serialization import *
+
 from .common import to_builtin
 from .csv import dump_csv, load_csv, to_csv
 from .dump_fn import dump, save

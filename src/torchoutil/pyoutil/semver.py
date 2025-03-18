@@ -8,7 +8,7 @@ from typing import Any, Iterable, List, Mapping, Tuple, TypedDict, Union, overlo
 
 from typing_extensions import NotRequired, TypeAlias
 
-from torchoutil.pyoutil.typing import NoneType, isinstance_guard
+from .typing import NoneType, isinstance_guard
 
 # Pattern of https://semver.org/
 _VERSION_PATTERN = r"^(?P<major>0|[1-9]\d*)\.(?P<minor>0|[1-9]\d*)\.(?P<patch>0|[1-9]\d*)(?:-(?P<prerelease>(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+(?P<buildmetadata>[0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$"

@@ -18,12 +18,9 @@ from typing import (
     overload,
 )
 
-from torchoutil.pyoutil.collections import (
-    dict_list_to_list_dict,
-    list_dict_to_dict_list,
-)
-from torchoutil.pyoutil.io import _setup_path
-from torchoutil.pyoutil.typing import isinstance_guard
+from .collections import dict_list_to_list_dict, list_dict_to_dict_list
+from .io import _setup_path
+from .typing import isinstance_guard
 
 T = TypeVar("T")
 

@@ -20,6 +20,8 @@ from typing_extensions import TypeAlias
 from torchoutil.core.packaging import _NUMPY_AVAILABLE, _PANDAS_AVAILABLE
 from torchoutil.extras.numpy import np
 from torchoutil.nn.functional.predicate import is_complex, is_floating_point
+from torchoutil.pyoutil.functools import function_alias
+from torchoutil.pyoutil.importlib import Placeholder
 from torchoutil.pyoutil.inspect import get_fullname
 from torchoutil.pyoutil.typing import (
     BuiltinNumber,
@@ -35,7 +37,7 @@ if _PANDAS_AVAILABLE:
     DataFrame = pd.DataFrame  # type: ignore
 else:
 
-    class DataFrame:
+    class DataFrame(Placeholder):
         ...
 
 
@@ -92,22 +94,6 @@ UNK_MODES = ("pickle", "error")
 
 
 # Recursive functions for union of types
-def checksum(
-    x: Checksumable,
-    *,
-    unk_mode: UnkMode = "error",
-    allow_protocol: bool = True,
-    **kwargs,
-) -> int:
-    """Alias for `torchoutil.checksum_any`."""
-    return checksum_any(
-        x,
-        unk_mode=unk_mode,
-        allow_protocol=allow_protocol,
-        **kwargs,
-    )
-
-
 def checksum_any(
     x: Checksumable,
     *,
@@ -157,7 +143,7 @@ def checksum_any(
         return checksum_ndarray(x, **kwargs)
     elif isinstance(x, torch.dtype) or (_NUMPY_AVAILABLE and isinstance(x, np.dtype)):
         return checksum_dtype(x, **kwargs)
-    elif _PANDAS_AVAILABLE and isinstance(x, pd.DataFrame):
+    elif _PANDAS_AVAILABLE and isinstance(x, DataFrame):
         return checksum_dataframe(x, **kwargs)
     elif allow_protocol and isinstance(x, NamedTupleInstance):
         return checksum_namedtuple(x, **kwargs)
@@ -187,6 +173,11 @@ def checksum_any(
         raise ValueError(msg)
 
 
+@function_alias(checksum_any)
+def checksum(*args, **kwargs):
+    ...
+
+
 def checksum_dataclass(x: DataclassInstance, **kwargs) -> int:
     kwargs["accumulator"] = kwargs.get("accumulator", 0) + __cached_checksum_str(
         get_fullname(x)
@@ -205,7 +196,7 @@ def checksum_dataframe(x: DataFrame, **kwargs) -> int:
         get_fullname(x)
     )
     x = x.to_dict()
-    return checksum_mapping(x, **kwargs)
+    return checksum_mapping(x, **kwargs)  # type: ignore
 
 
 def checksum_dtype(x: Union[torch.dtype, np.dtype], **kwargs) -> int:
@@ -331,7 +322,7 @@ def checksum_builtin_scalar(x: BuiltinScalar, **kwargs) -> int:
         return checksum_builtin_number(x, **kwargs)
     elif isinstance(x, bytes):
         return checksum_bytes(x, **kwargs)
-    elif isinstance(x, NoneType):
+    elif x is None:
         return checksum_none(x, **kwargs)
     elif isinstance(x, str):
         return checksum_str(x, **kwargs)

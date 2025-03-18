@@ -6,8 +6,6 @@ from typing import Generic, List, Mapping, Optional, Union
 import torch
 from torch import Tensor, nn
 
-from torchoutil.types import LongTensor
-from torchoutil.nn.modules.module import Module
 from torchoutil.core.make import DeviceLike, DTypeLike
 from torchoutil.nn.functional.multilabel import (
     T_Name,
@@ -22,6 +20,9 @@ from torchoutil.nn.functional.multilabel import (
     probs_to_multinames,
 )
 from torchoutil.pyoutil.collections import dump_dict
+from torchoutil.types import LongTensor
+
+from .module import Module
 
 
 class IndicesToMultihot(Module):

@@ -15,6 +15,7 @@ from typing_extensions import TypeAlias
 
 from torchoutil.pyoutil.io import _setup_path
 from torchoutil.pyoutil.semver import Version
+from torchoutil.pyoutil.warnings import deprecated_alias
 
 FileLike: TypeAlias = Union[str, os.PathLike, BinaryIO, IO[bytes]]
 MapLocationLike: TypeAlias = Optional[
@@ -91,4 +92,6 @@ def load_torch(
     )
 
 
-to_torch = dump_torch
+@deprecated_alias(dump_torch)
+def to_torch(*args, **kwargs):
+    ...

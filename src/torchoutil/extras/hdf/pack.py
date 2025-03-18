@@ -54,10 +54,10 @@ from torchoutil.pyoutil.collections import all_eq
 from torchoutil.pyoutil.datetime import now_iso
 from torchoutil.pyoutil.functools import Compose
 from torchoutil.pyoutil.typing import is_dataclass_instance, is_dict_str
+from torchoutil.serialization.common import to_builtin
 from torchoutil.types import BuiltinScalar
 from torchoutil.utils.data.dataloader import get_auto_num_cpus
 from torchoutil.utils.data.dataset import IterableDataset, SizedDatasetLike
-from torchoutil.utils.saving.common import to_builtin
 
 T = TypeVar("T", covariant=True)
 T_DictOrTuple = TypeVar("T_DictOrTuple", tuple, dict, covariant=True)

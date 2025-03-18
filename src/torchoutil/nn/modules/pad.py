@@ -15,8 +15,9 @@ from torchoutil.nn.functional.pad import (
     pad_dim,
     pad_dims,
 )
-from torchoutil.nn.modules.module import Module
 from torchoutil.pyoutil.collections import dump_dict
+
+from .module import Module
 
 
 class PadDim(Module):

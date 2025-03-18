@@ -14,11 +14,12 @@ from torchoutil.core.packaging import (
     _TORCHAUDIO_AVAILABLE,
     _YAML_AVAILABLE,
 )
-from torchoutil.utils.saving.common import EXTENSION_TO_BACKEND, SavingBackend
-from torchoutil.utils.saving.csv import load_csv
-from torchoutil.utils.saving.json import load_json
-from torchoutil.utils.saving.pickle import load_pickle
-from torchoutil.utils.saving.torch import load_torch
+
+from .common import EXTENSION_TO_BACKEND, SavingBackend
+from .csv import load_csv
+from .json import load_json
+from .pickle import load_pickle
+from .torch import load_torch
 
 T = TypeVar("T", covariant=True)
 pylog = logging.getLogger(__name__)
@@ -41,15 +42,15 @@ if _NUMPY_AVAILABLE:
 
 
 if _SAFETENSORS_AVAILABLE:
-    from ...extras.safetensors import load_safetensors
+    from torchoutil.extras.safetensors import load_safetensors
 
     LOAD_FNS["safetensors"] = load_safetensors
 
 
 if _TORCHAUDIO_AVAILABLE:
-    from .torchaudio import load_torchaudio
+    from .torchaudio import load_with_torchaudio
 
-    LOAD_FNS["torchaudio"] = load_torchaudio
+    LOAD_FNS["torchaudio"] = load_with_torchaudio
 
 
 if _YAML_AVAILABLE:

@@ -13,11 +13,13 @@ from torchoutil.core.packaging import (
     _TORCHAUDIO_AVAILABLE,
     _YAML_AVAILABLE,
 )
-from torchoutil.utils.saving.common import EXTENSION_TO_BACKEND, SavingBackend
-from torchoutil.utils.saving.csv import dump_csv
-from torchoutil.utils.saving.json import dump_json
-from torchoutil.utils.saving.pickle import dump_pickle
-from torchoutil.utils.saving.torch import to_torch
+from torchoutil.pyoutil.functools import function_alias
+
+from .common import EXTENSION_TO_BACKEND, SavingBackend
+from .csv import dump_csv
+from .json import dump_json
+from .pickle import dump_pickle
+from .torch import to_torch
 
 DumpFn: TypeAlias = Callable[..., Union[str, bytes]]
 DumpFnLike: TypeAlias = Union[DumpFn, SavingBackend]
@@ -36,14 +38,14 @@ if _NUMPY_AVAILABLE:
     DUMP_FNS["numpy"] = dump_numpy
 
 if _SAFETENSORS_AVAILABLE:
-    from ...extras.safetensors import dump_safetensors
+    from torchoutil.extras.safetensors import dump_safetensors
 
     DUMP_FNS["safetensors"] = dump_safetensors
 
 if _TORCHAUDIO_AVAILABLE:
-    from .torchaudio import dump_torchaudio
+    from .torchaudio import dump_with_torchaudio
 
-    DUMP_FNS["torchaudio"] = dump_torchaudio
+    DUMP_FNS["torchaudio"] = dump_with_torchaudio
 
 if _YAML_AVAILABLE:
     from .yaml import dump_yaml
@@ -100,5 +102,6 @@ def dump(
     return result
 
 
-# Alias for dump
-save = dump
+@function_alias(dump)
+def save(*args, **kwargs):
+    ...

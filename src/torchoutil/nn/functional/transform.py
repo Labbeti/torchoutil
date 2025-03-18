@@ -44,6 +44,7 @@ from torchoutil.pyoutil.typing import (
     T_BuiltinScalar,
     is_builtin_scalar,
 )
+from torchoutil.pyoutil.warnings import deprecated_alias
 from torchoutil.types import ComplexFloatingTensor, is_builtin_number, is_scalar_like
 from torchoutil.types._typing import (
     BoolTensor0D,
@@ -895,5 +896,6 @@ def as_tensor(
         raise TypeError(msg)
 
 
-# Aliases
-to_tensor = as_tensor
+@deprecated_alias(as_tensor)
+def to_tensor(*args, **kwargs):
+    ...

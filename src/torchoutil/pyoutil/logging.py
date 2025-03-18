@@ -18,9 +18,16 @@ from .semver import Version
 T = TypeVar("T", covariant=True)
 
 PackageOrLogger: TypeAlias = Union[
-    str, ModuleType, None, Logger, Literal["__parent_file__"]
+    str,
+    ModuleType,
+    None,
+    Logger,
+    Literal["__parent_file__"],
 ]
-PackageOrLoggerList: TypeAlias = Union[PackageOrLogger, Sequence[PackageOrLogger]]
+PackageOrLoggerList: TypeAlias = Union[
+    PackageOrLogger,
+    Sequence[PackageOrLogger],
+]
 
 _PARENT_FILE_KEY = "__parent_file__"
 DEFAULT_FMT = "[%(asctime)s][%(name)s][%(levelname)s] - %(message)s"
@@ -33,11 +40,11 @@ pylog = logging.getLogger(__name__)
 
 
 @lru_cache(maxsize=None)
-def warn_once(
+def log_once(
     msg: str,
     logger: PackageOrLoggerList = _PARENT_FILE_KEY,
     *,
-    level: int = logging.WARNING,
+    level: int = logging.INFO,
 ) -> None:
     loggers = _get_loggers(logger)
     for logger in loggers:

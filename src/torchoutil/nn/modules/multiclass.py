@@ -6,7 +6,6 @@ from typing import Generic, List, Mapping, Optional, Sequence, Union
 import torch
 from torch import Tensor, nn
 
-from torchoutil.nn.modules.module import Module
 from torchoutil.core.make import DeviceLike, DTypeLike
 from torchoutil.nn.functional.multiclass import (
     T_Name,
@@ -21,6 +20,8 @@ from torchoutil.nn.functional.multiclass import (
     probs_to_onehot,
 )
 from torchoutil.pyoutil.collections import dump_dict
+
+from .module import Module
 
 
 class IndexToOnehot(Module):

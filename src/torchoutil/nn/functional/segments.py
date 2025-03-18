@@ -9,6 +9,7 @@ from torch import Tensor
 from torchoutil.core.make import DeviceLike, make_device
 from torchoutil.nn import functional as F
 from torchoutil.nn.functional.pad import pad_and_stack_rec, pad_dim
+from torchoutil.pyoutil.warnings import deprecated_alias
 from torchoutil.types import BoolTensor, LongTensor
 
 
@@ -147,6 +148,11 @@ def segments_to_activity(x: Tensor) -> BoolTensor:
     return activity
 
 
-# - Aliases
-extract_segments = activity_to_segments
-segments_to_list = segments_to_segments_list
+@deprecated_alias(activity_to_segments)
+def extract_segments(*args, **kwargs):
+    ...
+
+
+@deprecated_alias(segments_to_segments_list)
+def segments_to_list(*args, **kwargs):
+    ...

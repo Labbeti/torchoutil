@@ -1,31 +1,22 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from typing import (
-    Callable,
-    Dict,
-    Generic,
-    Iterable,
-    List,
-    Mapping,
-    Optional,
-    overload,
-)
+from typing import Callable, Dict, Generic, Iterable, List, Mapping, Optional, overload
 
 from torch import nn
 from typing_extensions import Concatenate, ParamSpec
 
-from torchoutil.nn.modules._mixins import (
-    InType,
-    OutType,
-    TypedModule,
+from ._mixins import EModule  # noqa: F401
+from ._mixins import ESequential  # noqa: F401
+from ._mixins import (
+    _DEFAULT_DEVICE_DETECT_MODE,
     ConfigModule,
     DeviceDetectMode,
-    _DEFAULT_DEVICE_DETECT_MODE,
-    TypedModuleLike,
+    InType,
+    OutType,
     OutType3,
-    ESequential,  # noqa: F401
-    EModule,  # noqa: F401
+    TypedModule,
+    TypedModuleLike,
 )
 
 P = ParamSpec("P")
@@ -157,6 +148,12 @@ class EModulePartial(
 
     def extra_repr(self) -> str:
         return f"{self.fn.__name__}, {ConfigModule.extra_repr(self)}"
+
+
+ModuleList = EModuleList
+ModuleDict = EModuleDict
+ModulePartial = EModulePartial
+Sequential = ESequential
 
 
 def __test_typing_1() -> None:

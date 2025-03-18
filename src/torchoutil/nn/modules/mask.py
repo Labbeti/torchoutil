@@ -6,8 +6,9 @@ from typing import Iterable, Union
 from torch import Tensor
 
 from torchoutil.nn.functional.mask import masked_mean, masked_sum
-from torchoutil.nn.modules.module import Module
 from torchoutil.pyoutil.collections import dump_dict
+
+from .module import Module
 
 
 class MaskedMean(Module):

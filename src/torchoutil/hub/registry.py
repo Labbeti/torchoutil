@@ -25,9 +25,9 @@ from typing_extensions import NotRequired
 
 from torchoutil.core.make import DeviceLike, make_device
 from torchoutil.pyoutil.hashlib import HashName, hash_file
-from torchoutil.pyoutil.logging import warn_once
-from torchoutil.utils.saving.json import load_json, dump_json
-from torchoutil.utils.saving.load_fn import LOAD_FNS, LoadFnLike, load_torch
+from torchoutil.pyoutil.warnings import warn_once
+from torchoutil.serialization.json import dump_json, load_json
+from torchoutil.serialization.load_fn import LOAD_FNS, LoadFnLike, load_torch
 
 T_Hashable = TypeVar("T_Hashable", bound=Hashable)
 
@@ -126,7 +126,7 @@ class RegistryHub(Generic[T_Hashable]):
             src_device = device
             device = make_device(device)
             msg = f"Deprecated argument device={src_device}. Use `load_kwds=dict(map_location={device})` with function torch.load instead."
-            warn_once(msg, __name__)
+            warn_once(msg)
 
             if device is not None:
                 load_kwds["map_location"] = device

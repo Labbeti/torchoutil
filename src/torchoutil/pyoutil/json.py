@@ -5,7 +5,7 @@ import json
 from pathlib import Path
 from typing import Any, Optional, Union
 
-from torchoutil.pyoutil.io import _setup_path
+from .io import _setup_path
 
 
 def dump_json(

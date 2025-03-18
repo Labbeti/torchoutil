@@ -7,8 +7,9 @@ from torch import Tensor
 
 from torchoutil.core.make import GeneratorLike
 from torchoutil.nn.functional.crop import CropAlign, crop_dim, crop_dims
-from torchoutil.nn.modules.module import Module
 from torchoutil.pyoutil.collections import dump_dict
+
+from .module import Module
 
 
 class CropDim(Module):

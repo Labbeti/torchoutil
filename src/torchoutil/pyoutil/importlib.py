@@ -10,6 +10,8 @@ from importlib.util import find_spec
 from types import ModuleType
 from typing import Any, Dict, List
 
+from .warnings import deprecated_alias
+
 DEFAULT_SKIPPED = (
     "reimport_all",
     "get_ipython",
@@ -102,7 +104,9 @@ def reload_submodules(
     candidates: Dict[ModuleType, None] = {}
     for module in modules:
         submodules = search_submodules(
-            module, only_editable=only_editable, only_loaded=only_loaded
+            module,
+            only_editable=only_editable,
+            only_loaded=only_loaded,
         )
         candidates.update(dict.fromkeys(submodules))
 
@@ -152,5 +156,6 @@ class Placeholder:
         return self
 
 
-# Aliases
-package_is_available = is_available_package
+@deprecated_alias(is_available_package)
+def package_is_available(*args, **kwargs):
+    ...

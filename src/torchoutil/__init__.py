@@ -41,6 +41,13 @@ from .hub.download import download_file
 from .nn.functional import *
 from .pyoutil.semver import Version
 from .pyoutil.typing.guards import isinstance_guard
+from .serialization.common import to_builtin
+from .serialization.csv import dump_csv, load_csv
+from .serialization.dump_fn import dump, save
+from .serialization.json import dump_json, load_json
+from .serialization.load_fn import load
+from .serialization.pickle import dump_pickle, load_pickle
+from .serialization.torch import load_torch, to_torch
 from .types.guards import (
     is_builtin_number,
     is_builtin_scalar,
@@ -149,13 +156,6 @@ from .types.variable_fns import (
     randperm,
     zeros,
 )
-from .utils.saving.common import to_builtin
-from .utils.saving.csv import dump_csv, load_csv
-from .utils.saving.dump_fn import dump, save
-from .utils.saving.json import dump_json, load_json
-from .utils.saving.load_fn import load
-from .utils.saving.pickle import dump_pickle, load_pickle
-from .utils.saving.torch import load_torch, to_torch
 
 version = __version__
 version_info = Version(__version__)

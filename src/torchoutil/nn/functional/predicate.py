@@ -19,6 +19,7 @@ from torchoutil.nn.functional.others import nelement
 from torchoutil.pyoutil.collections import all_eq as builtin_all_eq
 from torchoutil.pyoutil.collections import all_ne as builtin_all_ne
 from torchoutil.pyoutil.collections import is_sorted as builtin_is_sorted
+from torchoutil.pyoutil.functools import function_alias
 from torchoutil.pyoutil.typing import is_builtin_number
 from torchoutil.types._typing import (
     ComplexFloatingTensor,
@@ -233,7 +234,9 @@ def all_ne(x: Union[Tensor, np.ndarray, ScalarLike, Iterable]) -> bool:
         raise TypeError(f"Invalid argument type {type(x)=}.")
 
 
-is_unique = all_ne
+@function_alias(all_ne)
+def is_unique(*args, **kwargs):
+    ...
 
 
 def is_full(x: TensorOrArray, target: Any = ...) -> bool:

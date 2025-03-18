@@ -41,10 +41,11 @@ from torchoutil.nn.functional.transform import (
     view_as_complex,
     view_as_real,
 )
-from torchoutil.nn.modules.module import Module
 from torchoutil.pyoutil.collections import dump_dict
 from torchoutil.pyoutil.typing import BuiltinScalar, SizedIterable
 from torchoutil.types._typing import ComplexFloatingTensor, ScalarLike, T_TensorOrArray
+
+from .module import Module
 
 T = TypeVar("T")
 

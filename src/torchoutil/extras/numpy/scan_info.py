@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 
 from dataclasses import dataclass
-from functools import lru_cache
 from typing import Any, Generic, Iterable, Tuple, TypeVar, Union
 
 import torch
@@ -10,8 +9,9 @@ from torch import Tensor
 
 import torchoutil as to
 from torchoutil import pyoutil as po
-from torchoutil.extras.numpy.definitions import ACCEPTED_NUMPY_DTYPES, np
 from torchoutil.pyoutil import BuiltinScalar, get_current_fn_name
+
+from .definitions import ACCEPTED_NUMPY_DTYPES, np
 
 T_Invalid = TypeVar("T_Invalid", covariant=True)
 T_EmptyNp = TypeVar("T_EmptyNp", covariant=True)
@@ -140,14 +140,12 @@ def scan_numpy_dtype(
     raise TypeError(msg)
 
 
-@lru_cache(maxsize=None)
 def torch_dtype_to_numpy_dtype(dtype: torch.dtype) -> np.dtype:
     x = torch.empty((0,), dtype=dtype)
     x = to.tensor_to_numpy(x)
     return x.dtype
 
 
-@lru_cache(maxsize=None)
 def numpy_dtype_to_torch_dtype(
     dtype: np.dtype,
     *,

@@ -46,7 +46,14 @@ from .dataclasses import get_defaults_values
 from .datetime import now_iso
 from .difflib import find_closest_in_list, sequence_matcher_ratio
 from .enum import StrEnum
-from .functools import Compose, compose, filter_and_call, get_argnames, identity
+from .functools import (
+    Compose,
+    compose,
+    filter_and_call,
+    function_alias,
+    get_argnames,
+    identity,
+)
 from .hashlib import hash_file
 from .importlib import (
     is_available_package,
@@ -68,12 +75,12 @@ from .logging import (
     get_current_file_logger,
     get_ipython_name,
     get_null_logger,
+    log_once,
     running_on_interpreter,
     running_on_notebook,
     running_on_terminal,
     setup_logging_level,
     setup_logging_verbose,
-    warn_once,
 )
 from .math import clamp, clip, nextafter, nextdown
 from .os import get_num_cpus_available, safe_rmdir, tree_iter
@@ -89,3 +96,4 @@ from .re import (
     sort_with_patterns,
 )
 from .typing import *
+from .warnings import deprecated, deprecated_alias, warn_once

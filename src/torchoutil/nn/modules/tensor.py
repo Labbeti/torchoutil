@@ -10,9 +10,10 @@ from torch import Tensor
 from torch.nn import functional as F
 from torch.types import Number
 
-from torchoutil.nn.modules.module import Module
 from torchoutil.pyoutil.collections import dump_dict
 from torchoutil.utils import return_types
+
+from .module import Module
 
 
 class Abs(Module):

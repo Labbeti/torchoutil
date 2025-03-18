@@ -9,6 +9,7 @@ from typing import Any, Iterable, Literal, Mapping, Optional, Type, Union
 from typing_extensions import TypeAlias
 
 from torchoutil.core.packaging import _OMEGACONF_AVAILABLE, _YAML_AVAILABLE
+from torchoutil.pyoutil.warnings import deprecated_alias
 
 if not _YAML_AVAILABLE:
     msg = f"Cannot use python module {__file__} since pyyaml package is not installed. Please install it with `pip install torchoutil[extras]`."
@@ -35,7 +36,7 @@ from yaml.parser import ParserError
 from yaml.scanner import ScannerError
 
 from torchoutil.pyoutil.typing import DataclassInstance, NamedTupleInstance
-from torchoutil.utils.saving.common import to_builtin
+from torchoutil.serialization.common import to_builtin
 
 if _OMEGACONF_AVAILABLE:
     from omegaconf import OmegaConf  # type: ignore
@@ -164,4 +165,6 @@ IgnoreTagLoader.add_multi_constructor("!", IgnoreTagLoader.construct_with_tag)
 IgnoreTagLoader.add_multi_constructor("tag:", IgnoreTagLoader.construct_with_tag)
 
 
-to_yaml = dump_yaml
+@deprecated_alias(dump_yaml)
+def to_yaml(*args, **kwargs):
+    ...

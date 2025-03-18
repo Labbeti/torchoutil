@@ -6,6 +6,8 @@ import struct
 from numbers import Real
 from typing import Optional, TypeVar
 
+from .functools import function_alias
+
 T = TypeVar("T", bound=Real)
 
 
@@ -17,8 +19,9 @@ def clip(x: T, xmin: Optional[T] = None, xmax: Optional[T] = None) -> T:
     return x
 
 
-def clamp(x: T, xmin: Optional[T] = None, xmax: Optional[T] = None) -> T:
-    return clip(x, xmin, xmax)
+@function_alias(clip)
+def clamp(*args, **kwargs):
+    ...
 
 
 def nextdown(x: float) -> float:

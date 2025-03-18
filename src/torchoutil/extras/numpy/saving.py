@@ -6,8 +6,9 @@ from io import BytesIO
 from pathlib import Path
 from typing import Union
 
-from torchoutil.extras.numpy import np
 from torchoutil.pyoutil.io import _setup_path
+
+from .definitions import np
 
 
 def dump_numpy(

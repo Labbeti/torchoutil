@@ -24,7 +24,7 @@ from torchoutil.core.make import DeviceLike, DTypeLike, make_device, make_dtype
 from torchoutil.extras.numpy import np
 from torchoutil.nn.functional.others import nelement
 from torchoutil.nn.functional.transform import to_item
-from torchoutil.pyoutil.logging import warn_once
+from torchoutil.pyoutil.warnings import warn_once
 from torchoutil.types import LongTensor, is_number_like
 from torchoutil.types._typing import TensorOrArray
 
@@ -108,7 +108,7 @@ def index_to_name(
         and index.ndim > 1
     ):
         msg = f"Found 0 elements in {index=} but {index.ndim=} > 1, which means that we will lose information about shape when converting to names."
-        warn_once(msg, __name__)
+        warn_once(msg)
 
     def _impl(x) -> Union[T_Name, list]:
         if is_number_fn(x):

@@ -4,10 +4,19 @@
 from torch.nn.modules import *
 
 from .activation import LogSoftmaxMultidim, SoftmaxMultidim
+from .container import (
+    EModuleDict,
+    EModuleList,
+    EModulePartial,
+    ESequential,
+    ModuleDict,
+    ModuleList,
+    ModulePartial,
+    Sequential,
+)
 from .crop import CropDim, CropDims
 from .layer import PositionalEncoding
 from .mask import MaskedMean, MaskedSum
-from .container import EModuleDict, EModuleList, EModulePartial, ESequential
 from .module import EModule, Module
 from .multiclass import (
     IndexToName,
@@ -62,6 +71,7 @@ from .tensor import (
     View,
 )
 from .transform import (
+    AsTensor,
     Flatten,
     Identity,
     MoveToRec,
@@ -78,5 +88,4 @@ from .transform import (
     Unsqueeze,
     ViewAsComplex,
     ViewAsReal,
-    AsTensor,
 )

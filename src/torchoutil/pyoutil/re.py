@@ -9,7 +9,7 @@ from typing import Any, Callable, Iterable, List, Optional, TypeVar, Union
 
 from typing_extensions import TypeAlias
 
-from torchoutil.pyoutil.collections import find
+from .collections import find
 
 T = TypeVar("T")
 

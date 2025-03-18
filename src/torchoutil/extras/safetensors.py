@@ -11,7 +11,8 @@ from torch import Tensor
 from torchoutil.nn.functional.transform import as_tensor
 from torchoutil.pyoutil.inspect import get_fullname
 from torchoutil.pyoutil.io import _setup_path
-from torchoutil.types.guards import is_dict_str_tensor
+from torchoutil.pyoutil.typing.guards import isinstance_guard
+from torchoutil.pyoutil.warnings import deprecated_alias
 
 
 @overload
@@ -89,17 +90,20 @@ def dump_safetensors(
     make_parents: bool = True,
     convert_to_tensor: bool = False,
 ) -> bytes:
+    """Dump tensors to safetensors format. Requires safetensors package installed."""
     if convert_to_tensor:
         tensors = {k: as_tensor(v) for k, v in tensors.items()}
-    elif not is_dict_str_tensor(tensors):
+    elif not isinstance_guard(tensors, Dict[str, Tensor]):
         msg = f"Invalid argument type {type(tensors)}. (expected dict[str, Tensor] but found {get_fullname(type(tensors))})"
         raise TypeError(msg)
 
     fpath = _setup_path(fpath, overwrite, make_parents)
-    content = save(tensors, fpath, metadata)
+    content = save(tensors, metadata)
     if fpath is not None:
         fpath.write_bytes(content)
     return content
 
 
-to_safetensors = dump_safetensors
+@deprecated_alias(dump_safetensors)
+def to_safetensors(*args, **kwargs):
+    ...

@@ -8,69 +8,26 @@ from torch import Tensor
 from typing_extensions import TypeGuard, TypeIs
 
 from torchoutil.extras.numpy import is_numpy_number_like, is_numpy_scalar_like, np
+from torchoutil.pyoutil.functools import function_alias
 from torchoutil.pyoutil.typing import (
     is_builtin_number,
     is_builtin_scalar,
     isinstance_guard,
 )
-from torchoutil.types._typing import (
+from torchoutil.pyoutil.warnings import deprecated
+
+from ._typing import (
     BoolTensor,
     BoolTensor1D,
     ComplexFloatingTensor,
     FloatingTensor,
+    IntegralTensor,
+    IntegralTensor1D,
     NumberLike,
     ScalarLike,
     Tensor0D,
-    Tensor1D,
     TensorOrArray,
 )
-
-
-def is_bool_tensor(x: Any) -> TypeIs[BoolTensor]:
-    """Deprecated: Use `isinstance(x, to.BoolTensor)` instead."""
-    return isinstance(x, BoolTensor)
-
-
-def is_bool_tensor1d(x: Any) -> TypeIs[BoolTensor1D]:
-    """Deprecated: Use `isinstance(x, to.BoolTensor1D)` instead."""
-    return isinstance(x, BoolTensor1D)
-
-
-def is_complex_tensor(x: Any) -> TypeIs[ComplexFloatingTensor]:
-    """Deprecated: Use `isinstance(x, to.ComplexFloatingTensor)` instead."""
-    return isinstance(x, ComplexFloatingTensor)
-
-
-def is_dict_str_tensor(x: Any) -> TypeIs[Dict[str, Tensor]]:
-    """Deprecated: Use `to.isinstance_guard(x, Dict[str, Tensor])` instead."""
-    return isinstance_guard(x, Dict[str, Tensor])
-
-
-def is_floating_tensor(x: Any) -> TypeIs[FloatingTensor]:
-    """Deprecated: Use `isinstance(x, to.FloatingTensor)` instead."""
-    return isinstance(x, FloatingTensor)
-
-
-def is_integral_dtype(dtype: torch.dtype) -> bool:
-    return not dtype.is_floating_point and not dtype.is_complex
-
-
-def is_integral_tensor(x: Any) -> TypeIs[Tensor]:
-    return isinstance(x, Tensor) and is_integral_dtype(x.dtype)
-
-
-def is_integral_tensor1d(x: Any) -> TypeIs[Tensor1D]:
-    return is_integral_tensor(x) and x.ndim == 1
-
-
-def is_iterable_tensor(x: Any) -> TypeIs[Iterable[Tensor]]:
-    """Deprecated: Use `to.isinstance_guard(x, Iterable[Tensor])` instead."""
-    return isinstance_guard(x, Iterable[Tensor])
-
-
-def is_list_tensor(x: Any) -> TypeIs[List[Tensor]]:
-    """Deprecated: Use `to.isinstance_guard(x, List[Tensor])` instead."""
-    return isinstance_guard(x, List[Tensor])
 
 
 def is_number_like(x: Any) -> TypeGuard[NumberLike]:
@@ -97,21 +54,69 @@ def is_scalar_like(x: Any) -> TypeGuard[ScalarLike]:
     return is_builtin_scalar(x) or is_numpy_scalar_like(x) or is_tensor0d(x)
 
 
-def is_tensor0d(x: Any) -> TypeIs[Tensor0D]:
-    """Deprecated: Use `isinstance(x, to.Tensor0D)` instead.
-
-    Returns True if x is a zero-dimensional torch Tensor."""
-    return isinstance(x, Tensor0D)
-
-
-def is_tensor_like(x: Any) -> TypeIs[TensorOrArray]:
-    return is_tensor_or_array(x)
-
-
 def is_tensor_or_array(x: Any) -> TypeIs[TensorOrArray]:
     return isinstance(x, (Tensor, np.ndarray))
 
 
+@function_alias(is_tensor_or_array)
+def is_tensor_like(*args, **kwargs):
+    ...
+
+
+def is_integral_dtype(dtype: torch.dtype) -> bool:
+    return is_integral_tensor(torch.empty((0,), dtype=dtype))
+
+
+@deprecated("Deprecated: Use `isinstance(x, to.BoolTensor)` instead.")
+def is_bool_tensor(x: Any) -> TypeIs[BoolTensor]:
+    return isinstance(x, BoolTensor)
+
+
+@deprecated("Deprecated: Use `isinstance(x, to.BoolTensor1D)` instead.")
+def is_bool_tensor1d(x: Any) -> TypeIs[BoolTensor1D]:
+    return isinstance(x, BoolTensor1D)
+
+
+@deprecated("Deprecated: Use `isinstance(x, to.ComplexFloatingTensor)` instead.")
+def is_complex_tensor(x: Any) -> TypeIs[ComplexFloatingTensor]:
+    return isinstance(x, ComplexFloatingTensor)
+
+
+@deprecated("Deprecated: Use `to.isinstance_guard(x, Dict[str, Tensor])` instead.")
+def is_dict_str_tensor(x: Any) -> TypeIs[Dict[str, Tensor]]:
+    return isinstance_guard(x, Dict[str, Tensor])
+
+
+@deprecated("Deprecated: Use `isinstance(x, to.FloatingTensor)` instead.")
+def is_floating_tensor(x: Any) -> TypeIs[FloatingTensor]:
+    return isinstance(x, FloatingTensor)
+
+
+@deprecated("Deprecated: Use `isinstance(x, to.IntegralTensor)` instead.")
+def is_integral_tensor(x: Any) -> TypeIs[Tensor]:
+    return isinstance(x, IntegralTensor)
+
+
+@deprecated("Deprecated: Use `isinstance(x, to.IntegralTensor1D)` instead.")
+def is_integral_tensor1d(x: Any) -> TypeIs[IntegralTensor1D]:
+    return isinstance(x, IntegralTensor1D)
+
+
+@deprecated("Deprecated: Use `to.isinstance_guard(x, Iterable[Tensor])` instead.")
+def is_iterable_tensor(x: Any) -> TypeIs[Iterable[Tensor]]:
+    return isinstance_guard(x, Iterable[Tensor])
+
+
+@deprecated("Deprecated: Use `to.isinstance_guard(x, List[Tensor])` instead.")
+def is_list_tensor(x: Any) -> TypeIs[List[Tensor]]:
+    return isinstance_guard(x, List[Tensor])
+
+
+@deprecated("Deprecated: Use `isinstance(x, Tensor0D)` instead.")
+def is_tensor0d(x: Any) -> TypeIs[Tensor0D]:
+    return isinstance(x, Tensor0D)
+
+
+@deprecated("Deprecated: Use `to.isinstance_guard(x, Tuple[Tensor, ...])` instead.")
 def is_tuple_tensor(x: Any) -> TypeIs[Tuple[Tensor, ...]]:
-    """Deprecated: Use `to.isinstance_guard(x, Tuple[Tensor, ...])` instead."""
     return isinstance_guard(x, Tuple[Tensor, ...])
