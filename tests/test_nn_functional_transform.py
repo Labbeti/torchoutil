@@ -60,7 +60,7 @@ class TestResampleNearest(TestCase):
                 19,
             ]
         )
-        assert torch.equal(result, expected)
+        assert torch.equal(result, expected), f"{result.shape=}; {expected.shape=}"
 
     def test_example_3(self) -> None:
         x = torch.stack([torch.arange(10, 20), torch.arange(20, 30)])

@@ -7,7 +7,7 @@ from typing import Any, Callable, Optional, Type, TypeVar, Union, overload
 
 from typing_extensions import ParamSpec
 
-from ._core import _alias
+from ._core import _decorator_factory
 
 P = ParamSpec("P")
 U = TypeVar("U")
@@ -56,7 +56,7 @@ def deprecated_alias(
         msg = msg_fmt.format(fn_name=fn.__name__, alternative_name=alternative_name)
         warn_fn(msg)
 
-    return _alias(alternative, pre_fn=pre_fn)
+    return _decorator_factory(alternative, pre_fn=pre_fn)
 
 
 def deprecated_function(
@@ -69,4 +69,4 @@ def deprecated_function(
         msg = msg_fmt.format(fn_name=fn.__name__)
         warn_fn(msg)
 
-    return _alias(None, pre_fn=pre_fn)
+    return _decorator_factory(None, pre_fn=pre_fn)

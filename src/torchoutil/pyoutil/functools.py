@@ -5,7 +5,7 @@ from typing import Any, Callable, Generic, TypeVar, overload
 
 from typing_extensions import ParamSpec
 
-from ._core import _alias, return_none  # noqa: F401
+from ._core import _decorator_factory, return_none  # noqa: F401
 from .inspect import get_argnames
 
 P = ParamSpec("P")
@@ -106,4 +106,4 @@ def filter_and_call(fn: Callable[..., T], **kwargs: Any) -> T:
 
 
 def function_alias(alternative: Callable[P, U]) -> Callable[..., Callable[P, U]]:
-    return _alias(alternative)
+    return _decorator_factory(alternative)

@@ -94,7 +94,9 @@ class TestGuards(TestCase):
 
                 # Impl: scalar => (nelements == 1)
                 nelements = F.nelement(x)  # type: ignore
-                assert not x_is_scalar or (nelements == 1), f"{type(x)=} ; {x=}"
+                assert not x_is_scalar or (
+                    nelements == 1
+                ), f"{type(x)=} ; {x=}; {x_is_scalar=}, {nelements=}"
 
                 xitem = F.to_item(x)  # type: ignore
                 assert is_builtin_scalar(xitem), f"{x=}"

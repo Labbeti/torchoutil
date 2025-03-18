@@ -17,7 +17,7 @@ from torchoutil.core.make import (
     make_dtype,
     make_generator,
 )
-from torchoutil.nn.functional.predicate import can_be_stacked
+from torchoutil.nn.functional.predicate import is_stackable
 from torchoutil.types import is_number_like
 
 PadAlign: TypeAlias = Literal["left", "right", "center", "random"]
@@ -119,7 +119,7 @@ def pad_and_stack_rec(
 
         elif isinstance(sequence, (list, tuple)):
             tensors = [_impl(elt) for elt in sequence]
-            if can_be_stacked(tensors):
+            if is_stackable(tensors):
                 return torch.stack(tensors)
 
             shapes = [elt.shape for elt in tensors]

@@ -87,6 +87,12 @@ class SupportsBool(Protocol):
 
 
 @runtime_checkable
+class SupportsAdd(Protocol):
+    def __add__(self, other, /):
+        raise NotImplementedError
+
+
+@runtime_checkable
 class SupportsAnd(Protocol):
     def __and__(self, other, /):
         raise NotImplementedError

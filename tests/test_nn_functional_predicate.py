@@ -11,8 +11,8 @@ from torchoutil.core.packaging import _NUMPY_AVAILABLE
 from torchoutil.extras.numpy import np
 from torchoutil.nn.functional.predicate import (
     all_eq,
-    can_be_converted_to_tensor,
-    can_be_stacked,
+    is_convertible_to_tensor,
+    is_stackable,
 )
 
 
@@ -64,12 +64,12 @@ class TestCanBeConvertedToTensor(TestCase):
             except RuntimeError:
                 stackable = False
 
-            # note: can_be_converted_to_tensor(example) => convertible, but not necessary equal
+            # note: is_convertible_to_tensor(example) => convertible, but not necessary equal
             assert (
-                not can_be_converted_to_tensor(example) or convertible
+                not is_convertible_to_tensor(example) or convertible
             ), f"can_be_converted_to_tensor: {example=}"
 
-            assert can_be_stacked(example) == stackable, f"can_be_stacked: {example=}"
+            assert is_stackable(example) == stackable, f"is_stackable: {example=}"
 
 
 class TestAllEq(TestCase):

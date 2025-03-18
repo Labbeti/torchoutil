@@ -285,122 +285,118 @@ def is_sequence_str(
 # -----------------------
 # Old aliases
 # -----------------------
-@deprecated_function("Deprecated: Use `isinstance_guard(x, Dict[str, Any])` instead.")
+@deprecated_function("{fn_name}, use `isinstance_guard(x, Dict[str, Any])` instead.")
 def is_dict_str(x: Any) -> TypeIs[Dict[str, Any]]:
     return isinstance_guard(x, Dict[str, Any])
 
 
 @deprecated_function(
-    "Deprecated: Use `isinstance_guard(x, Dict[str, Optional[int]])` instead."
+    "{fn_name}, use `isinstance_guard(x, Dict[str, Optional[int]])` instead."
 )
 def is_dict_str_optional_int(x: Any) -> TypeIs[Dict[str, Optional[int]]]:
     return isinstance_guard(x, Dict[str, Optional[int]])
 
 
-@deprecated_function(
-    "Deprecated: Use `isinstance_guard(x, Dict[str, Number])` instead."
-)
+@deprecated_function("{fn_name}, use `isinstance_guard(x, Dict[str, Number])` instead.")
 def is_dict_str_number(x: Any) -> TypeIs[Dict[str, Number]]:
     return isinstance_guard(x, Dict[str, Number])
 
 
-@deprecated_function("Deprecated: Use `isinstance_guard(x, Dict[str, str])` instead.")
+@deprecated_function("{fn_name}, use `isinstance_guard(x, Dict[str, str])` instead.")
 def is_dict_str_str(x: Any) -> TypeIs[Dict[str, str]]:
     return isinstance_guard(x, Dict[str, str])
 
 
 @deprecated_function(
-    "Deprecated: Use `isinstance_guard(x, Iterable[Iterable[int]])` instead."
+    "{fn_name}, use `isinstance_guard(x, Iterable[Iterable[int]])` instead."
 )
 def is_iterable_iterable_int(x: Any) -> TypeIs[Iterable[Iterable[int]]]:
     return isinstance_guard(x, Iterable[Iterable[int]])
 
 
 @deprecated_function(
-    "Deprecated: Use `isinstance_guard(x, Iterable[Mapping[str, Any]])` instead."
+    "{fn_name}, use `isinstance_guard(x, Iterable[Mapping[str, Any]])` instead."
 )
 def is_iterable_mapping_str(x: Any) -> TypeIs[Iterable[Mapping[str, Any]]]:
     return isinstance_guard(x, Iterable[Mapping[str, Any]])
 
 
-@deprecated_function("Deprecated: Use `isinstance_guard(x, List[bool])` instead.")
+@deprecated_function("{fn_name}, use `isinstance_guard(x, List[bool])` instead.")
 def is_list_bool(x: Any) -> TypeIs[List[bool]]:
     return isinstance_guard(x, List[bool])
 
 
 @deprecated_function(
-    "Deprecated: Use `isinstance_guard(x, List[BuiltinNumber])` instead."
+    "{fn_name}, use `isinstance_guard(x, List[BuiltinNumber])` instead."
 )
 def is_list_builtin_number(x: Any) -> TypeIs[List[BuiltinNumber]]:
     return isinstance_guard(x, List[BuiltinNumber])
 
 
-@deprecated_function("Deprecated: Use `isinstance_guard(x, List[float])` instead.")
+@deprecated_function("{fn_name}, use `isinstance_guard(x, List[float])` instead.")
 def is_list_float(x: Any) -> TypeIs[List[float]]:
     return isinstance_guard(x, List[float])
 
 
-@deprecated_function("Deprecated: Use `isinstance_guard(x, List[int])` instead.")
+@deprecated_function("{fn_name}, use `isinstance_guard(x, List[int])` instead.")
 def is_list_int(x: Any) -> TypeIs[List[int]]:
     return isinstance_guard(x, List[int])
 
 
-@deprecated_function("Deprecated: Use `isinstance_guard(x, List[List[str]])` instead.")
+@deprecated_function("{fn_name}, use `isinstance_guard(x, List[List[str]])` instead.")
 def is_list_list_str(x: Any) -> TypeIs[List[List[str]]]:
     return isinstance_guard(x, List[List[str]])
 
 
-@deprecated_function("Deprecated: Use `isinstance_guard(x, List[Number])` instead.")
+@deprecated_function("{fn_name}, use `isinstance_guard(x, List[Number])` instead.")
 def is_list_number(x: Any) -> TypeIs[List[Number]]:
     return isinstance_guard(x, List[Number])
 
 
-@deprecated_function("Deprecated: Use `isinstance_guard(x, List[str])` instead.")
+@deprecated_function("{fn_name}, use `isinstance_guard(x, List[str])` instead.")
 def is_list_str(x: Any) -> TypeIs[List[str]]:
     return isinstance_guard(x, List[str])
 
 
-@deprecated_function(
-    "Deprecated: Use `isinstance_guard(x, Mapping[str, Any])` instead."
-)
+@deprecated_function("{fn_name}, use `isinstance_guard(x, Mapping[str, Any])` instead.")
 def is_mapping_str(x: Any) -> TypeIs[Mapping[str, Any]]:
     return isinstance_guard(x, Mapping[str, Any])
 
 
 @deprecated_function(
-    "Deprecated: Use `isinstance_guard(x, Mapping[str, Iterable[Any]])` instead."
+    "{fn_name}, use `isinstance_guard(x, Mapping[str, Iterable[Any]])` instead."
 )
 def is_mapping_str_iterable(x: Any) -> TypeIs[Mapping[str, Iterable[Any]]]:
     return isinstance_guard(x, Mapping[str, Iterable[Any]])
 
 
-@deprecated_function("Deprecated: Use `isinstance_guard(x, Sequence[bool])` instead.")
+@deprecated_function("{fn_name}, use `isinstance_guard(x, Sequence[bool])` instead.")
 def is_sequence_bool(x: Any) -> TypeIs[Sequence[bool]]:
     return isinstance_guard(x, Sequence[bool])
 
 
-@deprecated_function("Deprecated: Use `isinstance_guard(x, Sequence[float])` instead.")
+@deprecated_function("{fn_name}, use `isinstance_guard(x, Sequence[float])` instead.")
 def is_sequence_float(x: Any) -> TypeIs[Sequence[float]]:
     return isinstance_guard(x, Sequence[float])
 
 
-@deprecated_function("Deprecated: Use `isinstance_guard(x, Sequence[int])` instead.")
+@deprecated_function("{fn_name}, use `isinstance_guard(x, Sequence[int])` instead.")
 def is_sequence_int(x: Any) -> TypeIs[Sequence[int]]:
     return isinstance_guard(x, Sequence[int])
 
 
 @deprecated_function(
-    "Deprecated: Use `isinstance_guard(x, Tuple[Optional[int], ...])` instead."
+    "{fn_name}, use `isinstance_guard(x, Tuple[Optional[int], ...])` instead."
 )
 def is_tuple_optional_int(x: Any) -> TypeIs[Tuple[Optional[int], ...]]:
     return isinstance_guard(x, Tuple[Optional[int], ...])
 
 
-@deprecated_function("Deprecated: Use `isinstance_guard(x, Tuple[int, ...])` instead.")
+@deprecated_function("{fn_name}, use `isinstance_guard(x, Tuple[int, ...])` instead.")
 def is_tuple_int(x: Any) -> TypeIs[Tuple[int, ...]]:
     return isinstance_guard(x, Tuple[int, ...])
 
 
-@deprecated_function("Deprecated: Use `isinstance_guard(x, Tuple[str, ...])` instead.")
+@deprecated_function("{fn_name}, use `isinstance_guard(x, Tuple[str, ...])` instead.")
 def is_tuple_str(x: Any) -> TypeIs[Tuple[str, ...]]:
     return isinstance_guard(x, Tuple[str, ...])

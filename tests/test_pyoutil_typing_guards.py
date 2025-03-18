@@ -113,7 +113,7 @@ class TestIsInstanceGuard(TestCase):
         assert isinstance_guard(x, Optional[int])
         assert isinstance_guard(x, Union[int, str])
         assert isinstance_guard(x, Literal[1])  # type: ignore
-        assert isinstance_guard(x, Literal[2, None, 1, "a"])
+        assert isinstance_guard(x, Literal[2, None, 1, "a"])  # type: ignore
 
         assert not isinstance_guard(x, float)
         assert not isinstance_guard(x, Callable)  # type: ignore

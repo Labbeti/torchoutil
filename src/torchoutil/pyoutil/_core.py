@@ -16,7 +16,7 @@ def return_none(*args, **kwargs) -> None:
     return None
 
 
-def _alias(
+def _decorator_factory(
     inner_fn: Optional[Callable[P, U]],
     *,
     pre_fn: Callable[..., Any] = return_none,
@@ -24,7 +24,7 @@ def _alias(
 ) -> Callable[..., Callable[P, U]]:
     """Deprecated decorator for function aliases."""
 
-    def deprecated_inner(fn: Callable[P, U]) -> Callable[P, U]:
+    def wrapper_factory(fn: Callable[P, U]) -> Callable[P, U]:
         if inner_fn is None:
             _inner_fn = fn
         else:
@@ -32,11 +32,11 @@ def _alias(
 
         @wraps(_inner_fn)
         def wrapped(*args: P.args, **kwargs: P.kwargs) -> U:
-            pre_fn(_inner_fn, *args, **kwargs)
+            pre_fn(fn, *args, **kwargs)
             result = _inner_fn(*args, **kwargs)
-            post_fn(_inner_fn, *args, **kwargs)
+            post_fn(fn, *args, **kwargs)
             return result
 
         return wrapped
 
-    return deprecated_inner
+    return wrapper_factory

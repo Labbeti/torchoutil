@@ -1,20 +1,23 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from typing import Any, Iterable, Tuple, Union, overload, Literal, List
+from typing import Any, Iterable, List, Literal, Tuple, Union, overload
 
 import torch
 from torch import Tensor
 from typing_extensions import TypeGuard
 
 from torchoutil.core.make import DeviceLike, DTypeLike, make_device, make_dtype
-from torchoutil.core.packaging import torch_version_ge_1_13
 from torchoutil.pyoutil import (
     BuiltinScalar,
+    function_alias,
     get_current_fn_name,
     is_builtin_scalar,
     prod,
+    reduce_and,
+    reduce_or,
 )
+from torchoutil.pyoutil.semver import Version
 
 from .definitions import NumpyNumberLike, NumpyScalarLike, np
 
@@ -39,7 +42,7 @@ def tensor_to_numpy(
     force: bool = False,
 ) -> np.ndarray:
     """Convert PyTorch tensor to numpy array."""
-    if torch_version_ge_1_13():
+    if Version(str(torch.__version__)) >= Version("1.13.0"):
         kwargs = dict(force=force)
     elif not force:
         kwargs = dict()
@@ -131,30 +134,6 @@ def is_numpy_scalar_like(x: Any) -> TypeGuard[NumpyScalarLike]:
     return isinstance(x, np.generic) or (isinstance(x, np.ndarray) and x.ndim == 0)
 
 
-def logical_and_lst(
-    arr0: np.ndarray,
-    /,
-    *others: np.ndarray,
-) -> np.ndarray:
-    """Compute multiple logical_and over numpy arrays."""
-    current = arr0
-    for other in others:
-        current = np.logical_and(current, other)
-    return current
-
-
-def logical_or_lst(
-    arr0: np.ndarray,
-    /,
-    *others: np.ndarray,
-) -> np.ndarray:
-    """Compute multiple logical_or over numpy arrays."""
-    current = arr0
-    for other in others:
-        current = np.logical_or(current, other)
-    return current
-
-
 def numpy_topk(
     x: np.ndarray,
     k: int,
@@ -221,3 +200,13 @@ def numpy_all_eq(
 
 def numpy_all_ne(x: Union[np.generic, np.ndarray]) -> bool:
     return len(np.unique(x)) == x.size
+
+
+@function_alias(reduce_and)
+def logical_and_lst(*args, **kwargs) -> np.ndarray:
+    ...
+
+
+@function_alias(reduce_or)
+def logical_or_lst(*args, **kwargs) -> np.ndarray:
+    ...

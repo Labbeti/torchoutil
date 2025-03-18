@@ -10,9 +10,9 @@ from torch import Tensor
 
 from torchoutil.core.make import DeviceLike, DTypeLike, make_device, make_dtype
 from torchoutil.nn.functional.pad import pad_and_stack_rec
-from torchoutil.nn.functional.predicate import can_be_stacked
-from torchoutil.nn.functional.transform import to_item, as_tensor
-from torchoutil.pyoutil.typing import is_sequence_int
+from torchoutil.nn.functional.predicate import is_stackable
+from torchoutil.nn.functional.transform import as_tensor, to_item
+from torchoutil.pyoutil.typing import isinstance_guard
 from torchoutil.types import LongTensor, is_number_like, is_tensor_like
 from torchoutil.types._typing import TensorOrArray
 
@@ -46,7 +46,7 @@ def indices_to_multihot(
         if is_tensor_like(x) and not _is_valid_indices(x):
             raise ValueError(f"Invalid argument shape {x.shape=}.")
 
-        if (is_tensor_like(x) and x.ndim == 1) or is_sequence_int(x):
+        if (is_tensor_like(x) and x.ndim == 1) or isinstance_guard(x, Sequence[int]):
             x = torch.as_tensor(x, dtype=torch.long, device=device)
 
             if padding_idx is not None:
@@ -150,7 +150,7 @@ def multihot_to_indices(
                 preds = pad_and_stack_rec(preds, padding_idx, dtype=torch.long)
                 if not keep_tensor:
                     preds = preds.tolist()
-            elif keep_tensor and can_be_stacked(preds):
+            elif keep_tensor and is_stackable(preds):
                 preds = torch.stack(preds)
             return preds  # type: ignore
 

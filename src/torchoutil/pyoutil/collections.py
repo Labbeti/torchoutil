@@ -31,6 +31,7 @@ from .functools import function_alias, identity
 from .semver import Version
 from .typing.classes import (
     SizedGetitemIter,
+    SupportsAdd,
     SupportsAnd,
     SupportsMul,
     SupportsOr,
@@ -46,6 +47,7 @@ W = TypeVar("W", covariant=True)
 X = TypeVar("X", covariant=True)
 Y = TypeVar("Y", covariant=True)
 
+T_SupportsAdd = TypeVar("T_SupportsAdd", bound=SupportsAdd)
 T_SupportsAnd = TypeVar("T_SupportsAnd", bound=SupportsAnd)
 T_SupportsMul = TypeVar("T_SupportsMul", bound=SupportsMul)
 T_SupportsOr = TypeVar("T_SupportsOr", bound=SupportsOr)
@@ -788,6 +790,48 @@ def shuffled(
 
 
 @overload
+def reduce_add(
+    args: Iterable[T_SupportsAdd],
+    /,
+    *,
+    start: T_SupportsAdd,
+) -> T_SupportsAdd:
+    ...
+
+
+@overload
+def reduce_add(
+    *args: T_SupportsAdd,
+    start: T_SupportsAdd,
+) -> T_SupportsAdd:
+    ...
+
+
+@overload
+def reduce_add(
+    arg0: T_SupportsAdd,
+    /,
+    *args: T_SupportsAdd,
+    start: Optional[T_SupportsAdd] = None,
+) -> T_SupportsAdd:
+    ...
+
+
+def reduce_add(*args, start=None):
+    return _reduce(*args, start=start, op_fn=operator.add, type_=SupportsAdd)
+
+
+@overload
+def reduce_and(
+    args: Iterable[T_SupportsAnd],
+    /,
+    *,
+    start: T_SupportsAnd,
+) -> T_SupportsAnd:
+    ...
+
+
+@overload
 def reduce_and(
     *args: T_SupportsAnd,
     start: T_SupportsAnd,
@@ -805,18 +849,18 @@ def reduce_and(
     ...
 
 
-@overload
-def reduce_and(
-    args: Iterable[T_SupportsAnd],
-    /,
-    *,
-    start: T_SupportsAnd,
-) -> T_SupportsAnd:
-    ...
-
-
 def reduce_and(*args, start=None):
     return _reduce(*args, start=start, op_fn=operator.and_, type_=SupportsAnd)
+
+
+@overload
+def reduce_mul(
+    args: Iterable[T_SupportsMul],
+    /,
+    *,
+    start: T_SupportsMul,
+) -> T_SupportsMul:
+    ...
 
 
 @overload
@@ -837,18 +881,18 @@ def reduce_mul(
     ...
 
 
-@overload
-def reduce_mul(
-    args: Iterable[T_SupportsMul],
-    /,
-    *,
-    start: T_SupportsMul,
-) -> T_SupportsMul:
-    ...
-
-
 def reduce_mul(*args, start=None):
     return _reduce(*args, start=start, op_fn=operator.mul, type_=SupportsMul)
+
+
+@overload
+def reduce_or(
+    args: Iterable[T_SupportsOr],
+    /,
+    *,
+    start: T_SupportsOr,
+) -> T_SupportsOr:
+    ...
 
 
 @overload
@@ -869,27 +913,20 @@ def reduce_or(
     ...
 
 
-@overload
-def reduce_or(
-    args: Iterable[T_SupportsOr],
-    /,
-    *,
-    start: T_SupportsOr,
-) -> T_SupportsOr:
-    ...
-
-
 def reduce_or(*args, start=None):
     return _reduce(*args, start=start, op_fn=operator.or_, type_=SupportsOr)
 
 
 def _reduce(
-    *args, start: Optional[T] = None, op_fn: Callable[[T, T], T], type_: Type[T]
+    *args,
+    start: Optional[T] = None,
+    op_fn: Callable[[T, T], T],
+    type_: Type[T],
 ) -> T:
-    if isinstance_guard(args, Tuple[type_, ...]):
-        it_or_args = args
-    elif isinstance_guard(args, Tuple[Iterable[type_]]):
+    if isinstance_guard(args, Tuple[Iterable[type_]]):
         it_or_args = args[0]
+    elif isinstance_guard(args, Tuple[type_, ...]):
+        it_or_args = args
     else:
         msg = f"Invalid positional arguments {args}. (expected {Tuple[type_, ...]} or {Tuple[Iterable[type_]]})"
         raise TypeError(msg)
@@ -912,6 +949,70 @@ def _reduce(
     return accumulator
 
 
+@overload
+def sum(
+    args: Iterable[T_SupportsAdd],
+    /,
+    *,
+    start: T_SupportsAdd = 0,
+) -> T_SupportsAdd:
+    ...
+
+
+@overload
+def sum(
+    *args: T_SupportsAdd,
+    start: T_SupportsAdd = 0,
+) -> T_SupportsAdd:
+    ...
+
+
+@overload
+def sum(
+    arg0: T_SupportsAdd,
+    /,
+    *args: T_SupportsAdd,
+    start: Optional[T_SupportsAdd] = 0,
+) -> T_SupportsAdd:
+    ...
+
+
+def sum(*args, start: Any = 0):
+    return reduce_add(*args, start=start)
+
+
+@overload
+def prod(
+    args: Iterable[T_SupportsMul],
+    /,
+    *,
+    start: T_SupportsMul = 1,
+) -> T_SupportsMul:
+    ...
+
+
+@overload
+def prod(
+    *args: T_SupportsMul,
+    start: T_SupportsMul = 1,
+) -> T_SupportsMul:
+    ...
+
+
+@overload
+def prod(
+    arg0: T_SupportsMul,
+    /,
+    *args: T_SupportsMul,
+    start: Optional[T_SupportsMul] = 1,
+) -> T_SupportsMul:
+    ...
+
+
+def prod(*args, start: Any = 1):
+    return reduce_mul(*args, start=start)
+
+
 @function_alias(all_eq)
 def is_full(*args, **kwargs):
     ...
@@ -924,11 +1025,6 @@ def is_unique(*args, **kwargs):
 
 @function_alias(reduce_and)
 def intersect(*args, **kwargs):
-    ...
-
-
-@function_alias(reduce_mul)
-def prod(*args, **kwargs):
     ...
 
 

@@ -4,6 +4,7 @@
 import copy
 import random
 import unittest
+from typing import List
 from unittest import TestCase
 
 from torchoutil.pyoutil.collections import (
@@ -20,7 +21,7 @@ from torchoutil.pyoutil.collections import (
     unflat_list_of_list,
 )
 from torchoutil.pyoutil.re import get_key_fn
-from torchoutil.pyoutil.typing import is_list_list_str, is_list_str
+from torchoutil.pyoutil.typing import isinstance_guard
 
 
 class TestAllEqAllNe(TestCase):
@@ -158,15 +159,15 @@ class TestFlatList(TestCase):
             random.shuffle(sublst)
         random.shuffle(lst)
 
-        assert is_list_list_str(lst)
+        assert isinstance_guard(lst, List[List[str]])
 
         flatten, sizes = flat_list_of_list(lst)
-        assert is_list_str(flatten)
+        assert isinstance_guard(flatten, List[str])
         assert len(lst) == len(sizes)
         assert len(flatten) == sum(sizes)
 
         unflat = unflat_list_of_list(flatten, sizes)
-        assert is_list_list_str(unflat)
+        assert isinstance_guard(unflat, List[List[str]])
         assert len(lst) == len(unflat)
         assert lst == unflat
 

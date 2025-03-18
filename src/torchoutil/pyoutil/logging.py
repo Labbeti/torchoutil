@@ -42,7 +42,7 @@ pylog = logging.getLogger(__name__)
 
 @lru_cache(maxsize=None)
 @deprecated_function(
-    "Deprecated: Use `torchoutil.pyoutil.logging.log_once(..., level=logging.WARNING)` or `torchoutil.pyoutil.warnings.warn_once` instead."
+    "Use `torchoutil.pyoutil.logging.log_once(..., level=logging.WARNING)` or `torchoutil.pyoutil.warnings.warn_once` instead."
 )
 def warn_once(*args, **kwargs):
     return log_once(*args, **kwargs)
