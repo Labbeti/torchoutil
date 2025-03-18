@@ -142,17 +142,6 @@ from .types.tensor_subclasses import (
     UnsignedIntegerTensor2D,
     UnsignedIntegerTensor3D,
 )
-from .types.variable_fns import (
-    arange,
-    as_tensor,
-    empty,
-    full,
-    ones,
-    rand,
-    randint,
-    randperm,
-    zeros,
-)
 
 version = __version__
 version_info = Version(__version__)

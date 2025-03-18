@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from torch.nn.functional import *
+from torch.nn.functional import *  # type: ignore
 
 from .activation import log_softmax_multidim, softmax_multidim
 from .checksum import checksum, checksum_any
