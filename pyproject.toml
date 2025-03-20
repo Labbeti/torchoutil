@@ -40,9 +40,15 @@ torchoutil-info = "torchoutil.info:print_install_info"
 torchoutil-tree = "torchoutil.entries:main_tree"
 torchoutil-safe-rmdir = "torchoutil.entries:main_safe_rmdir"
 
+[build-system]
+requires = ["setuptools >= 61.0"]
+build-backend = "setuptools.build_meta"
+
 [tool.setuptools.packages.find]
 where = ["src"]  # list of folders that contain the packages (["."] by default)
-include = ["torchoutil", "pyoutil"]  # package names should match these glob patterns (["*"] by default)
+# package names should match these glob patterns (["*"] by default)
+# note: star after package names is required to work
+include = ["torchoutil*", "pyoutil*"]
 
 [tool.setuptools.dynamic]
 version = {attr = "torchoutil.__version__"}
