@@ -100,5 +100,6 @@ from .re import (
     match_patterns,
     sort_with_patterns,
 )
+from .semver import Version
 from .typing import *
 from .warnings import deprecated_alias, deprecated_function, warn_once
