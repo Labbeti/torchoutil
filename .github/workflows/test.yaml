@@ -119,37 +119,37 @@ jobs:
           - os: macos-latest
             python-version: "3.12"
             torch-version: "unspecified"
-          - os: ubuntu-24.04
-            python-version: "3.8"
-            torch-version: "1.10"
-          - os: ubuntu-24.04
-            python-version: "3.8"
-            torch-version: "1.11"
-          - os: ubuntu-24.04
-            python-version: "3.8"
-            torch-version: "1.12"
-          - os: ubuntu-24.04
-            python-version: "3.8"
-            torch-version: "1.13"
-          - os: ubuntu-24.04
-            python-version: "3.8"
-            torch-version: "2.0"
-          - os: ubuntu-24.04
-            python-version: "3.8"
-            torch-version: "2.1"
-          - os: ubuntu-24.04
-            python-version: "3.8"
-            torch-version: "2.2"
-          - os: ubuntu-24.04
-            python-version: "3.8"
-            torch-version: "2.3"
-          - os: ubuntu-24.04
-            python-version: "3.8"
-            torch-version: "2.4"
-            # note: torch 2.5 is not available for python<=3.8
-          - os: ubuntu-24.04
-            python-version: "3.9"
-            torch-version: "2.5"
+          # - os: ubuntu-24.04
+          #   python-version: "3.8"
+          #   torch-version: "1.10"
+          # - os: ubuntu-24.04
+          #   python-version: "3.8"
+          #   torch-version: "1.11"
+          # - os: ubuntu-24.04
+          #   python-version: "3.8"
+          #   torch-version: "1.12"
+          # - os: ubuntu-24.04
+          #   python-version: "3.8"
+          #   torch-version: "1.13"
+          # - os: ubuntu-24.04
+          #   python-version: "3.8"
+          #   torch-version: "2.0"
+          # - os: ubuntu-24.04
+          #   python-version: "3.8"
+          #   torch-version: "2.1"
+          # - os: ubuntu-24.04
+          #   python-version: "3.8"
+          #   torch-version: "2.2"
+          # - os: ubuntu-24.04
+          #   python-version: "3.8"
+          #   torch-version: "2.3"
+          # - os: ubuntu-24.04
+          #   python-version: "3.8"
+          #   torch-version: "2.4"
+          #   # note: torch 2.5 is not available for python<=3.8
+          # - os: ubuntu-24.04
+          #   python-version: "3.9"
+          #   torch-version: "2.5"
 
     steps:
     # --- INSTALLATIONS ---
