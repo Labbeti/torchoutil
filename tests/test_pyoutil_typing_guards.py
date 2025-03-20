@@ -214,6 +214,10 @@ class TestIsInstanceGuard(TestCase):
             (("a", 2), Tuple[int, str], False),
             (("a", 2), Tuple[Union[str, int], ...], True),
             (("a", 2), Tuple[str, ...], False),
+            (("a", 2), Tuple[int, ...], False),
+            (("a", 2), Tuple[()], False),
+            ([], Tuple[()], False),
+            (("a",), Tuple[()], False),
         ]
         for example, type_, expected in examples:
             assert isinstance_guard(example, type_) == expected, f"{example=}, {type_}"
