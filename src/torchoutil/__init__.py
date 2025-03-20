@@ -3,7 +3,7 @@
 
 """Collection of functions and modules to help development in PyTorch."""
 
-from torchoutil.core.packaging import get_githash_short
+from .core.version import get_githash_short
 
 __name__ = "torchoutil"
 __author__ = "Étienne Labbé (Labbeti)"
