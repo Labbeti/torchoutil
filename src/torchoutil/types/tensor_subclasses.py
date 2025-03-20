@@ -20,6 +20,7 @@ CHalfTensor CFloatTensor CDoubleTensor    HalfTensor FloatTensor DoubleTensor   
                                                                               |           |           |           |             |           |
                                                                           CharTensor  ShortTensor  IntTensor  LongTensor    ByteTensor  BoolTensor
                                                                              (i8)       (i16)       (i32)       (i64)          (u8)       (bool)
+
 """
 
 from typing import (

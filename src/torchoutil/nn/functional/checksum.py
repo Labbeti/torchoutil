@@ -103,8 +103,8 @@ def checksum_any(
 ) -> int:
     """Compute checksum of an arbitrary python object.
 
-    The property of a checksum is: for all any supported objects a and b, `(a == b) => checksum(a) == checksum(b)`.
-    This function is deterministic.
+    The property of a checksum is: for all any supported objects a and b, `(a == b) => (checksum(a) == checksum(b))`.
+    This function is deterministic across executions by default.
 
     Args:
         x: Object to checksum.
