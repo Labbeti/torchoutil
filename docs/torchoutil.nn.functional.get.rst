@@ -1,7 +1,7 @@
-torchoutil.utils.saving.yaml module
+torchoutil.nn.functional.get module
 ===================================
 
-.. automodule:: torchoutil.utils.saving.yaml
+.. automodule:: torchoutil.nn.functional.get
    :members:
    :undoc-members:
    :show-inheritance:

@@ -15,4 +15,5 @@ Submodules
    torchoutil.extras.numpy.definitions
    torchoutil.extras.numpy.functional
    torchoutil.extras.numpy.modules
+   torchoutil.extras.numpy.saving
    torchoutil.extras.numpy.scan_info

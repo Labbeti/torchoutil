@@ -1,7 +1,7 @@
-torchoutil.utils.saving.torch module
+torchoutil.serialization.json module
 ====================================
 
-.. automodule:: torchoutil.utils.saving.torch
+.. automodule:: torchoutil.serialization.json
    :members:
    :undoc-members:
    :show-inheritance:

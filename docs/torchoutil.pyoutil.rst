@@ -40,4 +40,5 @@ Submodules
    torchoutil.pyoutil.pickle
    torchoutil.pyoutil.random
    torchoutil.pyoutil.re
+   torchoutil.pyoutil.semver
    torchoutil.pyoutil.warnings

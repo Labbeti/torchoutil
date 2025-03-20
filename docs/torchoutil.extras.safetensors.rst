@@ -1,7 +1,7 @@
-torchoutil.utils.saving.numpy module
+torchoutil.extras.safetensors module
 ====================================
 
-.. automodule:: torchoutil.utils.saving.numpy
+.. automodule:: torchoutil.extras.safetensors
    :members:
    :undoc-members:
    :show-inheritance:

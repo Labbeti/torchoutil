@@ -1,25 +1,7 @@
-torchoutil.utils.saving package
-===============================
+torchoutil.utils.saving module
+==============================
 
 .. automodule:: torchoutil.utils.saving
    :members:
    :undoc-members:
    :show-inheritance:
-
-Submodules
-----------
-
-.. toctree::
-   :maxdepth: 4
-
-   torchoutil.utils.saving.common
-   torchoutil.utils.saving.csv
-   torchoutil.utils.saving.dump_fn
-   torchoutil.utils.saving.json
-   torchoutil.utils.saving.load_fn
-   torchoutil.utils.saving.numpy
-   torchoutil.utils.saving.pickle
-   torchoutil.utils.saving.safetensors
-   torchoutil.utils.saving.torch
-   torchoutil.utils.saving.torchaudio
-   torchoutil.utils.saving.yaml

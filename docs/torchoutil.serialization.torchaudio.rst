@@ -1,7 +1,7 @@
-torchoutil.utils.saving.safetensors module
+torchoutil.serialization.torchaudio module
 ==========================================
 
-.. automodule:: torchoutil.utils.saving.safetensors
+.. automodule:: torchoutil.serialization.torchaudio
    :members:
    :undoc-members:
    :show-inheritance:

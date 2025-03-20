@@ -1,7 +1,7 @@
-torchoutil.nn.functional.crop module
+torchoutil.serialization.yaml module
 ====================================
 
-.. automodule:: torchoutil.nn.functional.crop
+.. automodule:: torchoutil.serialization.yaml
    :members:
    :undoc-members:
    :show-inheritance:

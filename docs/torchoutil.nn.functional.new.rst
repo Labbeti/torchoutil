@@ -1,7 +1,7 @@
-torchoutil.utils.saving.json module
+torchoutil.nn.functional.new module
 ===================================
 
-.. automodule:: torchoutil.utils.saving.json
+.. automodule:: torchoutil.nn.functional.new
    :members:
    :undoc-members:
    :show-inheritance:

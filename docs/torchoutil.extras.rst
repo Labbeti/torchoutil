@@ -22,6 +22,7 @@ Submodules
    :maxdepth: 4
 
    torchoutil.extras.colorlog
+   torchoutil.extras.safetensors
    torchoutil.extras.tensorboard
    torchoutil.extras.torchaudio
    torchoutil.extras.yaml

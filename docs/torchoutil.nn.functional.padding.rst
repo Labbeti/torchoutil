@@ -1,7 +1,7 @@
-torchoutil.utils.saving.dump\_fn module
+torchoutil.nn.functional.padding module
 =======================================
 
-.. automodule:: torchoutil.utils.saving.dump_fn
+.. automodule:: torchoutil.nn.functional.padding
    :members:
    :undoc-members:
    :show-inheritance:

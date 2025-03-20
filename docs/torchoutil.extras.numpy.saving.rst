@@ -1,7 +1,7 @@
-torchoutil.utils.saving.common module
+torchoutil.extras.numpy.saving module
 =====================================
 
-.. automodule:: torchoutil.utils.saving.common
+.. automodule:: torchoutil.extras.numpy.saving
    :members:
    :undoc-members:
    :show-inheritance:

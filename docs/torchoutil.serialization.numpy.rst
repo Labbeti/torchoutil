@@ -1,7 +1,7 @@
-torchoutil.utils.saving.pickle module
+torchoutil.serialization.numpy module
 =====================================
 
-.. automodule:: torchoutil.utils.saving.pickle
+.. automodule:: torchoutil.serialization.numpy
    :members:
    :undoc-members:
    :show-inheritance:

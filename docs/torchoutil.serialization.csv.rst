@@ -1,7 +1,7 @@
-torchoutil.nn.functional.pad module
+torchoutil.serialization.csv module
 ===================================
 
-.. automodule:: torchoutil.nn.functional.pad
+.. automodule:: torchoutil.serialization.csv
    :members:
    :undoc-members:
    :show-inheritance:
