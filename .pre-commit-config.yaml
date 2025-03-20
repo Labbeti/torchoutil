@@ -33,10 +33,3 @@ repos:
         args: ['--fix=no']
       - id: flake8
         args: ['--config=.flake8']
-    - repo: local
-      hooks:
-        - id: write-commit-hash
-          name: Write commit hash to file
-          entry: python write_commit_hash.py
-          language: system
-          files: ^commit_hash\.txt$
