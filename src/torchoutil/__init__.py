@@ -22,6 +22,7 @@ from . import hub as hub
 from . import nn as nn
 from . import optim as optim
 from . import pyoutil as pyoutil
+from . import serialization as serialization
 from . import types as types
 from . import utils as utils
 
