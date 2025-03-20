@@ -15,6 +15,7 @@ __version__ = "0.6.0"
 from torch import *  # type: ignore
 
 # Re-import torchoutil modules for language servers
+from . import core as core
 from . import extras as extras
 from . import hub as hub
 from . import nn as nn
