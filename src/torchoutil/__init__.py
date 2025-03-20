@@ -3,18 +3,6 @@
 
 """Collection of functions and modules to help development in PyTorch."""
 
-import subprocess
-
-
-def get_githash_short() -> str:
-    cmd = ["git", "rev-parse", "--short", "HEAD"]
-    return subprocess.check_output(cmd).decode().strip()
-
-
-def get_githash_full() -> str:
-    cmd = ["git", "rev-parse", "HEAD"]
-    return subprocess.check_output(cmd).decode().strip()
-
 
 __name__ = "torchoutil"
 __author__ = "Étienne Labbé (Labbeti)"
@@ -22,7 +10,7 @@ __author_email__ = "labbeti.pub@gmail.com"
 __license__ = "MIT"
 __maintainer__ = "Étienne Labbé (Labbeti)"
 __status__ = "Development"
-__version__ = f"0.6.0+{get_githash_short()}"
+__version__ = "0.6.0"
 
 # Import global functions and classes from torch
 from torch import *  # type: ignore
