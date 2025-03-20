@@ -54,6 +54,14 @@ class TestVersion(TestCase):
             "buildmetadata": ["build", 4],
         }
 
+        v12 = Version("1.2.3")
+        v13 = "1.2.3"
+        assert v12 == v13
+        assert not (v12 < v13)
+        assert v12 <= v13
+        assert v12 >= v13
+        assert not (v12 > v13)
+
         # Check if versions can be parsed
         Version(to.__version__)
         Version(torch.__version__)
@@ -88,6 +96,9 @@ class TestVersion(TestCase):
 
         with self.assertRaises(KeyError):
             Version(1, 2)  # type: ignore
+
+        with self.assertRaises(TypeError):
+            Version(1, 2, 1, minor=1)  # type: ignore
 
     def test_semver(self) -> None:
         assert Version("1.0.0") < Version("2.0.0") < Version("2.1.0") < Version("2.1.1")

@@ -34,8 +34,9 @@ VersionTuple: TypeAlias = Union[
     Tuple[int, int, int, PreRelease, BuildMetadata],
 ]
 
-VersionDictLike = Mapping[str, Union[int, PreRelease, BuildMetadata]]
-VersionTupleLike = Iterable[Union[int, PreRelease, BuildMetadata]]
+VersionDictLike: TypeAlias = Mapping[str, Union[int, PreRelease, BuildMetadata]]
+VersionTupleLike: TypeAlias = Iterable[Union[int, PreRelease, BuildMetadata]]
+VersionLike: TypeAlias = Union["Version", str, VersionDictLike, VersionTupleLike]
 
 
 @dataclass(init=False, eq=False)
@@ -118,19 +119,19 @@ class Version:
         # Version args/kwargs
         else:
             version_dict = dict(zip(_VERSION_KEYS, args))
-            intersection = set(version_dict.keys()).intersection(kwargs.keys())
+            intersection = tuple(set(version_dict.keys()).intersection(kwargs.keys()))
             if len(intersection) > 0:
-                msg = f"Duplicated argument(s) {tuple(intersection)}. (with {args=} and {kwargs=})"
-                raise ValueError(msg)
+                msg = f"Got multiple values for argument(s) {intersection}. (with {args=} and {kwargs=})"
+                raise TypeError(msg)
             version_dict.update(kwargs)  # type: ignore
 
             invalid = tuple(set(version_dict.keys()).difference(_VERSION_KEYS))
             if len(invalid) > 0:
-                msg = f"Invalid arguments {kwargs=}. (invalid keys: {invalid})"
-                raise ValueError(msg)
+                msg = f"Got an unexpected arguments {invalid=}. (with {args=} and {kwargs=})"
+                raise TypeError(msg)
 
         if not isinstance_guard(version_dict, VersionDict):
-            msg = f"Invalid argument {args=} and {kwargs=}. (invalid argument types, expected (int, int, int, {PreRelease}, {BuildMetadata}))"
+            msg = f"Invalid argument {args=} and {kwargs=}. (invalid argument types, expected (major=int, minor=int, patch=int, prerelease={PreRelease}, buildmetadata={BuildMetadata}))"
             raise ValueError(msg)
 
         major = version_dict["major"]
@@ -168,14 +169,56 @@ class Version:
     def from_tuple(cls, version_tuple: VersionTupleLike) -> "Version":
         return Version(version_tuple)
 
-    def next_major(self) -> "Version":
-        return Version(self.major + 1, 0, 0)
+    def without_prerelease(self) -> "Version":
+        return Version(self.major, self.minor, self.patch, None, self.buildmetadata)
 
-    def next_minor(self) -> "Version":
-        return Version(self.major, self.minor + 1, 0)
+    def without_buildmetadata(self) -> "Version":
+        return Version(self.major, self.minor, self.patch, self.prerelease, None)
 
-    def next_patch(self) -> "Version":
-        return Version(self.major, self.minor, self.patch + 1)
+    def next_major(
+        self,
+        keep_prerelease: bool = False,
+        keep_buildmetadata: bool = False,
+    ) -> "Version":
+        prerelease = self.prerelease if keep_prerelease else None
+        buildmetadata = self.buildmetadata if keep_buildmetadata else None
+        return Version(
+            self.major + 1,
+            0,
+            0,
+            prerelease,
+            buildmetadata,
+        )
+
+    def next_minor(
+        self,
+        keep_prerelease: bool = False,
+        keep_buildmetadata: bool = False,
+    ) -> "Version":
+        prerelease = self.prerelease if keep_prerelease else None
+        buildmetadata = self.buildmetadata if keep_buildmetadata else None
+        return Version(
+            self.major,
+            self.minor + 1,
+            0,
+            prerelease,
+            buildmetadata,
+        )
+
+    def next_patch(
+        self,
+        keep_prerelease: bool = False,
+        keep_buildmetadata: bool = False,
+    ) -> "Version":
+        prerelease = self.prerelease if keep_prerelease else None
+        buildmetadata = self.buildmetadata if keep_buildmetadata else None
+        return Version(
+            self.major,
+            self.minor,
+            self.patch + 1,
+            prerelease,
+            buildmetadata,
+        )
 
     def to_dict(self, exclude_none: bool = True) -> VersionDict:
         version_dict = asdict(self)
@@ -201,9 +244,7 @@ class Version:
         self,
         exclude_none: bool = True,
     ) -> VersionTuple:
-        version_tuple = tuple(self.to_dict().values())
-        if exclude_none:
-            version_tuple = tuple(v for v in version_tuple if v is not None)
+        version_tuple = tuple(self.to_dict(exclude_none).values())
         return version_tuple  # type: ignore
 
     def __str__(self) -> str:
@@ -223,13 +264,22 @@ class Version:
             and self.buildmetadata == other.buildmetadata
         )
 
-    def __lt__(self, other: "Version") -> bool:
-        self_tuple = self.to_tuple()
-        other_tuple = other.to_tuple()
+    def __lt__(self, other: VersionLike) -> bool:
+        if isinstance(other, (dict, tuple, str)):
+            other = Version(other)
+        elif not isinstance(other, Version):
+            raise TypeError(f"Invalid argument type {type(other)}.")
+
+        self_tuple = self.to_tuple(exclude_none=False)
+        other_tuple = other.to_tuple(exclude_none=False)
 
         for self_v, other_v in zip(self_tuple, other_tuple):
             if self_v == other_v:
                 continue
+            if self_v is None and other_v is not None:
+                return False
+            if self_v is not None and other_v is None:
+                return True
 
             if isinstance(self_v, (int, str, NoneType)):
                 self_v = [self_v]
@@ -259,15 +309,15 @@ class Version:
 
                 raise TypeError(f"Invalid attribute type {self_vi=} and {other_vi=}.")
 
-        return True
+        return False
 
-    def __le__(self, other: "Version") -> bool:
-        return self == other or self < other
+    def __le__(self, other: VersionLike) -> bool:
+        return (self == other) or (self < other)
 
-    def __gt__(self, other: "Version") -> bool:
-        return self != other and not (self < other)
+    def __gt__(self, other: VersionLike) -> bool:
+        return (self != other) and not (self < other)
 
-    def __ge__(self, other: "Version") -> bool:
+    def __ge__(self, other: VersionLike) -> bool:
         return not (self < other)
 
 
