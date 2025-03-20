@@ -8,7 +8,7 @@ from torch import Tensor
 
 from torchoutil.core.make import DeviceLike, make_device
 from torchoutil.nn import functional as F
-from torchoutil.nn.functional.pad import pad_and_stack_rec, pad_dim
+from torchoutil.nn.functional.padding import pad_and_stack_rec, pad_dim
 from torchoutil.pyoutil.warnings import deprecated_alias
 from torchoutil.types import BoolTensor, LongTensor
 

@@ -11,11 +11,12 @@ from typing_extensions import TypeAlias
 from torchoutil.core.packaging import (
     _NUMPY_AVAILABLE,
     _SAFETENSORS_AVAILABLE,
+    _TENSORBOARD_AVAILABLE,
     _TORCHAUDIO_AVAILABLE,
     _YAML_AVAILABLE,
 )
 
-from .common import EXTENSION_TO_BACKEND, SavingBackend
+from .common import SavingBackend, _fpath_to_saving_backend
 from .csv import load_csv
 from .json import load_json
 from .pickle import load_pickle
@@ -47,6 +48,12 @@ if _SAFETENSORS_AVAILABLE:
     LOAD_FNS["safetensors"] = load_safetensors
 
 
+if _TENSORBOARD_AVAILABLE:
+    from torchoutil.extras.tensorboard import load_tfevents
+
+    LOAD_FNS["tensorboard"] = load_tfevents
+
+
 if _TORCHAUDIO_AVAILABLE:
     from .torchaudio import load_with_torchaudio
 
@@ -73,12 +80,7 @@ def load(
         raise FileNotFoundError(msg)
 
     if saving_backend is None:
-        ext = fpath.suffix[1:]
-        if ext not in EXTENSION_TO_BACKEND.keys():
-            msg = f"Unknown extension file '{ext}'. (expected one of {tuple(EXTENSION_TO_BACKEND.keys())} or specify the backend argument with `to.load(..., backend=\"backend\")`)"
-            raise ValueError(msg)
-        saving_backend = EXTENSION_TO_BACKEND[ext]
-        pylog.debug(f"Loading file '{str(fpath)}' using {saving_backend=}.")
+        saving_backend = _fpath_to_saving_backend(fpath)
 
     elif saving_backend not in LOAD_FNS:
         msg = f"Invalid argument {saving_backend=}. (expected one of {tuple(LOAD_FNS.keys())})"

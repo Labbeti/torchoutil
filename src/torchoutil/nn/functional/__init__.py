@@ -5,7 +5,7 @@ from torch.nn.functional import *  # type: ignore
 
 from .activation import log_softmax_multidim, softmax_multidim
 from .checksum import checksum, checksum_any
-from .crop import crop_dim, crop_dims
+from .cropping import crop_dim, crop_dims
 from .indices import (
     get_inverse_perm,
     get_perm_indices,
@@ -13,7 +13,14 @@ from .indices import (
     randperm_diff,
     remove_at_indices,
 )
-from .make import make_device, make_dtype, make_generator
+from .make import (
+    get_default_device,
+    get_default_dtype,
+    get_default_generator,
+    make_device,
+    make_dtype,
+    make_generator,
+)
 from .mask import (
     generate_square_subsequent_mask,
     lengths_to_non_pad_mask,
@@ -66,7 +73,7 @@ from .others import (
     rmse,
     shape,
 )
-from .pad import cat_padded_batch, pad_and_stack_rec, pad_dim, pad_dims
+from .padding import cat_padded_batch, pad_and_stack_rec, pad_dim, pad_dims
 from .powerset import multilabel_to_powerset, powerset_to_multilabel
 from .predicate import (
     all_eq,
@@ -74,9 +81,11 @@ from .predicate import (
     can_be_converted_to_tensor,
     can_be_stacked,
     is_complex,
+    is_convertible_to_tensor,
     is_floating_point,
     is_full,
     is_sorted,
+    is_stackable,
     is_unique,
 )
 from .segments import (

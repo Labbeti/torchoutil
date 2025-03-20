@@ -24,7 +24,7 @@ from torchoutil.pyoutil.collections import all_eq as builtin_all_eq
 from torchoutil.pyoutil.collections import prod as builtin_prod
 from torchoutil.pyoutil.collections import unzip
 from torchoutil.pyoutil.functools import identity
-from torchoutil.pyoutil.typing import T_BuiltinNumber
+from torchoutil.pyoutil.typing import BuiltinNumber, T_BuiltinNumber
 from torchoutil.types._typing import LongTensor, ScalarLike, T_TensorOrArray
 from torchoutil.types.guards import is_scalar_like
 from torchoutil.utils import return_types
@@ -55,9 +55,10 @@ def count_parameters(
 
 
 def find(
-    x: Tensor,
     value: Any,
-    default: Union[None, Tensor, int, float] = None,
+    x: Tensor,
+    *,
+    default: Union[None, Tensor, BuiltinNumber] = None,
     dim: int = -1,
 ) -> LongTensor:
     """Return the index of the first occurrence of value in a tensor."""
@@ -228,9 +229,9 @@ def shape(
         raise ValueError(msg)
 
 
-def ranks(x: Tensor, dim: int = -1, descending: bool = False) -> Tensor:
+def ranks(x: Tensor, dim: int = -1, descending: bool = False) -> LongTensor:
     """Get the ranks of each value in range [0, x.shape[dim][."""
-    return x.argsort(dim, descending).argsort(dim)
+    return x.argsort(dim, descending).argsort(dim)  # type: ignore
 
 
 def nelement(x: Union[ScalarLike, Tensor, np.ndarray, Iterable]) -> int:
@@ -245,11 +246,11 @@ def nelement(x: Union[ScalarLike, Tensor, np.ndarray, Iterable]) -> int:
 
 @overload
 def prod(
-    x: Tensor,
+    x: T_TensorOrArray,
     *,
     dim: Optional[int] = None,
     start: Any = 1,
-) -> Tensor:
+) -> T_TensorOrArray:
     ...
 
 
@@ -295,14 +296,20 @@ def average_power(
 
 
 def mse(
-    x1: Tensor, x2: Tensor, *, dim: Union[int, Tuple[int, ...], None] = None
+    x1: Tensor,
+    x2: Tensor,
+    *,
+    dim: Union[int, Tuple[int, ...], None] = None,
 ) -> Tensor:
     """Mean squared error function."""
     return ((x1 - x2) ** 2).mean(dim).sqrt()
 
 
 def rmse(
-    x1: Tensor, x2: Tensor, *, dim: Union[int, Tuple[int, ...], None] = None
+    x1: Tensor,
+    x2: Tensor,
+    *,
+    dim: Union[int, Tuple[int, ...], None] = None,
 ) -> Tensor:
     """Root mean squared error function."""
     return mse(x1, x2, dim=dim).sqrt()

@@ -30,9 +30,9 @@ from torchoutil.core.make import (
     make_generator,
 )
 from torchoutil.extras.numpy import np, numpy_view_as_complex, numpy_view_as_real
-from torchoutil.nn.functional.crop import crop_dim
+from torchoutil.nn.functional.cropping import crop_dim
 from torchoutil.nn.functional.others import nelement
-from torchoutil.nn.functional.pad import PadMode, PadValue, pad_dim
+from torchoutil.nn.functional.padding import PadMode, PadValue, pad_dim
 from torchoutil.pyoutil.collections import all_eq
 from torchoutil.pyoutil.collections import flatten as builtin_flatten
 from torchoutil.pyoutil.collections import prod as builtin_prod

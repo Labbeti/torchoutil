@@ -6,7 +6,7 @@ from typing import Any, Dict, List, Optional, TypeVar
 
 import torch
 
-from torchoutil.nn.functional.pad import pad_and_stack_rec
+from torchoutil.nn.functional.padding import pad_and_stack_rec
 from torchoutil.nn.functional.predicate import is_convertible_to_tensor, is_stackable
 from torchoutil.pyoutil.collections import KeyMode, list_dict_to_dict_list
 from torchoutil.pyoutil.re import PatternListLike, match_patterns

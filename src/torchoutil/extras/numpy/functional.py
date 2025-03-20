@@ -123,7 +123,7 @@ def is_numpy_number_like(x: Any) -> TypeGuard[NumpyNumberLike]:
     If numpy is not installed, this function always returns False.
     """
     return isinstance(x, (np.number, np.bool_)) or (
-        isinstance(x, np.ndarray) and x.ndim == 0
+        isinstance(x, np.ndarray) and x.ndim == 0 and np.issubdtype(x.dtype, np.number)
     )
 
 
@@ -203,10 +203,25 @@ def numpy_all_ne(x: Union[np.generic, np.ndarray]) -> bool:
 
 
 @function_alias(reduce_and)
-def logical_and_lst(*args, **kwargs) -> np.ndarray:
+def logical_and_lst(*args, **kwargs):
     ...
 
 
 @function_alias(reduce_or)
-def logical_or_lst(*args, **kwargs) -> np.ndarray:
+def logical_or_lst(*args, **kwargs):
+    ...
+
+
+@function_alias(to_numpy)
+def to_ndarray(*args, **kwargs):
+    ...
+
+
+@function_alias(tensor_to_numpy)
+def tensor_to_ndarray(*args, **kwargs):
+    ...
+
+
+@function_alias(tensor_to_numpy)
+def ndarray_to_tensor(*args, **kwargs):
     ...

@@ -5,7 +5,6 @@ from typing import Any, Callable, Dict, Iterable, List, Literal, Sized, Tuple, U
 
 import torch
 from torch import Size, Tensor
-from torch.nn import functional as F
 from torch.types import Number
 from typing_extensions import TypeAlias
 
@@ -17,7 +16,7 @@ from torchoutil.core.make import (
     make_dtype,
     make_generator,
 )
-from torchoutil.nn.functional.predicate import is_stackable
+from torchoutil.nn import functional as F
 from torchoutil.types import is_number_like
 
 PadAlign: TypeAlias = Literal["left", "right", "center", "random"]
@@ -119,13 +118,13 @@ def pad_and_stack_rec(
 
         elif isinstance(sequence, (list, tuple)):
             tensors = [_impl(elt) for elt in sequence]
-            if is_stackable(tensors):
+            if F.is_stackable(tensors):
                 return torch.stack(tensors)
 
             shapes = [elt.shape for elt in tensors]
             shape0 = shapes[0]
 
-            if not all(len(shape) == len(shape0) for shape in shapes):
+            if not all(len(shape) == len(shape0) for shape in shapes[1:]):
                 msg = f"Cannot pad sequence of tensors of differents number of dims. (with {shapes=})"
                 raise ValueError(msg)
 

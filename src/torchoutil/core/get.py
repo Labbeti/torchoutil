@@ -8,7 +8,7 @@ from .make import CUDA_IF_AVAILABLE  # noqa: F401
 from .make import DeviceLike  # noqa: F401
 from .make import DTypeLike  # noqa: F401
 from .make import GeneratorLike  # noqa: F401
-from .make import make_device, make_dtype, make_generator
+from .make import make_device, make_dtype, make_generator  # noqa: F401
 
 
 @deprecated_alias(make_device)

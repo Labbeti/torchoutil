@@ -7,13 +7,23 @@ import sys
 from typing import Generic, NamedTuple
 
 from torch import LongTensor, Tensor, __version__
-from torch.torch_version import TorchVersion
 from typing_extensions import TypeVar
+
+from torchoutil.pyoutil.semver import Version
 
 T = TypeVar("T")
 
 
-if __version__ < TorchVersion("2.0.0"):
+__all__ = [
+    "min",
+    "max",
+    "topk",
+    "shape",
+    "ndim",
+]
+
+
+if Version(str(__version__)) < Version("2.0.0"):
 
     class _namedtuple_values_indices(tuple):
         @property

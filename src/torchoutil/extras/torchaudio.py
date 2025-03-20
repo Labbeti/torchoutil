@@ -27,28 +27,6 @@ except (ImportError, AttributeError):
         ...
 
 
-def load_with_torchaudio(
-    uri: Union[BinaryIO, str, os.PathLike, Path],
-    frame_offset: int = 0,
-    num_frames: int = -1,
-    normalize: bool = True,
-    channels_first: bool = True,
-    format: Optional[str] = None,
-    buffer_size: int = 4096,
-    backend: Optional[str] = None,
-) -> Any:
-    return torchaudio.load(
-        uri,
-        frame_offset,
-        num_frames,
-        normalize,
-        channels_first,
-        format,
-        buffer_size,
-        backend,
-    )
-
-
 def dump_with_torchaudio(
     src: torch.Tensor,
     uri: Union[BinaryIO, str, Path, os.PathLike, None],
@@ -98,6 +76,28 @@ def dump_with_torchaudio(
         uri.write_bytes(content)
 
     return content
+
+
+def load_with_torchaudio(
+    uri: Union[BinaryIO, str, os.PathLike, Path],
+    frame_offset: int = 0,
+    num_frames: int = -1,
+    normalize: bool = True,
+    channels_first: bool = True,
+    format: Optional[str] = None,
+    buffer_size: int = 4096,
+    backend: Optional[str] = None,
+) -> Any:
+    return torchaudio.load(
+        uri,
+        frame_offset,
+        num_frames,
+        normalize,
+        channels_first,
+        format,
+        buffer_size,
+        backend,
+    )
 
 
 @deprecated_alias(dump_with_torchaudio)

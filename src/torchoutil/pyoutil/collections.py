@@ -283,8 +283,8 @@ def dump_dict(
 
 @overload
 def find(
-    x: T,
-    include: Iterable[V],
+    target: T,
+    it: Iterable[V],
     *,
     match_fn: Callable[[V, T], bool] = operator.eq,
     order: Literal["right"] = "right",
@@ -295,8 +295,8 @@ def find(
 
 @overload
 def find(
-    x: T,
-    include: Iterable[V],
+    target: T,
+    it: Iterable[V],
     *,
     match_fn: Callable[[T, V], bool] = operator.eq,
     order: Literal["left"],
@@ -306,8 +306,8 @@ def find(
 
 
 def find(
-    x: T,
-    include: Iterable[T],
+    target: T,
+    it: Iterable[T],
     *,
     match_fn: Callable[[T, T], bool] = operator.eq,
     order: Literal["left", "right"] = "right",
@@ -328,8 +328,8 @@ def find(
         ORDER_VALUES = ("left", "right")
         raise ValueError(f"Invalid argument {order=}. (expected one of {ORDER_VALUES})")
 
-    for i, include_i in enumerate(include):
-        if match_fn(include_i, x):
+    for i, xi in enumerate(it):
+        if match_fn(xi, target):
             return i
     return default
 

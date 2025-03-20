@@ -10,12 +10,13 @@ from typing_extensions import TypeAlias
 from torchoutil.core.packaging import (
     _NUMPY_AVAILABLE,
     _SAFETENSORS_AVAILABLE,
+    _TENSORBOARD_AVAILABLE,
     _TORCHAUDIO_AVAILABLE,
     _YAML_AVAILABLE,
 )
 from torchoutil.pyoutil.functools import function_alias
 
-from .common import EXTENSION_TO_BACKEND, SavingBackend
+from .common import SavingBackend, _fpath_to_saving_backend
 from .csv import dump_csv
 from .json import dump_json
 from .pickle import dump_pickle
@@ -41,6 +42,11 @@ if _SAFETENSORS_AVAILABLE:
     from torchoutil.extras.safetensors import dump_safetensors
 
     DUMP_FNS["safetensors"] = dump_safetensors
+
+if _TENSORBOARD_AVAILABLE:
+    from torchoutil.extras.tensorboard import dump_tfevents
+
+    DUMP_FNS["tensorboard"] = dump_tfevents
 
 if _TORCHAUDIO_AVAILABLE:
     from .torchaudio import dump_with_torchaudio
@@ -91,11 +97,11 @@ def dump(
             msg = f"Invalid combinaison of arguments {fpath=} and {saving_backend=}."
             raise ValueError(msg)
 
-        ext = fpath.suffix[1:]
-        if ext not in EXTENSION_TO_BACKEND.keys():
-            msg = f"Unknown extension file {ext}. (expected one of {tuple(EXTENSION_TO_BACKEND.keys())})"
-            raise ValueError(msg)
-        saving_backend = EXTENSION_TO_BACKEND[ext]
+        saving_backend = _fpath_to_saving_backend(fpath)
+
+    elif saving_backend not in DUMP_FNS:
+        msg = f"Invalid argument {saving_backend=}. (expected one of {tuple(DUMP_FNS.keys())})"
+        raise ValueError(msg)
 
     dump_fn = DUMP_FNS[saving_backend]
     result = dump_fn(obj, fpath, *args, **kwargs)

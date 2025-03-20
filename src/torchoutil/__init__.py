@@ -15,7 +15,6 @@ __version__ = "0.6.0"
 from torch import *  # type: ignore
 
 # Re-import torchoutil modules for language servers
-from . import core as core
 from . import extras as extras
 from . import hub as hub
 from . import nn as nn
@@ -32,12 +31,6 @@ from .core.make import (  # noqa: F401
     DeviceLike,
     DTypeLike,
     GeneratorLike,
-    get_default_device,
-    get_default_dtype,
-    get_default_generator,
-    make_device,
-    make_dtype,
-    make_generator,
 )
 from .hub.download import download_file
 from .nn.functional import *

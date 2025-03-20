@@ -20,6 +20,7 @@ from torchoutil.types import (
     Tensor0D,
     is_number_like,
     is_numpy_number_like,
+    is_numpy_scalar_like,
     is_scalar_like,
 )
 
@@ -49,28 +50,37 @@ class TestGuards(TestCase):
             ((1, 2, 3), False),
             ([1.0], False),
             ([object(), [], "abc"], False),
-            (np.array(["a", "b"])[0], False),
         ]
+        tests = [tuple_ + (False, False) for tuple_ in tests]
 
         if _NUMPY_AVAILABLE:
             tests += [
-                (np.float64(random.random()), True),
-                (np.int64(random.randint(0, 100)), True),
-                (np.random.random(()), True),
-                (np.random.random((0,)), False),
-                (np.random.random((10,)), False),
+                (np.float64(random.random()), True, True, True),
+                (np.int64(random.randint(0, 100)), True, True, True),
+                (np.random.random(()), True, True, True),
+                (np.random.random((0,)), False, False, False),
+                (np.random.random((10,)), False, False, False),
+                (np.array(["abc"])[0], False, False, True),
+                (np.array(["abc"]), False, False, False),
             ]
 
-        for x, expected in tests:
+        for x, expected_is_num, expected_is_np_num, expected_is_np_sca in tests:
             x_is_number = is_number_like(x)
-            msg = f"{x=} ({is_builtin_number(x)}, {isinstance_guard(x, Tensor0D)}, {is_numpy_number_like(x)})"
-            assert x_is_number == expected, msg
-
             x_is_scalar = is_scalar_like(x)
+            x_is_np_number = is_numpy_number_like(x)
+            x_is_np_scalar = is_numpy_scalar_like(x)
+
+            msg = f"{x=} ({type(x)=}, {is_builtin_number(x)=}, {isinstance_guard(x, Tensor0D)=}, {x_is_np_number=})"
+            assert x_is_number == expected_is_num, msg
+            assert x_is_np_number == expected_is_np_num, msg
+            assert x_is_np_scalar == expected_is_np_sca, msg
+
             assert isinstance(x, Sized) or x_is_scalar
 
             # Impl: number => scalar
             assert not x_is_number or x_is_scalar
+            assert not x_is_np_number or x_is_number
+            assert not x_is_np_scalar or x_is_scalar
 
             if _NUMPY_AVAILABLE:
                 np_x_is_scalar = np.isscalar(x)

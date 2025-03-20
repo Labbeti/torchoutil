@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 
 import logging
-import warnings
 from email.message import Message
 from pathlib import Path
 from typing import Optional, Union
@@ -14,6 +13,7 @@ from torch.hub import download_url_to_file
 # for backward compatibility
 from torchoutil.pyoutil.hashlib import hash_file  # noqa: F401
 from torchoutil.pyoutil.os import safe_rmdir  # noqa: F401
+from torchoutil.pyoutil.warnings import warn_once
 
 pylog = logging.getLogger(__name__)
 
@@ -42,12 +42,12 @@ def download_file(
     """
     if make_intermediate is not None:
         msg = f"Deprecated argument {make_intermediate=}. Use make_parents={make_intermediate} instead."
-        warnings.warn(msg)
+        warn_once(msg)
         make_parents = make_intermediate
+    del make_intermediate
 
     if dst is None:
         dst = "."
-
     dst = Path(dst)
 
     if dst.is_dir():
@@ -56,7 +56,7 @@ def download_file(
     elif dst.exists() and not dst.is_file():
         msg = f"Destination '{dst}' exists but is not a file or directory."
         raise FileExistsError(msg)
-    else:
+    else:  # is_file or not exists
         fpath = dst
     del dst
 
@@ -73,7 +73,7 @@ def download_file(
         )
 
     except HTTPError as err:
-        msg = f"Cannot download from {url=}. (with {fpath=}, {hash_prefix=}, {make_intermediate=})"
+        msg = f"Cannot download from {url=}. (with {fpath=}, {hash_prefix=}, {make_parents=})"
         pylog.error(msg)
         raise err
 

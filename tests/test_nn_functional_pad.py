@@ -6,7 +6,7 @@ from unittest import TestCase
 
 import torch
 
-from torchoutil.nn.functional.pad import cat_padded_batch, pad_and_stack_rec
+from torchoutil.nn.functional.padding import cat_padded_batch, pad_and_stack_rec
 
 
 class TestPad(TestCase):

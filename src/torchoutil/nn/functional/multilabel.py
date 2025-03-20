@@ -9,7 +9,7 @@ import torch
 from torch import Tensor
 
 from torchoutil.core.make import DeviceLike, DTypeLike, make_device, make_dtype
-from torchoutil.nn.functional.pad import pad_and_stack_rec
+from torchoutil.nn.functional.padding import pad_and_stack_rec
 from torchoutil.nn.functional.predicate import is_stackable
 from torchoutil.nn.functional.transform import as_tensor, to_item
 from torchoutil.pyoutil.typing import isinstance_guard

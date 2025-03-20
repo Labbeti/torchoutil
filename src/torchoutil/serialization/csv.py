@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 
 import io
-import warnings
 from pathlib import Path
 from typing import (
     Any,
@@ -21,7 +20,7 @@ from torchoutil.pyoutil.csv import ORIENT_VALUES, Orient, _setup_path
 from torchoutil.pyoutil.csv import dump_csv as _dump_csv_base
 from torchoutil.pyoutil.csv import load_csv as _load_csv_base
 from torchoutil.pyoutil.importlib import Placeholder
-from torchoutil.pyoutil.warnings import deprecated_alias
+from torchoutil.pyoutil.warnings import deprecated_alias, warn_once
 
 from .common import to_builtin
 
@@ -37,6 +36,53 @@ else:
 
 CSVBackend = Literal["csv", "pandas", "auto"]
 CSV_BACKENDS = ("csv", "pandas", "auto")
+
+
+def dump_csv(
+    data: Union[Iterable[Mapping[str, Any]], Mapping[str, Iterable[Any]]],
+    fpath: Union[str, Path, None] = None,
+    *,
+    overwrite: bool = True,
+    to_builtins: bool = False,
+    make_parents: bool = True,
+    backend: CSVBackend = "auto",
+    header: bool = True,
+    **csv_writer_kwds,
+) -> str:
+    """Dump content to csv format."""
+    if backend == "auto":
+        if isinstance(data, DataFrame):
+            backend = "pandas"
+        else:
+            backend = "csv"
+
+    if to_builtins:
+        if isinstance(data, DataFrame) and backend == "pandas":
+            msg = f"Invalid combinaison of arguments {to_builtins=}, {backend=} and {type(data)=}."
+            warn_once(msg)
+        data = to_builtin(data)
+
+    if backend == "csv":
+        return _dump_csv_base(
+            data,
+            fpath,
+            overwrite=overwrite,
+            make_parents=make_parents,
+            header=header,
+            **csv_writer_kwds,
+        )
+
+    elif backend == "pandas":
+        return _dump_csv_with_pandas(
+            data,
+            fpath,
+            overwrite=overwrite,
+            make_parents=make_parents,
+        )
+
+    else:
+        msg = f"Invalid argument {backend=}. (expected one of {CSV_BACKENDS})"
+        raise ValueError(msg)
 
 
 @overload
@@ -157,53 +203,6 @@ def _load_csv_with_pandas(
         return df.to_dict("list")  # type: ignore
     else:
         msg = f"Invalid argument {orient=}. (expected one of {ORIENT_VALUES})"
-        raise ValueError(msg)
-
-
-def dump_csv(
-    data: Union[Iterable[Mapping[str, Any]], Mapping[str, Iterable[Any]]],
-    fpath: Union[str, Path, None] = None,
-    *,
-    overwrite: bool = True,
-    to_builtins: bool = False,
-    make_parents: bool = True,
-    backend: CSVBackend = "auto",
-    header: bool = True,
-    **csv_writer_kwds,
-) -> str:
-    """Dump content to csv format."""
-    if backend == "auto":
-        if isinstance(data, DataFrame):
-            backend = "pandas"
-        else:
-            backend = "csv"
-
-    if to_builtins:
-        if isinstance(data, DataFrame) and backend == "pandas":
-            msg = f"Invalid combinaison of arguments {to_builtins=}, {backend=} and {type(data)=}."
-            warnings.warn(msg, UserWarning)
-        data = to_builtin(data)
-
-    if backend == "csv":
-        return _dump_csv_base(
-            data,
-            fpath,
-            overwrite=overwrite,
-            make_parents=make_parents,
-            header=header,
-            **csv_writer_kwds,
-        )
-
-    elif backend == "pandas":
-        return _dump_csv_with_pandas(
-            data,
-            fpath,
-            overwrite=overwrite,
-            make_parents=make_parents,
-        )
-
-    else:
-        msg = f"Invalid argument {backend=}. (expected one of {CSV_BACKENDS})"
         raise ValueError(msg)
 
 

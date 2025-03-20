@@ -1,12 +1,25 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import logging
+import re
 from argparse import Namespace
 from dataclasses import asdict
 from enum import Enum
 from pathlib import Path
 from re import Pattern
-from typing import Any, Dict, Iterable, List, Literal, Mapping, TypeVar, Union, overload
+from typing import (
+    Any,
+    Dict,
+    Iterable,
+    List,
+    Literal,
+    Mapping,
+    Optional,
+    TypeVar,
+    Union,
+    overload,
+)
 
 import torch
 from torch import Tensor
@@ -16,6 +29,7 @@ from torchoutil.core.packaging import (
     _OMEGACONF_AVAILABLE,
     _PANDAS_AVAILABLE,
     _SAFETENSORS_AVAILABLE,
+    _TENSORBOARD_AVAILABLE,
     _TORCHAUDIO_AVAILABLE,
     _YAML_AVAILABLE,
 )
@@ -43,6 +57,8 @@ else:
         ...
 
 
+pylog = logging.getLogger(__name__)
+
 T = TypeVar("T")
 K = TypeVar("K")
 V = TypeVar("V")
@@ -54,61 +70,90 @@ SavingBackend = Literal[
     "numpy",
     "pickle",
     "safetensors",
+    "tensorboard",
     "torch",
     "torchaudio",
     "yaml",
 ]
 
 # Note: order matter here: last extension of a backend is the default/recommanded one
-EXTENSION_TO_BACKEND: Dict[str, SavingBackend] = {
-    "tsv": "csv",
-    "csv": "csv",
-    "json": "json",
-    "pkl": "pickle",
-    "pickle": "pickle",
-    "torch": "torch",
-    "ckpt": "torch",
-    "pt": "torch",
+PATTERN_TO_BACKEND: Dict[str, SavingBackend] = {
+    r"^.+\.tsv$": "csv",
+    r"^.+\.csv$": "csv",
+    r"^.+\.json$": "json",
+    r"^.+\.pkl$": "pickle",
+    r"^.+\.pickle$": "pickle",
+    r"^.+\.torch$": "torch",
+    r"^.+\.ckpt$": "torch",
+    r"^.+\.pt$": "torch",
 }
 
 if _NUMPY_AVAILABLE:
     import numpy as np
 
-    EXTENSION_TO_BACKEND.update(
+    PATTERN_TO_BACKEND.update(
         {
-            "npz": "numpy",
-            "npy": "numpy",
+            r"^.+\.npz$": "numpy",
+            r"^.+\.npy$": "numpy",
         }
     )
 
 if _SAFETENSORS_AVAILABLE:
-    EXTENSION_TO_BACKEND.update(
+    PATTERN_TO_BACKEND.update(
         {
-            "safetensors": "safetensors",
+            r"^.+\.safetensors$": "safetensors",
+        }
+    )
+
+if _TENSORBOARD_AVAILABLE:
+    PATTERN_TO_BACKEND.update(
+        {
+            r"^.*tfevents.*": "tensorboard",
         }
     )
 
 if _TORCHAUDIO_AVAILABLE:
-    EXTENSION_TO_BACKEND.update(
+    PATTERN_TO_BACKEND.update(
         {
-            "mp3": "torchaudio",
-            "wav": "torchaudio",
-            "aac": "torchaudio",
-            "ogg": "torchaudio",
-            "flac": "torchaudio",
+            r"^.+\.mp3$": "torchaudio",
+            r"^.+\.wav$": "torchaudio",
+            r"^.+\.aac$": "torchaudio",
+            r"^.+\.ogg$": "torchaudio",
+            r"^.+\.flac$": "torchaudio",
         }
     )
 
 if _YAML_AVAILABLE:
-    EXTENSION_TO_BACKEND.update(
+    PATTERN_TO_BACKEND.update(
         {
-            "yml": "yaml",
-            "yaml": "yaml",
+            r".+\.yml$": "yaml",
+            r".+\.yaml$": "yaml",
         }
     )
 
+
+def _fpath_to_saving_backend(
+    fpath: Union[str, Path], verbose: int = 0
+) -> SavingBackend:
+    fname = Path(fpath).name
+
+    saving_backend: Optional[SavingBackend] = None
+    for pattern, backend in PATTERN_TO_BACKEND.items():
+        if re.match(pattern, fname) is not None:
+            saving_backend = backend
+            break
+
+    if saving_backend is None:
+        msg = f"Unknown file pattern '{fname}'. (expected one of {tuple(PATTERN_TO_BACKEND.keys())} or specify the backend argument with `to.load(..., backend=\"backend\")`)"
+        raise ValueError(msg)
+
+    if verbose >= 2:
+        pylog.debug(f"Loading file '{str(fpath)}' using {saving_backend=}.")
+    return saving_backend
+
+
 BACKEND_TO_EXTENSION: Dict[SavingBackend, str] = {
-    backend: ext for ext, backend in EXTENSION_TO_BACKEND.items()
+    backend: ext for ext, backend in PATTERN_TO_BACKEND.items()
 }
 UNK_MODES = ("identity", "error")
 

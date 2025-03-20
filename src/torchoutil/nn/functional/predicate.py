@@ -27,6 +27,7 @@ from torchoutil.types._typing import (
     FloatingTensor,
     ScalarLike,
     T_TensorOrArray,
+    Tensor0D,
     TensorOrArray,
 )
 from torchoutil.types.guards import is_scalar_like
@@ -70,10 +71,7 @@ def __can_be_converted_to_tensor_list_tuple(x: Union[List, Tuple]) -> bool:
         return False
 
     # If all values are scalars-like items
-    if all(
-        (not isinstance(xi, Sized) or (isinstance(xi, Tensor) and xi.ndim == 0))
-        for xi in x
-    ):
+    if all((not isinstance(xi, Sized) or isinstance(xi, Tensor0D)) for xi in x):
         return True
 
     # If all values are sized items with same size
@@ -90,7 +88,7 @@ def __can_be_converted_to_tensor_nested(
 ) -> bool:
     if is_builtin_number(x):
         return True
-    elif isinstance(x, Tensor) and x.ndim == 0:
+    elif isinstance(x, Tensor0D):
         return True
     elif isinstance(x, (np.ndarray, np.generic)) and x.dtype in ACCEPTED_NUMPY_DTYPES:
         return True
@@ -217,11 +215,6 @@ def all_ne(x: Union[Tensor, np.ndarray, ScalarLike, Iterable]) -> bool:
         raise TypeError(f"Invalid argument type {type(x)=}.")
 
 
-@function_alias(all_ne)
-def is_unique(*args, **kwargs):
-    ...
-
-
 def is_full(x: TensorOrArray, target: Any = ...) -> bool:
     """Check if all element are equal to target in a tensor or array. Accept an optional value 'target' to specified the expected value."""
     if nelement(x) == 0 and target is not ...:
@@ -232,6 +225,11 @@ def is_full(x: TensorOrArray, target: Any = ...) -> bool:
     indices = tuple([0] * x.ndim)
     first_elem = x[indices]
     return (target is ... or first_elem == target) and all_eq(x)
+
+
+@function_alias(all_ne)
+def is_unique(*args, **kwargs):
+    ...
 
 
 @deprecated_alias(is_stackable)

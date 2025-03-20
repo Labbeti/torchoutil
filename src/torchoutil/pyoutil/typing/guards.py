@@ -83,6 +83,10 @@ def isinstance_guard(x: Any, target_type: Optional[Type[T]]) -> TypeIs[T]:
     if origin is Literal:
         return x in args
 
+    if isinstance(x, Generator):
+        msg = f"Invalid argument type {type(x)}."
+        raise TypeError(msg)
+
     if issubclass(origin, Mapping):
         assert len(args) == 2, f"{args=}"
         if not isinstance_guard(x, origin):
