@@ -11,7 +11,6 @@ from typing import (
     Any,
     Callable,
     Dict,
-    Iterable,
     List,
     Literal,
     Mapping,
@@ -53,7 +52,7 @@ from torchoutil.extras.numpy import (
 from torchoutil.pyoutil.collections import all_eq
 from torchoutil.pyoutil.datetime import now_iso
 from torchoutil.pyoutil.functools import Compose
-from torchoutil.pyoutil.typing import is_dataclass_instance, is_dict_str
+from torchoutil.pyoutil.typing import is_dataclass_instance, isinstance_guard
 from torchoutil.serialization.common import to_builtin
 from torchoutil.types import BuiltinScalar
 from torchoutil.utils.data.dataloader import get_auto_num_cpus
@@ -493,7 +492,7 @@ def _scan_dataset(
 
     to_dict_fn: Callable[[T], Dict[str, Any]]
 
-    if is_dict_str(item_0):
+    if isinstance_guard(item_0, Dict[str, Any]):
         item_type = "dict"
         to_dict_fn = to.identity  # type: ignore
     elif isinstance(item_0, tuple):
@@ -531,7 +530,7 @@ def _scan_dataset(
         disable=verbose <= 0 or skip_scan,
     ):
         batch = [pre_transform(item) for item in batch]
-        batch = [to_dict_fn(item) for item in batch]
+        batch = [to_dict_fn(item) for item in batch]  # type: ignore
 
         for item in batch:
             for attr_name, value in item.items():
@@ -607,7 +606,7 @@ def bytearray_to_bytes(x: Any) -> Any:
         return bytes(x)
     elif isinstance(x, Mapping):
         return {bytearray_to_bytes(k): bytearray_to_bytes(v) for k, v in x.items()}
-    elif isinstance(x, Iterable):
+    elif isinstance(x, (list, tuple, set, frozenset)):
         return type(x)(bytearray_to_bytes(xi) for xi in x)
     else:
         return x
