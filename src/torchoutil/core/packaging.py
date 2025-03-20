@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import subprocess
 from typing import Callable, Final, Iterable, Union
 
 import torch
@@ -28,8 +29,8 @@ _EXTRAS_PACKAGES = (
     "pandas",
     "safetensors",
     "scipy",
-    "torchaudio",
     "tensorboard",
+    "torchaudio",
     "tqdm",
     "yaml",
 )
@@ -48,6 +49,16 @@ _TENSORBOARD_AVAILABLE: Final[bool] = _EXTRA_AVAILABLE["tensorboard"]
 _TORCHAUDIO_AVAILABLE: Final[bool] = _EXTRA_AVAILABLE["torchaudio"]
 _TQDM_AVAILABLE: Final[bool] = _EXTRA_AVAILABLE["tqdm"]
 _YAML_AVAILABLE: Final[bool] = _EXTRA_AVAILABLE["yaml"]
+
+
+def get_githash_short() -> str:
+    cmd = ["git", "rev-parse", "--short", "HEAD"]
+    return subprocess.check_output(cmd).decode().strip()
+
+
+def get_githash_full() -> str:
+    cmd = ["git", "rev-parse", "HEAD"]
+    return subprocess.check_output(cmd).decode().strip()
 
 
 def requires_packages(packages: Union[str, Iterable[str]]) -> Callable:
