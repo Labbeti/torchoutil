@@ -35,5 +35,8 @@ def dump_json(
 def load_json(fpath: Union[str, Path], **json_load_kwds) -> Any:
     fpath = Path(fpath)
     content = fpath.read_text()
-    data = json.loads(content, **json_load_kwds)
-    return data
+    return _parse_json(content)
+
+
+def _parse_json(content: str, **json_load_kwds) -> Any:
+    return json.loads(content, **json_load_kwds)

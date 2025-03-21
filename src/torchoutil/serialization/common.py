@@ -133,7 +133,8 @@ if _YAML_AVAILABLE:
 
 
 def _fpath_to_saving_backend(
-    fpath: Union[str, Path], verbose: int = 0
+    fpath: Union[str, Path],
+    verbose: int = 0,
 ) -> SavingBackend:
     fname = Path(fpath).name
 
@@ -144,7 +145,7 @@ def _fpath_to_saving_backend(
             break
 
     if saving_backend is None:
-        msg = f"Unknown file pattern '{fname}'. (expected one of {tuple(PATTERN_TO_BACKEND.keys())} or specify the backend argument with `to.load(..., backend=\"backend\")`)"
+        msg = f"Unknown file pattern '{fname}'. (expected one of {tuple(PATTERN_TO_BACKEND.keys())} or specify the backend argument with `to.load(..., saving_backend=\"backend\")`)"
         raise ValueError(msg)
 
     if verbose >= 2:

@@ -8,7 +8,7 @@ from torchoutil.core.dtype_enum import DTypeEnum
 from torchoutil.core.make import DeviceLike, DTypeLike, GeneratorLike
 from torchoutil.pyoutil.typing import *
 
-from ._typing import T_TensorOrArray, TensorOrArray
+from ._typing import T_Tensor, T_TensorOrArray, TensorOrArray
 from .guards import (
     is_bool_tensor,
     is_bool_tensor1d,

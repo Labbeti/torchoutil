@@ -107,6 +107,7 @@ NumberLike: TypeAlias = Union[BuiltinNumber, NumpyNumberLike, Tensor0D]
 ScalarLike: TypeAlias = Union[BuiltinScalar, NumpyScalarLike, Tensor0D]
 TensorOrArray: TypeAlias = Union[torch.Tensor, np.ndarray]
 
+T_Tensor = TypeVar("T_Tensor", bound=torch.Tensor, covariant=True)
 T_TensorOrArray = TypeVar(
     "T_TensorOrArray",
     bound=TensorOrArray,

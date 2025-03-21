@@ -25,5 +25,9 @@ def dump_pickle(
 
 def load_pickle(fpath: Union[str, Path]) -> Any:
     fpath = Path(fpath)
-    content = pickle.loads(fpath.read_bytes())
-    return content
+    content = fpath.read_bytes()
+    return _parse_pickle(content)
+
+
+def _parse_pickle(content: bytes) -> Any:
+    return pickle.loads(content)

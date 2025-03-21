@@ -183,11 +183,11 @@ class Version:
         prerelease = self.prerelease if keep_prerelease else None
         buildmetadata = self.buildmetadata if keep_buildmetadata else None
         return Version(
-            self.major + 1,
-            0,
-            0,
-            prerelease,
-            buildmetadata,
+            major=self.major + 1,
+            minor=0,
+            patch=0,
+            prerelease=prerelease,
+            buildmetadata=buildmetadata,
         )
 
     def next_minor(
@@ -198,11 +198,11 @@ class Version:
         prerelease = self.prerelease if keep_prerelease else None
         buildmetadata = self.buildmetadata if keep_buildmetadata else None
         return Version(
-            self.major,
-            self.minor + 1,
-            0,
-            prerelease,
-            buildmetadata,
+            major=self.major,
+            minor=self.minor + 1,
+            patch=0,
+            prerelease=prerelease,
+            buildmetadata=buildmetadata,
         )
 
     def next_patch(
@@ -213,11 +213,11 @@ class Version:
         prerelease = self.prerelease if keep_prerelease else None
         buildmetadata = self.buildmetadata if keep_buildmetadata else None
         return Version(
-            self.major,
-            self.minor,
-            self.patch + 1,
-            prerelease,
-            buildmetadata,
+            major=self.major,
+            minor=self.minor,
+            patch=self.patch + 1,
+            prerelease=prerelease,
+            buildmetadata=buildmetadata,
         )
 
     def to_dict(self, exclude_none: bool = True) -> VersionDict:
