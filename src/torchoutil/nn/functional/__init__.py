@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+"""Functional interface."""
+
 from torch.nn.functional import *  # type: ignore
 
 from .activation import log_softmax_multidim, softmax_multidim
@@ -113,6 +115,8 @@ from .transform import (  # noqa: F811
     squeeze_copy,
     to_item,
     to_tensor,
+    top_p,
+    topk,
     transform_drop,
     unsqueeze,
     unsqueeze_,

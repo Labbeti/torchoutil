@@ -10,6 +10,7 @@ from torch import Tensor
 from torch.nn import functional as F
 from torch.types import Number
 
+from torchoutil.nn.functional.make import DTypeLike, make_dtype
 from torchoutil.pyoutil.collections import dump_dict
 from torchoutil.utils import return_types
 
@@ -214,22 +215,24 @@ class Mean(Module):
     Module version of :func:`~torch.mean`.
     """
 
-    def __init__(self, dim: Optional[int] = None, keepdim: bool = False) -> None:
+    def __init__(
+        self, dim: Optional[int] = None, keepdim: bool = False, dtype: DTypeLike = None
+    ) -> None:
         super().__init__()
         self.dim = dim
         self.keepdim = keepdim
+        self.dtype = dtype
 
     def forward(self, x: Tensor) -> Tensor:
-        if self.dim is None:
-            return x.mean()
-        else:
-            return x.mean(dim=self.dim, keepdim=self.keepdim)
+        dtype = make_dtype(self.dtype)
+        return x.mean(dim=self.dim, keepdim=self.keepdim, dtype=dtype)
 
     def extra_repr(self) -> str:
         return dump_dict(
             dict(
                 dim=self.dim,
                 keepdim=self.keepdim,
+                dtype=self.dtype,
             ),
             ignore_lst=(None,),
         )
@@ -454,62 +457,6 @@ class ToList(Module):
 
     def forward(self, x: Tensor) -> List:
         return x.tolist()
-
-
-class Topk(Module):
-    """
-    Module version of :func:`~torch.Tensor.topk`.
-    """
-
-    def __init__(
-        self,
-        k: int,
-        dim: int = -1,
-        largest: bool = True,
-        sorted: bool = True,
-        return_values: bool = True,
-        return_indices: bool = True,
-    ) -> None:
-        if not return_values and not return_indices:
-            msg = f"Invalid combinaison of arguments {return_values=} and {return_indices=}. (at least one of them must be True)"
-            raise ValueError(msg)
-
-        super().__init__()
-        self.k = k
-        self.dim = dim
-        self.largest = largest
-        self.sorted = sorted
-        self.return_values = return_values
-        self.return_indices = return_indices
-
-    def forward(self, x: Tensor) -> Union[Tensor, return_types.topk]:
-        values_indices = x.topk(
-            k=self.k,
-            dim=self.dim,
-            largest=self.largest,
-            sorted=self.sorted,
-        )
-        if self.return_values and self.return_indices:
-            return values_indices  # type: ignore
-        elif self.return_values:
-            return values_indices.values
-        elif self.return_indices:
-            return values_indices.indices
-        else:
-            msg = f"Invalid combinaison of arguments {self.return_values=} and {self.return_indices=}. (at least one of them must be True)"
-            raise ValueError(msg)
-
-    def extra_repr(self) -> str:
-        return dump_dict(
-            dict(
-                k=self.k,
-                dim=self.dim,
-                largest=self.largest,
-                sorted=self.sorted,
-                return_values=self.return_values,
-                return_indices=self.return_indices,
-            ),
-        )
 
 
 class Transpose(Module):

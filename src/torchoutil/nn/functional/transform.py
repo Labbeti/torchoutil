@@ -37,6 +37,7 @@ from torchoutil.pyoutil.collections import all_eq
 from torchoutil.pyoutil.collections import flatten as builtin_flatten
 from torchoutil.pyoutil.collections import prod as builtin_prod
 from torchoutil.pyoutil.functools import identity  # noqa: F401
+from torchoutil.pyoutil.functools import function_alias
 from torchoutil.pyoutil.typing import (
     BuiltinNumber,
     BuiltinScalar,
@@ -44,7 +45,6 @@ from torchoutil.pyoutil.typing import (
     T_BuiltinScalar,
     is_builtin_scalar,
 )
-from torchoutil.pyoutil.warnings import deprecated_alias
 from torchoutil.types import ComplexFloatingTensor, is_builtin_number, is_scalar_like
 from torchoutil.types._typing import (
     BoolTensor0D,
@@ -59,17 +59,20 @@ from torchoutil.types._typing import (
     FloatTensor1D,
     FloatTensor2D,
     FloatTensor3D,
+    LongTensor,
     LongTensor0D,
     LongTensor1D,
     LongTensor2D,
     LongTensor3D,
     ScalarLike,
+    T_Tensor,
     T_TensorOrArray,
     Tensor0D,
     Tensor1D,
     Tensor2D,
     Tensor3D,
 )
+from torchoutil.utils import return_types
 
 T = TypeVar("T")
 U = TypeVar("U")
@@ -153,6 +156,15 @@ def resample_nearest_freqs(
     dims: Union[int, Iterable[int]] = -1,
     round_fn: Callable[[Tensor], Tensor] = torch.floor,
 ) -> Tensor:
+    """Nearest neigbour resampling using tensor slices.
+
+    Args:
+        x: Input tensor.
+        orig_freq: Source sampling rate.
+        new_freq: Target sampling rate.
+        dims: Dimensions to apply resampling. defaults to -1.
+        round_fn: Rounding function to compute sub-indices. defaults to torch.floor.
+    """
     return resample_nearest_steps(
         x,
         orig_freq / new_freq,
@@ -168,6 +180,14 @@ def resample_nearest_steps(
     dims: Union[int, Iterable[int]] = -1,
     round_fn: Callable[[Tensor], Tensor] = torch.floor,
 ) -> Tensor:
+    """Nearest neigbour resampling using tensor slices.
+
+    Args:
+        x: Input tensor.
+        steps: Floating step for resampling each value.
+        dims: Dimensions to apply resampling. defaults to -1.
+        round_fn: Rounding function to compute sub-indices. defaults to torch.floor.
+    """
     if isinstance(dims, int):
         dims = [dims]
     else:
@@ -196,6 +216,7 @@ def transform_drop(
     transform: Callable[[T], T],
     x: T,
     p: float,
+    *,
     generator: GeneratorLike = None,
 ) -> T:
     """Apply a transform on a tensor with a probability of p.
@@ -204,16 +225,16 @@ def transform_drop(
         transform: Transform to apply.
         x: Argument of the transform.
         p: Probability p to apply the transform. Cannot be negative.
-            If > 1, it will apply the transform floor(p) times and apply a last time with a probability of p - floor(p).
+            If > 1, it will apply the transform `floor(p)` times and apply a last time with a probability of `p - floor(p)`.
     """
     if p < 0.0:
         raise ValueError(f"Invalid argument {p=} < 0")
-    generator = make_generator(generator)
 
     p_floor = math.floor(p)
     for _ in range(p_floor):
         x = transform(x)
 
+    generator = make_generator(generator)
     sampled = torch.rand((), generator=generator)
     if sampled + p_floor < p:
         x = transform(x)
@@ -896,6 +917,171 @@ def as_tensor(
         raise TypeError(msg)
 
 
-@deprecated_alias(as_tensor)
+@overload
+def topk(
+    x: Tensor,
+    k: int,
+    dim: int = -1,
+    largest: bool = True,
+    sorted: bool = True,
+    *,
+    return_values: Literal[True] = True,
+    return_indices: Literal[True] = True,
+) -> return_types.topk:
+    ...
+
+
+@overload
+def topk(
+    x: T_Tensor,
+    k: int,
+    dim: int = -1,
+    largest: bool = True,
+    sorted: bool = True,
+    *,
+    return_values: Literal[True] = True,
+    return_indices: Literal[False],
+) -> T_Tensor:
+    ...
+
+
+@overload
+def topk(
+    x: Tensor,
+    k: int,
+    dim: int = -1,
+    largest: bool = True,
+    sorted: bool = True,
+    *,
+    return_values: Literal[False],
+    return_indices: Literal[True] = True,
+) -> LongTensor:
+    ...
+
+
+@overload
+def topk(
+    x: T_Tensor,
+    k: int,
+    dim: int = -1,
+    largest: bool = True,
+    sorted: bool = True,
+    *,
+    return_values: bool = True,
+    return_indices: bool = True,
+) -> Union[T_Tensor, LongTensor, return_types.topk]:
+    ...
+
+
+def topk(
+    x: T_Tensor,
+    k: int,
+    dim: int = -1,
+    largest: bool = True,
+    sorted: bool = True,
+    *,
+    return_values: bool = True,
+    return_indices: bool = True,
+) -> Union[T_Tensor, LongTensor, return_types.topk]:
+    result = x.topk(
+        k=k,
+        dim=dim,
+        largest=largest,
+        sorted=sorted,
+    )
+    if return_values and return_indices:
+        return result  # type: ignore
+    elif return_values:
+        return result.values  # type: ignore
+    elif return_indices:
+        return result.indices  # type: ignore
+    else:
+        msg = f"Invalid combinaison of arguments {return_values=} and {return_indices=}. (at least one of them must be True)"
+        raise ValueError(msg)
+
+
+@overload
+def top_p(
+    x: Tensor,
+    p: float,
+    dim: int = -1,
+    largest: bool = True,
+    *,
+    return_values: Literal[True] = True,
+    return_indices: Literal[True] = True,
+) -> return_types.top_p:
+    ...
+
+
+@overload
+def top_p(
+    x: T_Tensor,
+    p: float,
+    dim: int = -1,
+    largest: bool = True,
+    *,
+    return_values: Literal[True] = True,
+    return_indices: Literal[False],
+) -> T_Tensor:
+    ...
+
+
+@overload
+def top_p(
+    x: Tensor,
+    p: float,
+    dim: int = -1,
+    largest: bool = True,
+    *,
+    return_values: Literal[False],
+    return_indices: Literal[True] = True,
+) -> LongTensor:
+    ...
+
+
+@overload
+def top_p(
+    x: T_Tensor,
+    p: float,
+    dim: int = -1,
+    largest: bool = True,
+    *,
+    return_values: bool = True,
+    return_indices: bool = True,
+) -> Union[T_Tensor, LongTensor, return_types.top_p]:
+    ...
+
+
+def top_p(
+    x: T_Tensor,
+    p: float,
+    dim: int = -1,
+    largest: bool = True,
+    *,
+    return_values: bool = True,
+    return_indices: bool = True,
+) -> Union[T_Tensor, LongTensor, return_types.top_p]:
+    values, indices = x.sort(dim=dim, descending=largest)
+    cumulated = torch.cumsum(values, dim=dim)
+    idx = (cumulated >= p).long().argmax()
+    result = return_types.top_p([values[:idx], indices[:idx]])
+
+    if return_values and return_indices:
+        return result  # type: ignore
+    elif return_values:
+        return result.values  # type: ignore
+    elif return_indices:
+        return result.indices  # type: ignore
+    else:
+        msg = f"Invalid combinaison of arguments {return_values=} and {return_indices=}. (at least one of them must be True)"
+        raise ValueError(msg)
+
+
+@function_alias(as_tensor)
 def to_tensor(*args, **kwargs):
+    ...
+
+
+@function_alias(topk)
+def top_k(*args, **kwargs):
     ...

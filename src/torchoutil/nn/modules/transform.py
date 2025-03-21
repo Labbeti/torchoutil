@@ -36,6 +36,8 @@ from torchoutil.nn.functional.transform import (
     shuffled,
     squeeze,
     to_item,
+    top_p,
+    topk,
     transform_drop,
     unsqueeze,
     view_as_complex,
@@ -43,7 +45,13 @@ from torchoutil.nn.functional.transform import (
 )
 from torchoutil.pyoutil.collections import dump_dict
 from torchoutil.pyoutil.typing import BuiltinScalar, SizedIterable
-from torchoutil.types._typing import ComplexFloatingTensor, ScalarLike, T_TensorOrArray
+from torchoutil.types._typing import (
+    ComplexFloatingTensor,
+    LongTensor,
+    ScalarLike,
+    T_TensorOrArray,
+)
+from torchoutil.utils import return_types
 
 from .module import Module
 
@@ -386,7 +394,9 @@ class Unsqueeze(Module):
     """
 
     def __init__(
-        self, dim: Union[int, Iterable[int]], mode: SqueezeMode = "view_if_possible"
+        self,
+        dim: Union[int, Iterable[int]],
+        mode: SqueezeMode = "view_if_possible",
     ) -> None:
         super().__init__()
         self.dim = dim
@@ -426,5 +436,104 @@ class ViewAsComplex(Module):
         return view_as_complex(x)
 
 
+class Topk(Module):
+    """
+    Module version of :func:`~torchoutil.topk`.
+    """
+
+    def __init__(
+        self,
+        k: int,
+        dim: int = -1,
+        largest: bool = True,
+        sorted: bool = True,
+        *,
+        return_values: bool = True,
+        return_indices: bool = True,
+    ) -> None:
+        if not return_values and not return_indices:
+            msg = f"Invalid combinaison of arguments {return_values=} and {return_indices=}. (at least one of them must be True)"
+            raise ValueError(msg)
+
+        super().__init__()
+        self.k = k
+        self.dim = dim
+        self.largest = largest
+        self.sorted = sorted
+        self.return_values = return_values
+        self.return_indices = return_indices
+
+    def forward(self, x: Tensor) -> Union[Tensor, LongTensor, return_types.topk]:
+        return topk(
+            x=x,
+            k=self.k,
+            dim=self.dim,
+            largest=self.largest,
+            sorted=self.sorted,
+            return_values=self.return_values,
+            return_indices=self.return_indices,
+        )
+
+    def extra_repr(self) -> str:
+        return dump_dict(
+            dict(
+                k=self.k,
+                dim=self.dim,
+                largest=self.largest,
+                sorted=self.sorted,
+                return_values=self.return_values,
+                return_indices=self.return_indices,
+            ),
+        )
+
+
+class TopP(Module):
+    """
+    Module version of :func:`~torchoutil.top_p`.
+    """
+
+    def __init__(
+        self,
+        p: float,
+        dim: int = -1,
+        largest: bool = True,
+        *,
+        return_values: bool = True,
+        return_indices: bool = True,
+    ) -> None:
+        if not return_values and not return_indices:
+            msg = f"Invalid combinaison of arguments {return_values=} and {return_indices=}. (at least one of them must be True)"
+            raise ValueError(msg)
+
+        super().__init__()
+        self.p = p
+        self.dim = dim
+        self.largest = largest
+        self.return_values = return_values
+        self.return_indices = return_indices
+
+    def forward(self, x: Tensor) -> Union[Tensor, LongTensor, return_types.top_p]:
+        return top_p(
+            x=x,
+            p=self.p,
+            dim=self.dim,
+            largest=self.largest,
+            return_values=self.return_values,
+            return_indices=self.return_indices,
+        )
+
+    def extra_repr(self) -> str:
+        return dump_dict(
+            dict(
+                p=self.p,
+                dim=self.dim,
+                largest=self.largest,
+                return_values=self.return_values,
+                return_indices=self.return_indices,
+            ),
+        )
+
+
 # Aliases
 ToTensor = AsTensor
+TopK = Topk

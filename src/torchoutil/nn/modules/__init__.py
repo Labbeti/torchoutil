@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+"""Modules (classes) interface."""
+
 from torch.nn.modules import *  # type: ignore
 
 from .activation import LogSoftmaxMultidim, SoftmaxMultidim
@@ -66,7 +68,6 @@ from .tensor import (
     Reshape,
     TensorTo,
     ToList,
-    Topk,
     Transpose,
     View,
 )
@@ -83,6 +84,8 @@ from .transform import (
     Shuffled,
     Squeeze,
     ToItem,
+    Topk,
+    TopP,
     ToTensor,
     TransformDrop,
     Unsqueeze,
