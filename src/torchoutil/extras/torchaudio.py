@@ -3,6 +3,7 @@
 
 import io
 import os
+from io import BufferedWriter
 from pathlib import Path
 from typing import Any, BinaryIO, Optional, Union
 
@@ -47,13 +48,10 @@ def dump_with_torchaudio(
         msg = f"Invalid argument {sample_rate=}. (expected positive value)"
         raise ValueError(msg)
 
-    buffer: Union[BinaryIO, io.BytesIO]
     if isinstance(uri, (str, Path, os.PathLike)) or uri is None:
         uri = _setup_path(uri, overwrite, make_parents)
-        buffer = io.BytesIO()
-    else:
-        buffer = uri
 
+    buffer = io.BytesIO()
     torchaudio.save(  # type: ignore
         buffer,
         src,
@@ -66,14 +64,13 @@ def dump_with_torchaudio(
         backend,
         compression,  # type: ignore
     )
-
-    if isinstance(buffer, io.BytesIO):
-        content = buffer.getvalue()
-    else:
-        content = buffer.read()
+    content = buffer.getvalue()
 
     if isinstance(uri, Path):
         uri.write_bytes(content)
+    elif isinstance(uri, (BinaryIO, BufferedWriter)):
+        uri.write(content)
+        uri.flush()
 
     return content
 

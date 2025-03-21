@@ -3,7 +3,7 @@
 
 import os
 from pathlib import Path
-from typing import Any, Callable, Dict, Literal, Optional, Union, overload
+from typing import Any, BinaryIO, Callable, Dict, Optional, Union, overload
 
 from typing_extensions import TypeAlias
 
@@ -20,7 +20,7 @@ from .common import SavingBackend, _fpath_to_saving_backend
 from .csv import dump_csv
 from .json import dump_json
 from .pickle import dump_pickle
-from .torch import to_torch
+from .torch import dump_torch
 
 DumpFn: TypeAlias = Callable[..., Union[str, bytes]]
 DumpFnLike: TypeAlias = Union[DumpFn, SavingBackend]
@@ -30,7 +30,7 @@ DUMP_FNS: Dict[str, DumpFn] = {
     "csv": dump_csv,  # type: ignore
     "json": dump_json,
     "pickle": dump_pickle,
-    "torch": to_torch,
+    "torch": dump_torch,
 }
 
 if _NUMPY_AVAILABLE:
@@ -62,9 +62,9 @@ if _YAML_AVAILABLE:
 @overload
 def dump(
     obj: Any,
-    fpath: Union[str, Path, os.PathLike],
+    fpath: Union[None, BinaryIO] = None,
     *args,
-    saving_backend: Optional[SavingBackend] = None,
+    saving_backend: SavingBackend = "torch",
     **kwargs,
 ) -> Union[str, bytes]:
     ...
@@ -73,9 +73,9 @@ def dump(
 @overload
 def dump(
     obj: Any,
-    fpath: Literal[None] = None,
+    fpath: Union[str, Path, os.PathLike],
     *args,
-    saving_backend: SavingBackend,
+    saving_backend: Optional[SavingBackend] = "torch",
     **kwargs,
 ) -> Union[str, bytes]:
     ...
@@ -83,9 +83,9 @@ def dump(
 
 def dump(
     obj: Any,
-    fpath: Union[str, Path, os.PathLike, None] = None,
+    fpath: Union[str, Path, os.PathLike, None, BinaryIO] = None,
     *args,
-    saving_backend: Optional[SavingBackend] = None,
+    saving_backend: Optional[SavingBackend] = "torch",
     **kwargs,
 ) -> Union[str, bytes]:
     """Load from file using the correct backend."""
@@ -93,7 +93,7 @@ def dump(
         fpath = Path(fpath)
 
     if saving_backend is None:
-        if fpath is None:
+        if not isinstance(fpath, (str, Path, os.PathLike)):
             msg = f"Invalid combinaison of arguments {fpath=} and {saving_backend=}."
             raise ValueError(msg)
 

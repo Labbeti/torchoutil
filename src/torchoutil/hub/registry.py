@@ -54,7 +54,7 @@ class RegistryHub(Generic[T_Hashable]):
         """
         Args:
             infos: Maps model_name to their checkpoint information, with download url, filename, hash value, hash type and state_dict key.
-            register_root: Directory where checkpoints are saved. If None, defaults to `~/.cache/torch/hub/checkpoints`.
+            register_root: Directory where checkpoints are saved. defaults to `~/.cache/torch/hub/checkpoints`.
         """
         infos = dict(infos.items())
         if register_root is None:
@@ -164,8 +164,7 @@ class RegistryHub(Generic[T_Hashable]):
             result = data[state_dict_key]
 
         if verbose >= 1:
-            test_map = data.get("test_mAP", "unknown")
-            msg = f"Loading encoder weights from '{path}'... (with test_mAP={test_map})"
+            msg = f"Loading encoder weights from '{path}'..."
             pylog.info(msg)
 
         return result

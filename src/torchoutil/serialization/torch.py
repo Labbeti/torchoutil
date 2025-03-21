@@ -5,6 +5,7 @@ import inspect
 import io
 import os
 import pickle
+from io import BufferedWriter
 from pathlib import Path
 from typing import IO, Any, BinaryIO, Callable, Dict, Optional, Union
 
@@ -36,15 +37,13 @@ def dump_torch(
 ) -> bytes:
     if isinstance(f, (str, Path, os.PathLike)) or f is None:
         f = _setup_path(f, overwrite, make_parents)
-        buffer = io.BytesIO()
-    else:
-        buffer = f
 
     if "_disable_byteorder_record" in inspect.getargs(torch.save.__code__).args:
         kwds = dict(_disable_byteorder_record=_disable_byteorder_record)
     else:
         kwds = {}
 
+    buffer = io.BytesIO()
     torch.save(
         obj,
         buffer,
@@ -53,14 +52,14 @@ def dump_torch(
         _use_new_zipfile_serialization,
         **kwds,
     )
-
-    if isinstance(buffer, io.BytesIO):
-        content = buffer.getvalue()
-    else:
-        content = buffer.read()
+    content = buffer.getvalue()
+    buffer.close()
 
     if isinstance(f, Path):
         f.write_bytes(content)
+    elif isinstance(f, (BinaryIO, BufferedWriter)):
+        f.write(content)
+        f.flush()
 
     return content
 

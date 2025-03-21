@@ -46,7 +46,7 @@ from .serialization.dump_fn import dump, save
 from .serialization.json import dump_json, load_json
 from .serialization.load_fn import load
 from .serialization.pickle import dump_pickle, load_pickle
-from .serialization.torch import load_torch, to_torch
+from .serialization.torch import dump_torch, load_torch
 from .types.guards import (
     is_builtin_number,
     is_builtin_scalar,

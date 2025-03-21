@@ -6,6 +6,7 @@ from unittest import TestCase
 
 import torch
 
+import torchoutil as to
 from torchoutil import Tensor, nn
 from torchoutil.hub.paths import get_tmp_dir
 from torchoutil.nn.modules._mixins import _DEFAULT_DEVICE_DETECT_MODE
@@ -71,9 +72,9 @@ class TestInheritEModule(TestCase):
         path = self.tmpdir.joinpath("state_dict.pt")
         path.parent.mkdir(parents=True, exist_ok=True)
         with open(path, "wb") as file:
-            torch.save(module1.state_dict(), file)
-            state_dict = torch.load(path)
+            to.save(module1.state_dict(), file)
 
+        state_dict = to.load(path)
         module2 = MyModule(in_features, out_features, p=0.25)
         module2.load_state_dict(state_dict)
 

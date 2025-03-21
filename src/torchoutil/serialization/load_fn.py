@@ -4,7 +4,17 @@
 import logging
 import os
 from pathlib import Path
-from typing import Any, Callable, Dict, Optional, TypeVar, Union
+from typing import (
+    Any,
+    BinaryIO,
+    Callable,
+    Dict,
+    Optional,
+    TextIO,
+    TypeVar,
+    Union,
+    overload,
+)
 
 from typing_extensions import TypeAlias
 
@@ -25,7 +35,7 @@ from .torch import load_torch
 T = TypeVar("T", covariant=True)
 pylog = logging.getLogger(__name__)
 
-LoadFn: TypeAlias = Callable[[Path], T]
+LoadFn: TypeAlias = Callable[[Any], T]
 LoadFnLike: TypeAlias = Union[LoadFn[T], SavingBackend]
 
 
@@ -66,23 +76,44 @@ if _YAML_AVAILABLE:
     LOAD_FNS["yaml"] = load_yaml
 
 
+@overload
+def load(
+    fpath: Union[TextIO, BinaryIO],
+    *args,
+    saving_backend: SavingBackend = "torch",
+    **kwargs,
+) -> Any:
+    ...
+
+
+@overload
 def load(
     fpath: Union[str, Path, os.PathLike],
     *args,
-    saving_backend: Optional[SavingBackend] = None,
+    saving_backend: Optional[SavingBackend] = "torch",
+    **kwargs,
+) -> Any:
+    ...
+
+
+def load(
+    fpath: Union[str, Path, os.PathLike, TextIO, BinaryIO],
+    *args,
+    saving_backend: Optional[SavingBackend] = "torch",
     **kwargs,
 ) -> Any:
     """Load from file using the correct backend."""
-    fpath = Path(fpath)
+    if isinstance(fpath, (str, os.PathLike)):
+        fpath = Path(fpath)
 
-    if not fpath.is_file():
-        msg = f"Invalid argument {fpath=}. (path is not a file)"
-        raise FileNotFoundError(msg)
+        if not fpath.is_file():
+            msg = f"Invalid argument {fpath=}. (path is not a file)"
+            raise FileNotFoundError(msg)
 
-    if saving_backend is None:
-        saving_backend = _fpath_to_saving_backend(fpath)
+        if saving_backend is None:
+            saving_backend = _fpath_to_saving_backend(fpath)
 
-    elif saving_backend not in LOAD_FNS:
+    if saving_backend not in LOAD_FNS:
         msg = f"Invalid argument {saving_backend=}. (expected one of {tuple(LOAD_FNS.keys())})"
         raise ValueError(msg)
 
