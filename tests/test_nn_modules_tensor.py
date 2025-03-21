@@ -21,7 +21,7 @@ def module_name_to_fn_name(x: str) -> str:
     return x
 
 
-class TestModuleTensorCompat(TestCase):
+class TestModuleCompat(TestCase):
     def test_all_results(self) -> None:
         base_modules = [torch, torch.Tensor, torch.nn.functional, torch.fft]
         all_fn_names = {
