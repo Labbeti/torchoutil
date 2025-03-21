@@ -4,6 +4,7 @@
 from typing import (
     Any,
     Callable,
+    Generic,
     Iterable,
     List,
     Optional,
@@ -53,7 +54,7 @@ from torchoutil.types._typing import (
 )
 from torchoutil.utils import return_types
 
-from .module import Module
+from .module import EModule, Module
 
 T = TypeVar("T")
 
@@ -78,10 +79,8 @@ class AsTensor(Module):
 
     def extra_repr(self) -> str:
         return dump_dict(
-            dict(
-                dtype=self.dtype,
-                device=self.device,
-            ),
+            dtype=self.dtype,
+            device=self.device,
             ignore_lst=(None,),
         )
 
@@ -120,10 +119,8 @@ class Flatten(Module):
 
     def extra_repr(self) -> str:
         return dump_dict(
-            dict(
-                start_dim=self.start_dim,
-                end_dim=self.end_dim,
-            )
+            start_dim=self.start_dim,
+            end_dim=self.end_dim,
         )
 
 
@@ -189,13 +186,11 @@ class PadAndCropDim(Module):
 
     def extra_repr(self) -> str:
         return dump_dict(
-            dict(
-                target_length=self.target_length,
-                align=self.align,
-                pad_value=self.pad_value,
-                dim=self.dim,
-                mode=self.mode,
-            )
+            target_length=self.target_length,
+            align=self.align,
+            pad_value=self.pad_value,
+            dim=self.dim,
+            mode=self.mode,
         )
 
 
@@ -213,7 +208,7 @@ class RepeatInterleaveNd(Module):
         return repeat_interleave_nd(x, self.repeats, self.dim)
 
     def extra_repr(self) -> str:
-        return dump_dict(dict(repeats=self.repeats, dim=self.dim))
+        return dump_dict(repeats=self.repeats, dim=self.dim)
 
 
 class ResampleNearestRates(Module):
@@ -241,7 +236,7 @@ class ResampleNearestRates(Module):
         )
 
     def extra_repr(self) -> str:
-        return dump_dict(dict(rates=self.rates, dims=self.dims))
+        return dump_dict(rates=self.rates, dims=self.dims)
 
 
 class ResampleNearestFreqs(Module):
@@ -272,7 +267,7 @@ class ResampleNearestFreqs(Module):
 
     def extra_repr(self) -> str:
         return dump_dict(
-            dict(orig_freq=self.orig_freq, new_freq=self.new_freq, dims=self.dims)
+            orig_freq=self.orig_freq, new_freq=self.new_freq, dims=self.dims
         )
 
 
@@ -300,7 +295,7 @@ class ResampleNearestSteps(Module):
         )
 
     def extra_repr(self) -> str:
-        return dump_dict(dict(steps=self.steps, dims=self.dims))
+        return dump_dict(steps=self.steps, dims=self.dims)
 
 
 class Squeeze(Module):
@@ -322,10 +317,8 @@ class Squeeze(Module):
 
     def extra_repr(self) -> str:
         return dump_dict(
-            dict(
-                dim=self.dim,
-                mode=self.mode,
-            ),
+            dim=self.dim,
+            mode=self.mode,
         )
 
 
@@ -346,7 +339,7 @@ class Shuffled(Module):
         return shuffled(x, dims=self.dims, generator=self.generator)
 
     def extra_repr(self) -> str:
-        return dump_dict(dict(dims=self.dims))
+        return dump_dict(dims=self.dims)
 
 
 class ToItem(Module):
@@ -361,7 +354,7 @@ class ToItem(Module):
         return to_item(x)  # type: ignore
 
 
-class TransformDrop(Module[T, T]):
+class TransformDrop(Generic[T], EModule[T, T]):
     def __init__(
         self,
         transform: Callable[[T], T],
@@ -385,7 +378,7 @@ class TransformDrop(Module[T, T]):
         )
 
     def extra_repr(self) -> str:
-        return dump_dict(dict(p=self.p))
+        return dump_dict(p=self.p)
 
 
 class Unsqueeze(Module):
@@ -406,12 +399,7 @@ class Unsqueeze(Module):
         return unsqueeze(x, self.dim, self.mode)
 
     def extra_repr(self) -> str:
-        return dump_dict(
-            dict(
-                dim=self.dim,
-                mode=self.mode,
-            ),
-        )
+        return dump_dict(dim=self.dim, mode=self.mode)
 
 
 class ViewAsReal(Module):
@@ -476,14 +464,12 @@ class Topk(Module):
 
     def extra_repr(self) -> str:
         return dump_dict(
-            dict(
-                k=self.k,
-                dim=self.dim,
-                largest=self.largest,
-                sorted=self.sorted,
-                return_values=self.return_values,
-                return_indices=self.return_indices,
-            ),
+            k=self.k,
+            dim=self.dim,
+            largest=self.largest,
+            sorted=self.sorted,
+            return_values=self.return_values,
+            return_indices=self.return_indices,
         )
 
 
@@ -524,13 +510,11 @@ class TopP(Module):
 
     def extra_repr(self) -> str:
         return dump_dict(
-            dict(
-                p=self.p,
-                dim=self.dim,
-                largest=self.largest,
-                return_values=self.return_values,
-                return_indices=self.return_indices,
-            ),
+            p=self.p,
+            dim=self.dim,
+            largest=self.largest,
+            return_values=self.return_values,
+            return_indices=self.return_indices,
         )
 
 

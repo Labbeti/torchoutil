@@ -30,7 +30,7 @@ class SoftmaxMultidim(Module):
         return softmax_multidim(input, dims=self.dims)
 
     def extra_repr(self) -> str:
-        return dump_dict(dict(dims=self.dims))
+        return dump_dict(dims=self.dims)
 
 
 class LogSoftmaxMultidim(Module):
@@ -52,4 +52,4 @@ class LogSoftmaxMultidim(Module):
         return log_softmax_multidim(input, dims=self.dims)
 
     def extra_repr(self) -> str:
-        return dump_dict(dict(dims=self.dims))
+        return dump_dict(dims=self.dims)

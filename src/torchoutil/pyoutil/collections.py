@@ -256,11 +256,12 @@ def union_lists(lst_of_lst: Iterable[Iterable[T]]) -> List[T]:
 
 
 def dump_dict(
-    dic: Mapping[str, T],
+    dic: Optional[Mapping[str, T]] = None,
     /,
     join: str = ", ",
     fmt: str = "{key}={value}",
     ignore_lst: Iterable[T] = (),
+    **kwargs,
 ) -> str:
     """Dump dictionary of scalars to string function to customize representation.
 
@@ -272,6 +273,12 @@ def dump_dict(
     ... 'a=1, b=2'
     ```
     """
+    if dic is None:
+        dic = {}
+    else:
+        dic = dict(dic.items())
+    dic.update(kwargs)
+
     ignore_lst = dict.fromkeys(ignore_lst)
     result = join.join(
         fmt.format(key=key, value=value)

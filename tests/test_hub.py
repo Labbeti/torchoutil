@@ -1,15 +1,13 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import os
-import tempfile
 import unittest
-from pathlib import Path
 from unittest import TestCase
 
 from torch import Tensor
 
 from torchoutil.hub.download import _get_filename_from_url
+from torchoutil.hub.paths import get_tmp_dir
 from torchoutil.hub.registry import RegistryHub
 
 
@@ -35,9 +33,7 @@ class TestFilename(TestCase):
 class TestRegistryHub(TestCase):
     @classmethod
     def setUpClass(cls) -> None:
-        tmpdir = Path(os.getenv("TORCHOUTIL_TMPDIR", tempfile.gettempdir())).joinpath(
-            "torchoutil_tests"
-        )
+        tmpdir = get_tmp_dir().joinpath("torchoutil_tests")
         tmpdir.mkdir(parents=True, exist_ok=True)
         cls.tmpdir = tmpdir
 

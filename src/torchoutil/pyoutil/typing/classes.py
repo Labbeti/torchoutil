@@ -52,7 +52,7 @@ class NamedTupleInstance(Protocol):
 
 @runtime_checkable
 class SupportsIterLen(Protocol[T]):
-    def __iter__(self) -> T:
+    def __iter__(self) -> Iterator[T]:
         raise NotImplementedError
 
     def __len__(self) -> int:

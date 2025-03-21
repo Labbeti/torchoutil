@@ -62,7 +62,7 @@ class SupportsTypedForward(Protocol[InType, OutType]):
 
 TypedModuleLike: TypeAlias = Union[
     SupportsTypedForward[InType, OutType],
-    "TypedModule[InType, OutType]",
+    "EModule[InType, OutType]",
 ]
 
 
@@ -142,16 +142,19 @@ class ConfigModule(Generic[T_MutableMappingStr], nn.Module):
     _CONFIG_EXCLUDE: ClassVar[Tuple[str, ...]] = ("^_.*",) + tuple(
         f".*{k}$" for k in nn.Module().__dict__.keys()
     )
+    _DEFAULT_EXTRA_REPR: ClassVar[bool] = False
 
     def __init__(
         self,
         *,
         strict_load: bool = False,
-        config_to_extra_repr: bool = False,
+        config_to_extra_repr: Optional[bool] = None,
         config: Optional[T_MutableMappingStr] = None,
     ) -> None:
         if config is None:
             config = {}  # type: ignore
+        if config_to_extra_repr is None:
+            config_to_extra_repr = self._DEFAULT_EXTRA_REPR
 
         attrs = {
             "config": config,
@@ -192,7 +195,8 @@ class ConfigModule(Generic[T_MutableMappingStr], nn.Module):
         state = {"config": self.__config}
         return state
 
-    def set_extra_state(self, state: Any) -> None:
+    def set_extra_state(self, state: Any) -> Any:
+        # return type is Any because parent class typed NoReturn in some versions, which is incompatible with None and the usage of returns code.
         if not self.__strict_load:
             return None
 
@@ -566,6 +570,72 @@ class ESequential(
         arg4: TypedModuleLike[Any, Any],
         arg5: TypedModuleLike[Any, Any],
         arg6: TypedModuleLike[Any, OutType],
+        /,
+        *,
+        unpack_tuple: bool = False,
+        unpack_dict: bool = False,
+        strict_load: bool = False,
+        config_to_extra_repr: bool = False,
+        device_detect_mode: DeviceDetectMode = _DEFAULT_DEVICE_DETECT_MODE,
+    ) -> None:
+        ...
+
+    @overload
+    def __init__(
+        self,
+        arg0: TypedModuleLike[InType, Any],
+        arg1: TypedModuleLike[Any, Any],
+        arg2: TypedModuleLike[Any, Any],
+        arg3: TypedModuleLike[Any, Any],
+        arg4: TypedModuleLike[Any, Any],
+        arg5: TypedModuleLike[Any, Any],
+        arg6: TypedModuleLike[Any, Any],
+        arg7: TypedModuleLike[Any, OutType],
+        /,
+        *,
+        unpack_tuple: bool = False,
+        unpack_dict: bool = False,
+        strict_load: bool = False,
+        config_to_extra_repr: bool = False,
+        device_detect_mode: DeviceDetectMode = _DEFAULT_DEVICE_DETECT_MODE,
+    ) -> None:
+        ...
+
+    @overload
+    def __init__(
+        self,
+        arg0: TypedModuleLike[InType, Any],
+        arg1: TypedModuleLike[Any, Any],
+        arg2: TypedModuleLike[Any, Any],
+        arg3: TypedModuleLike[Any, Any],
+        arg4: TypedModuleLike[Any, Any],
+        arg5: TypedModuleLike[Any, Any],
+        arg6: TypedModuleLike[Any, Any],
+        arg7: TypedModuleLike[Any, Any],
+        arg8: TypedModuleLike[Any, OutType],
+        /,
+        *,
+        unpack_tuple: bool = False,
+        unpack_dict: bool = False,
+        strict_load: bool = False,
+        config_to_extra_repr: bool = False,
+        device_detect_mode: DeviceDetectMode = _DEFAULT_DEVICE_DETECT_MODE,
+    ) -> None:
+        ...
+
+    @overload
+    def __init__(
+        self,
+        arg0: TypedModuleLike[InType, Any],
+        arg1: TypedModuleLike[Any, Any],
+        arg2: TypedModuleLike[Any, Any],
+        arg3: TypedModuleLike[Any, Any],
+        arg4: TypedModuleLike[Any, Any],
+        arg5: TypedModuleLike[Any, Any],
+        arg6: TypedModuleLike[Any, Any],
+        arg7: TypedModuleLike[Any, Any],
+        arg8: TypedModuleLike[Any, Any],
+        arg9: TypedModuleLike[Any, OutType],
         /,
         *,
         unpack_tuple: bool = False,

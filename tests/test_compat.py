@@ -3,7 +3,7 @@
 
 import inspect
 import unittest
-from typing import Any, Callable, Iterable, List, Tuple
+from typing import Any, Callable, List, Tuple
 from unittest import TestCase
 
 import torch
@@ -11,12 +11,17 @@ from torch import Tensor
 
 import torchoutil
 from torchoutil.pyoutil.inspect import get_fullname
-from torchoutil.pyoutil.typing.guards import isinstance_guard
+from torchoutil.pyoutil.typing import SizedIterable, isinstance_guard
 
 
 class TestFunctionsCompat(TestCase):
     def test_all_results(self) -> None:
-        src_modules = [torch, torch.Tensor, torch.nn.functional, torch.fft]
+        src_modules = [
+            torch,
+            torch.Tensor,
+            torch.nn.functional,  # type: ignore
+            torch.fft,
+        ]
         all_base_fn_names = {
             src_module: dict.fromkeys(
                 name
@@ -73,9 +78,10 @@ class TestFunctionsCompat(TestCase):
                     pass
                 elif isinstance(result, Tensor) and isinstance(expected, Tensor):
                     assert torch.equal(result, expected)
-                elif isinstance_guard(result, Iterable[Tensor]) and isinstance_guard(
-                    expected, Iterable[Tensor]
-                ):
+                elif isinstance_guard(
+                    result, SizedIterable[Tensor]
+                ) and isinstance_guard(expected, SizedIterable[Tensor]):
+                    assert len(result) == len(expected)
                     for result_i, expected_i in zip(result, expected):
                         assert torch.equal(result_i, expected_i)
                 else:

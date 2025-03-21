@@ -105,7 +105,7 @@ class OnehotToIndex(Module):
         return index
 
     def extra_repr(self) -> str:
-        return dump_dict(dict(dim=self.dim))
+        return dump_dict(dim=self.dim)
 
 
 class OnehotToName(Generic[T_Name], nn.Module):
@@ -130,7 +130,7 @@ class OnehotToName(Generic[T_Name], nn.Module):
         return name
 
     def extra_repr(self) -> str:
-        return dump_dict(dict(dim=self.dim))
+        return dump_dict(dim=self.dim)
 
 
 class NameToIndex(Generic[T_Name], nn.Module):
@@ -209,7 +209,7 @@ class ProbsToIndex(Module):
         return index
 
     def extra_repr(self) -> str:
-        return dump_dict(dict(dim=self.dim))
+        return dump_dict(dim=self.dim)
 
 
 class ProbsToOnehot(Module):
@@ -274,4 +274,4 @@ class ProbsToName(Generic[T_Name], nn.Module):
         return name
 
     def extra_repr(self) -> str:
-        return dump_dict(dict(dim=self.dim))
+        return dump_dict(dim=self.dim)

@@ -25,9 +25,11 @@ from typing_extensions import NotRequired
 
 from torchoutil.core.make import DeviceLike, make_device
 from torchoutil.pyoutil.hashlib import HashName, hash_file
-from torchoutil.pyoutil.warnings import warn_once
+from torchoutil.pyoutil.warnings import deprecated_function, warn_once
 from torchoutil.serialization.json import dump_json, load_json
 from torchoutil.serialization.load_fn import LOAD_FNS, LoadFnLike, load_torch
+
+from .paths import get_cache_dir
 
 T_Hashable = TypeVar("T_Hashable", bound=Hashable)
 
@@ -47,7 +49,7 @@ class RegistryHub(Generic[T_Hashable]):
     def __init__(
         self,
         infos: Mapping[T_Hashable, RegistryEntry],
-        register_root: Union[str, Path, None] = None,
+        register_root: Union[str, Path] = "~/.cache/torch/hub/checkpoints",
     ) -> None:
         """
         Args:
@@ -56,9 +58,9 @@ class RegistryHub(Generic[T_Hashable]):
         """
         infos = dict(infos.items())
         if register_root is None:
-            register_root = get_default_register_root()
+            register_root = get_cache_dir().joinpath("checkpoints")
         else:
-            register_root = Path(register_root)
+            register_root = Path(register_root).resolve().expanduser()
 
         super().__init__()
         self._infos = infos
@@ -252,6 +254,7 @@ class RegistryHub(Generic[T_Hashable]):
         return name
 
 
+@deprecated_function()
 def get_default_register_root() -> Path:
     """Default register root path is `~/.cache/torch/hub/checkpoints`, which is based on `torch.hub.get_dir`."""
     path = torch.hub.get_dir()

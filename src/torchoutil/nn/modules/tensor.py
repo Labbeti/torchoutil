@@ -12,6 +12,7 @@ from torch.types import Number
 
 from torchoutil.nn.functional.make import DTypeLike, make_dtype
 from torchoutil.pyoutil.collections import dump_dict
+from torchoutil.pyoutil.semver import Version
 from torchoutil.utils import return_types
 
 from .module import Module
@@ -117,14 +118,20 @@ class Interpolate(Module):
         self.antialias = antialias
 
     def forward(self, x: Tensor) -> Tensor:
+        kwds = {}
+        if Version(torch.__version__) >= Version("2.0.0"):
+            kwds.update(
+                recompute_scale_factor=self.recompute_scale_factor,
+                antialias=self.antialias,
+            )
+
         return F.interpolate(
             x,
             size=self.size,
             scale_factor=self.scale_factor,
             mode=self.mode,
             align_corners=self.align_corners,
-            recompute_scale_factor=self.recompute_scale_factor,
-            antialias=self.antialias,
+            **kwds,
         )
 
 
@@ -163,9 +170,10 @@ class Max(Module):
     def __init__(
         self,
         dim: Optional[int] = None,
+        keepdim: bool = False,
+        *,
         return_values: bool = True,
         return_indices: Optional[bool] = None,
-        keepdim: bool = False,
     ) -> None:
         if return_indices is None:
             return_indices = dim is not None
@@ -216,7 +224,10 @@ class Mean(Module):
     """
 
     def __init__(
-        self, dim: Optional[int] = None, keepdim: bool = False, dtype: DTypeLike = None
+        self,
+        dim: Optional[int] = None,
+        keepdim: bool = False,
+        dtype: DTypeLike = None,
     ) -> None:
         super().__init__()
         self.dim = dim
@@ -225,7 +236,15 @@ class Mean(Module):
 
     def forward(self, x: Tensor) -> Tensor:
         dtype = make_dtype(self.dtype)
-        return x.mean(dim=self.dim, keepdim=self.keepdim, dtype=dtype)
+        if (Version(torch.__version__) >= Version("2.0.0")) or (self.dim is not None):
+            return x.mean(dim=self.dim, keepdim=self.keepdim, dtype=dtype)  # type: ignore
+
+        # support for older torch versions
+        result = x.mean(dtype=dtype)
+        if self.keepdim:
+            return torch.full(x.shape, result.item(), dtype=dtype, device=x.device)
+        else:
+            return result
 
     def extra_repr(self) -> str:
         return dump_dict(
@@ -246,9 +265,10 @@ class Min(Module):
     def __init__(
         self,
         dim: Optional[int] = None,
+        keepdim: bool = False,
+        *,
         return_values: bool = True,
         return_indices: Optional[bool] = None,
-        keepdim: bool = False,
     ) -> None:
         if return_indices is None:
             return_indices = dim is not None
@@ -356,7 +376,7 @@ class Pow(Module):
         return x.pow(self.exponent)
 
     def extra_repr(self) -> str:
-        return dump_dict(dict(exponent=self.exponent))
+        return dump_dict(exponent=self.exponent)
 
 
 class Real(Module):
@@ -381,7 +401,7 @@ class Repeat(Module):
         return x.repeat(self.repeats)
 
     def extra_repr(self) -> str:
-        return dump_dict(dict(repeats=self.repeats))
+        return dump_dict(repeats=self.repeats)
 
 
 class RepeatInterleave(Module):
@@ -447,7 +467,7 @@ class TensorTo(Module):
         return x.to(**self.kwargs)
 
     def extra_repr(self) -> str:
-        return dump_dict(dict(self.kwargs))
+        return dump_dict(self.kwargs)
 
 
 class ToList(Module):
@@ -471,8 +491,12 @@ class Transpose(Module):
         self.copy = copy
 
     def forward(self, x: Tensor) -> Tensor:
+        if self.copy and not hasattr(torch, "transpose_copy"):
+            msg = f"Invalid argument {self.copy=} in torch {torch.__version__}."
+            raise ValueError(msg)
+
         if self.copy:
-            return torch.transpose_copy(x, self.dim0, self.dim1)
+            return torch.transpose_copy(x, self.dim0, self.dim1)  # type: ignore
         else:
             return torch.transpose(x, self.dim0, self.dim1)
 

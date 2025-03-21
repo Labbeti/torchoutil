@@ -25,7 +25,8 @@ class TestMultilabel(TestCase):
         indices = [[1, 2], [0], [], [3]]
         num_classes = 4
         expected_multihot = torch.as_tensor(
-            [[0, 1, 1, 0], [1, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 1]], dtype=torch.bool
+            [[0, 1, 1, 0], [1, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 1]],
+            dtype=torch.bool,
         )
 
         result = indices_to_multihot(indices, num_classes=num_classes)

@@ -10,6 +10,8 @@ import torch
 from torch import Tensor, nn
 
 from torchoutil.nn.modules import tensor as tensor_module
+from torchoutil.pyoutil.inspect import get_fullname
+from torchoutil.pyoutil.typing import SizedIterable, isinstance_guard
 
 
 def module_name_to_fn_name(x: str) -> str:
@@ -23,7 +25,12 @@ def module_name_to_fn_name(x: str) -> str:
 
 class TestModuleCompat(TestCase):
     def test_all_results(self) -> None:
-        base_modules = [torch, torch.Tensor, torch.nn.functional, torch.fft]
+        base_modules = [
+            torch,
+            torch.Tensor,
+            torch.nn.functional,  # type: ignore
+            torch.fft,
+        ]
         all_fn_names = {
             base_module: dict.fromkeys(
                 name
@@ -73,8 +80,8 @@ class TestModuleCompat(TestCase):
             except Exception as err:
                 result = err
 
+            fn = getattr(base_module, fn_name)
             try:
-                fn = getattr(base_module, fn_name)
                 expected = fn(x)
             except Exception as err:
                 expected = err
@@ -83,11 +90,19 @@ class TestModuleCompat(TestCase):
                 pass
             elif isinstance(result, Tensor) and isinstance(expected, Tensor):
                 assert torch.equal(result, expected)
+            elif isinstance_guard(result, SizedIterable[Tensor]) and isinstance_guard(
+                expected, SizedIterable[Tensor]
+            ):
+                assert len(result) == len(expected)
+                for result_i, expected_i in zip(result, expected):
+                    assert torch.equal(result_i, expected_i)
             else:
-                msg = f"{result=} ; {expected=} from {module_cls.__qualname__} and {base_module.__name__}.{fn_name}"
+                msg = f"{result=} ; {expected=} from {get_fullname(module_cls)} and {get_fullname(fn)}"
                 assert result == expected, msg
 
-        print(f"Total base coverage hit: {len(tested_modules)}")
+        print(
+            f"Total base coverage hit: {len(tested_modules)}/{len(tested_modules) + len(missed_modules)}"
+        )
         print(f"Hit_: {tested_modules}")
         print(f"Miss: {missed_modules}")
 

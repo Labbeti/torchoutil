@@ -54,7 +54,7 @@ def dump_with_torchaudio(
     else:
         buffer = uri
 
-    torchaudio.save(
+    torchaudio.save(  # type: ignore
         buffer,
         src,
         sample_rate,
@@ -88,7 +88,7 @@ def load_with_torchaudio(
     buffer_size: int = 4096,
     backend: Optional[str] = None,
 ) -> Any:
-    return torchaudio.load(
+    return torchaudio.load(  # type: ignore
         uri,
         frame_offset,
         num_frames,

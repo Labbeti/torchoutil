@@ -115,6 +115,7 @@ from .transform import (  # noqa: F811
     squeeze_copy,
     to_item,
     to_tensor,
+    top_k,
     top_p,
     topk,
     transform_drop,

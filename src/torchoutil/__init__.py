@@ -36,6 +36,7 @@ from .core.make import (  # noqa: F401
     GeneratorLike,
 )
 from .hub.download import download_file
+from .hub.paths import get_cache_dir, get_tmp_dir
 from .nn.functional import *
 from .pyoutil.semver import Version
 from .pyoutil.typing.guards import isinstance_guard

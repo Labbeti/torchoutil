@@ -1,15 +1,13 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import os
-import tempfile
 import unittest
-from pathlib import Path
 from unittest import TestCase
 
 import torch
 
 from torchoutil import Tensor, nn
+from torchoutil.hub.paths import get_tmp_dir
 from torchoutil.nn.modules._mixins import _DEFAULT_DEVICE_DETECT_MODE
 
 
@@ -43,9 +41,7 @@ class MyModule(nn.EModule[Tensor, Tensor]):
 class TestInheritEModule(TestCase):
     @classmethod
     def setUpClass(cls) -> None:
-        tmpdir = Path(os.getenv("TORCHOUTIL_TMPDIR", tempfile.gettempdir())).joinpath(
-            "torchoutil_tests"
-        )
+        tmpdir = get_tmp_dir().joinpath("torchoutil_tests")
         cls.tmpdir = tmpdir
 
     def test_multiple(self) -> None:
