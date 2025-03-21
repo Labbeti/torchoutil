@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import logging
 import sys
 from numbers import Integral, Number
 from typing import (
@@ -40,6 +41,8 @@ from .classes import (
 
 T = TypeVar("T")
 
+pylog = logging.getLogger(__name__)
+
 
 def is_typed_dict(x: Any) -> TypeGuard[type]:
     if sys.version_info.major == 3 and sys.version_info.minor < 9:
@@ -48,7 +51,10 @@ def is_typed_dict(x: Any) -> TypeGuard[type]:
         return hasattr(x, "__orig_bases__") and TypedDict in x.__orig_bases__
 
 
-def isinstance_guard(x: Any, target_type: Optional[Type[T]]) -> TypeIs[T]:
+def isinstance_guard(
+    x: Any,
+    target_type: Union[Type[T], None],
+) -> TypeIs[T]:
     """Improved isinstance(...) function that supports parametrized Union, TypedDict, Literal, Mapping or Iterable.
 
     Example 1::
@@ -72,6 +78,11 @@ def isinstance_guard(x: Any, target_type: Optional[Type[T]]) -> TypeIs[T]:
     origin = get_origin(target_type)
     if origin is None:
         return isinstance(x, target_type)
+
+    # Special case for empty tuple because get_args(Tuple[()]) returns () and not ((),) in python >= 3.11
+    # More info at https://github.com/python/cpython/issues/91137
+    if target_type == Tuple[()]:
+        return x == ()
 
     args = get_args(target_type)
     if len(args) == 0:
