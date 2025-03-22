@@ -7,6 +7,7 @@ from typing import (
     Callable,
     Iterable,
     Literal,
+    Mapping,
     Optional,
     Tuple,
     TypeVar,
@@ -18,13 +19,15 @@ import torch
 from torch import Tensor, nn
 
 # backward compatibility
-from torchoutil.core.get import get_dtype, get_generator, make_device  # noqa: F401
+from torchoutil.core.get import get_device, get_dtype, get_generator  # noqa: F401
 from torchoutil.extras.numpy import np
+from torchoutil.nn import functional as F
 from torchoutil.pyoutil.collections import all_eq as builtin_all_eq
 from torchoutil.pyoutil.collections import prod as builtin_prod
 from torchoutil.pyoutil.collections import unzip
 from torchoutil.pyoutil.functools import identity
-from torchoutil.pyoutil.typing import BuiltinNumber, T_BuiltinNumber
+from torchoutil.pyoutil.semver import Version
+from torchoutil.pyoutil.typing import BuiltinNumber, SizedIter, T_BuiltinNumber
 from torchoutil.types._typing import LongTensor, ScalarLike, T_TensorOrArray
 from torchoutil.types.guards import is_scalar_like
 from torchoutil.utils import return_types
@@ -75,8 +78,8 @@ def find(
             raise RuntimeError(f"Cannot find {value=} in tensor.")
         return indices  # type: ignore
     else:
-        output = torch.where(contains, indices, default)
-        return output  # type: ignore
+        output = torch.where(contains, indices, default)  # type: ignore
+        return output
 
 
 @overload
@@ -302,7 +305,10 @@ def mse(
     dim: Union[int, Tuple[int, ...], None] = None,
 ) -> Tensor:
     """Mean squared error function."""
-    return ((x1 - x2) ** 2).mean(dim).sqrt()
+    if dim is not None or Version(torch.__version__) >= "2.0.0":
+        return ((x1 - x2) ** 2).mean(dim).sqrt()  # type: ignore
+    else:
+        return ((x1 - x2) ** 2).mean().sqrt()
 
 
 def rmse(
@@ -313,3 +319,17 @@ def rmse(
 ) -> Tensor:
     """Root mean squared error function."""
     return mse(x1, x2, dim=dim).sqrt()
+
+
+def deep_equal(x: T, y: T) -> bool:
+    if is_scalar_like(x) and is_scalar_like(y):
+        return F.to_item(x == y)  # type: ignore
+    if isinstance(x, Tensor) and isinstance(y, Tensor):
+        return torch.equal(x, y)
+    if isinstance(x, Mapping) and isinstance(y, Mapping):
+        return deep_equal(list(x.items()), list(y.items()))
+    if isinstance(x, SizedIter) and isinstance(y, SizedIter):
+        return len(x) == len(y) and all(deep_equal(xi, yi) for xi, yi in zip(x, y))
+
+    msg = f"Invalid arguments types {type(x)=} and {type(y)=}."
+    raise TypeError(msg)

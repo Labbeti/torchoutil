@@ -153,7 +153,7 @@ def _fpath_to_saving_backend(
     return saving_backend
 
 
-BACKEND_TO_EXTENSION: Dict[SavingBackend, str] = {
+BACKEND_TO_PATTERN: Dict[SavingBackend, str] = {
     backend: ext for ext, backend in PATTERN_TO_BACKEND.items()
 }
 UNK_MODES = ("identity", "error")

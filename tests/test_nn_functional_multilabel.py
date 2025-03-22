@@ -80,7 +80,7 @@ class TestMultilabel(TestCase):
         assert indices_1 == indices_2
 
     def test_ints_to_multihots(self) -> None:
-        device = make_device()
+        device = make_device("cpu")
         ints = torch.as_tensor([[0, 1, 1]], device=device)
         num_classes = 5
         multihots = indices_to_multihot(ints, num_classes, dtype=torch.int)
@@ -90,7 +90,7 @@ class TestMultilabel(TestCase):
         assert multihots.eq(expected).all(), f"{multihots=}"
 
     def test_convert_and_reconvert(self) -> None:
-        device = make_device()
+        device = make_device("cpu")
         multihots = torch.as_tensor(
             [
                 [1, 1, 1],

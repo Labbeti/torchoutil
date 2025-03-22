@@ -7,11 +7,11 @@ from typing import Any, List, Tuple, Type
 from unittest import TestCase
 
 import torch
-from torch import Tensor, nn
+from torch import nn
 
+from torchoutil.nn.functional import deep_equal
 from torchoutil.nn.modules import tensor as tensor_module
 from torchoutil.pyoutil.inspect import get_fullname
-from torchoutil.pyoutil.typing import SizedIterable, isinstance_guard
 
 
 def module_name_to_fn_name(x: str) -> str:
@@ -88,17 +88,9 @@ class TestModuleCompat(TestCase):
 
             if isinstance(result, Exception) and isinstance(expected, Exception):
                 pass
-            elif isinstance(result, Tensor) and isinstance(expected, Tensor):
-                assert torch.equal(result, expected)
-            elif isinstance_guard(result, SizedIterable[Tensor]) and isinstance_guard(
-                expected, SizedIterable[Tensor]
-            ):
-                assert len(result) == len(expected)
-                for result_i, expected_i in zip(result, expected):
-                    assert torch.equal(result_i, expected_i)
             else:
                 msg = f"{result=} ; {expected=} from {get_fullname(module_cls)} and {get_fullname(fn)}"
-                assert result == expected, msg
+                assert deep_equal(result, expected), msg
 
         print(
             f"Total base coverage hit: {len(tested_modules)}/{len(tested_modules) + len(missed_modules)}"

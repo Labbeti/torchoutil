@@ -66,6 +66,7 @@ from .numpy import numpy_to_tensor, tensor_to_numpy, to_numpy
 from .others import (
     average_power,
     count_parameters,
+    deep_equal,
     find,
     mse,
     ndim,

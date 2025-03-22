@@ -19,7 +19,9 @@ from .functional import (
     numpy_topk,
     numpy_view_as_complex,
     numpy_view_as_real,
+    tensor_to_ndarray,
     tensor_to_numpy,
+    to_ndarray,
     to_numpy,
 )
 from .modules import NumpyToTensor, TensorToNumpy, ToNumpy

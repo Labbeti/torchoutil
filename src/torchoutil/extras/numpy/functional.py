@@ -32,7 +32,7 @@ def to_numpy(
     if isinstance(x, Tensor):
         return tensor_to_numpy(x, dtype=dtype, force=force)
     else:
-        return np.asarray(x, dtype=dtype)  # type: ignore
+        return np.array(x, dtype=dtype)  # type: ignore
 
 
 def tensor_to_numpy(

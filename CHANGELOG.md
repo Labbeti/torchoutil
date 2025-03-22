@@ -17,6 +17,7 @@ All notable changes to this project will be documented in this file.
 - Global import of `to.utils.return_types.shape` in python 3.9 and 3.10.
 - `checksum` function with non-cpu tensors.
 - `make_device` now correctly instantiate concrete type with str and int arguments.
+- Supports for older torch version functions like `mean`, `load`.
 
 ### Deleted
 - `pack_custom` function and classes.

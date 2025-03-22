@@ -43,7 +43,7 @@ def dump_with_torchaudio(
     overwrite: bool = True,
     make_parents: bool = True,
 ) -> bytes:
-    """Dump tensors to audio waveform. Requires torchaudio package installed."""
+    """Dump tensors to audio waveform file. Requires torchaudio package installed."""
     if sample_rate <= 0:
         msg = f"Invalid argument {sample_rate=}. (expected positive value)"
         raise ValueError(msg)
