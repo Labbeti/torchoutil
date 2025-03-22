@@ -7,12 +7,12 @@ from typing import Callable, Generic, Iterable, Iterator, Optional, TypeVar, Uni
 from torch.utils.data.dataset import Dataset, IterableDataset
 from torch.utils.data.dataset import Subset as TorchSubset
 
-from torchoutil import LongTensor1D
 from torchoutil.pyoutil.collections import is_sorted
 from torchoutil.pyoutil.typing.classes import (
     SupportsLenAndGetItem,
     SupportsLenAndGetItemAndIter,
 )
+from torchoutil.types.tensor_subclasses import LongTensor1D
 
 T = TypeVar("T", covariant=True)
 U = TypeVar("U", covariant=True)

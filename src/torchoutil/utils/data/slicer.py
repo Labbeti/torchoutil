@@ -12,8 +12,8 @@ from torchoutil.extras.numpy.functional import is_numpy_bool_array
 from torchoutil.nn.functional.transform import as_tensor
 from torchoutil.pyoutil.typing import isinstance_guard
 from torchoutil.pyoutil.typing.classes import SupportsLenAndGetItem
-from torchoutil.types import is_number_like, is_tensor_or_array
 from torchoutil.types._typing import BoolTensor1D, Tensor1D, TensorOrArray
+from torchoutil.types.guards import is_number_like, is_tensor_or_array
 from torchoutil.utils.data.dataset import Wrapper
 
 T = TypeVar("T", covariant=False)
