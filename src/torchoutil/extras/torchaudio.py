@@ -10,6 +10,7 @@ from typing import Any, BinaryIO, Optional, Union
 import torch
 
 from torchoutil.core.packaging import _TORCHAUDIO_AVAILABLE
+from torchoutil.pyoutil.collections import function_alias
 from torchoutil.pyoutil.importlib import Placeholder
 from torchoutil.pyoutil.io import _setup_path
 from torchoutil.pyoutil.warnings import deprecated_alias
@@ -95,6 +96,16 @@ def load_with_torchaudio(
         buffer_size,
         backend,
     )
+
+
+@function_alias(dump_with_torchaudio)
+def dump_audio(*args, **kwargs):
+    ...
+
+
+@function_alias(load_with_torchaudio)
+def load_audio(*args, **kwargs):
+    ...
 
 
 @deprecated_alias(dump_with_torchaudio)

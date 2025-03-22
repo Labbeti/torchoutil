@@ -19,6 +19,7 @@ from typing import (
 from typing_extensions import TypeAlias
 
 from torchoutil.core.packaging import (
+    _H5PY_AVAILABLE,
     _NUMPY_AVAILABLE,
     _SAFETENSORS_AVAILABLE,
     _TENSORBOARD_AVAILABLE,
@@ -45,6 +46,12 @@ LOAD_FNS: Dict[SavingBackend, LoadFn[Any]] = {
     "pickle": load_pickle,
     "torch": load_torch,
 }
+
+if _H5PY_AVAILABLE:
+    from .hdf import load_hdf
+
+    LOAD_FNS["h5py"] = load_hdf
+
 
 if _NUMPY_AVAILABLE:
     from .numpy import load_numpy

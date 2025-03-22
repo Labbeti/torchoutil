@@ -8,6 +8,7 @@ from typing import Any, BinaryIO, Callable, Dict, Optional, Union, overload
 from typing_extensions import TypeAlias
 
 from torchoutil.core.packaging import (
+    _H5PY_AVAILABLE,
     _NUMPY_AVAILABLE,
     _SAFETENSORS_AVAILABLE,
     _TENSORBOARD_AVAILABLE,
@@ -22,16 +23,21 @@ from .json import dump_json
 from .pickle import dump_pickle
 from .torch import dump_torch
 
-DumpFn: TypeAlias = Callable[..., Union[str, bytes]]
+DumpFn: TypeAlias = Callable[..., Any]
 DumpFnLike: TypeAlias = Union[DumpFn, SavingBackend]
 
 
-DUMP_FNS: Dict[str, DumpFn] = {
+DUMP_FNS: Dict[SavingBackend, DumpFn] = {
     "csv": dump_csv,  # type: ignore
     "json": dump_json,
     "pickle": dump_pickle,
     "torch": dump_torch,
 }
+
+if _H5PY_AVAILABLE:
+    from .hdf import dump_hdf
+
+    DUMP_FNS["h5py"] = dump_hdf
 
 if _NUMPY_AVAILABLE:
     from .numpy import dump_numpy

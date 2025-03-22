@@ -25,6 +25,7 @@ import torch
 from torch import Tensor
 
 from torchoutil.core.packaging import (
+    _H5PY_AVAILABLE,
     _NUMPY_AVAILABLE,
     _OMEGACONF_AVAILABLE,
     _PANDAS_AVAILABLE,
@@ -67,6 +68,7 @@ UnkMode = Literal["identity", "error"]
 SavingBackend = Literal[
     "csv",
     "json",
+    "h5py",
     "numpy",
     "pickle",
     "safetensors",
@@ -87,6 +89,15 @@ PATTERN_TO_BACKEND: Dict[str, SavingBackend] = {
     r"^.+\.ckpt$": "torch",
     r"^.+\.pt$": "torch",
 }
+
+if _H5PY_AVAILABLE:
+    PATTERN_TO_BACKEND.update(
+        {
+            r"^.+\.h5$": "h5py",
+            r"^.+\.hdf$": "h5py",
+        }
+    )
+
 
 if _NUMPY_AVAILABLE:
     import numpy as np

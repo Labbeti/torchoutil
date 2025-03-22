@@ -296,6 +296,7 @@ def find(
     match_fn: Callable[[V, T], bool] = operator.eq,
     order: Literal["right"] = "right",
     default: U = -1,
+    return_value: Literal[False] = False,
 ) -> Union[int, U]:
     ...
 
@@ -308,18 +309,57 @@ def find(
     match_fn: Callable[[T, V], bool] = operator.eq,
     order: Literal["left"],
     default: U = -1,
+    return_value: Literal[False] = False,
 ) -> Union[int, U]:
     ...
 
 
+@overload
 def find(
     target: T,
-    it: Iterable[T],
+    it: Iterable[V],
     *,
-    match_fn: Callable[[T, T], bool] = operator.eq,
+    match_fn: Callable[[V, T], bool] = operator.eq,
+    order: Literal["right"] = "right",
+    default: U = -1,
+    return_value: Literal[True],
+) -> Tuple[Union[int, U], Union[V, U]]:
+    ...
+
+
+@overload
+def find(
+    target: T,
+    it: Iterable[V],
+    *,
+    match_fn: Callable[[T, V], bool] = operator.eq,
+    order: Literal["left"],
+    default: U = -1,
+    return_value: Literal[True],
+) -> Tuple[Union[int, U], Union[V, U]]:
+    ...
+
+
+def find(
+    target: Any,
+    it: Iterable[V],
+    *,
+    match_fn: Callable[[Any, Any], bool] = operator.eq,
     order: Literal["left", "right"] = "right",
     default: U = -1,
-) -> Union[int, U]:
+    return_value: bool = False,
+) -> Union[int, U, Tuple[Union[int, U], Union[V, U]]]:
+    if not return_value:
+        result = find(
+            target,
+            it,
+            match_fn=match_fn,
+            order=order,
+            default=default,
+            return_value=True,
+        )
+        return result[0]
+
     if order == "right":
         pass
     elif order == "left":
@@ -337,8 +377,9 @@ def find(
 
     for i, xi in enumerate(it):
         if match_fn(xi, target):
-            return i
-    return default
+            return i, xi
+
+    return default, default
 
 
 def contained(
