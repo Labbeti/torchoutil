@@ -256,7 +256,9 @@ def to_builtin(
     *,
     unk_mode: UnkMode = "error",
 ) -> Any:
-    """Helper function to sanitize data before saving to YAML or CSV file.
+    """Convert an object to a python builtin equivalent.
+
+    This function can be used to sanitize data before saving to YAML or CSV file.
 
     Args:
         x: Object to convert to built-in equivalent.
