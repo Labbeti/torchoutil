@@ -49,14 +49,15 @@ def dump_tfevents(
 ) -> bytes:
     """Dump data to tensorboard event file."""
     if isinstance_guard(data, Iterable[Mapping[str, ScalarLike]]):
-        data = [dict(data_i.items()) for data_i in data]
+        pass
     elif isinstance_guard(data, Mapping[str, Iterable[ScalarLike]]):
         data = dict_list_to_list_dict(data)
     else:
         raise TypeError(f"Invalid argument type {type(data)}.")
 
     writer = SummaryWriter(log_dir)
-    writer.add_scalars(tag_prefix, data)
+    for data_i in data:
+        writer.add_scalars(tag_prefix, data_i)
     writer.close()
     return b""
 
@@ -198,6 +199,16 @@ def get_tfevents_duration(
     wall_times = [event["wall_time"] for event in events]
     duration = max(wall_times) - min(wall_times)
     return duration
+
+
+@deprecated_alias(dump_tfevents)
+def dump_with_tensorboard(*args, **kwargs):
+    ...
+
+
+@deprecated_alias(load_tfevents)
+def load_with_tensorboard(*args, **kwargs):
+    ...
 
 
 @deprecated_alias(load_tfevents)
