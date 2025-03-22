@@ -24,10 +24,18 @@ from typing import (
 import h5py
 import numpy as np
 import torch
-import tqdm
 from h5py import Dataset as HDFRawDataset
 from torch.utils.data.dataloader import DataLoader
 from typing_extensions import TypeAlias
+
+try:
+    from tqdm import tqdm  # type: ignore
+
+except ImportError:
+
+    def tqdm(x, *args, **kwargs):
+        return x
+
 
 import pyoutil as po
 import torchoutil as to
@@ -277,7 +285,7 @@ def pack_to_hdf(
         )
 
         for _batch_idx, batch in enumerate(
-            tqdm.tqdm(
+            tqdm(
                 loader,
                 desc="Pack data into HDF...",
                 disable=verbose <= 0,
@@ -524,7 +532,7 @@ def _scan_dataset(
     infos_dict: Dict[str, Set[Tuple[Tuple[int, ...], np.dtype]]] = {}
     src_np_dtypes: Dict[str, Set[np.dtype]] = {}
 
-    for batch in tqdm.tqdm(
+    for batch in tqdm(
         loader,
         desc="Pre compute shapes...",
         disable=verbose <= 0 or skip_scan,

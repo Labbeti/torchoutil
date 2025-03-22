@@ -6,7 +6,7 @@ from torchoutil.core.packaging import _EXTRA_AVAILABLE
 
 _MISSING_DEPS = {
     name: _EXTRA_AVAILABLE[name]
-    for name in ("h5py", "numpy", "tqdm")
+    for name in ("h5py", "numpy")
     if not _EXTRA_AVAILABLE[name]
 }
 if len(_MISSING_DEPS) > 0:
