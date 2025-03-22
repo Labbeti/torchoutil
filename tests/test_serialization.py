@@ -6,7 +6,7 @@ import os
 import unittest
 from collections import Counter
 from pathlib import Path
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Mapping, Tuple
 from unittest import TestCase
 
 import torch
@@ -97,6 +97,8 @@ class TestSaving(TestCase):
         for i, (backend, data, to_builtins, load_kwds) in enumerate(tests):
             if to_builtins:
                 data = to.to_builtin(data)
+            if isinstance(data, Mapping):
+                data = po.sorted_dict(data)
 
             fpath = get_tmp_dir().joinpath(f"tmp.{backend}")
             to.dump(data, fpath, saving_backend=backend)
