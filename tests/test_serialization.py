@@ -13,12 +13,7 @@ import torch
 
 import pyoutil as po
 import torchoutil as to
-from torchoutil.extras import (
-    _NUMPY_AVAILABLE,
-    _SAFETENSORS_AVAILABLE,
-    _TENSORBOARD_AVAILABLE,
-    _YAML_AVAILABLE,
-)
+from torchoutil.extras import _NUMPY_AVAILABLE, _SAFETENSORS_AVAILABLE, _YAML_AVAILABLE
 from torchoutil.hub.paths import get_tmp_dir
 from torchoutil.nn.functional import deep_equal
 from torchoutil.serialization.common import (
@@ -69,6 +64,8 @@ class TestSaving(TestCase):
         data2: Dict[str, Any] = copy.copy(data1)
         data2.update({"randstr": [po.randstr(2) for _ in range(n)]})
 
+        assert po.is_full(map(len, data2.values()))
+
         tests: List[Tuple[SavingBackend, Any, bool, dict]] = [
             ("json", data2, True, dict()),
             ("pickle", data2, False, dict()),
@@ -85,13 +82,6 @@ class TestSaving(TestCase):
         if _SAFETENSORS_AVAILABLE:
             added_tests: List[Tuple[SavingBackend, Any, bool, dict]] = [
                 ("safetensors", data1, False, dict()),
-            ]
-            tests += added_tests
-
-        if _TENSORBOARD_AVAILABLE:
-            data4 = {k: to.flatten(v).tolist() for k, v in data1.items()}
-            added_tests: List[Tuple[SavingBackend, Any, bool, dict]] = [
-                ("tensorboard", data4, True, dict()),
             ]
             tests += added_tests
 

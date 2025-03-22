@@ -449,6 +449,11 @@ class HDFDataset(Generic[T, U], DatasetSlicer[U]):
         self._hdf_file = h5py.File(self._hdf_fpath, "r", **self._file_kwds)
         self._sanity_check()
 
+    def to_dict(self, raw: bool = False) -> Dict[str, np.ndarray]:
+        return {
+            col: self.get_item(slice(None), col, raw=raw) for col in self.column_names
+        }
+
     # Magic methods
     def __eq__(self, __o: object) -> bool:
         return isinstance(__o, HDFDataset) and pickle.dumps(self) == pickle.dumps(__o)

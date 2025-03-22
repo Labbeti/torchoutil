@@ -11,7 +11,6 @@ from torchoutil.core.packaging import (
     _H5PY_AVAILABLE,
     _NUMPY_AVAILABLE,
     _SAFETENSORS_AVAILABLE,
-    _TENSORBOARD_AVAILABLE,
     _TORCHAUDIO_AVAILABLE,
     _YAML_AVAILABLE,
 )
@@ -48,11 +47,6 @@ if _SAFETENSORS_AVAILABLE:
     from torchoutil.extras.safetensors import dump_safetensors
 
     DUMP_FNS["safetensors"] = dump_safetensors
-
-if _TENSORBOARD_AVAILABLE:
-    from torchoutil.extras.tensorboard import dump_tfevents
-
-    DUMP_FNS["tensorboard"] = dump_tfevents
 
 if _TORCHAUDIO_AVAILABLE:
     from .torchaudio import dump_with_torchaudio

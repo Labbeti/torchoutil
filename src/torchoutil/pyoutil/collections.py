@@ -30,7 +30,6 @@ from typing_extensions import TypeGuard, TypeIs
 from .functools import function_alias, identity
 from .semver import Version
 from .typing.classes import (
-    SizedGetitemIter,
     SupportsAdd,
     SupportsAnd,
     SupportsMul,
@@ -58,7 +57,7 @@ KEY_MODES = ("same", "intersect", "union")
 
 @overload
 def list_dict_to_dict_list(
-    lst: SizedGetitemIter[Mapping[K, V]],
+    lst: Iterable[Mapping[K, V]],
     key_mode: Literal["intersect", "same"] = "same",
     default_val: Any = None,
     *,
@@ -70,7 +69,7 @@ def list_dict_to_dict_list(
 
 @overload
 def list_dict_to_dict_list(
-    lst: SizedGetitemIter[Mapping[K, V]],
+    lst: Iterable[Mapping[K, V]],
     key_mode: Literal["union"],
     default_val: Any = None,
     *,
@@ -82,7 +81,7 @@ def list_dict_to_dict_list(
 
 @overload
 def list_dict_to_dict_list(
-    lst: SizedGetitemIter[Mapping[K, V]],
+    lst: Iterable[Mapping[K, V]],
     key_mode: Literal["union"],
     default_val: W = None,
     *,
@@ -94,7 +93,7 @@ def list_dict_to_dict_list(
 
 @overload
 def list_dict_to_dict_list(
-    lst: SizedGetitemIter[Mapping[K, V]],
+    lst: Iterable[Mapping[K, V]],
     key_mode: KeyMode = "same",
     default_val: W = None,
     *,
@@ -105,7 +104,7 @@ def list_dict_to_dict_list(
 
 
 def list_dict_to_dict_list(
-    lst: SizedGetitemIter[Mapping[K, V]],
+    lst: Iterable[Mapping[K, V]],
     key_mode: KeyMode = "same",
     default_val: W = None,
     *,
@@ -124,10 +123,11 @@ def list_dict_to_dict_list(
         default_val_fn: Function to return the default value according to a specific key. defaults to None.
         list_fn: Optional function to build the values. defaults to identity.
     """
-    if len(lst) <= 0:
+    try:
+        item0 = next(iter(lst))
+    except StopIteration:
         return {}
 
-    item0 = lst[0]
     keys = set(item0.keys())
 
     if key_mode == "same":

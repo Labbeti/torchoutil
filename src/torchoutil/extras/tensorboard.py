@@ -5,22 +5,18 @@ import glob
 import logging
 import os.path as osp
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Mapping, TypedDict, Union
+from typing import Any, Dict, Iterable, List, TypedDict, Union
 
 from typing_extensions import NotRequired
 
 from torchoutil.core.packaging import _TENSORBOARD_AVAILABLE
-from torchoutil.pyoutil.collections import dict_list_to_list_dict
-from torchoutil.pyoutil.typing import isinstance_guard
 from torchoutil.pyoutil.warnings import deprecated_alias
-from torchoutil.types._typing import ScalarLike
 
 if not _TENSORBOARD_AVAILABLE:
     msg = "Cannot import tensorboard objects because optional dependency 'tensorboard' is not installed. Please install it using 'pip install torchoutil[extras]'"
     raise ImportError(msg)
 
 from tensorboard.backend.event_processing.event_file_loader import EventFileLoader
-from torch.utils.tensorboard.writer import SummaryWriter
 
 pylog = logging.getLogger(__name__)
 
@@ -39,27 +35,6 @@ class TensorboardEvent(TypedDict):
     value: Union[str, float]
     string_val: NotRequired[str]
     float_val: NotRequired[List[float]]
-
-
-def dump_tfevents(
-    data: Union[Iterable[Mapping[str, ScalarLike]], Mapping[str, Iterable[ScalarLike]]],
-    log_dir: Union[str, Path],
-    *,
-    tag_prefix: str = "",
-) -> bytes:
-    """Dump data to tensorboard event file."""
-    if isinstance_guard(data, Iterable[Mapping[str, ScalarLike]]):
-        pass
-    elif isinstance_guard(data, Mapping[str, Iterable[ScalarLike]]):
-        data = dict_list_to_list_dict(data)
-    else:
-        raise TypeError(f"Invalid argument type {type(data)}.")
-
-    writer = SummaryWriter(log_dir)
-    for data_i in data:
-        writer.add_scalars(tag_prefix, data_i)
-    writer.close()
-    return b""
 
 
 def load_tfevents(
@@ -199,11 +174,6 @@ def get_tfevents_duration(
     wall_times = [event["wall_time"] for event in events]
     duration = max(wall_times) - min(wall_times)
     return duration
-
-
-@deprecated_alias(dump_tfevents)
-def dump_with_tensorboard(*args, **kwargs):
-    ...
 
 
 @deprecated_alias(load_tfevents)

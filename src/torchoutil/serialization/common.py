@@ -30,7 +30,6 @@ from torchoutil.core.packaging import (
     _OMEGACONF_AVAILABLE,
     _PANDAS_AVAILABLE,
     _SAFETENSORS_AVAILABLE,
-    _TENSORBOARD_AVAILABLE,
     _TORCHAUDIO_AVAILABLE,
     _YAML_AVAILABLE,
 )
@@ -72,7 +71,6 @@ SavingBackend = Literal[
     "numpy",
     "pickle",
     "safetensors",
-    "tensorboard",
     "torch",
     "torchaudio",
     "yaml",
@@ -113,13 +111,6 @@ if _SAFETENSORS_AVAILABLE:
     PATTERN_TO_BACKEND.update(
         {
             r"^.+\.safetensors$": "safetensors",
-        }
-    )
-
-if _TENSORBOARD_AVAILABLE:
-    PATTERN_TO_BACKEND.update(
-        {
-            r"^.*tfevents.*": "tensorboard",
         }
     )
 
