@@ -6,7 +6,7 @@ import os
 import unittest
 from collections import Counter
 from pathlib import Path
-from typing import Any, Dict, List, Mapping, Tuple
+from typing import Any, Dict, List, Tuple
 from unittest import TestCase
 
 import torch
@@ -17,6 +17,7 @@ from torchoutil.extras import (
     _NUMPY_AVAILABLE,
     _SAFETENSORS_AVAILABLE,
     _TENSORBOARD_AVAILABLE,
+    _YAML_AVAILABLE,
 )
 from torchoutil.hub.paths import get_tmp_dir
 from torchoutil.nn.functional import deep_equal
@@ -88,16 +89,23 @@ class TestSaving(TestCase):
             tests += added_tests
 
         if _TENSORBOARD_AVAILABLE:
-            data4 = {k: to.flatten(v) for k, v in data1.items()}
+            data4 = {k: to.flatten(v).tolist() for k, v in data1.items()}
             added_tests: List[Tuple[SavingBackend, Any, bool, dict]] = [
                 ("tensorboard", data4, True, dict()),
+            ]
+            tests += added_tests
+
+        if _YAML_AVAILABLE:
+            added_tests: List[Tuple[SavingBackend, Any, bool, dict]] = [
+                ("yaml", data1, True, dict()),
+                ("yaml", data2, True, dict()),
             ]
             tests += added_tests
 
         for i, (backend, data, to_builtins, load_kwds) in enumerate(tests):
             if to_builtins:
                 data = to.to_builtin(data)
-            if isinstance(data, Mapping):
+            if backend == "safetensors":
                 data = po.sorted_dict(data)
 
             fpath = get_tmp_dir().joinpath(f"tmp.{backend}")
