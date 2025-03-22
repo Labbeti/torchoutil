@@ -326,6 +326,8 @@ def deep_equal(x: T, y: T) -> bool:
         return F.to_item(x == y)  # type: ignore
     if isinstance(x, Tensor) and isinstance(y, Tensor):
         return torch.equal(x, y)
+    if isinstance(x, np.ndarray) and isinstance(y, np.ndarray):
+        return (x == y).all().item()
     if isinstance(x, Mapping) and isinstance(y, Mapping):
         return deep_equal(list(x.items()), list(y.items()))
     if isinstance(x, SizedIter) and isinstance(y, SizedIter):

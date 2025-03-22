@@ -94,7 +94,7 @@ class TestSaving(TestCase):
             ]
             tests += added_tests
 
-        for backend, data, to_builtins, load_kwds in tests:
+        for i, (backend, data, to_builtins, load_kwds) in enumerate(tests):
             if to_builtins:
                 data = to.to_builtin(data)
 
@@ -103,15 +103,7 @@ class TestSaving(TestCase):
             result = to.load(fpath, saving_backend=backend, **load_kwds)
             os.remove(fpath)
 
-            assert deep_equal(data, result)
-            # assert set(data.keys()) == set(result.keys())
-            # for k, v in data.items():
-            #     v2 = result[k]
-
-            #     if isinstance(v, Tensor) and isinstance(v2, Tensor):
-            #         assert torch.equal(v, )
-
-            #     assert data == result, f"{backend=}, {data=}, {result=}"
+            assert deep_equal(data, result), f"{backend=}, {i=}/{len(tests)}"
 
 
 if __name__ == "__main__":
