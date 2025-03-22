@@ -294,6 +294,9 @@ def empty(
     dtype = make_dtype(dtype)
     device = make_device(device)
 
+    if layout is None:
+        layout = torch.strided
+
     return torch.empty(
         *data,
         out=out,
@@ -771,6 +774,9 @@ def ones(
     dtype = make_dtype(dtype)
     device = make_device(device)
 
+    if layout is None:
+        layout = torch.strided
+
     return torch.ones(
         *data,
         out=out,
@@ -917,6 +923,8 @@ def rand(
     kwds = {}
     if Version(torch.__version__) >= Version("2.0.0"):
         kwds.update(pin_memory=pin_memory)
+    elif layout is None:
+        layout = torch.strided
 
     return torch.rand(
         *data,
@@ -926,7 +934,7 @@ def rand(
         layout=layout,
         device=device,
         requires_grad=requires_grad,
-        pin_memory=pin_memory,
+        **kwds,
     )
 
 
@@ -1097,7 +1105,7 @@ def randperm(
     *,
     generator: GeneratorLike = None,
     out: Optional[Tensor] = None,
-    dtype: Literal[None, "long", "int64"] = None,
+    dtype: Literal[None, "long", "int64"] = "long",
     layout: Optional[torch.layout] = None,
     device: DeviceLike = None,
     pin_memory: Optional[bool] = False,
@@ -1126,7 +1134,7 @@ def randperm(
     *,
     generator: GeneratorLike = None,
     out: Optional[Tensor] = None,
-    dtype: DTypeLike = None,
+    dtype: DTypeLike = "long",
     layout: Optional[torch.layout] = None,
     device: DeviceLike = None,
     pin_memory: Optional[bool] = False,
@@ -1135,8 +1143,13 @@ def randperm(
     dtype = make_dtype(dtype)
     device = make_device(device)
     generator = make_generator(generator)
+
+    if layout is None:
+        layout = torch.strided
+
     return torch.randperm(
         n=n,
+        generator=generator,
         out=out,
         dtype=dtype,
         layout=layout,
@@ -1268,6 +1281,10 @@ def zeros(
 ) -> torch.Tensor:
     dtype = make_dtype(dtype)
     device = make_device(device)
+
+    if layout is None:
+        layout = torch.strided
+
     return torch.zeros(
         *data,
         out=out,
