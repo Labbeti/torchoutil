@@ -10,6 +10,7 @@ import torch
 
 import torchoutil
 from torchoutil.core.packaging import _EXTRA_VERSION
+from torchoutil.hub.paths import get_cache_dir, get_dir, get_tmp_dir
 from torchoutil.pyoutil.collections import dump_dict
 from torchoutil.utils.data.dataloader import get_auto_num_cpus, get_auto_num_gpus
 
@@ -26,9 +27,12 @@ def get_install_info() -> Dict[str, Union[str, int]]:
         "os": platform.system(),
         "architecture": platform.architecture()[0],
         "torch": str(torch.__version__),
-        "package_path": get_package_repository_path(),
         "num_cpus": get_auto_num_cpus(),
         "num_gpus": get_auto_num_gpus(),
+        "package_path": get_package_repository_path(),
+        "torchoutil_tmpdir": str(get_tmp_dir()),
+        "torchoutil_cachedir": str(get_cache_dir()),
+        "torch_hub": get_dir(),
     }
     install_info.update({k: str(v) for k, v in _EXTRA_VERSION.items()})
     return install_info
