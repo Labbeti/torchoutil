@@ -64,7 +64,7 @@ class RegistryHub(Generic[T_Hashable]):
 
         super().__init__()
         self._infos = infos
-        self._ckpt_parent_path = register_root
+        self._register_root = register_root
 
     @property
     def infos(self) -> Dict[T_Hashable, RegistryEntry]:
@@ -72,7 +72,7 @@ class RegistryHub(Generic[T_Hashable]):
 
     @property
     def register_root(self) -> Path:
-        return self._ckpt_parent_path.resolve()
+        return self._register_root.resolve()
 
     @property
     def names(self) -> List[T_Hashable]:
@@ -215,6 +215,7 @@ class RegistryHub(Generic[T_Hashable]):
         self,
         name: T_Hashable,
     ) -> bool:
+        """Returns True if target file hash is valid. If no hash is provided in infos, this function also returns True."""
         info = self.infos[name]
         if "hash_type" not in info or "hash_value" not in info:
             msg = f"Cannot check hash for {name}. (cannot find any expected hash value or type)"
@@ -233,7 +234,7 @@ class RegistryHub(Generic[T_Hashable]):
         """Save info to JSON file."""
         args = {
             "infos": self._infos,
-            "register_root": str(self._ckpt_parent_path),
+            "register_root": str(self._register_root),
         }
         dump_json(args, path)
 
