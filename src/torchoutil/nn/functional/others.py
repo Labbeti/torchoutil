@@ -359,4 +359,4 @@ def deep_equal(x: T, y: T) -> bool:
     if isinstance(x, SizedIter) and isinstance(y, SizedIter):
         return len(x) == len(y) and all(deep_equal(xi, yi) for xi, yi in zip(x, y))
 
-    return False
+    return x == y  # type: ignore

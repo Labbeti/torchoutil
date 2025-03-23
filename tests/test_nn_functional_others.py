@@ -133,6 +133,11 @@ class TestDeepEqual(TestCase):
             tests += [
                 (math.nan, np.nan, True),
                 (np.array(["a", math.nan]), 0, False),
+                (
+                    np.array([[1.507782, math.nan]], dtype=np.float32),
+                    np.array([[1.507782, np.nan]], dtype=np.float32),
+                    True,
+                ),
             ]
 
         for x, y, expected in tests:

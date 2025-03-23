@@ -103,7 +103,7 @@ def numpy_view_as_complex(x: np.ndarray) -> np.ndarray:
 
 
 def numpy_is_floating_point(x: Union[np.ndarray, np.generic]) -> bool:
-    return isinstance(x, np.floating)
+    return x.dtype.kind == "f"
 
 
 def numpy_is_complex(x: Union[np.ndarray, np.generic]) -> bool:
