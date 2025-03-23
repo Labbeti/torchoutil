@@ -4,7 +4,6 @@
 from typing import Any, Iterable, List, Sized, Tuple, TypeVar, Union, overload
 
 import torch
-from torch import Tensor
 from typing_extensions import TypeGuard
 
 from torchoutil.extras.numpy import (
@@ -31,6 +30,7 @@ from torchoutil.types._typing import (
     TensorOrArray,
 )
 from torchoutil.types.guards import is_scalar_like
+from torchoutil.types.tensor_subclasses import Tensor
 
 T = TypeVar("T")
 U = TypeVar("U")

@@ -1,14 +1,16 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import math
 import unittest
 from unittest import TestCase
 
 import torch
 
+import torchoutil as to
 from torchoutil.core.packaging import _NUMPY_AVAILABLE
 from torchoutil.extras.numpy import np
-from torchoutil.nn.functional.others import ndim, shape
+from torchoutil.nn.functional.others import deep_equal, ndim, shape
 
 
 class TestNDimShape(TestCase):
@@ -99,6 +101,23 @@ class TestNDimShape(TestCase):
                 with self.assertRaises(expected_shape):
                     invalid_shape = shape(example)
                     print(f"{invalid_shape=} with {example=} at {i=}")
+
+
+class TestDeepEqual(TestCase):
+    def test_examples(self) -> None:
+        tests = [
+            (0, 0.0, True),
+            (to.as_tensor(math.nan), math.nan, True),
+            ([math.nan], math.nan, False),
+            ({"a": math.nan}, {"a": to.as_tensor(math.nan)}, True),
+        ]
+        if _NUMPY_AVAILABLE:
+            tests += [
+                (math.nan, np.nan, True),
+            ]
+
+        for x, y, expected in tests:
+            assert deep_equal(x, y) == expected, f"{x=}, {y=}"
 
 
 if __name__ == "__main__":

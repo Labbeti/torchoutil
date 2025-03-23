@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import itertools
+import math
 from typing import (
     Any,
     Callable,
@@ -323,15 +324,31 @@ def rmse(
 
 def deep_equal(x: T, y: T) -> bool:
     if is_scalar_like(x) and is_scalar_like(y):
-        return F.to_item(x == y)  # type: ignore
+        x_isnan = math.isnan(x) if F.is_floating_point(x) else False
+        y_isnan = math.isnan(y) if F.is_floating_point(y) else False
+        return (x_isnan and y_isnan) or F.to_item(x == y)  # type: ignore
+
     if isinstance(x, Tensor) and isinstance(y, Tensor):
-        return torch.equal(x, y)
+        x_isnan = x.isnan()
+        y_isnan = y.isnan()
+        return (
+            (x.shape == y.shape)
+            and bool((x_isnan == y_isnan).all().item())
+            and torch.equal(x[x_isnan], y[y_isnan])
+        )
+
     if isinstance(x, np.ndarray) and isinstance(y, np.ndarray):
-        return (x == y).all().item()
+        x_isnan = np.isnan(x)
+        y_isnan = np.isnan(y)
+        return (
+            (x.shape == y.shape)
+            and (x_isnan == y_isnan).all().item()
+            and (x == y).all().item()
+        )
+
     if isinstance(x, Mapping) and isinstance(y, Mapping):
         return deep_equal(list(x.items()), list(y.items()))
     if isinstance(x, SizedIter) and isinstance(y, SizedIter):
         return len(x) == len(y) and all(deep_equal(xi, yi) for xi, yi in zip(x, y))
 
-    msg = f"Invalid arguments types {type(x)=} and {type(y)=}."
-    raise TypeError(msg)
+    return False
