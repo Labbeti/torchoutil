@@ -82,7 +82,7 @@ def dump_safetensors(
 
 
 def dump_safetensors(
-    tensors: Dict[str, Tensor],
+    tensors: Dict[str, Any],
     fpath: Union[str, Path, None] = None,
     metadata: Optional[Dict[str, str]] = None,
     *,
