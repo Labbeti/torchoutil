@@ -112,7 +112,23 @@ class TestDeepEqual(TestCase):
             ({"a": math.nan}, {"a": to.as_tensor(math.nan)}, True),
             ("a", 0, False),
             ("a", math.nan, False),
+            (
+                {
+                    "arange": to.as_tensor([0]),
+                    "empty": to.as_tensor([[math.nan, 3.0744e-41]]),
+                    "full": to.as_tensor([[9, 9, 9, 9, 9]]),
+                    "ones": to.as_tensor([[1.0, 1.0, 1.0, 1.0, 1.0]]),
+                },
+                {
+                    "arange": to.as_tensor([0]),
+                    "empty": to.as_tensor([[math.nan, 3.0744e-41]]),
+                    "full": to.as_tensor([[9, 9, 9, 9, 9]]),
+                    "ones": to.as_tensor([[1.0, 1.0, 1.0, 1.0, 1.0]]),
+                },
+                True,
+            ),
         ]
+
         if _NUMPY_AVAILABLE:
             tests += [
                 (math.nan, np.nan, True),

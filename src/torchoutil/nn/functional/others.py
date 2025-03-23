@@ -334,7 +334,7 @@ def deep_equal(x: T, y: T) -> bool:
         return (
             (x.shape == y.shape)
             and bool((x_isnan == y_isnan).all().item())
-            and torch.equal(x[x_isnan], y[y_isnan])
+            and torch.equal(x[~x_isnan], y[~y_isnan])
         )
 
     if isinstance(x, np.ndarray) and isinstance(y, np.ndarray):
@@ -351,7 +351,7 @@ def deep_equal(x: T, y: T) -> bool:
         return (
             (x.shape == y.shape)
             and (x_isnan == y_isnan).all().item()
-            and (x == y).all().item()
+            and np.equal(x[~x_isnan], y[~y_isnan]).all().item()
         )
 
     if isinstance(x, Mapping) and isinstance(y, Mapping):
