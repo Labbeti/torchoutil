@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 
 import copy
-import os
 import unittest
 from collections import Counter
 from pathlib import Path
@@ -101,7 +100,6 @@ class TestSaving(TestCase):
             fpath = get_tmp_dir().joinpath(f"tmp.{backend}")
             to.dump(data, fpath, saving_backend=backend)
             result = to.load(fpath, saving_backend=backend, **load_kwds)
-            os.remove(fpath)
 
             assert deep_equal(data, result), f"{backend=}, {i=}/{len(tests)}"
 
