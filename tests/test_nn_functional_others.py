@@ -111,6 +111,7 @@ class TestDeepEqual(TestCase):
             ([math.nan], math.nan, False),
             ({"a": math.nan}, {"a": to.as_tensor(math.nan)}, True),
             ("a", 0, False),
+            (torch.rand(10), 0, False),
             ("a", math.nan, False),
             (
                 {
@@ -127,6 +128,7 @@ class TestDeepEqual(TestCase):
                 },
                 True,
             ),
+            (np.random.rand(10), 0, False),
         ]
 
         if _NUMPY_AVAILABLE:
