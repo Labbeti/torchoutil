@@ -338,8 +338,16 @@ def deep_equal(x: T, y: T) -> bool:
         )
 
     if isinstance(x, np.ndarray) and isinstance(y, np.ndarray):
-        x_isnan = np.isnan(x)
-        y_isnan = np.isnan(y)
+        x_isnan = (
+            np.isnan(x)
+            if F.is_floating_point(x)
+            else np.full(x.shape, False, dtype=bool)
+        )
+        y_isnan = (
+            np.isnan(y)
+            if F.is_floating_point(y)
+            else np.full(y.shape, False, dtype=bool)
+        )
         return (
             (x.shape == y.shape)
             and (x_isnan == y_isnan).all().item()

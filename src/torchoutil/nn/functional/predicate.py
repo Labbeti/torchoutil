@@ -98,6 +98,26 @@ def __can_be_converted_to_tensor_nested(
         return False
 
 
+@overload
+def is_floating_point(x: Tensor) -> TypeGuard[FloatingTensor]:
+    ...
+
+
+@overload
+def is_floating_point(x: np.ndarray) -> TypeGuard[np.ndarray]:
+    ...
+
+
+@overload
+def is_floating_point(x: float) -> TypeGuard[float]:
+    ...
+
+
+@overload
+def is_floating_point(x: Any) -> TypeGuard[Union[FloatingTensor, np.ndarray, float]]:
+    ...
+
+
 def is_floating_point(x: Any) -> TypeGuard[Union[FloatingTensor, np.ndarray, float]]:
     """Returns True if object is a/contains floating-point object(s)."""
     if isinstance(x, Tensor):
@@ -106,6 +126,26 @@ def is_floating_point(x: Any) -> TypeGuard[Union[FloatingTensor, np.ndarray, flo
         return numpy_is_floating_point(x)
     else:
         return isinstance(x, float)
+
+
+@overload
+def is_complex(x: Tensor) -> TypeGuard[ComplexFloatingTensor]:
+    ...
+
+
+@overload
+def is_complex(x: np.ndarray) -> TypeGuard[np.ndarray]:
+    ...
+
+
+@overload
+def is_complex(x: complex) -> TypeGuard[complex]:
+    ...
+
+
+@overload
+def is_complex(x: Any) -> TypeGuard[Union[ComplexFloatingTensor, np.ndarray, complex]]:
+    ...
 
 
 def is_complex(x: Any) -> TypeGuard[Union[ComplexFloatingTensor, np.ndarray, complex]]:

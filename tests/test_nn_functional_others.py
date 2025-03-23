@@ -110,10 +110,13 @@ class TestDeepEqual(TestCase):
             (to.as_tensor(math.nan), math.nan, True),
             ([math.nan], math.nan, False),
             ({"a": math.nan}, {"a": to.as_tensor(math.nan)}, True),
+            ("a", 0, False),
+            ("a", math.nan, False),
         ]
         if _NUMPY_AVAILABLE:
             tests += [
                 (math.nan, np.nan, True),
+                (np.array(["a", math.nan]), 0, False),
             ]
 
         for x, y, expected in tests:
