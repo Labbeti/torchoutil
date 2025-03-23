@@ -97,7 +97,7 @@ def is_floating_tensor(x: Any) -> TypeIs[FloatingTensor]:
 
 
 @deprecated_function("{fn_name}, use `isinstance(x, to.IntegralTensor)` instead.")
-def is_integral_tensor(x: Any) -> TypeIs[Tensor]:
+def is_integral_tensor(x: Any) -> TypeIs[IntegralTensor]:
     return isinstance(x, IntegralTensor)
 
 
