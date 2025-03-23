@@ -54,12 +54,6 @@ jobs:
         python-version: ${{ matrix.python-version }}
         cache: "pip"
 
-    - name: Set permissions for tmpdir
-      shell: bash
-      run: |
-        echo "Setting permissions for '${TORCHOUTIL_TMPDIR}'..."
-        chmod u+rwx -R "${TORCHOUTIL_TMPDIR}"
-
     - name: Install package
       if: matrix.torch-version == 'torch-latest'
       shell: bash
