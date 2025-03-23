@@ -432,6 +432,18 @@ class _TensorNDBase(
         ...
 
     @overload
+    def isfinite(self) -> "BoolTensor":  # type: ignore
+        ...
+
+    @overload
+    def isinf(self) -> "BoolTensor":  # type: ignore
+        ...
+
+    @overload
+    def isnan(self) -> "BoolTensor":  # type: ignore
+        ...
+
+    @overload
     def item(self) -> T_BuiltinNumber:  # type: ignore
         ...
 
@@ -621,6 +633,9 @@ class _TensorNDBase(
     is_complex = torch.Tensor.is_complex  # noqa: F811  # type: ignore
     is_floating_point = torch.Tensor.is_floating_point  # noqa: F811  # type: ignore
     is_signed = torch.Tensor.is_signed  # noqa: F811  # type: ignore
+    isfinite = torch.Tensor.isfinite  # noqa: F811  # type: ignore
+    isinf = torch.Tensor.isinf  # noqa: F811  # type: ignore
+    isnan = torch.Tensor.isnan  # noqa: F811  # type: ignore
     item = torch.Tensor.item  # noqa: F811  # type: ignore
     mean = torch.Tensor.mean  # noqa: F811  # type: ignore
     reshape = torch.Tensor.reshape  # noqa: F811  # type: ignore

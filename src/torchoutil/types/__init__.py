@@ -1,8 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from torch import Tensor
-from torch.types import *
+from torch.types import *  # type: ignore
 
 from torchoutil.core.dtype_enum import DTypeEnum
 from torchoutil.core.make import DeviceLike, DTypeLike, GeneratorLike
@@ -103,6 +102,7 @@ from .tensor_subclasses import (
     SignedIntegerTensor1D,
     SignedIntegerTensor2D,
     SignedIntegerTensor3D,
+    Tensor,
     Tensor0D,
     Tensor1D,
     Tensor2D,
