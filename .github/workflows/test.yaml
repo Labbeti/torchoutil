@@ -34,7 +34,6 @@ jobs:
             python-version: "3.8"
             torch-version: "1.10"
           - os: windows-latest
-            # Do not use python 3.13 on windows yet because it is not entirely supported by numpy (18/02/2025)
             python-version: "3.13"
             torch-version: "torch-latest"
           - os: macos-13
@@ -54,6 +53,12 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
         cache: "pip"
+
+    - name: Set permissions for tmpdir
+      shell: bash
+      run: |
+        echo "Setting permissions for '${TORCHOUTIL_TMPDIR}'..."
+        chmod u+rwx -R "${TORCHOUTIL_TMPDIR}"
 
     - name: Install package
       if: matrix.torch-version == 'torch-latest'
@@ -111,7 +116,6 @@ jobs:
             python-version: "3.8"
             torch-version: "1.10"
           - os: windows-latest
-            # Do not use python 3.13 on windows yet because it is not entirely supported by numpy (18/02/2025)
             python-version: "3.13"
             torch-version: "torch-latest"
           - os: macos-13
