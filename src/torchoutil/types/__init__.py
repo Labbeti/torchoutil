@@ -26,7 +26,6 @@ from .guards import (
     is_numpy_scalar_like,
     is_scalar_like,
     is_tensor0d,
-    is_tensor_like,
     is_tensor_or_array,
     is_tuple_tensor,
     isinstance_guard,

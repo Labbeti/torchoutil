@@ -12,9 +12,9 @@ from torchoutil.core.make import (
     DeviceLike,
     DTypeLike,
     GeneratorLike,
-    make_device,
-    make_dtype,
-    make_generator,
+    as_device,
+    as_dtype,
+    as_generator,
 )
 from torchoutil.nn import functional as F
 from torchoutil.types import is_number_like
@@ -104,8 +104,8 @@ def pad_and_stack_rec(
     ValueError : Cannot pad sequence of tensors of differents number of dims.
 
     """
-    device = make_device(device)
-    dtype = make_dtype(dtype)
+    device = as_device(device)
+    dtype = as_dtype(dtype)
 
     def _impl(sequence: Union[Tensor, int, float, tuple, list]) -> Tensor:
         if isinstance(sequence, Tensor):
@@ -219,7 +219,7 @@ def __generate_pad_seq(
     target_lengths = list(target_lengths)
     aligns = list(aligns)
     dims = list(dims)
-    generator = make_generator(generator)
+    generator = as_generator(generator)
 
     if len(dims) == 0:
         msg = f"Invalid argument {dims=}. (cannot use an empty list of dimensions)"

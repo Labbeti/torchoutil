@@ -6,7 +6,7 @@ from typing import Iterable, List, Literal, Union
 import torch
 from torch import Tensor
 
-from torchoutil.core.make import GeneratorLike, make_generator
+from torchoutil.core.make import GeneratorLike, as_generator
 
 CROP_ALIGNS = ("left", "right", "center", "random")
 CropAlign = Literal["left", "right", "center", "random"]
@@ -54,7 +54,7 @@ def crop_dims(
     else:
         dims = list(dims)
 
-    generator = make_generator(generator)
+    generator = as_generator(generator)
 
     if len(target_lengths) != len(dims):
         msg = f"Invalid number of targets lengths ({len(target_lengths)}) with the number of dimensions ({len(dims)})."

@@ -23,7 +23,7 @@ import torch
 from torch import Tensor
 from typing_extensions import NotRequired
 
-from torchoutil.core.make import DeviceLike, make_device
+from torchoutil.core.make import DeviceLike, as_device
 from torchoutil.pyoutil.hashlib import HashName, hash_file
 from torchoutil.pyoutil.warnings import deprecated_function, warn_once
 from torchoutil.serialization.json import dump_json, load_json
@@ -126,7 +126,7 @@ class RegistryHub(Generic[T_Hashable]):
 
         if device is not None:
             src_device = device
-            device = make_device(device)
+            device = as_device(device)
             msg = f"Deprecated argument device={src_device}. Use `load_kwds=dict(map_location={device})` with function torch.load instead."
             warn_once(msg)
 

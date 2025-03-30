@@ -10,7 +10,7 @@ from torch import Tensor
 from torch.nn import functional as F
 from torch.types import Number
 
-from torchoutil.nn.functional.make import DTypeLike, make_dtype
+from torchoutil.nn.functional.make import DTypeLike, as_dtype
 from torchoutil.pyoutil.collections import dump_dict
 from torchoutil.pyoutil.semver import Version
 from torchoutil.utils import return_types
@@ -235,7 +235,7 @@ class Mean(Module):
         self.dtype = dtype
 
     def forward(self, x: Tensor) -> Tensor:
-        dtype = make_dtype(self.dtype)
+        dtype = as_dtype(self.dtype)
         if (Version(torch.__version__) >= Version("2.0.0")) or (self.dim is not None):
             return x.mean(dim=self.dim, keepdim=self.keepdim, dtype=dtype)  # type: ignore
 

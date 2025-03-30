@@ -8,12 +8,12 @@ from typing import Hashable, Iterable, List, Mapping, Optional, Sequence, TypeVa
 import torch
 from torch import Tensor
 
-from torchoutil.core.make import DeviceLike, DTypeLike, make_device, make_dtype
+from torchoutil.core.make import DeviceLike, DTypeLike, as_device, as_dtype
 from torchoutil.nn.functional.padding import pad_and_stack_rec
 from torchoutil.nn.functional.predicate import is_stackable
 from torchoutil.nn.functional.transform import as_tensor, to_item
 from torchoutil.pyoutil.typing import isinstance_guard
-from torchoutil.types import LongTensor, is_number_like, is_tensor_like
+from torchoutil.types import LongTensor, is_number_like, is_tensor_or_array
 from torchoutil.types._typing import TensorOrArray
 
 T_Name = TypeVar("T_Name", bound=Hashable)
@@ -39,14 +39,16 @@ def indices_to_multihot(
     if device is None and isinstance(indices, Tensor):
         device = indices.device
     else:
-        device = make_device(device)
-    dtype = make_dtype(dtype)
+        device = as_device(device)
+    dtype = as_dtype(dtype)
 
     def _impl(x) -> Tensor:
-        if is_tensor_like(x) and not _is_valid_indices(x):
+        if is_tensor_or_array(x) and not _is_valid_indices(x):
             raise ValueError(f"Invalid argument shape {x.shape=}.")
 
-        if (is_tensor_like(x) and x.ndim == 1) or isinstance_guard(x, Sequence[int]):
+        if (is_tensor_or_array(x) and x.ndim == 1) or isinstance_guard(
+            x, Sequence[int]
+        ):
             x = torch.as_tensor(x, dtype=torch.long, device=device)
 
             if padding_idx is not None:
@@ -280,8 +282,8 @@ def probs_to_multihot(
     if device is None:
         device = probs.device
     else:
-        device = make_device(device)
-    dtype = make_dtype(dtype)
+        device = as_device(device)
+    dtype = as_dtype(dtype)
 
     if not isinstance(threshold, Tensor):
         threshold = torch.as_tensor(threshold, dtype=probs.dtype, device=device)

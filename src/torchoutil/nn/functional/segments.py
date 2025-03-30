@@ -6,7 +6,7 @@ from typing import Iterable, List, Tuple, Union
 import torch
 from torch import Tensor
 
-from torchoutil.core.make import DeviceLike, make_device
+from torchoutil.core.make import DeviceLike, as_device
 from torchoutil.nn import functional as F
 from torchoutil.nn.functional.padding import pad_and_stack_rec, pad_dim
 from torchoutil.pyoutil.warnings import deprecated_alias
@@ -99,7 +99,7 @@ def segments_list_to_activity(
     if device is None and isinstance(segments_list, Tensor):
         device = segments_list.device
     else:
-        device = make_device(device)
+        device = as_device(device)
 
     if F.ndim(segments_list) == 2 or (
         F.ndim(segments_list) == 1 and len(segments_list) == 0

@@ -6,7 +6,7 @@ from typing import Iterable, List, Optional, Union
 import torch
 from torch import Tensor
 
-from torchoutil.core.make import DeviceLike, DTypeLike, make_device, make_dtype
+from torchoutil.core.make import DeviceLike, DTypeLike, as_device, as_dtype
 from torchoutil.types import LongTensor, LongTensor1D, T_TensorOrArray
 
 
@@ -88,8 +88,8 @@ def generate_square_subsequent_mask(
     device: DeviceLike = None,
     dtype: DTypeLike = None,
 ) -> Tensor:
-    device = make_device(device)
-    dtype = make_dtype(dtype)
+    device = as_device(device)
+    dtype = as_dtype(dtype)
 
     mask = torch.ones((size, size), device=device, dtype=torch.bool)
     mask = torch.tril(mask, diagonal=diagonal)
@@ -138,7 +138,7 @@ def lengths_to_non_pad_mask(
         non_pad_mask = indices <= lengths
     else:
         non_pad_mask = indices < lengths
-    dtype = make_dtype(dtype)
+    dtype = as_dtype(dtype)
     non_pad_mask = non_pad_mask.to(dtype=dtype)
     return non_pad_mask
 
@@ -178,7 +178,7 @@ def lengths_to_pad_mask(
         dtype=torch.bool,
     )
     pad_mask = non_pad_mask.logical_not()
-    dtype = make_dtype(dtype)
+    dtype = as_dtype(dtype)
     pad_mask = pad_mask.to(dtype=dtype)
     return pad_mask
 
@@ -274,7 +274,7 @@ def tensor_to_non_pad_mask(
         >>> tensor_to_pad_mask(input, end_value=2)
         tensor([True, True, True, False, False, False])
     """
-    dtype = make_dtype(dtype)
+    dtype = as_dtype(dtype)
 
     if (pad_value is None) == (end_value is None):
         msg = "Invalid arguments. Please provide only one of the arguments: end_value, pad_value."
@@ -326,7 +326,7 @@ def tensor_to_pad_mask(
         >>> tensor_to_pad_mask(input, end_value=2)
         tensor([False, False, False, True, True, True])
     """
-    dtype = make_dtype(dtype)
+    dtype = as_dtype(dtype)
     non_pad_mask = tensor_to_non_pad_mask(
         tensor,
         pad_value=pad_value,

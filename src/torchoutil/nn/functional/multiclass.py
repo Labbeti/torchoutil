@@ -20,7 +20,7 @@ import torch
 from torch import Tensor
 from torch.nn import functional as F
 
-from torchoutil.core.make import DeviceLike, DTypeLike, make_device, make_dtype
+from torchoutil.core.make import DeviceLike, DTypeLike, as_device, as_dtype
 from torchoutil.nn.functional.others import ndim, shape
 from torchoutil.nn.functional.transform import to_item
 from torchoutil.pyoutil.collections import prod
@@ -49,8 +49,8 @@ def index_to_onehot(
         device: PyTorch device of the output tensor.
         dtype: PyTorch DType of the output tensor.
     """
-    device = make_device(device)
-    dtype = make_dtype(dtype)
+    device = as_device(device)
+    dtype = as_dtype(dtype)
     index = torch.as_tensor(index, device=device, dtype=torch.long)
 
     if padding_idx is not None:

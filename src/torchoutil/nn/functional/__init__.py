@@ -16,12 +16,14 @@ from .indices import (
     remove_at_indices,
 )
 from .make import (
+    as_device,
+    as_dtype,
+    as_generator,
     get_default_device,
     get_default_dtype,
     get_default_generator,
-    make_device,
-    make_dtype,
-    make_generator,
+    set_default_dtype,
+    set_default_generator,
 )
 from .mask import (
     generate_square_subsequent_mask,

@@ -1,18 +1,18 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from typing import Literal, Optional, Union
+from typing import Literal, Optional, Union, overload
 
 import torch
-from torch import Generator
-from torch.types import Device
 from typing_extensions import TypeAlias
 
 from .dtype_enum import DTypeEnum, enum_dtype_to_torch_dtype, str_to_torch_dtype
 
-DeviceLike: TypeAlias = Union[Device, Literal["default", "cuda_if_available"]]
+DeviceLike: TypeAlias = Union[
+    torch.device, None, Literal["default", "cuda_if_available"], str, int
+]
 DTypeLike: TypeAlias = Union[torch.dtype, None, Literal["default"], str, DTypeEnum]
-GeneratorLike: TypeAlias = Union[int, Generator, None, Literal["default"]]
+GeneratorLike: TypeAlias = Union[torch.Generator, None, Literal["default"], int]
 
 CUDA_IF_AVAILABLE = "cuda_if_available"
 
@@ -26,13 +26,35 @@ def get_default_dtype() -> torch.dtype:
     return torch.get_default_dtype()
 
 
-def get_default_generator() -> Generator:
+def get_default_generator() -> torch.Generator:
     return torch.default_generator
 
 
-def make_device(device: DeviceLike = CUDA_IF_AVAILABLE) -> Optional[torch.device]:
+def set_default_dtype(dtype: DTypeLike) -> None:
+    dtype = as_dtype(dtype)
+    torch.set_default_dtype(dtype)
+
+
+def set_default_generator(generator: GeneratorLike) -> None:
+    generator = as_generator(generator)
+    torch.default_generator = generator
+
+
+@overload
+def as_device(device: Literal[None]) -> None:
+    ...
+
+
+@overload
+def as_device(
+    device: Union[str, int, torch.device] = CUDA_IF_AVAILABLE
+) -> torch.device:
+    ...
+
+
+def as_device(device: DeviceLike = CUDA_IF_AVAILABLE) -> Optional[torch.device]:
     """Create concrete device object from device-like object."""
-    if isinstance(device, (torch.device, type(None))):
+    if isinstance(device, (torch.device, type(None))) or device is ...:
         return device
     elif device == "default":
         return get_default_device()
@@ -45,9 +67,19 @@ def make_device(device: DeviceLike = CUDA_IF_AVAILABLE) -> Optional[torch.device
         raise TypeError(msg)
 
 
-def make_dtype(dtype: DTypeLike = None) -> Optional[torch.dtype]:
+@overload
+def as_dtype(dtype: Literal[None] = None) -> None:
+    ...
+
+
+@overload
+def as_dtype(dtype: Union[str, DTypeEnum, torch.dtype]) -> torch.dtype:
+    ...
+
+
+def as_dtype(dtype: DTypeLike = None) -> Optional[torch.dtype]:
     """Create concrete dtype object from dtype-like object."""
-    if isinstance(dtype, (torch.dtype, type(None))):
+    if isinstance(dtype, (torch.dtype, type(None))) or dtype is ...:
         return dtype
     elif dtype == "default":
         return get_default_dtype()
@@ -60,12 +92,24 @@ def make_dtype(dtype: DTypeLike = None) -> Optional[torch.dtype]:
         raise TypeError(msg)
 
 
-def make_generator(generator: GeneratorLike = None) -> Optional[Generator]:
+@overload
+def as_generator(generator: Literal[None] = None) -> None:
+    ...
+
+
+@overload
+def as_generator(
+    generator: Union[int, torch.Generator, Literal["default"]]
+) -> torch.Generator:
+    ...
+
+
+def as_generator(generator: GeneratorLike = None) -> Optional[torch.Generator]:
     """Create concrete generator object from generator-like object."""
-    if isinstance(generator, (Generator, type(None))):
+    if isinstance(generator, (torch.Generator, type(None))) or generator is ...:
         return generator
     elif isinstance(generator, int):
-        return Generator().manual_seed(generator)
+        return torch.Generator().manual_seed(generator)
     elif generator == "default":
         return get_default_generator()
     else:

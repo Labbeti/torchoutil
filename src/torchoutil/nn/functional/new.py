@@ -13,9 +13,9 @@ from torchoutil.core.make import (
     DeviceLike,
     DTypeLike,
     GeneratorLike,
-    make_device,
-    make_dtype,
-    make_generator,
+    as_device,
+    as_dtype,
+    as_generator,
 )
 from torchoutil.pyoutil.semver import Version
 from torchoutil.pyoutil.typing import BuiltinNumber
@@ -151,8 +151,8 @@ def arange(
     pin_memory: bool = False,
     **kwargs,
 ) -> torch.Tensor:
-    dtype = make_dtype(dtype)
-    device = make_device(device)
+    dtype = as_dtype(dtype)
+    device = as_device(device)
 
     kwds = {}
     if Version(torch.__version__) >= Version("2.0.0"):
@@ -291,8 +291,8 @@ def empty(
     pin_memory: Union[bool, None] = False,
     requires_grad: Union[bool, None] = False,
 ) -> torch.Tensor:
-    dtype = make_dtype(dtype)
-    device = make_device(device)
+    dtype = as_dtype(dtype)
+    device = as_device(device)
 
     if layout is None:
         layout = torch.strided
@@ -629,8 +629,8 @@ def full(
     pin_memory: Union[bool, None] = False,
     requires_grad: Union[bool, None] = False,
 ) -> torch.Tensor:
-    dtype = make_dtype(dtype)
-    device = make_device(device)
+    dtype = as_dtype(dtype)
+    device = as_device(device)
     kwds = {}
     if Version(torch.__version__) >= Version("2.0.0"):
         kwds.update(pin_memory=pin_memory)
@@ -771,8 +771,8 @@ def ones(
     pin_memory: Union[bool, None] = False,
     requires_grad: Union[bool, None] = False,
 ) -> torch.Tensor:
-    dtype = make_dtype(dtype)
-    device = make_device(device)
+    dtype = as_dtype(dtype)
+    device = as_device(device)
 
     if layout is None:
         layout = torch.strided
@@ -916,9 +916,9 @@ def rand(
     pin_memory: Union[bool, None] = False,
     requires_grad: Union[bool, None] = False,
 ) -> torch.Tensor:
-    dtype = make_dtype(dtype)
-    device = make_device(device)
-    generator = make_generator(generator)
+    dtype = as_dtype(dtype)
+    device = as_device(device)
+    generator = as_generator(generator)
 
     kwds = {}
     if Version(torch.__version__) >= Version("2.0.0"):
@@ -1074,9 +1074,9 @@ def randint(
     requires_grad: bool = False,
     pin_memory: bool = False,
 ) -> Tensor:
-    dtype = make_dtype(dtype)
-    device = make_device(device)
-    generator = make_generator(generator)
+    dtype = as_dtype(dtype)
+    device = as_device(device)
+    generator = as_generator(generator)
 
     kwds = {}
     if Version(torch.__version__) >= Version("2.0.0"):
@@ -1140,9 +1140,9 @@ def randperm(
     pin_memory: Optional[bool] = False,
     requires_grad: Optional[bool] = False,
 ) -> Tensor:
-    dtype = make_dtype(dtype)
-    device = make_device(device)
-    generator = make_generator(generator)
+    dtype = as_dtype(dtype)
+    device = as_device(device)
+    generator = as_generator(generator)
 
     if layout is None:
         layout = torch.strided
@@ -1279,8 +1279,8 @@ def zeros(
     pin_memory: Union[bool, None] = False,
     requires_grad: Union[bool, None] = False,
 ) -> torch.Tensor:
-    dtype = make_dtype(dtype)
-    device = make_device(device)
+    dtype = as_dtype(dtype)
+    device = as_device(device)
 
     if layout is None:
         layout = torch.strided

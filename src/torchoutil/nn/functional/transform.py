@@ -25,9 +25,9 @@ from torchoutil.core.make import (
     DeviceLike,
     DTypeLike,
     GeneratorLike,
-    make_device,
-    make_dtype,
-    make_generator,
+    as_device,
+    as_dtype,
+    as_generator,
 )
 from torchoutil.extras.numpy import np, numpy_view_as_complex, numpy_view_as_real
 from torchoutil.nn.functional.cropping import crop_dim
@@ -234,7 +234,7 @@ def transform_drop(
     for _ in range(p_floor):
         x = transform(x)
 
-    generator = make_generator(generator)
+    generator = as_generator(generator)
     sampled = torch.rand((), generator=generator)
     if sampled + p_floor < p:
         x = transform(x)
@@ -283,7 +283,7 @@ def shuffled(
     else:
         dims = list(dims)
 
-    generator = make_generator(generator)
+    generator = as_generator(generator)
     slices: List[Union[slice, Tensor]] = [slice(None) for _ in range(x.ndim)]
     for dim in dims:
         indices = torch.randperm(x.shape[dim], generator=generator)
@@ -609,7 +609,7 @@ def move_to_rec(
 ) -> Any:
     """Move all modules and tensors recursively to a specific dtype or device."""
     if "device" in kwargs:
-        kwargs["device"] = make_device(kwargs["device"])
+        kwargs["device"] = as_device(kwargs["device"])
 
     if is_builtin_scalar(x, strict=True):
         return x
@@ -881,13 +881,13 @@ def as_tensor(
         PyTorch tensor created from data.
     """
     if isinstance(data, (Tensor, np.ndarray, np.number)) or is_builtin_number(data):
-        dtype = make_dtype(dtype)
-        device = make_device(device)
+        dtype = as_dtype(dtype)
+        device = as_device(device)
         return torch.as_tensor(data, dtype=dtype, device=device)
 
     elif isinstance(data, (list, tuple, PythonGenerator)):
-        dtype = make_dtype(dtype)
-        device = make_device(device)
+        dtype = as_dtype(dtype)
+        device = as_device(device)
 
         tensors: List[Tensor] = [
             as_tensor(data_i, dtype=dtype, device=device) for data_i in data

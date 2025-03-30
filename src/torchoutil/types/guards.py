@@ -8,13 +8,12 @@ from torch import Tensor
 from typing_extensions import TypeGuard, TypeIs
 
 from torchoutil.extras.numpy import is_numpy_number_like, is_numpy_scalar_like, np
-from torchoutil.pyoutil.functools import function_alias
 from torchoutil.pyoutil.typing import (
     is_builtin_number,
     is_builtin_scalar,
     isinstance_guard,
 )
-from torchoutil.pyoutil.warnings import deprecated_function
+from torchoutil.pyoutil.warnings import deprecated_alias, deprecated_function
 
 from ._typing import (
     BoolTensor,
@@ -58,7 +57,7 @@ def is_tensor_or_array(x: Any) -> TypeIs[TensorOrArray]:
     return isinstance(x, (Tensor, np.ndarray))
 
 
-@function_alias(is_tensor_or_array)
+@deprecated_alias(is_tensor_or_array)
 def is_tensor_like(*args, **kwargs):
     ...
 

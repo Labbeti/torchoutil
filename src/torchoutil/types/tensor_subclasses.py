@@ -46,7 +46,7 @@ from torch.types import Device
 from typing_extensions import TypeVar
 
 from torchoutil.core.dtype_enum import DTypeEnum
-from torchoutil.core.make import DeviceLike, DTypeLike, make_device, make_dtype
+from torchoutil.core.make import DeviceLike, DTypeLike, as_device, as_dtype
 from torchoutil.pyoutil import BuiltinNumber, T_BuiltinNumber
 
 _DEFAULT_T_DTYPE = Literal[None]
@@ -221,8 +221,8 @@ class _TensorNDBase(
         pin_memory: Union[bool, None] = False,
         requires_grad: Union[bool, None] = False,
     ) -> T_Tensor:
-        dtype = make_dtype(dtype)
-        device = make_device(device)
+        dtype = as_dtype(dtype)
+        device = as_device(device)
 
         gen = _get_generics(cls)  # type: ignore
         cls_dtype = gen.dtype
@@ -397,6 +397,10 @@ class _TensorNDBase(
 
     @overload
     def abs(self: T_Tensor) -> T_Tensor:  # type: ignore
+        ...
+
+    @overload
+    def absolute(self: T_Tensor) -> T_Tensor:  # type: ignore
         ...
 
     @overload
@@ -627,6 +631,7 @@ class _TensorNDBase(
     __getitem__ = torch.Tensor.__getitem__  # noqa: F811  # type: ignore
     __ne__ = torch.Tensor.__ne__  # noqa: F811  # type: ignore
     abs = torch.Tensor.abs  # noqa: F811  # type: ignore
+    absolute = torch.Tensor.absolute  # noqa: F811  # type: ignore
     all = torch.Tensor.all  # noqa: F811  # type: ignore
     any = torch.Tensor.any  # noqa: F811  # type: ignore
     contiguous = torch.Tensor.contiguous  # noqa: F811  # type: ignore

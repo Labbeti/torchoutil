@@ -7,7 +7,7 @@ from typing import Callable, Iterable, List, Optional, Union
 import torch
 from torch import Tensor
 
-from torchoutil.core.make import GeneratorLike, make_generator
+from torchoutil.core.make import GeneratorLike, as_generator
 from torchoutil.nn.functional.transform import as_tensor
 from torchoutil.pyoutil.collections import flat_list_of_list
 
@@ -26,7 +26,7 @@ def random_split(
         generator: Torch Generator or seed to make this function deterministic. defaults to None.
         round_fn: Function to round ratios to integer sizes. defaults to math.floor.
     """
-    generator = make_generator(generator)
+    generator = as_generator(generator)
 
     if isinstance(num_samples_or_indices, int):
         num_samples = num_samples_or_indices
@@ -37,7 +37,7 @@ def random_split(
     del num_samples_or_indices
 
     lengths = _round_lengths(num_samples, lengths, round_fn)
-    generator = make_generator(generator)
+    generator = as_generator(generator)
 
     start = 0
     splits = []
@@ -73,7 +73,7 @@ def balanced_monolabel_split(
     ).all(), f"Target classes indices must be lower than {num_classes=}."
 
     lengths = list(lengths)
-    generator = make_generator(generator)
+    generator = as_generator(generator)
 
     indices_per_class = []
     for class_idx in range(num_classes):
