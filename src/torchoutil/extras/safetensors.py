@@ -8,7 +8,7 @@ from safetensors import safe_open
 from safetensors.torch import save
 from torch import Tensor
 
-from torchoutil.nn.functional.transform import as_tensor
+from torchoutil.nn import functional as F
 from torchoutil.pyoutil.inspect import get_fullname
 from torchoutil.pyoutil.io import _setup_path
 from torchoutil.pyoutil.typing.guards import isinstance_guard
@@ -92,7 +92,7 @@ def dump_safetensors(
 ) -> bytes:
     """Dump tensors to safetensors format. Requires safetensors package installed."""
     if convert_to_tensor:
-        tensors = {k: as_tensor(v) for k, v in tensors.items()}
+        tensors = {k: F.as_tensor(v) for k, v in tensors.items()}
     elif not isinstance_guard(tensors, Dict[str, Tensor]):
         msg = f"Invalid argument type {type(tensors)}. (expected dict[str, Tensor] but found {get_fullname(type(tensors))})"
         raise TypeError(msg)

@@ -67,6 +67,8 @@ from .new import arange, empty, full, ones, rand, randint, randperm, zeros
 from .numpy import numpy_to_tensor, tensor_to_numpy, to_numpy
 from .others import (
     average_power,
+    cat,
+    concat,
     count_parameters,
     deep_equal,
     find,
@@ -77,6 +79,7 @@ from .others import (
     ranks,
     rmse,
     shape,
+    stack,
 )
 from .padding import cat_padded_batch, pad_and_stack_rec, pad_dim, pad_dims
 from .powerset import multilabel_to_powerset, powerset_to_multilabel

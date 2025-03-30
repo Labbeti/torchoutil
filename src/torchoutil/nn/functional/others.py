@@ -7,6 +7,7 @@ from typing import (
     Any,
     Callable,
     Iterable,
+    List,
     Literal,
     Mapping,
     Optional,
@@ -26,11 +27,12 @@ from torchoutil.nn import functional as F
 from torchoutil.pyoutil.collections import all_eq as builtin_all_eq
 from torchoutil.pyoutil.collections import prod as builtin_prod
 from torchoutil.pyoutil.collections import unzip
-from torchoutil.pyoutil.functools import identity
+from torchoutil.pyoutil.functools import function_alias, identity
 from torchoutil.pyoutil.semver import Version
 from torchoutil.pyoutil.typing import BuiltinNumber, SizedIter, T_BuiltinNumber
-from torchoutil.types._typing import LongTensor, ScalarLike, T_TensorOrArray
+from torchoutil.types._typing import LongTensor, ScalarLike, T_Tensor, T_TensorOrArray
 from torchoutil.types.guards import is_scalar_like
+from torchoutil.types.tensor_subclasses import Tensor0D, Tensor1D, Tensor2D, Tensor3D
 from torchoutil.utils import return_types
 
 T = TypeVar("T")
@@ -360,3 +362,76 @@ def deep_equal(x: T, y: T) -> bool:
         return len(x) == len(y) and all(deep_equal(xi, yi) for xi, yi in zip(x, y))
 
     return (type(x) is type(y)) and (x == y)  # type: ignore
+
+
+@overload
+def stack(
+    tensors: Union[List[Tensor0D], Tuple[Tensor0D, ...]],
+    dim: int = 0,
+    *,
+    out: Optional[Tensor1D] = None,
+) -> Tensor1D:
+    ...
+
+
+@overload
+def stack(
+    tensors: Union[List[Tensor1D], Tuple[Tensor1D, ...]],
+    dim: int = 0,
+    *,
+    out: Optional[Tensor2D] = None,
+) -> Tensor2D:
+    ...
+
+
+@overload
+def stack(
+    tensors: Union[List[Tensor2D], Tuple[Tensor2D, ...]],
+    dim: int = 0,
+    *,
+    out: Optional[Tensor3D] = None,
+) -> Tensor3D:
+    ...
+
+
+@overload
+def stack(
+    tensors: Union[List[Tensor], Tuple[Tensor, ...]],
+    dim: int = 0,
+    *,
+    out: Optional[Tensor] = None,
+) -> Tensor:
+    ...
+
+
+def stack(tensors: Union[List[Tensor], Tuple[Tensor, ...]], dim: int = 0, *, out: Optional[Tensor] = None) -> Tensor:  # type: ignore
+    return torch.stack(tensors, dim=dim, out=out)
+
+
+@overload
+def cat(
+    tensors: Union[List[T_Tensor], Tuple[T_Tensor, ...]],
+    dim: int = 0,
+    *,
+    out: Optional[T_Tensor] = None,
+) -> T_Tensor:
+    ...
+
+
+@overload
+def cat(tensors: Union[List[Tensor], Tuple[Tensor, ...]], dim: int = 0, *, out: Optional[Tensor] = None) -> Tensor:  # type: ignore
+    ...
+
+
+def cat(
+    tensors: Union[List[Tensor], Tuple[Tensor, ...]],
+    dim: int = 0,
+    *,
+    out: Optional[Tensor] = None,
+) -> Tensor:
+    return torch.cat(tensors, dim=dim, out=out)
+
+
+@function_alias(cat)
+def concat(*args, **kwargs):
+    ...
