@@ -397,7 +397,7 @@ def __squeeze_impl_tensor(
     else:
         args = (dim,)
 
-    if isinstance(dim, int):
+    if isinstance(dim, int) or dim is None:
         if mode in ("view", "view_if_possible"):
             return torch.squeeze(x, *args)
         elif mode == "copy":

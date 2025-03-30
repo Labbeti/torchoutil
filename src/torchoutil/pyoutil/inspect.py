@@ -55,7 +55,10 @@ def get_fullname(x: Any, *, inst_suffix: str = "(...)") -> str:
     ... '__main__.A.f'
     """
     if hasattr(x, "__module__") and hasattr(x, "__qualname__"):
-        name = f"{x.__module__}.{x.__qualname__}"
+        if x.__module__ is None:
+            name = f"{x.__qualname__}"
+        else:
+            name = f"{x.__module__}.{x.__qualname__}"
     elif inspect.ismodule(x):
         name = x.__name__
     else:

@@ -37,7 +37,8 @@ def set_default_dtype(dtype: DTypeLike) -> None:
 
 def set_default_generator(generator: GeneratorLike) -> None:
     generator = as_generator(generator)
-    torch.default_generator = generator
+    if generator is not None:
+        torch.default_generator.set_state(generator.get_state())
 
 
 @overload

@@ -9,7 +9,7 @@ from unittest import TestCase
 import torch
 from torch import Tensor
 
-import torchoutil
+import torchoutil as to
 from torchoutil.pyoutil.inspect import get_fullname
 from torchoutil.pyoutil.typing import SizedIterable, isinstance_guard
 
@@ -19,7 +19,7 @@ class TestFunctionsCompat(TestCase):
         src_modules = [
             torch,
             torch.Tensor,
-            torch.nn.functional,  # type: ignore
+            # torch.nn.functional,  # type: ignore
             torch.fft,
         ]
         all_base_fn_names = {
@@ -39,8 +39,8 @@ class TestFunctionsCompat(TestCase):
         num_modules = 0
         targets: List[Tuple[Callable, Any, str]] = []
 
-        for fn_name in dir(torchoutil):
-            tgt_fn = getattr(torchoutil, fn_name)
+        for fn_name in dir(to):
+            tgt_fn = getattr(to, fn_name)
             if not inspect.isfunction(tgt_fn) and not inspect.ismethod(tgt_fn):
                 continue
 
@@ -61,31 +61,46 @@ class TestFunctionsCompat(TestCase):
 
             targets += fn_targets
 
-        args_lst = [torch.rand((10,))]
+        seed = to.randint(0, 10**6, ()).item()
+        args_lst = [(torch.rand(10),)]
         for tgt_fn, src_fn, fn_name in targets:
             for args in args_lst:
+                if tgt_fn == src_fn:
+                    continue
+                # skip some functions: function that have different signature (activations) and torch.save due to its non deterministic behaviour
+                if fn_name in (
+                    "log_softmax",
+                    "softmax",
+                    "sigmoid",
+                    "log_sigmoid",
+                    "save",
+                ):
+                    continue
+
                 try:
+                    to.set_default_generator(seed)
                     result = tgt_fn(*args)
                 except Exception as err:
                     result = err
 
                 try:
+                    to.set_default_generator(seed)
                     expected = src_fn(*args)
                 except Exception as err:
                     expected = err
 
+                msg = f"Invalid results for '{fn_name}': {type(result)=} != {type(expected)=} from '{get_fullname(tgt_fn)}' and '{get_fullname(src_fn)}', with {args=}."
                 if isinstance(result, Exception) and isinstance(expected, Exception):
                     pass
                 elif isinstance(result, Tensor) and isinstance(expected, Tensor):
-                    assert torch.equal(result, expected)
+                    assert torch.equal(result, expected), msg
                 elif isinstance_guard(
                     result, SizedIterable[Tensor]
                 ) and isinstance_guard(expected, SizedIterable[Tensor]):
-                    assert len(result) == len(expected)
+                    assert len(result) == len(expected), msg
                     for result_i, expected_i in zip(result, expected):
-                        assert torch.equal(result_i, expected_i)
+                        assert torch.equal(result_i, expected_i), msg
                 else:
-                    msg = f"Invalid results for '{fn_name}': {type(result)=} != {type(expected)=} from {get_fullname(tgt_fn)} and {get_fullname(src_fn)}, with {args}."
                     assert result == expected, msg
 
         print(

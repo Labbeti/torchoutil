@@ -30,7 +30,13 @@ from torchoutil.pyoutil.collections import unzip
 from torchoutil.pyoutil.functools import function_alias, identity
 from torchoutil.pyoutil.semver import Version
 from torchoutil.pyoutil.typing import BuiltinNumber, SizedIter, T_BuiltinNumber
-from torchoutil.types._typing import LongTensor, ScalarLike, T_Tensor, T_TensorOrArray
+from torchoutil.types._typing import (
+    LongTensor,
+    ScalarLike,
+    T_Tensor,
+    T_TensorOrArray,
+    TensorOrArray,
+)
 from torchoutil.types.guards import is_scalar_like
 from torchoutil.types.tensor_subclasses import Tensor0D, Tensor1D, Tensor2D, Tensor3D
 from torchoutil.utils import return_types
@@ -271,16 +277,19 @@ def prod(
 
 
 def prod(
-    x: Union[Tensor, Iterable[T_BuiltinNumber]],
+    x: Union[TensorOrArray, Iterable[T_BuiltinNumber]],
     *,
     dim: Optional[int] = None,
     start: T_BuiltinNumber = 1,
 ) -> Union[Tensor, T_BuiltinNumber]:
     """Returns the product of all elements in input."""
     if isinstance(x, Tensor):
-        return torch.prod(x, dim=dim)
+        if dim is not None:
+            return torch.prod(x, dim=dim) * start
+        else:
+            return torch.prod(x) * start
     elif isinstance(x, np.ndarray):
-        return np.prod(x, axis=dim)
+        return np.prod(x, axis=dim, initial=start)
     elif isinstance(x, Iterable):
         if dim is not None:
             msg = f"Invalid argument {dim=}. (expected None with {type(x)=})"
