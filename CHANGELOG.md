@@ -9,14 +9,14 @@ All notable changes to this project will be documented in this file.
 - Function `randstr` to generate random strings.
 
 ### Modified
-- Rename `get_device` to `make_device`.
-- Rename `get_dtype` to `make_dtype`.
-- Rename `get_generator` to `make_generator`.
+- Rename `get_device` to `as_device`.
+- Rename `get_dtype` to `as_dtype`.
+- Rename `get_generator` to `as_generator`.
 
 ### Fixed
 - Global import of `to.utils.return_types.shape` in python 3.9 and 3.10.
 - `checksum` function with non-cpu tensors.
-- `make_device` now correctly instantiate concrete type with str and int arguments.
+- `as_device` now correctly instantiate concrete type with str and int arguments.
 - Supports for older torch version functions like `mean`, `load`.
 
 ### Deleted
