@@ -181,6 +181,7 @@ def empty(
     *,
     dtype: DTypeLike = None,
     device: DeviceLike = None,
+    memory_format: Optional[torch.memory_format] = None,
     out: Union[torch.Tensor, None] = None,
     layout: Union[torch.layout, None] = None,
     pin_memory: Union[bool, None] = False,
@@ -196,6 +197,7 @@ def empty(
     *,
     dtype: DTypeLike = None,
     device: DeviceLike = None,
+    memory_format: Optional[torch.memory_format] = None,
     out: Union[torch.Tensor, None] = None,
     layout: Union[torch.layout, None] = None,
     pin_memory: Union[bool, None] = False,
@@ -211,6 +213,7 @@ def empty(
     *,
     dtype: DTypeLike = None,
     device: DeviceLike = None,
+    memory_format: Optional[torch.memory_format] = None,
     out: Union[torch.Tensor, None] = None,
     layout: Union[torch.layout, None] = None,
     pin_memory: Union[bool, None] = False,
@@ -226,6 +229,7 @@ def empty(
     *,
     dtype: DTypeLike = None,
     device: DeviceLike = None,
+    memory_format: Optional[torch.memory_format] = None,
     out: Union[torch.Tensor, None] = None,
     layout: Union[torch.layout, None] = None,
     pin_memory: Union[bool, None] = False,
@@ -241,6 +245,7 @@ def empty(
     *,
     dtype: DTypeLike = None,
     device: DeviceLike = None,
+    memory_format: Optional[torch.memory_format] = None,
     out: Union[torch.Tensor, None] = None,
     layout: Union[torch.layout, None] = None,
     pin_memory: Union[bool, None] = False,
@@ -257,6 +262,7 @@ def empty(
     *,
     dtype: DTypeLike = None,
     device: DeviceLike = None,
+    memory_format: Optional[torch.memory_format] = None,
     out: Union[torch.Tensor, None] = None,
     layout: Union[torch.layout, None] = None,
     pin_memory: Union[bool, None] = False,
@@ -274,6 +280,7 @@ def empty(
     *,
     dtype: DTypeLike = None,
     device: DeviceLike = None,
+    memory_format: Optional[torch.memory_format] = None,
     out: Union[torch.Tensor, None] = None,
     layout: Union[torch.layout, None] = None,
     pin_memory: Union[bool, None] = False,
@@ -286,6 +293,7 @@ def empty(
     *data,
     dtype: DTypeLike = None,
     device: DeviceLike = None,
+    memory_format: Optional[torch.memory_format] = None,
     out: Union[torch.Tensor, None] = None,
     layout: Union[torch.layout, None] = None,
     pin_memory: Union[bool, None] = False,
@@ -296,15 +304,20 @@ def empty(
 
     if layout is None:
         layout = torch.strided
+    if pin_memory is None:
+        pin_memory = False
+    if requires_grad is None:
+        requires_grad = False
 
-    return torch.empty(
+    return torch.empty(  # type: ignore
         *data,
+        memory_format=memory_format,
         out=out,
-        dtype=dtype,
+        dtype=dtype,  # type: ignore
         layout=layout,
         device=device,
-        requires_grad=requires_grad,
         pin_memory=pin_memory,
+        requires_grad=requires_grad,
     )
 
 
@@ -634,12 +647,14 @@ def full(
     kwds = {}
     if Version(torch.__version__) >= Version("2.0.0"):
         kwds.update(pin_memory=pin_memory)
-    elif layout is None:
+    if layout is None:
         layout = torch.strided
+    if requires_grad is None:
+        requires_grad = False
 
     return torch.full(
-        size,
-        fill_value,
+        tuple(size),
+        fill_value,  # type: ignore
         out=out,
         dtype=dtype,
         layout=layout,
@@ -776,15 +791,19 @@ def ones(
 
     if layout is None:
         layout = torch.strided
+    if pin_memory is None:
+        pin_memory = False
+    if requires_grad is None:
+        requires_grad = False
 
-    return torch.ones(
+    return torch.ones(  # type: ignore
         *data,
         out=out,
-        dtype=dtype,
+        dtype=dtype,  # type: ignore
         layout=layout,
         device=device,
-        requires_grad=requires_grad,
         pin_memory=pin_memory,
+        requires_grad=requires_grad,
     )
 
 
@@ -923,14 +942,16 @@ def rand(
     kwds = {}
     if Version(torch.__version__) >= Version("2.0.0"):
         kwds.update(pin_memory=pin_memory)
-    elif layout is None:
+    if layout is None:
         layout = torch.strided
+    if requires_grad is None:
+        requires_grad = False
 
-    return torch.rand(
+    return torch.rand(  # type: ignore
         *data,
         generator=generator,
         out=out,
-        dtype=dtype,
+        dtype=dtype,  # type: ignore
         layout=layout,
         device=device,
         requires_grad=requires_grad,
@@ -1146,12 +1167,16 @@ def randperm(
 
     if layout is None:
         layout = torch.strided
+    if pin_memory is None:
+        pin_memory = False
+    if requires_grad is None:
+        requires_grad = False
 
     return torch.randperm(
         n=n,
         generator=generator,
         out=out,
-        dtype=dtype,
+        dtype=dtype,  # type: ignore
         layout=layout,
         device=device,
         pin_memory=pin_memory,
@@ -1284,11 +1309,15 @@ def zeros(
 
     if layout is None:
         layout = torch.strided
+    if pin_memory is None:
+        pin_memory = False
+    if requires_grad is None:
+        requires_grad = False
 
-    return torch.zeros(
+    return torch.zeros(  # type: ignore
         *data,
         out=out,
-        dtype=dtype,
+        dtype=dtype,  # type: ignore
         layout=layout,
         device=device,
         pin_memory=pin_memory,
