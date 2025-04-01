@@ -815,6 +815,121 @@ def rand(
     size: Sequence[Never],
     /,
     *,
+    dtype: Literal["float", "float32", None] = None,
+    device: DeviceLike = None,
+    generator: GeneratorLike = None,
+    out: Union[torch.Tensor, None] = None,
+    layout: Union[torch.layout, None] = None,
+    pin_memory: Union[bool, None] = False,
+    requires_grad: Union[bool, None] = False,
+) -> FloatTensor0D:
+    ...
+
+
+@overload
+def rand(
+    size: Tuple[int],
+    /,
+    *,
+    dtype: Literal["float", "float32", None] = None,
+    device: DeviceLike = None,
+    generator: GeneratorLike = None,
+    out: Union[torch.Tensor, None] = None,
+    layout: Union[torch.layout, None] = None,
+    pin_memory: Union[bool, None] = False,
+    requires_grad: Union[bool, None] = False,
+) -> FloatTensor1D:
+    ...
+
+
+@overload
+def rand(
+    size: Tuple[int, int],
+    /,
+    *,
+    dtype: Literal["float", "float32", None] = None,
+    device: DeviceLike = None,
+    generator: GeneratorLike = None,
+    out: Union[torch.Tensor, None] = None,
+    layout: Union[torch.layout, None] = None,
+    pin_memory: Union[bool, None] = False,
+    requires_grad: Union[bool, None] = False,
+) -> FloatTensor2D:
+    ...
+
+
+@overload
+def rand(
+    size: Tuple[int, int, int],
+    /,
+    *,
+    dtype: Literal["float", "float32", None] = None,
+    device: DeviceLike = None,
+    generator: GeneratorLike = None,
+    out: Union[torch.Tensor, None] = None,
+    layout: Union[torch.layout, None] = None,
+    pin_memory: Union[bool, None] = False,
+    requires_grad: Union[bool, None] = False,
+) -> FloatTensor3D:
+    ...
+
+
+@overload
+def rand(
+    size0: int,
+    /,
+    *,
+    dtype: Literal["float", "float32", None] = None,
+    device: DeviceLike = None,
+    generator: GeneratorLike = None,
+    out: Union[torch.Tensor, None] = None,
+    layout: Union[torch.layout, None] = None,
+    pin_memory: Union[bool, None] = False,
+    requires_grad: Union[bool, None] = False,
+) -> FloatTensor1D:
+    ...
+
+
+@overload
+def rand(
+    size0: int,
+    size1: int,
+    /,
+    *,
+    dtype: Literal["float", "float32", None] = None,
+    device: DeviceLike = None,
+    generator: GeneratorLike = None,
+    out: Union[torch.Tensor, None] = None,
+    layout: Union[torch.layout, None] = None,
+    pin_memory: Union[bool, None] = False,
+    requires_grad: Union[bool, None] = False,
+) -> FloatTensor2D:
+    ...
+
+
+@overload
+def rand(
+    size0: int,
+    size1: int,
+    size2: int,
+    /,
+    *,
+    dtype: Literal["float", "float32", None] = None,
+    device: DeviceLike = None,
+    generator: GeneratorLike = None,
+    out: Union[torch.Tensor, None] = None,
+    layout: Union[torch.layout, None] = None,
+    pin_memory: Union[bool, None] = False,
+    requires_grad: Union[bool, None] = False,
+) -> FloatTensor3D:
+    ...
+
+
+@overload
+def rand(
+    size: Sequence[Never],
+    /,
+    *,
     dtype: DTypeLike = None,
     device: DeviceLike = None,
     generator: GeneratorLike = None,
