@@ -255,6 +255,11 @@ class TestIsInstanceGuard(TestCase):
         assert isinstance_guard("a", (str, int))
         assert isinstance_guard("a", (str,))
 
+        assert isinstance_guard(["a", "b"], (List[str], Tuple[str, ...]))
+        assert isinstance_guard(("a", "b", "c"), (List[str], Tuple[str, ...]))
+        assert isinstance_guard((), (List[str], Tuple[str, ...]))
+        assert not isinstance_guard(("a",), (str,))
+
     def test_old_compatibility(self) -> None:
         examples = [
             0,
