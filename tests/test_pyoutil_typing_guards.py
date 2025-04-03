@@ -244,6 +244,17 @@ class TestIsInstanceGuard(TestCase):
         for example, type_, expected in examples:
             assert isinstance_guard(example, type_) == expected, f"{example=}, {type_}"
 
+    def test_tuple_of_types(self) -> None:
+        assert not isinstance_guard(1, ())
+        assert isinstance_guard(1, (int,))
+        assert isinstance_guard(1, (str, int))
+        assert not isinstance_guard(1, (str,))
+
+        assert not isinstance_guard("a", ())
+        assert not isinstance_guard("a", (int,))
+        assert isinstance_guard("a", (str, int))
+        assert isinstance_guard("a", (str,))
+
     def test_old_compatibility(self) -> None:
         examples = [
             0,
