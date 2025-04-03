@@ -20,6 +20,7 @@ from typing import (
     Union,
 )
 
+import typing_extensions
 from typing_extensions import (
     NotRequired,
     Required,
@@ -53,7 +54,7 @@ def is_typed_dict(x: Any) -> TypeGuard[type]:
 
 def isinstance_guard(
     x: Any,
-    target_type: Union[Type[T], None],
+    target_type: Union[Type[T], None, Tuple[Type[T], ...]],
 ) -> TypeIs[T]:
     """Improved isinstance(...) function that supports parametrized Union, TypedDict, Literal, Mapping or Iterable.
 
@@ -67,11 +68,12 @@ def isinstance_guard(
     """
     if isinstance(x, type):
         return False
-    if target_type is Any:
+    if target_type is Any or target_type is typing_extensions.Any:
         return True
-    elif target_type is None:
+    if target_type is None:
         return x is None
-
+    if isinstance(target_type, tuple):
+        return any(isinstance_guard(x, target_type_i) for target_type_i in target_type)
     if is_typed_dict(target_type):
         return _isinstance_guard_typed_dict(x, target_type)
 
