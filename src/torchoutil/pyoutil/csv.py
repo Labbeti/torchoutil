@@ -45,8 +45,14 @@ def dump_csv(
         data_lst = dict_list_to_list_dict(data)  # type: ignore
     elif isinstance_guard(data, Iterable[Mapping[str, Any]]):
         data_lst = list(data)
+    elif not header and isinstance_guard(data, Iterable[str]):
+        data_lst = [(data_i,) for data_i in data]
+    elif not header and isinstance_guard(data, Iterable[Iterable]):
+        data_lst = list(data)
+    elif not header and isinstance_guard(data, Iterable):
+        data_lst = [(data_i,) for data_i in data]
     else:
-        raise TypeError(f"Invalid argument type {type(data)}.")
+        raise TypeError(f"Invalid argument type {type(data)} with {header=}.")
     del data
 
     if header:
