@@ -72,6 +72,8 @@ def dump_csv(
     else:
         fieldnames = [str(k) for k in data_lst[0].keys()]
 
+    print(f"{fieldnames=}; {header=}")
+
     if align_content:
         old_fieldnames = fieldnames
         data_lst = _stringify(data_lst)
@@ -99,7 +101,10 @@ def dump_csv(
     writer = writer_cls(file, **csv_writer_kwds)
     if isinstance(writer, DictWriter):
         writer.writeheader()
-    writer.writerows(data_lst)  # type: ignore
+        writer.writerows(data_lst)
+    else:
+        data_lst = [tuple(data_i.values()) for data_i in data_lst]
+        writer.writerows(data_lst)
     content = file.getvalue()
     file.close()
 
