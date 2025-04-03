@@ -29,28 +29,33 @@ Orient = Literal["list", "dict"]
 
 
 def dump_csv(
-    data: Union[Iterable[Mapping[str, Any]], Mapping[str, Iterable[Any]]],
+    data: Union[Iterable[Mapping[str, Any]], Mapping[str, Iterable[Any]], Iterable],
     fpath: Union[str, Path, None] = None,
     *,
     overwrite: bool = True,
     make_parents: bool = True,
-    header: bool = True,
+    header: Union[bool, Literal["auto"]] = "auto",
     align_content: bool = False,
     **csv_writer_kwds,
 ) -> str:
     """Dump content to CSV format."""
     fpath = _setup_path(fpath, overwrite, make_parents)
 
+    if header == "auto":
+        header = isinstance_guard(
+            data, (Mapping[str, Iterable], Iterable[Mapping[str, Any]])
+        )
+
     if isinstance_guard(data, Mapping[str, Iterable]):
         data_lst = dict_list_to_list_dict(data)  # type: ignore
     elif isinstance_guard(data, Iterable[Mapping[str, Any]]):
-        data_lst = list(data)
+        data_lst = [dict(data_i.items()) for data_i in data]
     elif not header and isinstance_guard(data, Iterable[str]):
-        data_lst = [(data_i,) for data_i in data]
+        data_lst = [{"0": data_i} for data_i in data]
     elif not header and isinstance_guard(data, Iterable[Iterable]):
-        data_lst = list(data)
+        data_lst = [dict(zip(map(str, range(len(data_i))))) for data_i in data]
     elif not header and isinstance_guard(data, Iterable):
-        data_lst = [(data_i,) for data_i in data]
+        data_lst = [{"0": data_i} for data_i in data]
     else:
         raise TypeError(f"Invalid argument type {type(data)} with {header=}.")
     del data
@@ -62,10 +67,10 @@ def dump_csv(
 
     if len(data_lst) == 0:
         fieldnames = []
-    elif header:
-        fieldnames = [str(k) for k in data_lst[0].keys()]
+    # elif header:
+    #     fieldnames = list(range(len(next(iter(data_lst)))))
     else:
-        fieldnames = list(range(len(next(iter(data_lst)))))
+        fieldnames = [str(k) for k in data_lst[0].keys()]
 
     if align_content:
         old_fieldnames = fieldnames
