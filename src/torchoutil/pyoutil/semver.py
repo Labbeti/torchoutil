@@ -22,8 +22,8 @@ BuildMetadata: TypeAlias = Union[int, str, None, List[Union[int, str]]]
 
 class VersionDict(TypedDict):
     major: int
-    minor: NotRequired[int]
-    patch: NotRequired[int]
+    minor: int
+    patch: int
     prerelease: NotRequired[PreRelease]
     buildmetadata: NotRequired[BuildMetadata]
 
@@ -147,13 +147,18 @@ class Version:
         self.buildmetadata = buildmetadata  # type: ignore
 
     @classmethod
-    def python(cls) -> "Version":
-        """Create an instance of Version with Python version."""
+    def python(cls, releaselevel_in_metadata: bool = False) -> "Version":
+        """Create an instance of Version with Python version.
+
+        Note: Python 'micro' value is mapped to 'patch'.
+        """
         return Version(
             major=sys.version_info.major,
             minor=sys.version_info.minor,
             patch=sys.version_info.micro,
-            buildmetadata=sys.version_info.releaselevel,
+            buildmetadata=sys.version_info.releaselevel
+            if releaselevel_in_metadata
+            else None,
         )
 
     @classmethod
@@ -168,6 +173,16 @@ class Version:
     @classmethod
     def from_tuple(cls, version_tuple: VersionTupleLike) -> "Version":
         return Version(version_tuple)
+
+    @property
+    def micro(self) -> int:
+        """Getter alias of 'patch'."""
+        return self.patch
+
+    @micro.setter
+    def micro(self, new_value: int) -> None:
+        """Setter alias of 'patch'."""
+        self.patch = new_value
 
     def without_prerelease(self) -> "Version":
         return Version(self.major, self.minor, self.patch, None, self.buildmetadata)
