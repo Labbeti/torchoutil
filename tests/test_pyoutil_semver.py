@@ -94,7 +94,7 @@ class TestVersion(TestCase):
         with self.assertRaises(ValueError):
             Version("1.02.X")
 
-        with self.assertRaises(KeyError):
+        with self.assertRaises(ValueError):
             Version(1, 2)  # type: ignore
 
         with self.assertRaises(TypeError):
