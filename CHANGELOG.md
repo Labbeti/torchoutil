@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## [0.6.0] UNRELEASED
+## [0.6.0] 2025-04-09
 ### Added
 - Functions `unsqueeze`, `squeeze` and `one_hot`.
 - Function `isinstance_guard` to check parametrized types.
@@ -17,7 +17,7 @@ All notable changes to this project will be documented in this file.
 - Global import of `to.utils.return_types.shape` in python 3.9 and 3.10.
 - `checksum` function with non-cpu tensors.
 - `as_device` now correctly instantiate concrete type with str and int arguments.
-- Supports for older torch version functions like `mean`, `load`.
+- Supports typing for older torch version for functions like `mean`, `load`.
 
 ### Deleted
 - `pack_custom` function and classes.

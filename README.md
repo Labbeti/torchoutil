@@ -35,7 +35,7 @@ To check if the package is installed and show the package version, you can use t
 torchoutil-info
 ```
 
-This library works on all Python versions from **3.8 to 3.13**, and on **Linux, Mac and Windows**.
+This library works on all Python versions **>=3.8**, all PyTorch versions **>= 3.10**, and on **Linux, Mac and Windows** systems.
 
 ## Examples
 
