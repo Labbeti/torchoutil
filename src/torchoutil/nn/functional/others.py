@@ -87,8 +87,8 @@ def find(
             raise RuntimeError(f"Cannot find {value=} in tensor.")
         return indices  # type: ignore
     else:
-        output = torch.where(contains, indices, default)  # type: ignore
-        return output
+        output = torch.where(contains, indices, default)
+        return output  # type: ignore
 
 
 @overload

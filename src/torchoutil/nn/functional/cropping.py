@@ -1,14 +1,13 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from typing import Iterable, List, Literal, Union
+from typing import Iterable, List, Literal, Union, get_args
 
 import torch
 from torch import Tensor
 
 from torchoutil.core.make import GeneratorLike, as_generator
 
-CROP_ALIGNS = ("left", "right", "center", "random")
 CropAlign = Literal["left", "right", "center", "random"]
 
 
@@ -85,7 +84,7 @@ def crop_dims(
             start = torch.randint(low=0, high=diff, size=(), generator=generator).item()
             end = start + target_length
         else:
-            msg = f"Invalid argument {align=}. (expected one of {CROP_ALIGNS})"
+            msg = f"Invalid argument {align=}. (expected one of {get_args(CropAlign)})"
             raise ValueError(msg)
 
         slices[dim] = slice(start, end)

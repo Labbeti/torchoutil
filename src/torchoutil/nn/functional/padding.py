@@ -1,7 +1,18 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from typing import Any, Callable, Dict, Iterable, List, Literal, Sized, Tuple, Union
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    Iterable,
+    List,
+    Literal,
+    Sized,
+    Tuple,
+    Union,
+    get_args,
+)
 
 import torch
 from torch import Size, Tensor
@@ -22,8 +33,6 @@ from torchoutil.types import is_number_like
 PadAlign: TypeAlias = Literal["left", "right", "center", "random"]
 PadValue: TypeAlias = Union[Number, Callable[[Tensor], Number]]
 PadMode: TypeAlias = Literal["constant", "reflect", "replicate", "circular"]
-
-PAD_ALIGNS = ("left", "right", "center", "random")
 
 
 def pad_dim(
@@ -257,7 +266,7 @@ def __generate_pad_seq(
             )
             missing_right = missing - missing_left
         else:
-            msg = f"Invalid argument {align=}. (expected one of {PAD_ALIGNS})"
+            msg = f"Invalid argument {align=}. (expected one of {get_args(PadAlign)})"
             raise ValueError(msg)
 
         # Note: pad_seq : [pad_left_dim_-1, pad_right_dim_-1, pad_left_dim_-2, pad_right_dim_-2, ...)

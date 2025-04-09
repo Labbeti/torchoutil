@@ -14,6 +14,7 @@ from typing import (
     Tuple,
     TypeVar,
     Union,
+    get_args,
     overload,
 )
 
@@ -78,10 +79,7 @@ T = TypeVar("T")
 U = TypeVar("U")
 
 PadCropAlign = Literal["left", "right", "center", "random"]
-PAD_CROP_ALIGN_VALUES = ("left", "right", "center", "random")
-
 SqueezeMode = Literal["view_if_possible", "view", "copy", "inplace"]
-UNSQUEEZE_MODES = ("view_if_possible", "view", "copy", "inplace")
 
 
 def repeat_interleave_nd(x: Tensor, repeats: int, dim: int = 0) -> Tensor:
@@ -405,7 +403,7 @@ def __squeeze_impl_tensor(
         elif mode == "inplace":
             return x.squeeze_(*args)
         else:
-            msg = f"Invalid argument {mode=}. (expected one of {UNSQUEEZE_MODES})"
+            msg = f"Invalid argument {mode=}. (expected one of {get_args(SqueezeMode)})"
             raise ValueError(msg)
 
     else:
@@ -473,7 +471,7 @@ def __unsqueeze_impl_tensor(
         elif mode == "inplace":
             return x.unsqueeze_(dim)
         else:
-            msg = f"Invalid argument {mode=}. (expected one of {UNSQUEEZE_MODES})"
+            msg = f"Invalid argument {mode=}. (expected one of {get_args(SqueezeMode)})"
             raise ValueError(msg)
 
     elif isinstance(dim, Iterable):

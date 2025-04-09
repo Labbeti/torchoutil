@@ -65,32 +65,7 @@ Checksumable: TypeAlias = Union[
     type,
     slice,
 ]
-CHECKSUMABLE_TYPES = (
-    "int",
-    "bool",
-    "complex",
-    "float",
-    "NoneType",
-    "str",
-    "bytes",
-    "bytearray",
-    "re.Pattern",
-    "torch.nn.Module",
-    "torch.Tensor",
-    "numpy.ndarray",
-    "numpy.generic",
-    "NamedTuple",
-    "Dataclass",
-    "Mapping",
-    "Iterable",
-    "MethodType",
-    "FunctionType",
-    "functools.partial",
-    "type",
-    "slice",
-)
 UnkMode = Literal["pickle", "error"]
-UNK_MODES = ("pickle", "error")
 
 
 # Recursive functions for union of types
@@ -166,10 +141,10 @@ def checksum_any(
     elif unk_mode == "pickle":
         return checksum_bytes(pickle.dumps(x), **kwargs)
     elif unk_mode == "error":
-        msg = f"Invalid argument type {type(x)}. (expected one of {CHECKSUMABLE_TYPES})"
+        msg = f"Invalid argument type {type(x)}. (expected one of {get_args(Checksumable)})"
         raise TypeError(msg)
     else:
-        msg = f"Invalid argument {unk_mode=}. (expected one of {UNK_MODES})"
+        msg = f"Invalid argument {unk_mode=}. (expected one of {get_args(UnkMode)})"
         raise ValueError(msg)
 
 
