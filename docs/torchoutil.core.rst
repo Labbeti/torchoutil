@@ -17,3 +17,4 @@ Submodules
    torchoutil.core.make
    torchoutil.core.packaging
    torchoutil.core.semver
+   torchoutil.core.version

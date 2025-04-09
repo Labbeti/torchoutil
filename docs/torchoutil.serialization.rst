@@ -15,6 +15,7 @@ Submodules
    torchoutil.serialization.common
    torchoutil.serialization.csv
    torchoutil.serialization.dump_fn
+   torchoutil.serialization.hdf
    torchoutil.serialization.json
    torchoutil.serialization.load_fn
    torchoutil.serialization.numpy

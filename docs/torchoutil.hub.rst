@@ -13,4 +13,5 @@ Submodules
    :maxdepth: 4
 
    torchoutil.hub.download
+   torchoutil.hub.paths
    torchoutil.hub.registry
