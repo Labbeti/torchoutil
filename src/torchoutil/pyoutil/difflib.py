@@ -3,7 +3,7 @@
 
 import math
 from difflib import SequenceMatcher
-from typing import Callable, Iterable
+from typing import Callable, Iterable, Optional
 
 
 def sequence_matcher_ratio(a: str, b: str) -> float:
@@ -15,8 +15,9 @@ def find_closest_in_list(
     lst: Iterable[str],
     sim_fn: Callable[[str, str], float] = sequence_matcher_ratio,
     higher_is_closer: bool = True,
-) -> str:
+) -> Optional[str]:
     best_sim = -int(higher_is_closer) * math.inf
+    closest = None
 
     for elt in lst:
         sim = sim_fn(x, elt)

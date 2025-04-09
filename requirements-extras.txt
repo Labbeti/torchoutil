@@ -9,4 +9,5 @@ pyyaml
 safetensors
 scipy
 tensorboard
+torchaudio>=0.10.0
 tqdm

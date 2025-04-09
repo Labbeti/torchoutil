@@ -3,13 +3,15 @@
 
 from typing import Iterable, Union
 
-from torch import Tensor, nn
+from torch import Tensor
 
 from torchoutil.nn.functional.activation import log_softmax_multidim, softmax_multidim
 from torchoutil.pyoutil.collections import dump_dict
 
+from .module import Module
 
-class SoftmaxMultidim(nn.Module):
+
+class SoftmaxMultidim(Module):
     """
     For more information, see :func:`~torchoutil.nn.functional.activation.softmax_multidim`.
     """
@@ -28,10 +30,10 @@ class SoftmaxMultidim(nn.Module):
         return softmax_multidim(input, dims=self.dims)
 
     def extra_repr(self) -> str:
-        return dump_dict(dict(dims=self.dims))
+        return dump_dict(dims=self.dims)
 
 
-class LogSoftmaxMultidim(nn.Module):
+class LogSoftmaxMultidim(Module):
     """
     For more information, see :func:`~torchoutil.nn.functional.activation.softmax_multidim`.
     """
@@ -50,4 +52,4 @@ class LogSoftmaxMultidim(nn.Module):
         return log_softmax_multidim(input, dims=self.dims)
 
     def extra_repr(self) -> str:
-        return dump_dict(dict(dims=self.dims))
+        return dump_dict(dims=self.dims)

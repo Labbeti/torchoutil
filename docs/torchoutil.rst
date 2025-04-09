@@ -14,11 +14,11 @@ Subpackages
 
    torchoutil.core
    torchoutil.extras
-   torchoutil.fft
    torchoutil.hub
    torchoutil.nn
    torchoutil.optim
    torchoutil.pyoutil
+   torchoutil.serialization
    torchoutil.types
    torchoutil.utils
 

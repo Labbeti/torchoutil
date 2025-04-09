@@ -3,13 +3,15 @@
 
 from typing import Iterable, Union
 
-from torch import Tensor, nn
+from torch import Tensor
 
 from torchoutil.nn.functional.mask import masked_mean, masked_sum
 from torchoutil.pyoutil.collections import dump_dict
 
+from .module import Module
 
-class MaskedMean(nn.Module):
+
+class MaskedMean(Module):
     """
     For more information, see :func:`~torchoutil.nn.functional.mask.masked_mean`.
     """
@@ -31,7 +33,7 @@ class MaskedMean(nn.Module):
         )
 
 
-class MaskedSum(nn.Module):
+class MaskedSum(Module):
     """
     For more information, see :func:`~torchoutil.nn.functional.mask.masked_sum`.
     """

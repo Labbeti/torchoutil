@@ -13,10 +13,11 @@ Submodules
    :maxdepth: 4
 
    torchoutil.nn.modules.activation
+   torchoutil.nn.modules.container
    torchoutil.nn.modules.crop
    torchoutil.nn.modules.layer
    torchoutil.nn.modules.mask
-   torchoutil.nn.modules.mixins
+   torchoutil.nn.modules.module
    torchoutil.nn.modules.multiclass
    torchoutil.nn.modules.multilabel
    torchoutil.nn.modules.numpy

@@ -23,11 +23,13 @@ import torch
 from torch import Tensor
 from typing_extensions import NotRequired
 
-from torchoutil.core.get import DeviceLike, get_device
+from torchoutil.core.make import DeviceLike, as_device
 from torchoutil.pyoutil.hashlib import HashName, hash_file
-from torchoutil.pyoutil.logging import warn_once
-from torchoutil.utils.saving.json import load_json, to_json
-from torchoutil.utils.saving.load_fn import LOAD_FNS, LoadFnLike
+from torchoutil.pyoutil.warnings import deprecated_function, warn_once
+from torchoutil.serialization.json import dump_json, load_json
+from torchoutil.serialization.load_fn import LOAD_FNS, LoadFnLike, load_torch
+
+from .paths import get_cache_dir
 
 T_Hashable = TypeVar("T_Hashable", bound=Hashable)
 
@@ -47,22 +49,22 @@ class RegistryHub(Generic[T_Hashable]):
     def __init__(
         self,
         infos: Mapping[T_Hashable, RegistryEntry],
-        register_root: Union[str, Path, None] = None,
+        register_root: Union[str, Path] = "~/.cache/torch/hub/checkpoints",
     ) -> None:
         """
         Args:
             infos: Maps model_name to their checkpoint information, with download url, filename, hash value, hash type and state_dict key.
-            register_root: Directory where checkpoints are saved. If None, defaults to `~/.cache/torch/hub/checkpoints`.
+            register_root: Directory where checkpoints are saved. defaults to `~/.cache/torch/hub/checkpoints`.
         """
         infos = dict(infos.items())
         if register_root is None:
-            register_root = get_default_register_root()
+            register_root = get_cache_dir().joinpath("checkpoints")
         else:
-            register_root = Path(register_root)
+            register_root = Path(register_root).resolve().expanduser()
 
         super().__init__()
         self._infos = infos
-        self._ckpt_parent_path = register_root
+        self._register_root = register_root
 
     @property
     def infos(self) -> Dict[T_Hashable, RegistryEntry]:
@@ -70,7 +72,7 @@ class RegistryHub(Generic[T_Hashable]):
 
     @property
     def register_root(self) -> Path:
-        return self._ckpt_parent_path.resolve()
+        return self._register_root.resolve()
 
     @property
     def names(self) -> List[T_Hashable]:
@@ -81,6 +83,7 @@ class RegistryHub(Generic[T_Hashable]):
         return [self.get_path(model_name) for model_name in self.names]
 
     def get_path(self, name: T_Hashable) -> Path:
+        """Returns the expected filepath of an element."""
         if name not in self.names:
             msg = f"Invalid argument {name=}. (expected one of {self.names})"
             raise ValueError(msg)
@@ -95,7 +98,7 @@ class RegistryHub(Generic[T_Hashable]):
         *,
         device: DeviceLike = None,
         offline: bool = False,
-        load_fn: LoadFnLike = torch.load,
+        load_fn: LoadFnLike = load_torch,
         load_kwds: Optional[Dict[str, Any]] = None,
         verbose: int = 0,
     ) -> Dict[str, Tensor]:
@@ -123,9 +126,9 @@ class RegistryHub(Generic[T_Hashable]):
 
         if device is not None:
             src_device = device
-            device = get_device(device)
+            device = as_device(device)
             msg = f"Deprecated argument device={src_device}. Use `load_kwds=dict(map_location={device})` with function torch.load instead."
-            warn_once(msg, __name__)
+            warn_once(msg)
 
             if device is not None:
                 load_kwds["map_location"] = device
@@ -144,10 +147,10 @@ class RegistryHub(Generic[T_Hashable]):
             if path.is_file():
                 pass
             elif offline:
-                msg = f"Cannot find checkpoint model file in '{path}' for model '{name_or_path}' with mode {offline=}."
+                msg = f"Cannot find checkpoint model file in '{path}' for model '{name}' with mode {offline=}."
                 raise FileNotFoundError(msg)
             else:
-                self.download_file(name_or_path, verbose=verbose)  # type: ignore
+                self.download_file(name, verbose=verbose)  # type: ignore
 
         del name_or_path
 
@@ -161,8 +164,7 @@ class RegistryHub(Generic[T_Hashable]):
             result = data[state_dict_key]
 
         if verbose >= 1:
-            test_map = data.get("test_mAP", "unknown")
-            msg = f"Loading encoder weights from '{path}'... (with test_mAP={test_map})"
+            msg = f"Loading encoder weights from '{path}'..."
             pylog.info(msg)
 
         return result
@@ -198,10 +200,22 @@ class RegistryHub(Generic[T_Hashable]):
         else:
             raise ValueError(f"Invalid hash for file '{model_path}'.")
 
+    def remove_file(
+        self,
+        name: T_Hashable,
+    ) -> None:
+        path = self.get_path(name)
+        if path.is_file():
+            os.remove(path)
+        elif path.exists():
+            msg = f"Invalid argument {name=}, which redirect to a non-file {path=}."
+            raise ValueError(msg)
+
     def is_valid_hash(
         self,
         name: T_Hashable,
     ) -> bool:
+        """Returns True if target file hash is valid. If no hash is provided in infos, this function also returns True."""
         info = self.infos[name]
         if "hash_type" not in info or "hash_value" not in info:
             msg = f"Cannot check hash for {name}. (cannot find any expected hash value or type)"
@@ -220,9 +234,9 @@ class RegistryHub(Generic[T_Hashable]):
         """Save info to JSON file."""
         args = {
             "infos": self._infos,
-            "register_root": str(self._ckpt_parent_path),
+            "register_root": str(self._register_root),
         }
-        to_json(args, path)
+        dump_json(args, path)
 
     @classmethod
     def from_file(cls, path: Union[str, Path]) -> "RegistryHub":
@@ -240,6 +254,7 @@ class RegistryHub(Generic[T_Hashable]):
         return name
 
 
+@deprecated_function()
 def get_default_register_root() -> Path:
     """Default register root path is `~/.cache/torch/hub/checkpoints`, which is based on `torch.hub.get_dir`."""
     path = torch.hub.get_dir()

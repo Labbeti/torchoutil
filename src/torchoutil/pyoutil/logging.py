@@ -10,12 +10,25 @@ from pathlib import Path
 from types import ModuleType
 from typing import IO, List, Literal, Optional, Sequence, TypeVar, Union
 
+from typing_extensions import TypeAlias
+
 from .importlib import reload_submodules
+from .semver import Version
+from .warnings import deprecated_function
 
 T = TypeVar("T", covariant=True)
 
-PackageOrLogger = Union[str, ModuleType, None, Logger, Literal["__parent_file__"]]
-PackageOrLoggerList = Union[PackageOrLogger, Sequence[PackageOrLogger]]
+PackageOrLogger: TypeAlias = Union[
+    str,
+    ModuleType,
+    None,
+    Logger,
+    Literal["__parent_file__"],
+]
+PackageOrLoggerList: TypeAlias = Union[
+    PackageOrLogger,
+    Sequence[PackageOrLogger],
+]
 
 _PARENT_FILE_KEY = "__parent_file__"
 DEFAULT_FMT = "[%(asctime)s][%(name)s][%(levelname)s] - %(message)s"
@@ -28,12 +41,21 @@ pylog = logging.getLogger(__name__)
 
 
 @lru_cache(maxsize=None)
-def warn_once(
+@deprecated_function(
+    "Use `torchoutil.pyoutil.logging.log_once(..., level=logging.WARNING)` or `torchoutil.pyoutil.warnings.warn_once` instead."
+)
+def warn_once(*args, **kwargs):
+    return log_once(*args, **kwargs)
+
+
+@lru_cache(maxsize=None)
+def log_once(
     msg: str,
     logger: PackageOrLoggerList = _PARENT_FILE_KEY,
     *,
-    level: int = logging.WARNING,
+    level: int = logging.INFO,
 ) -> None:
+    """Log message to loggers at the specified level."""
     loggers = _get_loggers(logger)
     for logger in loggers:
         logger.log(level, msg)
@@ -157,6 +179,7 @@ def get_current_file_logger(
         return default
 
 
+@lru_cache(maxsize=None)
 def get_null_logger() -> Logger:
     logger = logging.getLogger("null_logger")
     logger.addHandler(logging.NullHandler())
@@ -204,13 +227,17 @@ class MkdirFileHandler(FileHandler):
         encoding: Optional[str] = None,
         delay: bool = True,
         errors: Optional[str] = None,
+        *,
         mkdir_parents: bool = True,
         mkdir_exist_ok: bool = True,
     ) -> None:
         filename = Path(filename)
         filename.parent.mkdir(parents=mkdir_parents, exist_ok=mkdir_exist_ok)
 
-        super().__init__(filename, mode, encoding, delay, errors)
+        if Version.python() < Version("3.9.0"):
+            super().__init__(filename, mode, encoding, delay)
+        else:
+            super().__init__(filename, mode, encoding, delay, errors)  # type: ignore
 
 
 def _verbose_to_logging_level(verbose: int) -> int:

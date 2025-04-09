@@ -5,18 +5,11 @@
 
 from typing import Any
 
+from torchoutil.pyoutil.importlib import Placeholder
 from torchoutil.pyoutil.inspect import get_current_fn_name
 
 
-class _placeholder:
-    def __init__(self, *args, **kwargs) -> None:
-        ...
-
-    def __getattr__(self, name: str) -> Any:
-        return self
-
-
-class generic(_placeholder):
+class generic(Placeholder):
     ...
 
 
@@ -28,32 +21,32 @@ class bool_(generic):
     ...
 
 
-class dtype(_placeholder):
+class dtype(Placeholder):
     ...
 
 
-class ndarray(_placeholder):
+class ndarray(Placeholder):
     def __getitem__(self, *args) -> Any:
         return self
 
 
 def array(x: Any, *args, **kwargs):
-    msg = f"Cannot call function '{get_current_fn_name()}' because optional dependancy 'numpy' is not installed. Please install it using 'pip install torchoutil[extras]'"
+    msg = f"Cannot call function '{get_current_fn_name()}' because optional dependency 'numpy' is not installed. Please install it using 'pip install torchoutil[extras]'"
     raise NotImplementedError(msg)
 
 
 def asarray(x: Any, *args, **kwargs):
-    msg = f"Cannot call function '{get_current_fn_name()}' because optional dependancy 'numpy' is not installed. Please install it using 'pip install torchoutil[extras]'"
+    msg = f"Cannot call function '{get_current_fn_name()}' because optional dependency 'numpy' is not installed. Please install it using 'pip install torchoutil[extras]'"
     raise NotImplementedError(msg)
 
 
 def iscomplexobj(x: Any):
-    msg = f"Cannot call function '{get_current_fn_name()}' because optional dependancy 'numpy' is not installed. Please install it using 'pip install torchoutil[extras]'"
+    msg = f"Cannot call function '{get_current_fn_name()}' because optional dependency 'numpy' is not installed. Please install it using 'pip install torchoutil[extras]'"
     raise NotImplementedError(msg)
 
 
 def empty(*args, **kwargs):
-    msg = f"Cannot call function '{get_current_fn_name()}' because optional dependancy 'numpy' is not installed. Please install it using 'pip install torchoutil[extras]'"
+    msg = f"Cannot call function '{get_current_fn_name()}' because optional dependency 'numpy' is not installed. Please install it using 'pip install torchoutil[extras]'"
     raise NotImplementedError(msg)
 
 

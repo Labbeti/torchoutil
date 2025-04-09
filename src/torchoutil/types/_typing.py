@@ -4,12 +4,12 @@
 from typing import TypeVar, Union
 
 import torch
+from typing_extensions import TypeAlias
 
 from torchoutil.extras.numpy.definitions import (  # noqa: F401
     NumpyNumberLike,
     NumpyScalarLike,
     np,
-    numpy,
 )
 from torchoutil.pyoutil.typing.classes import BuiltinNumber, BuiltinScalar
 
@@ -34,11 +34,6 @@ from .tensor_subclasses import (  # noqa: F401
     CFloatTensor1D,
     CFloatTensor2D,
     CFloatTensor3D,
-    CHalfTensor,
-    CHalfTensor0D,
-    CHalfTensor1D,
-    CHalfTensor2D,
-    CHalfTensor3D,
     CharTensor,
     CharTensor0D,
     CharTensor1D,
@@ -69,6 +64,11 @@ from .tensor_subclasses import (  # noqa: F401
     HalfTensor1D,
     HalfTensor2D,
     HalfTensor3D,
+    IntegralTensor,
+    IntegralTensor0D,
+    IntegralTensor1D,
+    IntegralTensor2D,
+    IntegralTensor3D,
     IntTensor,
     IntTensor0D,
     IntTensor1D,
@@ -103,13 +103,14 @@ from .tensor_subclasses import (  # noqa: F401
 r"""/!\ The following type hints are meant for type annotation only, not for runtime checks.
 """
 
-NumberLike = Union[BuiltinNumber, NumpyNumberLike, Tensor0D]
-ScalarLike = Union[BuiltinScalar, NumpyScalarLike, Tensor0D]
-TensorLike = Union[torch.Tensor, np.ndarray]
+NumberLike: TypeAlias = Union[BuiltinNumber, NumpyNumberLike, Tensor0D]
+ScalarLike: TypeAlias = Union[BuiltinScalar, NumpyScalarLike, Tensor0D]
+TensorOrArray: TypeAlias = Union[torch.Tensor, np.ndarray]
 
-T_TensorLike = TypeVar(
-    "T_TensorLike",
-    bound=Union[torch.Tensor, np.ndarray],
+T_Tensor = TypeVar("T_Tensor", bound=torch.Tensor, covariant=True)
+T_TensorOrArray = TypeVar(
+    "T_TensorOrArray",
+    bound=TensorOrArray,
     covariant=True,
 )
 

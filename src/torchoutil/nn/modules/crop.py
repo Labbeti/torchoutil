@@ -3,13 +3,16 @@
 
 from typing import Iterable, Union
 
-from torch import Generator, Tensor, nn
+from torch import Tensor
 
-from torchoutil.nn.functional.crop import CropAlign, crop_dim, crop_dims
+from torchoutil.core.make import GeneratorLike
+from torchoutil.nn.functional.cropping import CropAlign, crop_dim, crop_dims
 from torchoutil.pyoutil.collections import dump_dict
 
+from .module import Module
 
-class CropDim(nn.Module):
+
+class CropDim(Module):
     """
     For more information, see :func:`~torchoutil.nn.functional.crop.crop_dim`.
     """
@@ -17,15 +20,16 @@ class CropDim(nn.Module):
     def __init__(
         self,
         target_length: int,
+        *,
         align: CropAlign = "left",
         dim: int = -1,
-        generator: Union[int, Generator, None] = None,
+        generator: GeneratorLike = None,
     ) -> None:
         super().__init__()
         self.target_length = target_length
         self.align: CropAlign = align
         self.dim = dim
-        self.generator = generator
+        self.generator: GeneratorLike = generator
 
     def forward(self, x: Tensor) -> Tensor:
         return crop_dim(
@@ -46,7 +50,7 @@ class CropDim(nn.Module):
         )
 
 
-class CropDims(nn.Module):
+class CropDims(Module):
     """
     For more information, see :func:`~torchoutil.nn.functional.crop.crop_dims`.
     """
@@ -54,15 +58,16 @@ class CropDims(nn.Module):
     def __init__(
         self,
         target_lengths: Iterable[int],
+        *,
         aligns: Union[CropAlign, Iterable[CropAlign]] = "left",
         dims: Iterable[int] = (-1,),
-        generator: Union[int, Generator, None] = None,
+        generator: GeneratorLike = None,
     ) -> None:
         super().__init__()
         self.target_lengths = target_lengths
         self.dims = dims
         self.aligns: Union[CropAlign, Iterable[CropAlign]] = aligns
-        self.generator = generator
+        self.generator: GeneratorLike = generator
 
     def forward(self, x: Tensor) -> Tensor:
         return crop_dims(

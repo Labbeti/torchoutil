@@ -6,12 +6,12 @@ from torchoutil.core.packaging import _EXTRA_AVAILABLE
 
 _MISSING_DEPS = {
     name: _EXTRA_AVAILABLE[name]
-    for name in ("h5py", "numpy", "tqdm")
+    for name in ("h5py", "numpy")
     if not _EXTRA_AVAILABLE[name]
 }
 if len(_MISSING_DEPS) > 0:
     if len(_MISSING_DEPS) == 1:
-        deps_msg = f"dependancy '{next(iter(_MISSING_DEPS.keys()))}' is"
+        deps_msg = f"dependency '{next(iter(_MISSING_DEPS.keys()))}' is"
     else:
         deps_msg = (
             "dependancies " + ", ".join(f"'{k}'" for k in _MISSING_DEPS.keys()) + " are"

@@ -6,7 +6,7 @@ from unittest import TestCase
 
 import torch
 
-from torchoutil.core.get import get_device
+from torchoutil.core.make import as_device
 from torchoutil.nn.functional.multilabel import (
     indices_to_multihot,
     indices_to_multinames,
@@ -25,7 +25,8 @@ class TestMultilabel(TestCase):
         indices = [[1, 2], [0], [], [3]]
         num_classes = 4
         expected_multihot = torch.as_tensor(
-            [[0, 1, 1, 0], [1, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 1]], dtype=torch.bool
+            [[0, 1, 1, 0], [1, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 1]],
+            dtype=torch.bool,
         )
 
         result = indices_to_multihot(indices, num_classes=num_classes)
@@ -79,7 +80,7 @@ class TestMultilabel(TestCase):
         assert indices_1 == indices_2
 
     def test_ints_to_multihots(self) -> None:
-        device = get_device()
+        device = as_device("cpu")
         ints = torch.as_tensor([[0, 1, 1]], device=device)
         num_classes = 5
         multihots = indices_to_multihot(ints, num_classes, dtype=torch.int)
@@ -89,7 +90,7 @@ class TestMultilabel(TestCase):
         assert multihots.eq(expected).all(), f"{multihots=}"
 
     def test_convert_and_reconvert(self) -> None:
-        device = get_device()
+        device = as_device("cpu")
         multihots = torch.as_tensor(
             [
                 [1, 1, 1],

@@ -1,13 +1,25 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from torch.nn.modules import *
+"""Modules (classes) interface."""
+
+from torch.nn.modules import *  # type: ignore
 
 from .activation import LogSoftmaxMultidim, SoftmaxMultidim
+from .container import (
+    EModuleDict,
+    EModuleList,
+    EModulePartial,
+    ESequential,
+    ModuleDict,
+    ModuleList,
+    ModulePartial,
+    Sequential,
+)
 from .crop import CropDim, CropDims
 from .layer import PositionalEncoding
 from .mask import MaskedMean, MaskedSum
-from .mixins import EModule, EModuleDict, EModuleList, EModulePartial, ESequential
+from .module import EModule, Module
 from .multiclass import (
     IndexToName,
     IndexToOnehot,
@@ -38,7 +50,6 @@ from .tensor import (
     IFFT,
     Abs,
     Angle,
-    AsTensor,
     Exp,
     Exp2,
     Imag,
@@ -55,24 +66,29 @@ from .tensor import (
     Repeat,
     RepeatInterleave,
     Reshape,
-    Squeeze,
     TensorTo,
-    ToItem,
     ToList,
-    Topk,
     Transpose,
-    Unsqueeze,
     View,
 )
 from .transform import (
+    AsTensor,
     Flatten,
     Identity,
+    MoveToRec,
     PadAndCropDim,
     RepeatInterleaveNd,
     ResampleNearestFreqs,
     ResampleNearestRates,
     ResampleNearestSteps,
     Shuffled,
+    Squeeze,
+    ToItem,
+    Topk,
+    TopP,
     ToTensor,
     TransformDrop,
+    Unsqueeze,
+    ViewAsComplex,
+    ViewAsReal,
 )

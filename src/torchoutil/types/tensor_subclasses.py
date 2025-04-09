@@ -8,14 +8,19 @@ Note: torchoutil.FloatTensor != torch.FloatTensor but issubclass(torchoutil.Floa
 Here is an overview of the valid tensor subclasses tree:
                                                                             Tensor
                                                                               |
-                  +---------------------------------------+-------------------+-----------------------+-------------------------------------+
-                  |                                       |                                           |                                     |
-        ComplexFloatingTensor                       FloatingTensor                            SignedIntegerTensor                  UnsignedIntegerTensor
-                  |                                       |                                           |                                     |
-     +------------+------------+              +-----------+-----------+             +-----------+-----+-----+-----------+             +-----+-----+
-     |            |            |              |           |           |             |           |           |           |             |           |
-CHalfTensor CFloatTensor CDoubleTensor    HalfTensor FloatTensor DoubleTensor   CharTensor  ShortTensor  IntTensor  LongTensor    ByteTensor  BoolTensor
-   (c32)        (c64)       (c128)          (f16)       (f32)       (f64)          (i8)       (i16)       (i32)       (i64)          (u8)       (bool)
+                  +---------------------------------------+-------------------+------------------------------------+
+                  |                                       |                                                        |
+        ComplexFloatingTensor                       FloatingTensor                                           IntegralTensor
+                  |                                       |                                                        |
+     +------------+------------+              +-----------+-----------+                         +------------------+------------------+
+     |            |            |              |           |           |                         |                                     |
+CHalfTensor CFloatTensor CDoubleTensor    HalfTensor FloatTensor DoubleTensor          SignedIntegerTensor                  UnsignedIntegerTensor
+   (c32)        (c64)       (c128)          (f16)       (f32)       (f64)                       |                                     |
+                                                                              +-----------+-----+-----+-----------+             +-----+-----+
+                                                                              |           |           |           |             |           |
+                                                                          CharTensor  ShortTensor  IntTensor  LongTensor    ByteTensor  BoolTensor
+                                                                             (i8)       (i16)       (i32)       (i64)          (u8)       (bool)
+
 """
 
 from typing import (
@@ -37,30 +42,29 @@ from typing import (
 
 import torch
 from torch._C import _TensorMeta
-from torch.types import Device
+from torch.types import Device, _bool, _float, _int
 from typing_extensions import TypeVar
 
 from torchoutil.core.dtype_enum import DTypeEnum
-from torchoutil.core.get import DeviceLike, DTypeLike, get_device, get_dtype
-from torchoutil.nn import functional as F
+from torchoutil.core.make import DeviceLike, DTypeLike, as_device, as_dtype
 from torchoutil.pyoutil import BuiltinNumber, T_BuiltinNumber
 
 _DEFAULT_T_DTYPE = Literal[None]
-_DEFAULT_T_NDIM = int
-_DEFAULT_T_FLOATING = bool
-_DEFAULT_T_COMPLEX = bool
-_DEFAULT_T_SIGNED = bool
+_DEFAULT_T_NDIM = _int
+_DEFAULT_T_FLOATING = _bool
+_DEFAULT_T_COMPLEX = _bool
+_DEFAULT_T_SIGNED = _bool
 
 T_Tensor = TypeVar("T_Tensor", bound="_TensorNDBase")
 T_DType = TypeVar("T_DType", "DTypeEnum", None)
-T_NDim = TypeVar("T_NDim", bound=int)
-T_Floating = TypeVar("T_Floating", bound=bool)
-T_Complex = TypeVar("T_Complex", bound=bool)
-T_Signed = TypeVar("T_Signed", bound=bool)
+T_NDim = TypeVar("T_NDim", bound=_int)
+T_Floating = TypeVar("T_Floating", bound=_bool)
+T_Complex = TypeVar("T_Complex", bound=_bool)
+T_Signed = TypeVar("T_Signed", bound=_bool)
 
 _TORCH_BASE_CLASSES: Final[Dict[str, Type]] = {
     "float32": torch.FloatTensor,
-    "float": torch.FloatTensor,
+    "_float": torch.FloatTensor,
     "float64": torch.DoubleTensor,
     "double": torch.DoubleTensor,
     "float16": torch.HalfTensor,
@@ -68,27 +72,27 @@ _TORCH_BASE_CLASSES: Final[Dict[str, Type]] = {
     "int16": torch.ShortTensor,
     "short": torch.ShortTensor,
     "int32": torch.IntTensor,
-    "int": torch.IntTensor,
+    "_int": torch.IntTensor,
     "int64": torch.LongTensor,
     "long": torch.LongTensor,
-    "bool": torch.BoolTensor,
+    "_bool": torch.BoolTensor,
 }
 
 
 class _GenericsValues(NamedTuple):
     dtype: Optional[torch.dtype] = None
-    ndim: Optional[int] = None
-    is_floating_point: Optional[bool] = None
-    is_complex: Optional[bool] = None
-    is_signed: Optional[bool] = None
+    ndim: Optional[_int] = None
+    is_floating_point: Optional[_bool] = None
+    is_complex: Optional[_bool] = None
+    is_signed: Optional[_bool] = None
 
-    def is_compatible_with_tensor(self, tensor: torch.Tensor) -> bool:
+    def is_compatible_with_tensor(self, tensor: torch.Tensor) -> _bool:
         if self.ndim is not None and self.ndim != tensor.ndim:
             return False
         else:
             return self.is_compatible_with_dtype(tensor.dtype)
 
-    def is_compatible_with_dtype(self, dtype: torch.dtype) -> bool:
+    def is_compatible_with_dtype(self, dtype: torch.dtype) -> _bool:
         if self.dtype is not None:
             return self.dtype == dtype
 
@@ -99,7 +103,7 @@ class _GenericsValues(NamedTuple):
                 return False
         return True
 
-    def is_compatible_with_generic(self, other: "_GenericsValues") -> bool:
+    def is_compatible_with_generic(self, other: "_GenericsValues") -> _bool:
         for self_attr, other_attr in zip(self, other):
             if self_attr is not None and (
                 other_attr is None or self_attr != other_attr
@@ -109,7 +113,7 @@ class _GenericsValues(NamedTuple):
 
 
 def _get_generics(
-    cls: Union[Type["_TensorNDMeta"], Type["_TensorNDBase"]],
+    cls: Union["_TensorNDMeta", "_TensorNDBase"],
 ) -> _GenericsValues:
     if not hasattr(cls, "__orig_class__"):
         return _GenericsValues()
@@ -160,17 +164,19 @@ class _TensorNDMeta(
     Generic[T_DType, T_NDim, T_BuiltinNumber, T_Floating, T_Complex, T_Signed],
     _TensorMeta,
 ):
-    def __instancecheck__(cls, instance: Any) -> bool:
+    """Tensor metaclass with redefined instance check based on generic properties."""
+
+    def __instancecheck__(self, instance: Any) -> _bool:
         """Called method to check isinstance(instance, self)"""
         if not isinstance(instance, torch.Tensor):
             return False
 
-        gen = _get_generics(cls)
+        gen = _get_generics(self)
         return gen.is_compatible_with_tensor(instance)
 
-    def __subclasscheck__(cls, subclass: Any) -> bool:
+    def __subclasscheck__(self, subclass: Any) -> _bool:
         """Called method to check issubclass(subclass, cls)"""
-        self_generics = _get_generics(cls)
+        self_generics = _get_generics(self)
         other_generics = _get_generics(subclass)
         return self_generics.is_compatible_with_generic(other_generics)
 
@@ -179,19 +185,21 @@ class _TensorNDBase(
     Generic[T_DType, T_NDim, T_BuiltinNumber, T_Floating, T_Complex, T_Signed],
     torch.Tensor,
 ):
+    """Tensor base class with redefined constructor and overloaded methods."""
+
     _DEFAULT_DTYPE: ClassVar[Optional[DTypeEnum]] = None
 
     @overload
     def __new__(
         cls: Type[T_Tensor],
-        *dims: int,
+        *dims: _int,
         dtype: DTypeLike = None,
         device: DeviceLike = None,
         memory_format: Union[torch.memory_format, None] = None,
         out: Union[torch.Tensor, None] = None,
         layout: Union[torch.layout, None] = None,
-        pin_memory: Union[bool, None] = False,
-        requires_grad: Union[bool, None] = False,
+        pin_memory: Union[_bool, None] = False,
+        requires_grad: Union[_bool, None] = False,
     ) -> T_Tensor:
         ...
 
@@ -214,11 +222,11 @@ class _TensorNDBase(
         memory_format: Union[torch.memory_format, None] = None,
         out: Union[torch.Tensor, None] = None,
         layout: Union[torch.layout, None] = None,
-        pin_memory: Union[bool, None] = False,
-        requires_grad: Union[bool, None] = False,
+        pin_memory: Union[_bool, None] = False,
+        requires_grad: Union[_bool, None] = False,
     ) -> T_Tensor:
-        dtype = get_dtype(dtype)
-        device = get_device(device)
+        dtype = as_dtype(dtype)
+        device = as_device(device)
 
         gen = _get_generics(cls)  # type: ignore
         cls_dtype = gen.dtype
@@ -245,7 +253,7 @@ class _TensorNDBase(
             raise ValueError(msg)
 
         # Sanity checks for data and ndim
-        is_int_args = all(isinstance(arg, int) for arg in args)
+        is_int_args = all(isinstance(arg, _int) for arg in args)
         if cls_ndim is None:
             if len(args) == 0:
                 size = (0,)
@@ -253,7 +261,7 @@ class _TensorNDBase(
             elif is_int_args:
                 size = args
                 data = None
-            elif len(args) == 1 and not isinstance(args[0], int):
+            elif len(args) == 1 and not isinstance(args[0], _int):
                 size = None
                 data = args[0]
             else:
@@ -274,29 +282,29 @@ class _TensorNDBase(
             raise ValueError(msg)
         del args
 
-        if data is not None and cls_ndim is not None:
-            valid, ndim = F.ndim(data, return_valid=True)
-            if not valid:
-                msg = f"Invalid argument data in {cls.__name__}. (cannot compute ndim for heterogeneous number of dimensions)"
-                raise TypeError(msg)
-            elif ndim != cls_ndim:
-                msg = f"Invalid number of dimension(s) for argument data in {cls.__name__}. (found {ndim} but expected {cls_ndim})"
-                raise ValueError(msg)
-
-        if layout is None:  # supports older PyTorch versions
+        # Supports older PyTorch versions
+        if layout is None:
             layout = torch.strided
+        if pin_memory is None:
+            pin_memory = False
+        if requires_grad is None:
+            requires_grad = False
 
         if data is not None:
-            return torch.as_tensor(
+            result = torch.as_tensor(
                 data=data,
-                dtype=dtype,
+                dtype=dtype,  # type: ignore
                 device=device,
-            )  # type: ignore
+            )
+            if cls_ndim is not None and result.ndim != cls_ndim:
+                msg = f"Invalid number of dimension(s) for argument data in {cls.__name__}. (found {result.ndim} but expected {cls_ndim})"
+                raise ValueError(msg)
+            return result  # type: ignore
 
         elif size is not None:
             return torch.empty(
                 size,
-                dtype=dtype,
+                dtype=dtype,  # type: ignore
                 device=device,
                 memory_format=memory_format,
                 out=out,
@@ -312,14 +320,14 @@ class _TensorNDBase(
     @overload
     def __init__(
         self,
-        *dims: int,
+        *dims: _int,
         dtype: DTypeLike = None,
         device: DeviceLike = None,
         memory_format: Union[torch.memory_format, None] = None,
         out: Union[torch.Tensor, None] = None,
         layout: Union[torch.layout, None] = None,
-        pin_memory: Union[bool, None] = False,
-        requires_grad: Union[bool, None] = False,
+        pin_memory: Union[_bool, None] = False,
+        requires_grad: Union[_bool, None] = False,
     ) -> None:
         ...
 
@@ -342,45 +350,45 @@ class _TensorNDBase(
         memory_format: Union[torch.memory_format, None] = None,
         out: Union[torch.Tensor, None] = None,
         layout: Union[torch.layout, None] = None,
-        pin_memory: Union[bool, None] = False,
-        requires_grad: Union[bool, None] = False,
+        pin_memory: Union[_bool, None] = False,
+        requires_grad: Union[_bool, None] = False,
     ) -> None:
         ...
 
     @overload
-    def __eq__(self, other: Any) -> "BoolTensor":
+    def __eq__(self, other: Any) -> "BoolTensor":  # type: ignore
         ...
 
     @overload
-    def __getitem__(self: "Tensor1D", /, idx: int) -> "Tensor0D":
+    def __getitem__(self: "Tensor1D", idx: _int, /) -> "Tensor0D":  # type: ignore
         ...
 
     @overload
-    def __getitem__(self: "Tensor2D", /, idx: int) -> "Tensor1D":
+    def __getitem__(self: "Tensor2D", idx: _int, /) -> "Tensor1D":  # type: ignore
         ...
 
     @overload
-    def __getitem__(self: "Tensor3D", /, idx: int) -> "Tensor2D":
+    def __getitem__(self: "Tensor3D", idx: _int, /) -> "Tensor2D":  # type: ignore
         ...
 
     @overload
-    def __getitem__(self: "Tensor0D", /, idx: None) -> "Tensor1D":
+    def __getitem__(self: "Tensor0D", idx: None, /) -> "Tensor1D":  # type: ignore
         ...
 
     @overload
-    def __getitem__(self: "Tensor1D", /, idx: None) -> "Tensor2D":
+    def __getitem__(self: "Tensor1D", idx: None, /) -> "Tensor2D":  # type: ignore
         ...
 
     @overload
-    def __getitem__(self: "Tensor2D", /, idx: None) -> "Tensor3D":
+    def __getitem__(self: "Tensor2D", idx: None, /) -> "Tensor3D":  # type: ignore
         ...
 
     @overload
-    def __getitem__(self: "Tensor3D", /, idx: None) -> "Tensor":
+    def __getitem__(self: "Tensor3D", idx: None, /) -> "Tensor":  # type: ignore
         ...
 
     @overload
-    def __getitem__(self: T_Tensor, /, sl: slice) -> T_Tensor:
+    def __getitem__(self: T_Tensor, sl: slice, /) -> T_Tensor:
         ...
 
     @overload
@@ -388,15 +396,67 @@ class _TensorNDBase(
         ...
 
     @overload
-    def __ne__(self, other: Any) -> "BoolTensor":
+    def __ne__(self, other: Any) -> "BoolTensor":  # type: ignore
         ...
 
     @overload
-    def abs(self: T_Tensor) -> T_Tensor:
+    def abs(self: T_Tensor) -> T_Tensor:  # type: ignore
         ...
 
     @overload
-    def contiguous(self: T_Tensor) -> T_Tensor:
+    def absolute(self: T_Tensor) -> T_Tensor:  # type: ignore
+        ...
+
+    @overload
+    def acos(self: T_Tensor) -> T_Tensor:  # type: ignore
+        ...
+
+    @overload
+    def all(self, dim: Literal[None] = None) -> "BoolTensor0D":  # type: ignore
+        ...
+
+    @overload
+    def all(self, dim: Union[_int, Tuple[_int, ...]], keepdim: _bool = False) -> "BoolTensor":  # type: ignore
+        ...
+
+    @overload
+    def any(self, dim: Literal[None] = None) -> "BoolTensor0D":  # type: ignore
+        ...
+
+    @overload
+    def any(self, dim: Union[_int, Tuple[_int, ...]], keepdim: _bool = False) -> "BoolTensor":  # type: ignore
+        ...
+
+    @overload
+    def bool(self: T_Tensor) -> "BoolTensor":  # type: ignore
+        ...
+
+    @overload
+    def contiguous(self: T_Tensor) -> T_Tensor:  # type: ignore
+        ...
+
+    @overload
+    def double(self) -> "DoubleTensor":  # type: ignore
+        ...
+
+    @overload
+    def eq(self: T_Tensor, other: Union[torch.Tensor, BuiltinNumber]) -> "BoolTensor":  # type: ignore
+        ...
+
+    @overload
+    def equal(self: T_Tensor, other: torch.Tensor) -> _bool:  # type: ignore
+        ...
+
+    @overload
+    def float(self) -> "FloatTensor":  # type: ignore
+        ...
+
+    @overload
+    def half(self) -> "HalfTensor":  # type: ignore
+        ...
+
+    @overload
+    def int(self) -> "IntTensor":  # type: ignore
         ...
 
     @overload
@@ -412,91 +472,115 @@ class _TensorNDBase(
         ...
 
     @overload
+    def isfinite(self) -> "BoolTensor":  # type: ignore
+        ...
+
+    @overload
+    def isinf(self) -> "BoolTensor":  # type: ignore
+        ...
+
+    @overload
+    def isnan(self) -> "BoolTensor":  # type: ignore
+        ...
+
+    @overload
     def item(self) -> T_BuiltinNumber:  # type: ignore
         ...
 
     @overload
-    def mean(self, dim: Literal[None] = None) -> "Tensor0D":
+    def long(self) -> "LongTensor":  # type: ignore
         ...
 
     @overload
-    def mean(self: "Tensor1D", dim: int) -> "Tensor0D":
+    def mean(self, dim: Literal[None] = None) -> "Tensor0D":  # type: ignore
         ...
 
     @overload
-    def mean(self: "Tensor2D", dim: int) -> "Tensor1D":
+    def mean(self: "Tensor0D", dim: _int) -> "Tensor0D":
         ...
 
     @overload
-    def mean(self: "Tensor3D", dim: int) -> "Tensor2D":
+    def mean(self: "Tensor1D", dim: _int) -> "Tensor0D":  # type: ignore
         ...
 
     @overload
-    def mean(self, dim: Optional[int] = None) -> "Tensor":
+    def mean(self: "Tensor2D", dim: _int) -> "Tensor1D":  # type: ignore
         ...
 
     @overload
-    def reshape(self: T_Tensor, size: Tuple[()]) -> "Tensor0D":
+    def mean(self: "Tensor3D", dim: _int) -> "Tensor2D":  # type: ignore
         ...
 
     @overload
-    def reshape(self: T_Tensor, size: Tuple[int]) -> "Tensor1D":
+    def mean(self, dim: _int) -> "Tensor":  # type: ignore
         ...
 
     @overload
-    def reshape(self: T_Tensor, size: Tuple[int, int]) -> "Tensor2D":
+    def reshape(self, size: Tuple[()]) -> "Tensor0D":  # type: ignore
         ...
 
     @overload
-    def reshape(self: T_Tensor, size: Tuple[int, int, int]) -> "Tensor3D":
+    def reshape(self, size: Tuple[_int]) -> "Tensor1D":  # type: ignore
         ...
 
     @overload
-    def reshape(self: T_Tensor, size: Tuple[int, ...]) -> "Tensor":
+    def reshape(self, size: Tuple[_int, _int]) -> "Tensor2D":
         ...
 
     @overload
-    def reshape(self: T_Tensor, size0: int) -> "Tensor1D":
+    def reshape(self, size: Tuple[_int, _int, _int]) -> "Tensor3D":
         ...
 
     @overload
-    def reshape(self: T_Tensor, size0: int, size1: int) -> "Tensor2D":
+    def reshape(self, size: Tuple[_int, ...]) -> "Tensor":
         ...
 
     @overload
-    def reshape(self: T_Tensor, size0: int, size1: int, size2: int) -> "Tensor3D":
+    def reshape(self, size0: _int) -> "Tensor1D":
         ...
 
     @overload
-    def squeeze(self, dim: Optional[int] = None) -> "Tensor":
+    def reshape(self, size0: _int, size1: _int) -> "Tensor2D":
         ...
 
     @overload
-    def sum(self, dim: Literal[None] = None) -> "Tensor0D":
+    def reshape(self, size0: _int, size1: _int, size2: _int) -> "Tensor3D":  # type: ignore
         ...
 
     @overload
-    def sum(self: "Tensor1D", dim: int) -> "Tensor0D":
+    def short(self) -> "ShortTensor":  # type: ignore
         ...
 
     @overload
-    def sum(self: "Tensor2D", dim: int) -> "Tensor1D":
+    def squeeze(self, dim: Optional[_int] = None) -> "Tensor":  # type: ignore
         ...
 
     @overload
-    def sum(self: "Tensor3D", dim: int) -> "Tensor2D":
+    def sum(self, dim: Literal[None] = None) -> "Tensor0D":  # type: ignore
         ...
 
     @overload
-    def sum(self, dim: Optional[int] = None) -> "Tensor":
+    def sum(self: "Tensor1D", dim: _int) -> "Tensor0D":
         ...
 
     @overload
-    def to(
+    def sum(self: "Tensor2D", dim: _int) -> "Tensor1D":  # type: ignore
+        ...
+
+    @overload
+    def sum(self: "Tensor3D", dim: _int) -> "Tensor2D":  # type: ignore
+        ...
+
+    @overload
+    def sum(self, dim: Optional[_int] = None) -> "Tensor":  # type: ignore
+        ...
+
+    @overload
+    def to(  # type: ignore
         self: T_Tensor,
         dtype: Optional[torch.dtype] = None,
-        non_blocking: bool = False,
-        copy: bool = False,
+        non_blocking: _bool = False,
+        copy: _bool = False,
         *,
         memory_format: Optional[torch.memory_format] = None,
     ) -> T_Tensor:
@@ -507,8 +591,8 @@ class _TensorNDBase(
         self: T_Tensor,
         device: Device = None,
         dtype: Optional[torch.dtype] = None,
-        non_blocking: bool = False,
-        copy: bool = False,
+        non_blocking: _bool = False,
+        copy: _bool = False,
         *,
         memory_format: Optional[torch.memory_format] = None,
     ) -> T_Tensor:
@@ -518,8 +602,8 @@ class _TensorNDBase(
     def to(
         self,
         other: T_Tensor,
-        non_blocking: bool = False,
-        copy: bool = False,
+        non_blocking: _bool = False,
+        copy: _bool = False,
         *,
         memory_format: Optional[torch.memory_format] = None,
     ) -> T_Tensor:
@@ -530,126 +614,159 @@ class _TensorNDBase(
         ...
 
     @overload
-    def unsqueeze(self: "Tensor0D", dim: int) -> "Tensor1D":
+    def unsqueeze(self: "Tensor0D", dim: _int) -> "Tensor1D":  # type: ignore
         ...
 
     @overload
-    def unsqueeze(self: "Tensor1D", dim: int) -> "Tensor2D":
+    def unsqueeze(self: "Tensor1D", dim: _int) -> "Tensor2D":  # type: ignore
         ...
 
     @overload
-    def unsqueeze(self: "Tensor2D", dim: int) -> "Tensor3D":
+    def unsqueeze(self: "Tensor2D", dim: _int) -> "Tensor3D":  # type: ignore
         ...
 
     @overload
-    def unsqueeze(self, dim: int) -> "Tensor":
+    def unsqueeze(self, dim: _int) -> "Tensor":  # type: ignore
         ...
 
     @overload
-    def view(self: T_Tensor, size: Tuple[()]) -> "Tensor0D":
+    def view(self, size: Tuple[()]) -> "Tensor0D":  # type: ignore
         ...
 
     @overload
-    def view(self: T_Tensor, size: Tuple[int]) -> "Tensor1D":
+    def view(self, size: Tuple[_int]) -> "Tensor1D":  # type: ignore
         ...
 
     @overload
-    def view(self: T_Tensor, size: Tuple[int, int]) -> "Tensor2D":
+    def view(self, size: Tuple[_int, _int]) -> "Tensor2D":
         ...
 
     @overload
-    def view(self: T_Tensor, size: Tuple[int, int, int]) -> "Tensor3D":
+    def view(self, size: Tuple[_int, _int, _int]) -> "Tensor3D":
         ...
 
     @overload
-    def view(self: T_Tensor, size: Tuple[int, ...]) -> "Tensor":
+    def view(self, size: Tuple[_int, ...]) -> "Tensor":
         ...
 
     @overload
-    def view(self: T_Tensor, size0: int) -> "Tensor1D":
+    def view(self, size0: _int) -> "Tensor1D":
         ...
 
     @overload
-    def view(self: T_Tensor, size0: int, size1: int) -> "Tensor2D":
+    def view(self, size0: _int, size1: _int) -> "Tensor2D":
         ...
 
     @overload
-    def view(self: T_Tensor, size0: int, size1: int, size2: int) -> "Tensor3D":
+    def view(self, size0: _int, size1: _int, size2: _int) -> "Tensor3D":
         ...
 
     @overload
-    def view(self, dtype: torch.dtype) -> "Tensor":
+    def view(self, *size: _int) -> "Tensor":  # type: ignore
+        ...
+
+    @overload
+    def view(self, dtype: torch.dtype) -> "Tensor":  # type: ignore
         ...
 
     ndim: T_NDim  # type: ignore
 
-    __eq__ = torch.Tensor.__eq__  # noqa: F811
-    __getitem__ = torch.Tensor.__getitem__  # noqa: F811
-    __ne__ = torch.Tensor.__ne__  # noqa: F811
-    abs = torch.Tensor.abs  # noqa: F811
-    contiguous = torch.Tensor.contiguous  # noqa: F811
-    is_complex = torch.Tensor.is_complex  # noqa: F811
-    is_floating_point = torch.Tensor.is_floating_point  # noqa: F811
-    is_signed = torch.Tensor.is_signed  # noqa: F811
+    __eq__ = torch.Tensor.__eq__  # noqa: F811  # type: ignore
+    __getitem__ = torch.Tensor.__getitem__  # noqa: F811  # type: ignore
+    __ne__ = torch.Tensor.__ne__  # noqa: F811  # type: ignore
+    abs = torch.Tensor.abs  # noqa: F811  # type: ignore
+    absolute = torch.Tensor.absolute  # noqa: F811  # type: ignore
+    acos = torch.Tensor.acos  # noqa: F811  # type: ignore
+    all = torch.Tensor.all  # noqa: F811  # type: ignore
+    any = torch.Tensor.any  # noqa: F811  # type: ignore
+    bool = torch.Tensor.bool  # noqa: F811  # type: ignore
+    contiguous = torch.Tensor.contiguous  # noqa: F811  # type: ignore
+    double = torch.Tensor.double  # noqa: F811  # type: ignore
+    eq = torch.Tensor.eq  # noqa: F811  # type: ignore
+    equal = torch.Tensor.equal  # noqa: F811  # type: ignore
+    float = torch.Tensor.float  # noqa: F811  # type: ignore
+    half = torch.Tensor.half  # noqa: F811  # type: ignore
+    is_complex = torch.Tensor.is_complex  # noqa: F811  # type: ignore
+    is_floating_point = torch.Tensor.is_floating_point  # noqa: F811  # type: ignore
+    is_signed = torch.Tensor.is_signed  # noqa: F811  # type: ignore
+    isfinite = torch.Tensor.isfinite  # noqa: F811  # type: ignore
+    isinf = torch.Tensor.isinf  # noqa: F811  # type: ignore
+    isnan = torch.Tensor.isnan  # noqa: F811  # type: ignore
+    int = torch.Tensor.int  # noqa: F811  # type: ignore
     item = torch.Tensor.item  # noqa: F811  # type: ignore
-    mean = torch.Tensor.mean  # noqa: F811
-    reshape = torch.Tensor.reshape  # noqa: F811
-    squeeze = torch.Tensor.squeeze  # noqa: F811
-    sum = torch.Tensor.sum  # noqa: F811
-    to = torch.Tensor.to  # noqa: F811
-    tolist = torch.Tensor.tolist  # noqa: F811
-    unsqueeze = torch.Tensor.unsqueeze  # noqa: F811
-    view = torch.Tensor.view  # noqa: F811
+    long = torch.Tensor.long  # noqa: F811  # type: ignore
+    mean = torch.Tensor.mean  # noqa: F811  # type: ignore
+    reshape = torch.Tensor.reshape  # noqa: F811  # type: ignore
+    short = torch.Tensor.short  # noqa: F811  # type: ignore
+    squeeze = torch.Tensor.squeeze  # noqa: F811  # type: ignore
+    sum = torch.Tensor.sum  # noqa: F811  # type: ignore
+    to = torch.Tensor.to  # noqa: F811  # type: ignore
+    tolist = torch.Tensor.tolist  # noqa: F811  # type: ignore
+    unsqueeze = torch.Tensor.unsqueeze  # noqa: F811  # type: ignore
+    view = torch.Tensor.view  # noqa: F811  # type: ignore
 
 
 class Tensor(
-    _TensorNDBase[Literal[None], int, BuiltinNumber, bool, bool, bool],
-    metaclass=_TensorNDMeta[Literal[None], int, BuiltinNumber, bool, bool, bool],
+    _TensorNDBase[Literal[None], _int, BuiltinNumber, _bool, _bool, _bool],
+    metaclass=_TensorNDMeta[Literal[None], _int, BuiltinNumber, _bool, _bool, _bool],
 ):
     ...
 
 
 class Tensor0D(
-    _TensorNDBase[Literal[None], Literal[0], BuiltinNumber, bool, bool, bool],
-    metaclass=_TensorNDMeta[Literal[None], Literal[0], BuiltinNumber, bool, bool, bool],
+    _TensorNDBase[Literal[None], Literal[0], BuiltinNumber, _bool, _bool, _bool],
+    metaclass=_TensorNDMeta[
+        Literal[None], Literal[0], BuiltinNumber, _bool, _bool, _bool
+    ],
 ):
     ...
 
 
 class Tensor1D(
-    _TensorNDBase[Literal[None], Literal[1], BuiltinNumber, bool, bool, bool],
-    metaclass=_TensorNDMeta[Literal[None], Literal[1], BuiltinNumber, bool, bool, bool],
+    _TensorNDBase[Literal[None], Literal[1], BuiltinNumber, _bool, _bool, _bool],
+    metaclass=_TensorNDMeta[
+        Literal[None], Literal[1], BuiltinNumber, _bool, _bool, _bool
+    ],
 ):
     ...
 
 
 class Tensor2D(
-    _TensorNDBase[Literal[None], Literal[2], BuiltinNumber, bool, bool, bool],
-    metaclass=_TensorNDMeta[Literal[None], Literal[2], BuiltinNumber, bool, bool, bool],
+    _TensorNDBase[Literal[None], Literal[2], BuiltinNumber, _bool, _bool, _bool],
+    metaclass=_TensorNDMeta[
+        Literal[None], Literal[2], BuiltinNumber, _bool, _bool, _bool
+    ],
 ):
     ...
 
 
 class Tensor3D(
-    _TensorNDBase[Literal[None], Literal[3], BuiltinNumber, bool, bool, bool],
-    metaclass=_TensorNDMeta[Literal[None], Literal[3], BuiltinNumber, bool, bool, bool],
+    _TensorNDBase[Literal[None], Literal[3], BuiltinNumber, _bool, _bool, _bool],
+    metaclass=_TensorNDMeta[
+        Literal[None], Literal[3], BuiltinNumber, _bool, _bool, _bool
+    ],
 ):
     ...
+
+
+# ----------------------------------------
+# Concrete classes
+# ----------------------------------------
 
 
 class BoolTensor(
     _TensorNDBase[
         Literal[DTypeEnum.bool],
-        int,
-        bool,
+        _int,
+        _bool,
         Literal[False],
         Literal[False],
         Literal[False],
     ],
     metaclass=_TensorNDMeta[
         Literal[DTypeEnum.bool],
-        int,
-        bool,
+        _int,
+        _bool,
         Literal[False],
         Literal[False],
         Literal[False],
@@ -662,7 +779,7 @@ class BoolTensor0D(
     _TensorNDBase[
         Literal[DTypeEnum.bool],
         Literal[0],
-        bool,
+        _bool,
         Literal[False],
         Literal[False],
         Literal[False],
@@ -670,13 +787,13 @@ class BoolTensor0D(
     metaclass=_TensorNDMeta[
         Literal[DTypeEnum.bool],
         Literal[0],
-        bool,
+        _bool,
         Literal[False],
         Literal[False],
         Literal[False],
     ],
 ):
-    def tolist(self) -> bool:
+    def tolist(self) -> _bool:
         return super().tolist()  # type: ignore
 
 
@@ -684,7 +801,7 @@ class BoolTensor1D(
     _TensorNDBase[
         Literal[DTypeEnum.bool],
         Literal[1],
-        bool,
+        _bool,
         Literal[False],
         Literal[False],
         Literal[False],
@@ -692,13 +809,13 @@ class BoolTensor1D(
     metaclass=_TensorNDMeta[
         Literal[DTypeEnum.bool],
         Literal[1],
-        bool,
+        _bool,
         Literal[False],
         Literal[False],
         Literal[False],
     ],
 ):
-    def tolist(self) -> List[bool]:
+    def tolist(self) -> List[_bool]:
         return super().tolist()  # type: ignore
 
 
@@ -706,7 +823,7 @@ class BoolTensor2D(
     _TensorNDBase[
         Literal[DTypeEnum.bool],
         Literal[2],
-        bool,
+        _bool,
         Literal[False],
         Literal[False],
         Literal[False],
@@ -714,13 +831,13 @@ class BoolTensor2D(
     metaclass=_TensorNDMeta[
         Literal[DTypeEnum.bool],
         Literal[2],
-        bool,
+        _bool,
         Literal[False],
         Literal[False],
         Literal[False],
     ],
 ):
-    def tolist(self) -> List[List[bool]]:
+    def tolist(self) -> List[List[_bool]]:
         return super().tolist()  # type: ignore
 
 
@@ -728,7 +845,7 @@ class BoolTensor3D(
     _TensorNDBase[
         Literal[DTypeEnum.bool],
         Literal[3],
-        bool,
+        _bool,
         Literal[False],
         Literal[False],
         Literal[False],
@@ -736,29 +853,29 @@ class BoolTensor3D(
     metaclass=_TensorNDMeta[
         Literal[DTypeEnum.bool],
         Literal[3],
-        bool,
+        _bool,
         Literal[False],
         Literal[False],
         Literal[False],
     ],
 ):
-    def tolist(self) -> List[List[List[bool]]]:
+    def tolist(self) -> List[List[List[_bool]]]:
         return super().tolist()  # type: ignore
 
 
 class ByteTensor(
     _TensorNDBase[
         Literal[DTypeEnum.uint8],
-        int,
-        int,
+        _int,
+        _int,
         Literal[False],
         Literal[False],
         Literal[False],
     ],
     metaclass=_TensorNDMeta[
         Literal[DTypeEnum.uint8],
-        int,
-        int,
+        _int,
+        _int,
         Literal[False],
         Literal[False],
         Literal[False],
@@ -771,7 +888,7 @@ class ByteTensor0D(
     _TensorNDBase[
         Literal[DTypeEnum.uint8],
         Literal[0],
-        int,
+        _int,
         Literal[False],
         Literal[False],
         Literal[False],
@@ -779,13 +896,13 @@ class ByteTensor0D(
     metaclass=_TensorNDMeta[
         Literal[DTypeEnum.uint8],
         Literal[0],
-        int,
+        _int,
         Literal[False],
         Literal[False],
         Literal[False],
     ],
 ):
-    def tolist(self) -> int:
+    def tolist(self) -> _int:
         return super().tolist()  # type: ignore
 
 
@@ -793,7 +910,7 @@ class ByteTensor1D(
     _TensorNDBase[
         Literal[DTypeEnum.uint8],
         Literal[1],
-        int,
+        _int,
         Literal[False],
         Literal[False],
         Literal[False],
@@ -801,13 +918,13 @@ class ByteTensor1D(
     metaclass=_TensorNDMeta[
         Literal[DTypeEnum.uint8],
         Literal[1],
-        int,
+        _int,
         Literal[False],
         Literal[False],
         Literal[False],
     ],
 ):
-    def tolist(self) -> List[int]:
+    def tolist(self) -> List[_int]:
         return super().tolist()  # type: ignore
 
 
@@ -815,7 +932,7 @@ class ByteTensor2D(
     _TensorNDBase[
         Literal[DTypeEnum.uint8],
         Literal[2],
-        int,
+        _int,
         Literal[False],
         Literal[False],
         Literal[False],
@@ -823,13 +940,13 @@ class ByteTensor2D(
     metaclass=_TensorNDMeta[
         Literal[DTypeEnum.uint8],
         Literal[2],
-        int,
+        _int,
         Literal[False],
         Literal[False],
         Literal[False],
     ],
 ):
-    def tolist(self) -> List[List[int]]:
+    def tolist(self) -> List[List[_int]]:
         return super().tolist()  # type: ignore
 
 
@@ -837,7 +954,7 @@ class ByteTensor3D(
     _TensorNDBase[
         Literal[DTypeEnum.uint8],
         Literal[3],
-        int,
+        _int,
         Literal[False],
         Literal[False],
         Literal[False],
@@ -845,29 +962,29 @@ class ByteTensor3D(
     metaclass=_TensorNDMeta[
         Literal[DTypeEnum.uint8],
         Literal[3],
-        int,
+        _int,
         Literal[False],
         Literal[False],
         Literal[False],
     ],
 ):
-    def tolist(self) -> List[List[List[int]]]:
+    def tolist(self) -> List[List[List[_int]]]:
         return super().tolist()  # type: ignore
 
 
 class CharTensor(
     _TensorNDBase[
         Literal[DTypeEnum.int8],
-        int,
-        int,
+        _int,
+        _int,
         Literal[False],
         Literal[False],
         Literal[True],
     ],
     metaclass=_TensorNDMeta[
         Literal[DTypeEnum.int8],
-        int,
-        int,
+        _int,
+        _int,
         Literal[False],
         Literal[False],
         Literal[True],
@@ -880,7 +997,7 @@ class CharTensor0D(
     _TensorNDBase[
         Literal[DTypeEnum.int8],
         Literal[0],
-        int,
+        _int,
         Literal[False],
         Literal[False],
         Literal[True],
@@ -888,13 +1005,13 @@ class CharTensor0D(
     metaclass=_TensorNDMeta[
         Literal[DTypeEnum.int8],
         Literal[0],
-        int,
+        _int,
         Literal[False],
         Literal[False],
         Literal[True],
     ],
 ):
-    def tolist(self) -> int:
+    def tolist(self) -> _int:
         return super().tolist()  # type: ignore
 
 
@@ -902,7 +1019,7 @@ class CharTensor1D(
     _TensorNDBase[
         Literal[DTypeEnum.int8],
         Literal[1],
-        int,
+        _int,
         Literal[False],
         Literal[False],
         Literal[True],
@@ -910,13 +1027,13 @@ class CharTensor1D(
     metaclass=_TensorNDMeta[
         Literal[DTypeEnum.int8],
         Literal[1],
-        int,
+        _int,
         Literal[False],
         Literal[False],
         Literal[True],
     ],
 ):
-    def tolist(self) -> List[int]:
+    def tolist(self) -> List[_int]:
         return super().tolist()  # type: ignore
 
 
@@ -924,7 +1041,7 @@ class CharTensor2D(
     _TensorNDBase[
         Literal[DTypeEnum.int8],
         Literal[2],
-        int,
+        _int,
         Literal[False],
         Literal[False],
         Literal[True],
@@ -932,13 +1049,13 @@ class CharTensor2D(
     metaclass=_TensorNDMeta[
         Literal[DTypeEnum.int8],
         Literal[2],
-        int,
+        _int,
         Literal[False],
         Literal[False],
         Literal[True],
     ],
 ):
-    def tolist(self) -> List[List[int]]:
+    def tolist(self) -> List[List[_int]]:
         return super().tolist()  # type: ignore
 
 
@@ -946,7 +1063,7 @@ class CharTensor3D(
     _TensorNDBase[
         Literal[DTypeEnum.int8],
         Literal[3],
-        int,
+        _int,
         Literal[False],
         Literal[False],
         Literal[True],
@@ -954,29 +1071,29 @@ class CharTensor3D(
     metaclass=_TensorNDMeta[
         Literal[DTypeEnum.int8],
         Literal[3],
-        int,
+        _int,
         Literal[False],
         Literal[False],
         Literal[True],
     ],
 ):
-    def tolist(self) -> List[List[List[int]]]:
+    def tolist(self) -> List[List[List[_int]]]:
         return super().tolist()  # type: ignore
 
 
 class DoubleTensor(
     _TensorNDBase[
         Literal[DTypeEnum.double],
-        int,
-        float,
+        _int,
+        _float,
         Literal[True],
         Literal[False],
         Literal[True],
     ],
     metaclass=_TensorNDMeta[
         Literal[DTypeEnum.double],
-        int,
-        float,
+        _int,
+        _float,
         Literal[True],
         Literal[False],
         Literal[True],
@@ -989,7 +1106,7 @@ class DoubleTensor0D(
     _TensorNDBase[
         Literal[DTypeEnum.double],
         Literal[0],
-        float,
+        _float,
         Literal[True],
         Literal[False],
         Literal[True],
@@ -997,13 +1114,13 @@ class DoubleTensor0D(
     metaclass=_TensorNDMeta[
         Literal[DTypeEnum.double],
         Literal[0],
-        float,
+        _float,
         Literal[True],
         Literal[False],
         Literal[True],
     ],
 ):
-    def tolist(self) -> float:
+    def tolist(self) -> _float:
         return super().tolist()  # type: ignore
 
 
@@ -1011,7 +1128,7 @@ class DoubleTensor1D(
     _TensorNDBase[
         Literal[DTypeEnum.double],
         Literal[1],
-        float,
+        _float,
         Literal[True],
         Literal[False],
         Literal[True],
@@ -1019,13 +1136,13 @@ class DoubleTensor1D(
     metaclass=_TensorNDMeta[
         Literal[DTypeEnum.double],
         Literal[1],
-        float,
+        _float,
         Literal[True],
         Literal[False],
         Literal[True],
     ],
 ):
-    def tolist(self) -> List[float]:
+    def tolist(self) -> List[_float]:
         return super().tolist()  # type: ignore
 
 
@@ -1033,7 +1150,7 @@ class DoubleTensor2D(
     _TensorNDBase[
         Literal[DTypeEnum.double],
         Literal[2],
-        float,
+        _float,
         Literal[True],
         Literal[False],
         Literal[True],
@@ -1041,13 +1158,13 @@ class DoubleTensor2D(
     metaclass=_TensorNDMeta[
         Literal[DTypeEnum.double],
         Literal[2],
-        float,
+        _float,
         Literal[True],
         Literal[False],
         Literal[True],
     ],
 ):
-    def tolist(self) -> List[List[float]]:
+    def tolist(self) -> List[List[_float]]:
         return super().tolist()  # type: ignore
 
 
@@ -1055,7 +1172,7 @@ class DoubleTensor3D(
     _TensorNDBase[
         Literal[DTypeEnum.double],
         Literal[3],
-        float,
+        _float,
         Literal[True],
         Literal[False],
         Literal[True],
@@ -1063,29 +1180,29 @@ class DoubleTensor3D(
     metaclass=_TensorNDMeta[
         Literal[DTypeEnum.double],
         Literal[3],
-        float,
+        _float,
         Literal[True],
         Literal[False],
         Literal[True],
     ],
 ):
-    def tolist(self) -> List[List[List[float]]]:
+    def tolist(self) -> List[List[List[_float]]]:
         return super().tolist()  # type: ignore
 
 
 class FloatTensor(
     _TensorNDBase[
         Literal[DTypeEnum.float],
-        int,
-        float,
+        _int,
+        _float,
         Literal[True],
         Literal[False],
         Literal[True],
     ],
     metaclass=_TensorNDMeta[
         Literal[DTypeEnum.float],
-        int,
-        float,
+        _int,
+        _float,
         Literal[True],
         Literal[False],
         Literal[True],
@@ -1098,7 +1215,7 @@ class FloatTensor0D(
     _TensorNDBase[
         Literal[DTypeEnum.float],
         Literal[0],
-        float,
+        _float,
         Literal[True],
         Literal[False],
         Literal[True],
@@ -1106,7 +1223,7 @@ class FloatTensor0D(
     metaclass=_TensorNDMeta[
         Literal[DTypeEnum.float],
         Literal[0],
-        float,
+        _float,
         Literal[True],
         Literal[False],
         Literal[True],
@@ -1119,7 +1236,7 @@ class FloatTensor1D(
     _TensorNDBase[
         Literal[DTypeEnum.float],
         Literal[1],
-        float,
+        _float,
         Literal[True],
         Literal[False],
         Literal[True],
@@ -1127,13 +1244,13 @@ class FloatTensor1D(
     metaclass=_TensorNDMeta[
         Literal[DTypeEnum.float],
         Literal[1],
-        float,
+        _float,
         Literal[True],
         Literal[False],
         Literal[True],
     ],
 ):
-    def tolist(self) -> List[float]:
+    def tolist(self) -> List[_float]:
         return super().tolist()  # type: ignore
 
 
@@ -1141,7 +1258,7 @@ class FloatTensor2D(
     _TensorNDBase[
         Literal[DTypeEnum.float],
         Literal[2],
-        float,
+        _float,
         Literal[True],
         Literal[False],
         Literal[True],
@@ -1149,13 +1266,13 @@ class FloatTensor2D(
     metaclass=_TensorNDMeta[
         Literal[DTypeEnum.float],
         Literal[2],
-        float,
+        _float,
         Literal[True],
         Literal[False],
         Literal[True],
     ],
 ):
-    def tolist(self) -> List[List[float]]:
+    def tolist(self) -> List[List[_float]]:
         return super().tolist()  # type: ignore
 
 
@@ -1163,7 +1280,7 @@ class FloatTensor3D(
     _TensorNDBase[
         Literal[DTypeEnum.float],
         Literal[3],
-        float,
+        _float,
         Literal[True],
         Literal[False],
         Literal[True],
@@ -1171,29 +1288,29 @@ class FloatTensor3D(
     metaclass=_TensorNDMeta[
         Literal[DTypeEnum.float],
         Literal[3],
-        float,
+        _float,
         Literal[True],
         Literal[False],
         Literal[True],
     ],
 ):
-    def tolist(self) -> List[List[List[float]]]:
+    def tolist(self) -> List[List[List[_float]]]:
         return super().tolist()  # type: ignore
 
 
 class HalfTensor(
     _TensorNDBase[
         Literal[DTypeEnum.half],
-        int,
-        float,
+        _int,
+        _float,
         Literal[True],
         Literal[False],
         Literal[True],
     ],
     metaclass=_TensorNDMeta[
         Literal[DTypeEnum.half],
-        int,
-        float,
+        _int,
+        _float,
         Literal[True],
         Literal[False],
         Literal[True],
@@ -1206,7 +1323,7 @@ class HalfTensor0D(
     _TensorNDBase[
         Literal[DTypeEnum.half],
         Literal[0],
-        float,
+        _float,
         Literal[True],
         Literal[False],
         Literal[True],
@@ -1214,13 +1331,13 @@ class HalfTensor0D(
     metaclass=_TensorNDMeta[
         Literal[DTypeEnum.half],
         Literal[0],
-        float,
+        _float,
         Literal[True],
         Literal[False],
         Literal[True],
     ],
 ):
-    def tolist(self) -> float:
+    def tolist(self) -> _float:
         return super().tolist()  # type: ignore
 
 
@@ -1228,7 +1345,7 @@ class HalfTensor1D(
     _TensorNDBase[
         Literal[DTypeEnum.half],
         Literal[1],
-        float,
+        _float,
         Literal[True],
         Literal[False],
         Literal[True],
@@ -1236,13 +1353,13 @@ class HalfTensor1D(
     metaclass=_TensorNDMeta[
         Literal[DTypeEnum.half],
         Literal[1],
-        float,
+        _float,
         Literal[True],
         Literal[False],
         Literal[True],
     ],
 ):
-    def tolist(self) -> List[float]:
+    def tolist(self) -> List[_float]:
         return super().tolist()  # type: ignore
 
 
@@ -1250,7 +1367,7 @@ class HalfTensor2D(
     _TensorNDBase[
         Literal[DTypeEnum.half],
         Literal[2],
-        float,
+        _float,
         Literal[True],
         Literal[False],
         Literal[True],
@@ -1258,13 +1375,13 @@ class HalfTensor2D(
     metaclass=_TensorNDMeta[
         Literal[DTypeEnum.half],
         Literal[2],
-        float,
+        _float,
         Literal[True],
         Literal[False],
         Literal[True],
     ],
 ):
-    def tolist(self) -> List[List[float]]:
+    def tolist(self) -> List[List[_float]]:
         return super().tolist()  # type: ignore
 
 
@@ -1272,7 +1389,7 @@ class HalfTensor3D(
     _TensorNDBase[
         Literal[DTypeEnum.half],
         Literal[3],
-        float,
+        _float,
         Literal[True],
         Literal[False],
         Literal[True],
@@ -1280,22 +1397,32 @@ class HalfTensor3D(
     metaclass=_TensorNDMeta[
         Literal[DTypeEnum.half],
         Literal[3],
-        float,
+        _float,
         Literal[True],
         Literal[False],
         Literal[True],
     ],
 ):
-    def tolist(self) -> List[List[List[float]]]:
+    def tolist(self) -> List[List[List[_float]]]:
         return super().tolist()  # type: ignore
 
 
 class IntTensor(
     _TensorNDBase[
-        Literal[DTypeEnum.int], int, int, Literal[False], Literal[False], Literal[True]
+        Literal[DTypeEnum.int],
+        _int,
+        _int,
+        Literal[False],
+        Literal[False],
+        Literal[True],
     ],
     metaclass=_TensorNDMeta[
-        Literal[DTypeEnum.int], int, int, Literal[False], Literal[False], Literal[True]
+        Literal[DTypeEnum.int],
+        _int,
+        _int,
+        Literal[False],
+        Literal[False],
+        Literal[True],
     ],
 ):
     ...
@@ -1305,7 +1432,7 @@ class IntTensor0D(
     _TensorNDBase[
         Literal[DTypeEnum.int],
         Literal[0],
-        int,
+        _int,
         Literal[False],
         Literal[False],
         Literal[True],
@@ -1313,13 +1440,13 @@ class IntTensor0D(
     metaclass=_TensorNDMeta[
         Literal[DTypeEnum.int],
         Literal[0],
-        int,
+        _int,
         Literal[False],
         Literal[False],
         Literal[True],
     ],
 ):
-    def tolist(self) -> int:
+    def tolist(self) -> _int:
         return super().tolist()  # type: ignore
 
 
@@ -1327,7 +1454,7 @@ class IntTensor1D(
     _TensorNDBase[
         Literal[DTypeEnum.int],
         Literal[1],
-        int,
+        _int,
         Literal[False],
         Literal[False],
         Literal[True],
@@ -1335,13 +1462,13 @@ class IntTensor1D(
     metaclass=_TensorNDMeta[
         Literal[DTypeEnum.int],
         Literal[1],
-        int,
+        _int,
         Literal[False],
         Literal[False],
         Literal[True],
     ],
 ):
-    def tolist(self) -> List[int]:
+    def tolist(self) -> List[_int]:
         return super().tolist()  # type: ignore
 
 
@@ -1349,7 +1476,7 @@ class IntTensor2D(
     _TensorNDBase[
         Literal[DTypeEnum.int],
         Literal[2],
-        int,
+        _int,
         Literal[False],
         Literal[False],
         Literal[True],
@@ -1357,13 +1484,13 @@ class IntTensor2D(
     metaclass=_TensorNDMeta[
         Literal[DTypeEnum.int],
         Literal[2],
-        int,
+        _int,
         Literal[False],
         Literal[False],
         Literal[True],
     ],
 ):
-    def tolist(self) -> List[List[int]]:
+    def tolist(self) -> List[List[_int]]:
         return super().tolist()  # type: ignore
 
 
@@ -1371,7 +1498,7 @@ class IntTensor3D(
     _TensorNDBase[
         Literal[DTypeEnum.int],
         Literal[3],
-        int,
+        _int,
         Literal[False],
         Literal[False],
         Literal[True],
@@ -1379,22 +1506,32 @@ class IntTensor3D(
     metaclass=_TensorNDMeta[
         Literal[DTypeEnum.int],
         Literal[3],
-        int,
+        _int,
         Literal[False],
         Literal[False],
         Literal[True],
     ],
 ):
-    def tolist(self) -> List[List[List[int]]]:
+    def tolist(self) -> List[List[List[_int]]]:
         return super().tolist()  # type: ignore
 
 
 class LongTensor(
     _TensorNDBase[
-        Literal[DTypeEnum.long], int, int, Literal[False], Literal[False], Literal[True]
+        Literal[DTypeEnum.long],
+        _int,
+        _int,
+        Literal[False],
+        Literal[False],
+        Literal[True],
     ],
     metaclass=_TensorNDMeta[
-        Literal[DTypeEnum.long], int, int, Literal[False], Literal[False], Literal[True]
+        Literal[DTypeEnum.long],
+        _int,
+        _int,
+        Literal[False],
+        Literal[False],
+        Literal[True],
     ],
 ):
     ...
@@ -1404,7 +1541,7 @@ class LongTensor0D(
     _TensorNDBase[
         Literal[DTypeEnum.long],
         Literal[0],
-        int,
+        _int,
         Literal[False],
         Literal[False],
         Literal[True],
@@ -1412,13 +1549,13 @@ class LongTensor0D(
     metaclass=_TensorNDMeta[
         Literal[DTypeEnum.long],
         Literal[0],
-        int,
+        _int,
         Literal[False],
         Literal[False],
         Literal[True],
     ],
 ):
-    def tolist(self) -> int:
+    def tolist(self) -> _int:
         return super().tolist()  # type: ignore
 
 
@@ -1426,7 +1563,7 @@ class LongTensor1D(
     _TensorNDBase[
         Literal[DTypeEnum.long],
         Literal[1],
-        int,
+        _int,
         Literal[False],
         Literal[False],
         Literal[True],
@@ -1434,13 +1571,13 @@ class LongTensor1D(
     metaclass=_TensorNDMeta[
         Literal[DTypeEnum.long],
         Literal[1],
-        int,
+        _int,
         Literal[False],
         Literal[False],
         Literal[True],
     ],
 ):
-    def tolist(self) -> List[int]:
+    def tolist(self) -> List[_int]:
         return super().tolist()  # type: ignore
 
 
@@ -1448,7 +1585,7 @@ class LongTensor2D(
     _TensorNDBase[
         Literal[DTypeEnum.long],
         Literal[2],
-        int,
+        _int,
         Literal[False],
         Literal[False],
         Literal[True],
@@ -1456,13 +1593,13 @@ class LongTensor2D(
     metaclass=_TensorNDMeta[
         Literal[DTypeEnum.long],
         Literal[2],
-        int,
+        _int,
         Literal[False],
         Literal[False],
         Literal[True],
     ],
 ):
-    def tolist(self) -> List[List[int]]:
+    def tolist(self) -> List[List[_int]]:
         return super().tolist()  # type: ignore
 
 
@@ -1470,7 +1607,7 @@ class LongTensor3D(
     _TensorNDBase[
         Literal[DTypeEnum.long],
         Literal[3],
-        int,
+        _int,
         Literal[False],
         Literal[False],
         Literal[True],
@@ -1478,29 +1615,29 @@ class LongTensor3D(
     metaclass=_TensorNDMeta[
         Literal[DTypeEnum.long],
         Literal[3],
-        int,
+        _int,
         Literal[False],
         Literal[False],
         Literal[True],
     ],
 ):
-    def tolist(self) -> List[List[List[int]]]:
+    def tolist(self) -> List[List[List[_int]]]:
         return super().tolist()  # type: ignore
 
 
 class ShortTensor(
     _TensorNDBase[
         Literal[DTypeEnum.short],
-        int,
-        int,
+        _int,
+        _int,
         Literal[False],
         Literal[False],
         Literal[True],
     ],
     metaclass=_TensorNDMeta[
         Literal[DTypeEnum.short],
-        int,
-        int,
+        _int,
+        _int,
         Literal[False],
         Literal[False],
         Literal[True],
@@ -1513,7 +1650,7 @@ class ShortTensor0D(
     _TensorNDBase[
         Literal[DTypeEnum.short],
         Literal[0],
-        int,
+        _int,
         Literal[False],
         Literal[False],
         Literal[True],
@@ -1521,13 +1658,13 @@ class ShortTensor0D(
     metaclass=_TensorNDMeta[
         Literal[DTypeEnum.short],
         Literal[0],
-        int,
+        _int,
         Literal[False],
         Literal[False],
         Literal[True],
     ],
 ):
-    def tolist(self) -> int:
+    def tolist(self) -> _int:
         return super().tolist()  # type: ignore
 
 
@@ -1535,7 +1672,7 @@ class ShortTensor1D(
     _TensorNDBase[
         Literal[DTypeEnum.short],
         Literal[1],
-        int,
+        _int,
         Literal[False],
         Literal[False],
         Literal[True],
@@ -1543,13 +1680,13 @@ class ShortTensor1D(
     metaclass=_TensorNDMeta[
         Literal[DTypeEnum.short],
         Literal[1],
-        int,
+        _int,
         Literal[False],
         Literal[False],
         Literal[True],
     ],
 ):
-    def tolist(self) -> List[int]:
+    def tolist(self) -> List[_int]:
         return super().tolist()  # type: ignore
 
 
@@ -1557,7 +1694,7 @@ class ShortTensor2D(
     _TensorNDBase[
         Literal[DTypeEnum.short],
         Literal[2],
-        int,
+        _int,
         Literal[False],
         Literal[False],
         Literal[True],
@@ -1565,13 +1702,13 @@ class ShortTensor2D(
     metaclass=_TensorNDMeta[
         Literal[DTypeEnum.short],
         Literal[2],
-        int,
+        _int,
         Literal[False],
         Literal[False],
         Literal[True],
     ],
 ):
-    def tolist(self) -> List[List[int]]:
+    def tolist(self) -> List[List[_int]]:
         return super().tolist()  # type: ignore
 
 
@@ -1579,7 +1716,7 @@ class ShortTensor3D(
     _TensorNDBase[
         Literal[DTypeEnum.short],
         Literal[3],
-        int,
+        _int,
         Literal[False],
         Literal[False],
         Literal[True],
@@ -1587,20 +1724,20 @@ class ShortTensor3D(
     metaclass=_TensorNDMeta[
         Literal[DTypeEnum.short],
         Literal[3],
-        int,
+        _int,
         Literal[False],
         Literal[False],
         Literal[True],
     ],
 ):
-    def tolist(self) -> List[List[List[int]]]:
+    def tolist(self) -> List[List[List[_int]]]:
         return super().tolist()  # type: ignore
 
 
 class CFloatTensor(
     _TensorNDBase[
         Literal[DTypeEnum.cfloat],
-        int,
+        _int,
         complex,
         Literal[False],
         Literal[True],
@@ -1608,7 +1745,7 @@ class CFloatTensor(
     ],
     metaclass=_TensorNDMeta[
         Literal[DTypeEnum.cfloat],
-        int,
+        _int,
         complex,
         Literal[False],
         Literal[True],
@@ -1706,119 +1843,117 @@ class CFloatTensor3D(
         return super().tolist()  # type: ignore
 
 
-class CHalfTensor(
-    _TensorNDBase[
-        Literal[DTypeEnum.chalf],
-        int,
-        complex,
-        Literal[False],
-        Literal[True],
-        Literal[True],
-    ],
-    metaclass=_TensorNDMeta[
-        Literal[DTypeEnum.chalf],
-        int,
-        complex,
-        Literal[False],
-        Literal[True],
-        Literal[True],
-    ],
-):
-    ...
+if hasattr(torch, "complex32"):
 
+    class CHalfTensor(
+        _TensorNDBase[
+            Literal[DTypeEnum.chalf],
+            _int,
+            complex,
+            Literal[False],
+            Literal[True],
+            Literal[True],
+        ],
+        metaclass=_TensorNDMeta[
+            Literal[DTypeEnum.chalf],
+            _int,
+            complex,
+            Literal[False],
+            Literal[True],
+            Literal[True],
+        ],
+    ):
+        ...
 
-class CHalfTensor0D(
-    _TensorNDBase[
-        Literal[DTypeEnum.chalf],
-        Literal[0],
-        complex,
-        Literal[False],
-        Literal[True],
-        Literal[True],
-    ],
-    metaclass=_TensorNDMeta[
-        Literal[DTypeEnum.chalf],
-        Literal[0],
-        complex,
-        Literal[False],
-        Literal[True],
-        Literal[True],
-    ],
-):
-    def tolist(self) -> complex:
-        return super().tolist()  # type: ignore
+    class CHalfTensor0D(
+        _TensorNDBase[
+            Literal[DTypeEnum.chalf],
+            Literal[0],
+            complex,
+            Literal[False],
+            Literal[True],
+            Literal[True],
+        ],
+        metaclass=_TensorNDMeta[
+            Literal[DTypeEnum.chalf],
+            Literal[0],
+            complex,
+            Literal[False],
+            Literal[True],
+            Literal[True],
+        ],
+    ):
+        def tolist(self) -> complex:
+            return super().tolist()  # type: ignore
 
+    class CHalfTensor1D(
+        _TensorNDBase[
+            Literal[DTypeEnum.chalf],
+            Literal[1],
+            complex,
+            Literal[False],
+            Literal[True],
+            Literal[True],
+        ],
+        metaclass=_TensorNDMeta[
+            Literal[DTypeEnum.chalf],
+            Literal[1],
+            complex,
+            Literal[False],
+            Literal[True],
+            Literal[True],
+        ],
+    ):
+        def tolist(self) -> List[complex]:
+            return super().tolist()  # type: ignore
 
-class CHalfTensor1D(
-    _TensorNDBase[
-        Literal[DTypeEnum.chalf],
-        Literal[1],
-        complex,
-        Literal[False],
-        Literal[True],
-        Literal[True],
-    ],
-    metaclass=_TensorNDMeta[
-        Literal[DTypeEnum.chalf],
-        Literal[1],
-        complex,
-        Literal[False],
-        Literal[True],
-        Literal[True],
-    ],
-):
-    def tolist(self) -> List[complex]:
-        return super().tolist()  # type: ignore
+    class CHalfTensor2D(
+        _TensorNDBase[
+            Literal[DTypeEnum.chalf],
+            Literal[2],
+            complex,
+            Literal[False],
+            Literal[True],
+            Literal[True],
+        ],
+        metaclass=_TensorNDMeta[
+            Literal[DTypeEnum.chalf],
+            Literal[2],
+            complex,
+            Literal[False],
+            Literal[True],
+            Literal[True],
+        ],
+    ):
+        def tolist(self) -> List[List[complex]]:
+            return super().tolist()  # type: ignore
 
-
-class CHalfTensor2D(
-    _TensorNDBase[
-        Literal[DTypeEnum.chalf],
-        Literal[2],
-        complex,
-        Literal[False],
-        Literal[True],
-        Literal[True],
-    ],
-    metaclass=_TensorNDMeta[
-        Literal[DTypeEnum.chalf],
-        Literal[2],
-        complex,
-        Literal[False],
-        Literal[True],
-        Literal[True],
-    ],
-):
-    def tolist(self) -> List[List[complex]]:
-        return super().tolist()  # type: ignore
-
-
-class CHalfTensor3D(
-    _TensorNDBase[
-        Literal[DTypeEnum.chalf],
-        Literal[3],
-        complex,
-        Literal[False],
-        Literal[True],
-        Literal[True],
-    ],
-    metaclass=_TensorNDMeta[
-        Literal[DTypeEnum.chalf],
-        Literal[3],
-        complex,
-        Literal[False],
-        Literal[True],
-        Literal[True],
-    ],
-):
-    def tolist(self) -> List[List[List[complex]]]:
-        return super().tolist()  # type: ignore
+    class CHalfTensor3D(
+        _TensorNDBase[
+            Literal[DTypeEnum.chalf],
+            Literal[3],
+            complex,
+            Literal[False],
+            Literal[True],
+            Literal[True],
+        ],
+        metaclass=_TensorNDMeta[
+            Literal[DTypeEnum.chalf],
+            Literal[3],
+            complex,
+            Literal[False],
+            Literal[True],
+            Literal[True],
+        ],
+    ):
+        def tolist(self) -> List[List[List[complex]]]:
+            return super().tolist()  # type: ignore
 
 
 class CDoubleTensor(
     _TensorNDBase[
         Literal[DTypeEnum.cdouble],
-        int,
+        _int,
         complex,
         Literal[False],
         Literal[True],
@@ -1826,7 +1961,7 @@ class CDoubleTensor(
     ],
     metaclass=_TensorNDMeta[
         Literal[DTypeEnum.cdouble],
-        int,
+        _int,
         complex,
         Literal[False],
         Literal[True],
@@ -1924,10 +2059,15 @@ class CDoubleTensor3D(
         return super().tolist()  # type: ignore
 
 
+# ----------------------------------------
+# Intermediate classes
+# ----------------------------------------
+
+
 class ComplexFloatingTensor(
     _TensorNDBase[
         Literal[None],
-        int,
+        _int,
         complex,
         Literal[False],
         Literal[True],
@@ -1935,7 +2075,7 @@ class ComplexFloatingTensor(
     ],
     metaclass=_TensorNDMeta[
         Literal[None],
-        int,
+        _int,
         complex,
         Literal[False],
         Literal[True],
@@ -2038,16 +2178,16 @@ class ComplexFloatingTensor3D(
 class FloatingTensor(
     _TensorNDBase[
         Literal[None],
-        int,
-        float,
+        _int,
+        _float,
         Literal[True],
         Literal[False],
         Literal[True],
     ],
     metaclass=_TensorNDMeta[
         Literal[None],
-        int,
-        float,
+        _int,
+        _float,
         Literal[True],
         Literal[False],
         Literal[True],
@@ -2066,7 +2206,7 @@ class FloatingTensor0D(
     _TensorNDBase[
         Literal[None],
         Literal[0],
-        float,
+        _float,
         Literal[True],
         Literal[False],
         Literal[True],
@@ -2074,7 +2214,7 @@ class FloatingTensor0D(
     metaclass=_TensorNDMeta[
         Literal[None],
         Literal[0],
-        float,
+        _float,
         Literal[True],
         Literal[False],
         Literal[True],
@@ -2087,7 +2227,7 @@ class FloatingTensor1D(
     _TensorNDBase[
         Literal[None],
         Literal[1],
-        float,
+        _float,
         Literal[True],
         Literal[False],
         Literal[True],
@@ -2095,7 +2235,7 @@ class FloatingTensor1D(
     metaclass=_TensorNDMeta[
         Literal[None],
         Literal[1],
-        float,
+        _float,
         Literal[True],
         Literal[False],
         Literal[True],
@@ -2108,7 +2248,7 @@ class FloatingTensor2D(
     _TensorNDBase[
         Literal[None],
         Literal[2],
-        float,
+        _float,
         Literal[True],
         Literal[False],
         Literal[True],
@@ -2116,7 +2256,7 @@ class FloatingTensor2D(
     metaclass=_TensorNDMeta[
         Literal[None],
         Literal[2],
-        float,
+        _float,
         Literal[True],
         Literal[False],
         Literal[True],
@@ -2129,7 +2269,7 @@ class FloatingTensor3D(
     _TensorNDBase[
         Literal[None],
         Literal[3],
-        float,
+        _float,
         Literal[True],
         Literal[False],
         Literal[True],
@@ -2137,7 +2277,7 @@ class FloatingTensor3D(
     metaclass=_TensorNDMeta[
         Literal[None],
         Literal[3],
-        float,
+        _float,
         Literal[True],
         Literal[False],
         Literal[True],
@@ -2149,16 +2289,16 @@ class FloatingTensor3D(
 class SignedIntegerTensor(
     _TensorNDBase[
         Literal[None],
-        int,
-        int,
+        _int,
+        _int,
         Literal[False],
         Literal[False],
         Literal[True],
     ],
     metaclass=_TensorNDMeta[
         Literal[None],
-        int,
-        int,
+        _int,
+        _int,
         Literal[False],
         Literal[False],
         Literal[True],
@@ -2178,7 +2318,7 @@ class SignedIntegerTensor0D(
     _TensorNDBase[
         Literal[None],
         Literal[0],
-        int,
+        _int,
         Literal[False],
         Literal[False],
         Literal[True],
@@ -2186,7 +2326,7 @@ class SignedIntegerTensor0D(
     metaclass=_TensorNDMeta[
         Literal[None],
         Literal[0],
-        int,
+        _int,
         Literal[False],
         Literal[False],
         Literal[True],
@@ -2199,7 +2339,7 @@ class SignedIntegerTensor1D(
     _TensorNDBase[
         Literal[None],
         Literal[1],
-        int,
+        _int,
         Literal[False],
         Literal[False],
         Literal[True],
@@ -2207,7 +2347,7 @@ class SignedIntegerTensor1D(
     metaclass=_TensorNDMeta[
         Literal[None],
         Literal[1],
-        int,
+        _int,
         Literal[False],
         Literal[False],
         Literal[True],
@@ -2220,7 +2360,7 @@ class SignedIntegerTensor2D(
     _TensorNDBase[
         Literal[None],
         Literal[2],
-        int,
+        _int,
         Literal[False],
         Literal[False],
         Literal[True],
@@ -2228,7 +2368,7 @@ class SignedIntegerTensor2D(
     metaclass=_TensorNDMeta[
         Literal[None],
         Literal[2],
-        int,
+        _int,
         Literal[False],
         Literal[False],
         Literal[True],
@@ -2241,7 +2381,7 @@ class SignedIntegerTensor3D(
     _TensorNDBase[
         Literal[None],
         Literal[3],
-        int,
+        _int,
         Literal[False],
         Literal[False],
         Literal[True],
@@ -2249,7 +2389,7 @@ class SignedIntegerTensor3D(
     metaclass=_TensorNDMeta[
         Literal[None],
         Literal[3],
-        int,
+        _int,
         Literal[False],
         Literal[False],
         Literal[True],
@@ -2261,16 +2401,16 @@ class SignedIntegerTensor3D(
 class UnsignedIntegerTensor(
     _TensorNDBase[
         Literal[None],
-        int,
-        int,
+        _int,
+        _int,
         Literal[False],
         Literal[False],
         Literal[False],
     ],
     metaclass=_TensorNDMeta[
         Literal[None],
-        int,
-        int,
+        _int,
+        _int,
         Literal[False],
         Literal[False],
         Literal[False],
@@ -2290,7 +2430,7 @@ class UnsignedIntegerTensor0D(
     _TensorNDBase[
         Literal[None],
         Literal[0],
-        int,
+        _int,
         Literal[False],
         Literal[False],
         Literal[False],
@@ -2298,7 +2438,7 @@ class UnsignedIntegerTensor0D(
     metaclass=_TensorNDMeta[
         Literal[None],
         Literal[0],
-        int,
+        _int,
         Literal[False],
         Literal[False],
         Literal[False],
@@ -2311,7 +2451,7 @@ class UnsignedIntegerTensor1D(
     _TensorNDBase[
         Literal[None],
         Literal[1],
-        int,
+        _int,
         Literal[False],
         Literal[False],
         Literal[False],
@@ -2319,7 +2459,7 @@ class UnsignedIntegerTensor1D(
     metaclass=_TensorNDMeta[
         Literal[None],
         Literal[1],
-        int,
+        _int,
         Literal[False],
         Literal[False],
         Literal[False],
@@ -2332,7 +2472,7 @@ class UnsignedIntegerTensor2D(
     _TensorNDBase[
         Literal[None],
         Literal[2],
-        int,
+        _int,
         Literal[False],
         Literal[False],
         Literal[False],
@@ -2340,7 +2480,7 @@ class UnsignedIntegerTensor2D(
     metaclass=_TensorNDMeta[
         Literal[None],
         Literal[2],
-        int,
+        _int,
         Literal[False],
         Literal[False],
         Literal[False],
@@ -2353,7 +2493,7 @@ class UnsignedIntegerTensor3D(
     _TensorNDBase[
         Literal[None],
         Literal[3],
-        int,
+        _int,
         Literal[False],
         Literal[False],
         Literal[False],
@@ -2361,10 +2501,122 @@ class UnsignedIntegerTensor3D(
     metaclass=_TensorNDMeta[
         Literal[None],
         Literal[3],
-        int,
+        _int,
         Literal[False],
         Literal[False],
         Literal[False],
     ],
 ):
     _DEFAULT_DTYPE = DTypeEnum.uint8
+
+
+class IntegralTensor(
+    _TensorNDBase[
+        Literal[None],
+        _int,
+        _int,
+        Literal[False],
+        Literal[False],
+        _bool,
+    ],
+    metaclass=_TensorNDMeta[
+        Literal[None],
+        _int,
+        _int,
+        Literal[False],
+        Literal[False],
+        _bool,
+    ],
+):
+    """Intermediate class for checking and typing integer data type (integer-like) tensors.
+    - Concrete subclasses are: CharTensor, ShortTensor, IntTensor, LongTensor, BoolTensor, ByteTensor.
+    - Properties are: is_floating_point=False, is_complex=False.
+    - By default, instantiate this class will create an LongTensor.
+    - BoolTensor is a subclass of UnsignedIntegerTensor.
+    """
+
+    _DEFAULT_DTYPE = DTypeEnum.long
+
+
+class IntegralTensor0D(
+    _TensorNDBase[
+        Literal[None],
+        Literal[0],
+        _int,
+        Literal[False],
+        Literal[False],
+        _bool,
+    ],
+    metaclass=_TensorNDMeta[
+        Literal[None],
+        Literal[0],
+        _int,
+        Literal[False],
+        Literal[False],
+        _bool,
+    ],
+):
+    _DEFAULT_DTYPE = DTypeEnum.long
+
+
+class IntegralTensor1D(
+    _TensorNDBase[
+        Literal[None],
+        Literal[1],
+        _int,
+        Literal[False],
+        Literal[False],
+        _bool,
+    ],
+    metaclass=_TensorNDMeta[
+        Literal[None],
+        Literal[1],
+        _int,
+        Literal[False],
+        Literal[False],
+        _bool,
+    ],
+):
+    _DEFAULT_DTYPE = DTypeEnum.long
+
+
+class IntegralTensor2D(
+    _TensorNDBase[
+        Literal[None],
+        Literal[2],
+        _int,
+        Literal[False],
+        Literal[False],
+        _bool,
+    ],
+    metaclass=_TensorNDMeta[
+        Literal[None],
+        Literal[2],
+        _int,
+        Literal[False],
+        Literal[False],
+        _bool,
+    ],
+):
+    _DEFAULT_DTYPE = DTypeEnum.long
+
+
+class IntegralTensor3D(
+    _TensorNDBase[
+        Literal[None],
+        Literal[3],
+        _int,
+        Literal[False],
+        Literal[False],
+        _bool,
+    ],
+    metaclass=_TensorNDMeta[
+        Literal[None],
+        Literal[3],
+        _int,
+        Literal[False],
+        Literal[False],
+        _bool,
+    ],
+):
+    _DEFAULT_DTYPE = DTypeEnum.long

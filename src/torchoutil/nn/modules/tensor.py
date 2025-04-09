@@ -3,19 +3,22 @@
 
 """Module versions of tensor functions that do not already exists in PyTorch."""
 
-from typing import Any, List, Optional, Sequence, Tuple, Union, overload
+from typing import List, Optional, Sequence, Tuple, Union, overload
 
 import torch
-from torch import Tensor, nn
+from torch import Tensor
 from torch.nn import functional as F
-from torch.types import Device, Number
+from torch.types import Number
 
+from torchoutil.nn.functional.make import DTypeLike, as_dtype
 from torchoutil.pyoutil.collections import dump_dict
-from torchoutil.types import BuiltinNumber
+from torchoutil.pyoutil.semver import Version
 from torchoutil.utils import return_types
 
+from .module import Module
 
-class Abs(nn.Module):
+
+class Abs(Module):
     """
     Module version of :func:`~torch.abs`.
     """
@@ -24,7 +27,7 @@ class Abs(nn.Module):
         return x.abs()
 
 
-class Angle(nn.Module):
+class Angle(Module):
     """
     Module version of :func:`~torch.angle`.
     """
@@ -33,35 +36,7 @@ class Angle(nn.Module):
         return x.angle()
 
 
-class AsTensor(nn.Module):
-    """
-    Module version of :func:`~torch.as_tensor`.
-    """
-
-    def __init__(
-        self,
-        *,
-        device: Device = None,
-        dtype: Optional[torch.dtype] = None,
-    ) -> None:
-        super().__init__()
-        self.device = device
-        self.dtype = dtype
-
-    def forward(self, x: Any) -> Tensor:
-        return torch.as_tensor(x, dtype=self.dtype, device=self.device)
-
-    def extra_repr(self) -> str:
-        return dump_dict(
-            dict(
-                dtype=self.dtype,
-                device=self.device,
-            ),
-            ignore_lst=(None,),
-        )
-
-
-class Exp(nn.Module):
+class Exp(Module):
     """
     Module version of :func:`~torch.exp`.
     """
@@ -70,7 +45,7 @@ class Exp(nn.Module):
         return x.exp()
 
 
-class Exp2(nn.Module):
+class Exp2(Module):
     """
     Module version of :func:`~torch.exp2`.
     """
@@ -79,7 +54,7 @@ class Exp2(nn.Module):
         return x.exp2()
 
 
-class FFT(nn.Module):
+class FFT(Module):
     """
     Module version of :func:`~torch.fft.fft`.
     """
@@ -88,7 +63,7 @@ class FFT(nn.Module):
         return torch.fft.fft(x)
 
 
-class IFFT(nn.Module):
+class IFFT(Module):
     """
     Module version of :func:`~torch.fft.ifft`.
     """
@@ -97,7 +72,7 @@ class IFFT(nn.Module):
         return torch.fft.ifft(x)
 
 
-class Imag(nn.Module):
+class Imag(Module):
     """
     Module version of :func:`~torch.Tensor.imag`.
     """
@@ -120,7 +95,7 @@ class Imag(nn.Module):
             return x.imag
 
 
-class Interpolate(nn.Module):
+class Interpolate(Module):
     """
     Module version of :func:`~torch.nn.functional.interpolate`.
     """
@@ -143,18 +118,24 @@ class Interpolate(nn.Module):
         self.antialias = antialias
 
     def forward(self, x: Tensor) -> Tensor:
+        kwds = {}
+        if Version(torch.__version__) >= Version("2.0.0"):
+            kwds.update(
+                recompute_scale_factor=self.recompute_scale_factor,
+                antialias=self.antialias,
+            )
+
         return F.interpolate(
             x,
             size=self.size,
             scale_factor=self.scale_factor,
             mode=self.mode,
             align_corners=self.align_corners,
-            recompute_scale_factor=self.recompute_scale_factor,
-            antialias=self.antialias,
+            **kwds,
         )
 
 
-class Log(nn.Module):
+class Log(Module):
     """
     Module version of :func:`~torch.log`.
     """
@@ -163,7 +144,7 @@ class Log(nn.Module):
         return x.log()
 
 
-class Log10(nn.Module):
+class Log10(Module):
     """
     Module version of :func:`~torch.log10`.
     """
@@ -172,7 +153,7 @@ class Log10(nn.Module):
         return x.log10()
 
 
-class Log2(nn.Module):
+class Log2(Module):
     """
     Module version of :func:`~torch.log2`.
     """
@@ -181,7 +162,7 @@ class Log2(nn.Module):
         return x.log2()
 
 
-class Max(nn.Module):
+class Max(Module):
     """
     Module version of :func:`~torch.max`.
     """
@@ -189,9 +170,10 @@ class Max(nn.Module):
     def __init__(
         self,
         dim: Optional[int] = None,
+        keepdim: bool = False,
+        *,
         return_values: bool = True,
         return_indices: Optional[bool] = None,
-        keepdim: bool = False,
     ) -> None:
         if return_indices is None:
             return_indices = dim is not None
@@ -236,33 +218,46 @@ class Max(nn.Module):
         )
 
 
-class Mean(nn.Module):
+class Mean(Module):
     """
     Module version of :func:`~torch.mean`.
     """
 
-    def __init__(self, dim: Optional[int] = None, keepdim: bool = False) -> None:
+    def __init__(
+        self,
+        dim: Optional[int] = None,
+        keepdim: bool = False,
+        dtype: DTypeLike = None,
+    ) -> None:
         super().__init__()
         self.dim = dim
         self.keepdim = keepdim
+        self.dtype = dtype
 
     def forward(self, x: Tensor) -> Tensor:
-        if self.dim is None:
-            return x.mean()
+        dtype = as_dtype(self.dtype)
+        if (Version(torch.__version__) >= Version("2.0.0")) or (self.dim is not None):
+            return x.mean(dim=self.dim, keepdim=self.keepdim, dtype=dtype)  # type: ignore
+
+        # support for older torch versions
+        result = x.mean(dtype=dtype)
+        if self.keepdim:
+            return torch.full(x.shape, result.item(), dtype=dtype, device=x.device)
         else:
-            return x.mean(dim=self.dim, keepdim=self.keepdim)
+            return result
 
     def extra_repr(self) -> str:
         return dump_dict(
             dict(
                 dim=self.dim,
                 keepdim=self.keepdim,
+                dtype=self.dtype,
             ),
             ignore_lst=(None,),
         )
 
 
-class Min(nn.Module):
+class Min(Module):
     """
     Module version of :func:`~torch.min`.
     """
@@ -270,9 +265,10 @@ class Min(nn.Module):
     def __init__(
         self,
         dim: Optional[int] = None,
+        keepdim: bool = False,
+        *,
         return_values: bool = True,
         return_indices: Optional[bool] = None,
-        keepdim: bool = False,
     ) -> None:
         if return_indices is None:
             return_indices = dim is not None
@@ -317,7 +313,7 @@ class Min(nn.Module):
         )
 
 
-class Normalize(nn.Module):
+class Normalize(Module):
     """
     Module version of :func:`~torch.nn.functional.normalize`.
     """
@@ -346,7 +342,7 @@ class Normalize(nn.Module):
         )
 
 
-class Permute(nn.Module):
+class Permute(Module):
     """
     Module version of :func:`~torch.permute`.
     """
@@ -367,7 +363,7 @@ class Permute(nn.Module):
         )
 
 
-class Pow(nn.Module):
+class Pow(Module):
     """
     Module version of :func:`~torch.Tensor.pow`.
     """
@@ -380,10 +376,10 @@ class Pow(nn.Module):
         return x.pow(self.exponent)
 
     def extra_repr(self) -> str:
-        return dump_dict(dict(exponent=self.exponent))
+        return dump_dict(exponent=self.exponent)
 
 
-class Real(nn.Module):
+class Real(Module):
     """
     Module version of :func:`~torch.Tensor.real`.
     """
@@ -392,7 +388,7 @@ class Real(nn.Module):
         return x.real
 
 
-class Repeat(nn.Module):
+class Repeat(Module):
     """
     Module version of :func:`~torch.repeat`.
     """
@@ -405,10 +401,10 @@ class Repeat(nn.Module):
         return x.repeat(self.repeats)
 
     def extra_repr(self) -> str:
-        return dump_dict(dict(repeats=self.repeats))
+        return dump_dict(repeats=self.repeats)
 
 
-class RepeatInterleave(nn.Module):
+class RepeatInterleave(Module):
     """
     Module version of :func:`~torch.repeat_interleave`.
     """
@@ -438,7 +434,7 @@ class RepeatInterleave(nn.Module):
         )
 
 
-class Reshape(nn.Module):
+class Reshape(Module):
     """
     Module version of :func:`~torch.reshape`.
     """
@@ -458,38 +454,7 @@ class Reshape(nn.Module):
         )
 
 
-class Squeeze(nn.Module):
-    """
-    Module version of :func:`~torch.squeeze`.
-    """
-
-    def __init__(self, dim: Optional[int] = None, inplace: bool = True) -> None:
-        super().__init__()
-        self.dim = dim
-        self.inplace = inplace
-
-    def forward(self, x: Tensor) -> Tensor:
-        if not self.inplace:
-            if self.dim is None:
-                return x.squeeze()
-            else:
-                return x.squeeze(self.dim)
-        else:
-            if self.dim is None:
-                return x.squeeze_()
-            else:
-                return x.squeeze_(self.dim)
-
-    def extra_repr(self) -> str:
-        return dump_dict(
-            dict(
-                dim=self.dim,
-                inplace=self.inplace,
-            ),
-        )
-
-
-class TensorTo(nn.Module):
+class TensorTo(Module):
     """
     Module version of :func:`~torch.Tensor.to`.
     """
@@ -502,19 +467,10 @@ class TensorTo(nn.Module):
         return x.to(**self.kwargs)
 
     def extra_repr(self) -> str:
-        return dump_dict(dict(self.kwargs))
+        return dump_dict(self.kwargs)
 
 
-class ToItem(nn.Module):
-    """
-    Module version of :func:`~torch.Tensor.item`.
-    """
-
-    def forward(self, x: Tensor) -> BuiltinNumber:
-        return x.item()
-
-
-class ToList(nn.Module):
+class ToList(Module):
     """
     Module version of :func:`~torch.Tensor.tolist`.
     """
@@ -523,63 +479,7 @@ class ToList(nn.Module):
         return x.tolist()
 
 
-class Topk(nn.Module):
-    """
-    Module version of :func:`~torch.Tensor.topk`.
-    """
-
-    def __init__(
-        self,
-        k: int,
-        dim: int = -1,
-        largest: bool = True,
-        sorted: bool = True,
-        return_values: bool = True,
-        return_indices: bool = True,
-    ) -> None:
-        if not return_values and not return_indices:
-            msg = f"Invalid combinaison of arguments {return_values=} and {return_indices=}. (at least one of them must be True)"
-            raise ValueError(msg)
-
-        super().__init__()
-        self.k = k
-        self.dim = dim
-        self.largest = largest
-        self.sorted = sorted
-        self.return_values = return_values
-        self.return_indices = return_indices
-
-    def forward(self, x: Tensor) -> Union[Tensor, return_types.topk]:
-        values_indices = x.topk(
-            k=self.k,
-            dim=self.dim,
-            largest=self.largest,
-            sorted=self.sorted,
-        )
-        if self.return_values and self.return_indices:
-            return values_indices
-        elif self.return_values:
-            return values_indices.values
-        elif self.return_indices:
-            return values_indices.indices
-        else:
-            msg = f"Invalid combinaison of arguments {self.return_values=} and {self.return_indices=}. (at least one of them must be True)"
-            raise ValueError(msg)
-
-    def extra_repr(self) -> str:
-        return dump_dict(
-            dict(
-                k=self.k,
-                dim=self.dim,
-                largest=self.largest,
-                sorted=self.sorted,
-                return_values=self.return_values,
-                return_indices=self.return_indices,
-            ),
-        )
-
-
-class Transpose(nn.Module):
+class Transpose(Module):
     """
     Module version of :func:`~torch.transpose`.
     """
@@ -591,8 +491,12 @@ class Transpose(nn.Module):
         self.copy = copy
 
     def forward(self, x: Tensor) -> Tensor:
+        if self.copy and not hasattr(torch, "transpose_copy"):
+            msg = f"Invalid argument {self.copy=} in torch {torch.__version__}."
+            raise ValueError(msg)
+
         if self.copy:
-            return torch.transpose_copy(x, self.dim0, self.dim1)
+            return torch.transpose_copy(x, self.dim0, self.dim1)  # type: ignore
         else:
             return torch.transpose(x, self.dim0, self.dim1)
 
@@ -606,38 +510,13 @@ class Transpose(nn.Module):
         )
 
 
-class Unsqueeze(nn.Module):
-    """
-    Module version of :func:`~torch.Tensor.unsqueeze`.
-    """
-
-    def __init__(self, dim: int, inplace: bool = True) -> None:
-        super().__init__()
-        self.dim = dim
-        self.inplace = inplace
-
-    def forward(self, x: Tensor) -> Tensor:
-        if not self.inplace:
-            return x.unsqueeze(self.dim)
-        else:
-            return x.unsqueeze_(self.dim)
-
-    def extra_repr(self) -> str:
-        return dump_dict(
-            dict(
-                dim=self.dim,
-                inplace=self.inplace,
-            ),
-        )
-
-
-class View(nn.Module):
+class View(Module):
     @overload
-    def __init__(self, dtype: torch.dtype) -> None:
+    def __init__(self, dtype: torch.dtype, /) -> None:
         ...
 
     @overload
-    def __init__(self, size: Sequence[int]) -> None:
+    def __init__(self, size: Sequence[int], /) -> None:
         ...
 
     @overload

@@ -1,27 +1,26 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-"""Helper functions for conversion between classes indices, multihot, multi-names and probabilities for multilabel classification.
-"""
+"""Helper functions for conversion between classes indices, multihot, multi-names and probabilities for multilabel classification."""
 
 from typing import Hashable, Iterable, List, Mapping, Optional, Sequence, TypeVar, Union
 
 import torch
 from torch import Tensor
 
-from torchoutil.core.get import DeviceLike, DTypeLike, get_device, get_dtype
-from torchoutil.nn.functional.others import can_be_stacked, to_item
-from torchoutil.nn.functional.pad import pad_and_stack_rec
-from torchoutil.nn.functional.transform import to_tensor
-from torchoutil.pyoutil.typing import is_sequence_int
-from torchoutil.types import LongTensor, is_number_like, is_tensor_like
-from torchoutil.types._typing import TensorLike
+from torchoutil.core.make import DeviceLike, DTypeLike, as_device, as_dtype
+from torchoutil.nn.functional.padding import pad_and_stack_rec
+from torchoutil.nn.functional.predicate import is_stackable
+from torchoutil.nn.functional.transform import as_tensor, to_item
+from torchoutil.pyoutil.typing import isinstance_guard
+from torchoutil.types import LongTensor, is_number_like, is_tensor_or_array
+from torchoutil.types._typing import TensorOrArray
 
 T_Name = TypeVar("T_Name", bound=Hashable)
 
 
 def indices_to_multihot(
-    indices: Union[Sequence[Union[Sequence[int], TensorLike]], TensorLike],
+    indices: Union[Sequence[Union[Sequence[int], TensorOrArray]], TensorOrArray],
     num_classes: int,
     *,
     padding_idx: Optional[int] = None,
@@ -40,14 +39,16 @@ def indices_to_multihot(
     if device is None and isinstance(indices, Tensor):
         device = indices.device
     else:
-        device = get_device(device)
-    dtype = get_dtype(dtype)
+        device = as_device(device)
+    dtype = as_dtype(dtype)
 
     def _impl(x) -> Tensor:
-        if is_tensor_like(x) and not _is_valid_indices(x):
+        if is_tensor_or_array(x) and not _is_valid_indices(x):
             raise ValueError(f"Invalid argument shape {x.shape=}.")
 
-        if (is_tensor_like(x) and x.ndim == 1) or is_sequence_int(x):
+        if (is_tensor_or_array(x) and x.ndim == 1) or isinstance_guard(
+            x, Sequence[int]
+        ):
             x = torch.as_tensor(x, dtype=torch.long, device=device)
 
             if padding_idx is not None:
@@ -81,7 +82,7 @@ def indices_to_multihot(
 
 
 def indices_to_multinames(
-    indices: Union[Sequence[Union[Sequence[int], TensorLike]], TensorLike],
+    indices: Union[Sequence[Union[Sequence[int], TensorOrArray]], TensorOrArray],
     idx_to_name: Union[Mapping[int, T_Name], Sequence[T_Name]],
     *,
     padding_idx: Optional[int] = None,
@@ -115,7 +116,7 @@ def indices_to_multinames(
 
 def multihot_to_indices(
     multihot: Union[
-        TensorLike, Sequence[TensorLike], Sequence[Sequence[bool]], Sequence
+        TensorOrArray, Sequence[TensorOrArray], Sequence[Sequence[bool]], Sequence
     ],
     *,
     keep_tensor: bool = False,
@@ -130,14 +131,14 @@ def multihot_to_indices(
         padding_idx: Class index fill value. When none, output will not be padded. defaults to None.
         dim: Dimension of classes. defaults to -1.
     """
-    multihot = to_tensor(multihot)
+    multihot = as_tensor(multihot)
     multihot = multihot.transpose(dim, -1)
 
     if not _is_valid_indices(multihot):
         msg = f"Invalid argument shape {multihot=}. (expected first axis should be > 0)"
         raise ValueError(msg)
 
-    def _impl(x: TensorLike) -> Union[list, LongTensor]:
+    def _impl(x: TensorOrArray) -> Union[list, LongTensor]:
         if x.ndim == 1:
             x = torch.as_tensor(x, dtype=torch.bool)
             preds = torch.where(x)[0]
@@ -151,7 +152,7 @@ def multihot_to_indices(
                 preds = pad_and_stack_rec(preds, padding_idx, dtype=torch.long)
                 if not keep_tensor:
                     preds = preds.tolist()
-            elif keep_tensor and can_be_stacked(preds):
+            elif keep_tensor and is_stackable(preds):
                 preds = torch.stack(preds)
             return preds  # type: ignore
 
@@ -164,7 +165,7 @@ def multihot_to_indices(
 
 
 def multihot_to_multinames(
-    multihot: Union[TensorLike, Sequence[TensorLike], Sequence[Sequence[bool]]],
+    multihot: Union[TensorOrArray, Sequence[TensorOrArray], Sequence[Sequence[bool]]],
     idx_to_name: Union[Mapping[int, T_Name], Sequence[T_Name]],
     *,
     dim: int = -1,
@@ -236,8 +237,8 @@ def multinames_to_multihot(
 
 
 def probs_to_indices(
-    probs: TensorLike,
-    threshold: Union[float, Sequence[float], TensorLike],
+    probs: TensorOrArray,
+    threshold: Union[float, Sequence[float], TensorOrArray],
     *,
     padding_idx: Optional[int] = None,
     dim: int = -1,
@@ -256,8 +257,8 @@ def probs_to_indices(
 
 
 def probs_to_multihot(
-    probs: TensorLike,
-    threshold: Union[float, Sequence[float], TensorLike],
+    probs: TensorOrArray,
+    threshold: Union[float, Sequence[float], TensorOrArray],
     *,
     dim: int = -1,
     device: DeviceLike = None,
@@ -272,7 +273,7 @@ def probs_to_multihot(
         device: PyTorch device of the output tensor.
         dtype: PyTorch DType of the output tensor.
     """
-    probs = to_tensor(probs)
+    probs = as_tensor(probs)
     if probs.ndim == 0:
         msg = f"Invalid argument ndim {probs.ndim=}. (expected at least 1 dim)."
         raise ValueError(msg)
@@ -281,8 +282,8 @@ def probs_to_multihot(
     if device is None:
         device = probs.device
     else:
-        device = get_device(device)
-    dtype = get_dtype(dtype)
+        device = as_device(device)
+    dtype = as_dtype(dtype)
 
     if not isinstance(threshold, Tensor):
         threshold = torch.as_tensor(threshold, dtype=probs.dtype, device=device)
@@ -309,8 +310,8 @@ def probs_to_multihot(
 
 
 def probs_to_multinames(
-    probs: TensorLike,
-    threshold: Union[float, Sequence[float], TensorLike],
+    probs: TensorOrArray,
+    threshold: Union[float, Sequence[float], TensorOrArray],
     idx_to_name: Union[Mapping[int, T_Name], Sequence[T_Name]],
 ) -> List[List[T_Name]]:
     """Convert matrix of probabilities to labels names for **multilabel** classification.
@@ -325,7 +326,7 @@ def probs_to_multinames(
     return names
 
 
-def _is_valid_indices(x: TensorLike, dim: int = -1) -> bool:
+def _is_valid_indices(x: TensorOrArray, dim: int = -1) -> bool:
     """Returns True if tensor has valid shape for indices_to_multihot."""
     shape = list(x.shape)
     dim = dim % len(shape)

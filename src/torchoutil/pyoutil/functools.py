@@ -1,9 +1,14 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import inspect
-from typing import Any, Callable, Generic, List, TypeVar, overload
+from typing import Any, Callable, Generic, TypeVar, overload
 
+from typing_extensions import ParamSpec
+
+from ._core import _decorator_factory, return_none  # noqa: F401
+from .inspect import get_argnames
+
+P = ParamSpec("P")
 T = TypeVar("T")
 U = TypeVar("U")
 
@@ -91,20 +96,6 @@ class Compose(Generic[T, U]):
 compose = Compose  # type: ignore
 
 
-def get_argnames(fn: Callable) -> List[str]:
-    """Get arguments names of a method, function or callable object."""
-    if inspect.ismethod(fn):
-        # If method, remove 'self' arg
-        argnames = fn.__code__.co_varnames[1:]  # type: ignore
-    elif inspect.isfunction(fn):
-        argnames = fn.__code__.co_varnames
-    else:
-        argnames = fn.__call__.__code__.co_varnames  # type: ignore
-
-    argnames = list(argnames)
-    return argnames
-
-
 def filter_and_call(fn: Callable[..., T], **kwargs: Any) -> T:
     """Filter kwargs with function arg names and call function."""
     argnames = get_argnames(fn)
@@ -112,3 +103,7 @@ def filter_and_call(fn: Callable[..., T], **kwargs: Any) -> T:
         name: value for name, value in kwargs.items() if name in argnames
     }
     return fn(**kwargs_filtered)
+
+
+def function_alias(alternative: Callable[P, U]) -> Callable[..., Callable[P, U]]:
+    return _decorator_factory(alternative)

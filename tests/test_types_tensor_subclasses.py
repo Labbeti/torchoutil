@@ -3,6 +3,7 @@
 
 import random
 import unittest
+import warnings
 from unittest import TestCase
 
 import torch
@@ -14,7 +15,6 @@ from torchoutil.types.tensor_subclasses import (
     ByteTensor,
     CDoubleTensor,
     CFloatTensor,
-    CHalfTensor,
     ComplexFloatingTensor,
     ComplexFloatingTensor1D,
     DoubleTensor,
@@ -205,6 +205,8 @@ class TestTensorTyping(TestCase):
         assert x.ndim == 0 and x.dtype == torch.float
 
     def test_instantiate_all(self) -> None:
+        warnings.simplefilter("ignore", UserWarning)
+
         module = tensor_subclasses
         for name in dir(module):
             elem = getattr(module, name)
@@ -220,6 +222,8 @@ class TestTensorTyping(TestCase):
 
             assert isinstance(tensor, torch.Tensor)
 
+        warnings.resetwarnings()
+
     def test_complex_class(self) -> None:
         cls = ComplexFloatingTensor
         assert not cls().is_floating_point()
@@ -228,7 +232,6 @@ class TestTensorTyping(TestCase):
         assert isinstance(cls(), cls)
 
         assert issubclass(CFloatTensor, cls)
-        assert issubclass(CHalfTensor, cls)
         assert issubclass(CDoubleTensor, cls)
 
         assert isinstance(torch.rand(10, dtype=torch.complex64), cls)
@@ -266,7 +269,7 @@ class TestTensorTyping(TestCase):
 
         assert not isinstance(BoolTensor1D(), cls)
 
-    def test_integral_class(self) -> None:
+    def test_signed_integer_class(self) -> None:
         cls = SignedIntegerTensor
         assert not cls().is_floating_point()
         assert not cls().is_complex()

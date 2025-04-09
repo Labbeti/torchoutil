@@ -29,7 +29,7 @@ import h5py
 import numpy as np
 from h5py import Dataset as HDFRawDataset
 from torch import Tensor
-from typing_extensions import override
+from typing_extensions import TypeAlias, override
 
 import torchoutil as to
 from torchoutil.extras.hdf.common import (
@@ -37,6 +37,7 @@ from torchoutil.extras.hdf.common import (
     _DUMPED_JSON_KEYS,
     HDFDatasetAttributes,
     HDFItemType,
+    _dict_to_tuple,
 )
 from torchoutil.extras.numpy.scan_info import numpy_dtype_to_torch_dtype
 from torchoutil.nn.functional.indices import get_inverse_perm
@@ -47,14 +48,13 @@ from torchoutil.pyoutil.typing import is_iterable_bytes_or_list, is_iterable_str
 from torchoutil.types._typing import ScalarLike
 from torchoutil.types.guards import is_scalar_like
 from torchoutil.utils.data import DatasetSlicer
-from torchoutil.utils.pack.common import _dict_to_tuple
 from torchoutil.utils.saving import to_builtin
 
 T = TypeVar("T", covariant=True)
 U = TypeVar("U", covariant=False)
 
-IndexLike = Union[int, Iterable[int], Tensor, slice, None]
-ColumnLike = Union[str, Iterable[str], None]
+IndexLike: TypeAlias = Union[int, Iterable[int], Tensor, slice, None]
+ColumnLike: TypeAlias = Union[str, Iterable[str], None]
 CastMode = Literal[
     "to_torch_or_builtin",
     "to_torch_or_numpy",
@@ -93,11 +93,11 @@ class HDFDataset(Generic[T, U], DatasetSlicer[U]):
 
         Args:
             hdf_fpath: The path to the HDF file.
-            transforms: The transform to apply values. default to None.
+            transform: The transform to apply values. default to None.
             keep_padding: Keys to keep padding values. defaults to ().
-            return_added_columns: Returns the columns added by pack_to_hdf(.) function.
+            return_added_columns: If True, returns the columns added by pack_to_hdf(.) function. defaults to False.
             open_hdf: If True, open the HDF file at start. defaults to True.
-            numpy_to_torch: If True, converts numpy array to PyTorch tensors. defaults to True.
+            cast: Cast policy when loading data. defaults to None.
             file_kwds: Options given to h5py file object. defaults to None.
         """
         hdf_fpath = Path(hdf_fpath).resolve().expanduser()
@@ -119,6 +119,7 @@ class HDFDataset(Generic[T, U], DatasetSlicer[U]):
             add_indices_support=False,
             add_mask_support=False,
             add_slice_support=False,
+            add_none_support=True,
         )
         self._hdf_fpath = hdf_fpath
         self._transform = transform
@@ -234,6 +235,10 @@ class HDFDataset(Generic[T, U], DatasetSlicer[U]):
         return self.attrs["load_as_complex"]
 
     # Public methods
+    def at(self, *args, **kwargs) -> Any:
+        """Deprecated: Use get_item method instead."""
+        return self.get_item(*args, **kwargs)
+
     @overload
     def get_item(
         self,
@@ -309,6 +314,7 @@ class HDFDataset(Generic[T, U], DatasetSlicer[U]):
                 result = self._transform(result)  # type: ignore
             return result  # type: ignore
 
+        assert isinstance(column, str)
         if column not in self.all_columns:
             closest = find_closest_in_list(column, self.all_columns)  # type: ignore
             msg = f"Invalid argument {column=}. (did you mean '{closest}'? Expected one of {tuple(self.all_columns)})"
@@ -442,6 +448,11 @@ class HDFDataset(Generic[T, U], DatasetSlicer[U]):
         self._clear_caches()
         self._hdf_file = h5py.File(self._hdf_fpath, "r", **self._file_kwds)
         self._sanity_check()
+
+    def to_dict(self, raw: bool = False) -> Dict[str, np.ndarray]:
+        return {
+            col: self.get_item(slice(None), col, raw=raw) for col in self.column_names
+        }
 
     # Magic methods
     def __eq__(self, __o: object) -> bool:
@@ -616,7 +627,7 @@ class HDFDataset(Generic[T, U], DatasetSlicer[U]):
         elif self._cast == "to_torch_or_builtin":
             valid = to.shape(hdf_values, return_valid=True).valid
             if valid and hdf_dtype.kind not in ("V", "S", "O"):
-                result = to.to_tensor(hdf_values)
+                result = to.as_tensor(hdf_values)
             elif isinstance(hdf_values, np.ndarray):
                 result = hdf_values.tolist()
             else:
@@ -625,7 +636,7 @@ class HDFDataset(Generic[T, U], DatasetSlicer[U]):
         elif self._cast == "to_torch_or_numpy":
             valid = to.shape(hdf_values, return_valid=True).valid
             if valid and hdf_dtype.kind not in ("V", "S", "O"):
-                result = to.to_tensor(hdf_values)
+                result = to.as_tensor(hdf_values)
             else:
                 result = np.array(hdf_values)
 
@@ -659,7 +670,7 @@ class HDFDataset(Generic[T, U], DatasetSlicer[U]):
                 hdf_values_view = hdf_values.view(target_np_dtype)
                 result = to.numpy_to_tensor(hdf_values_view)
             elif valid:
-                result = to.to_tensor(hdf_values, dtype=target_pt_dtype)
+                result = to.as_tensor(hdf_values, dtype=target_pt_dtype)
             else:
                 result = hdf_values
 

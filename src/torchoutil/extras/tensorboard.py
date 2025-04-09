@@ -10,14 +10,13 @@ from typing import Any, Dict, Iterable, List, TypedDict, Union
 from typing_extensions import NotRequired
 
 from torchoutil.core.packaging import _TENSORBOARD_AVAILABLE
+from torchoutil.pyoutil.warnings import deprecated_alias
 
 if not _TENSORBOARD_AVAILABLE:
-    msg = "Cannot import tensorboard objects because optional dependancy 'tensorboard' is not installed. Please install it using 'pip install torchoutil[extras]'"
+    msg = "Cannot import tensorboard objects because optional dependency 'tensorboard' is not installed. Please install it using 'pip install torchoutil[extras]'"
     raise ImportError(msg)
 
-from tensorboard.backend.event_processing.event_file_loader import (  # type: ignore
-    EventFileLoader,
-)
+from tensorboard.backend.event_processing.event_file_loader import EventFileLoader
 
 pylog = logging.getLogger(__name__)
 
@@ -38,8 +37,9 @@ class TensorboardEvent(TypedDict):
     float_val: NotRequired[List[float]]
 
 
-def load_event_file(
+def load_tfevents(
     fpath: Union[str, Path],
+    *,
     cast_float_and_str: bool = True,
     ignore_underscore_tags: bool = True,
     verbose: int = 0,
@@ -126,8 +126,9 @@ def load_event_file(
     return data
 
 
-def load_event_files(
+def load_tfevents_files(
     paths_or_patterns: Union[str, Path, Iterable[Union[str, Path]]],
+    *,
     cast_float_and_str: bool = True,
     ignore_underscore_tags: bool = True,
     verbose: int = 0,
@@ -153,23 +154,43 @@ def load_event_files(
     ]
     all_events = {}
     for path in paths:
-        events = load_event_file(
+        events = load_tfevents(
             path,
-            cast_float_and_str,
-            ignore_underscore_tags,
-            verbose,
+            cast_float_and_str=cast_float_and_str,
+            ignore_underscore_tags=ignore_underscore_tags,
+            verbose=verbose,
         )
         all_events[path] = events
 
     return all_events
 
 
-def get_duration(
+def get_tfevents_duration(
     fpath: Union[str, Path],
     verbose: int = 0,
 ) -> float:
     """Return time elapsed between first and last log in a tensorboard event file."""
-    events = load_event_file(fpath, cast_float_and_str=True, verbose=verbose)
+    events = load_tfevents(fpath, cast_float_and_str=True, verbose=verbose)
     wall_times = [event["wall_time"] for event in events]
     duration = max(wall_times) - min(wall_times)
     return duration
+
+
+@deprecated_alias(load_tfevents)
+def load_with_tensorboard(*args, **kwargs):
+    ...
+
+
+@deprecated_alias(load_tfevents)
+def load_event_file(*args, **kwargs):
+    ...
+
+
+@deprecated_alias(load_tfevents_files)
+def load_event_files(*args, **kwargs):
+    ...
+
+
+@deprecated_alias(get_tfevents_duration)
+def get_duration(*args, **kwargs):
+    ...

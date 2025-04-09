@@ -7,7 +7,7 @@ import torch
 from torch import Tensor
 from torch.types import Number
 
-from torchoutil.core.get import CUDA_IF_AVAILABLE, DeviceLike, get_device, get_generator
+from torchoutil.core.make import DeviceLike, GeneratorLike, as_device, as_generator
 from torchoutil.types import LongTensor1D, Tensor1D, is_builtin_number
 
 
@@ -43,8 +43,8 @@ def get_inverse_perm(indices: Tensor, dim: int = -1) -> Tensor:
 
 def randperm_diff(
     size: int,
-    generator: Union[None, int, torch.Generator] = None,
-    device: DeviceLike = CUDA_IF_AVAILABLE,
+    generator: GeneratorLike = None,
+    device: DeviceLike = None,
 ) -> LongTensor1D:
     """This function ensure that every value i cannot be the element at index i.
     The output will be a tensor of shape (size,).
@@ -64,8 +64,8 @@ def randperm_diff(
     if size < 2:
         raise ValueError(f"Invalid argument {size=} < 2 for randperm_diff.")
 
-    device = get_device(device)
-    generator = get_generator(generator)
+    device = as_device(device)
+    generator = as_generator(generator)
 
     perm_kws: Dict[str, Any] = dict(generator=generator, device=device)
     arange = torch.arange(size, device=device)
@@ -128,7 +128,7 @@ def insert_at_indices(
     mask = torch.full((out.shape[0],), True, dtype=torch.bool)
     mask[indices] = False
     out[mask] = x
-    return out
+    return out  # type: ignore
 
 
 def remove_at_indices(
@@ -156,4 +156,4 @@ def remove_at_indices(
     mask = torch.full((x.shape[0],), True, dtype=torch.bool)
     mask[indices] = False
     out = x[mask]
-    return out
+    return out  # type: ignore

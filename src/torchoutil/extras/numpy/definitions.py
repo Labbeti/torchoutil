@@ -3,6 +3,8 @@
 
 from typing import Union
 
+from typing_extensions import TypeAlias
+
 from torchoutil.core.packaging import _NUMPY_AVAILABLE
 
 if not _NUMPY_AVAILABLE:
@@ -31,5 +33,5 @@ else:
     )
 
 
-NumpyNumberLike = Union[np.ndarray, np.number]
-NumpyScalarLike = Union[np.ndarray, np.generic]
+NumpyNumberLike: TypeAlias = Union[np.ndarray, np.number]
+NumpyScalarLike: TypeAlias = Union[np.ndarray, np.generic]

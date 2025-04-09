@@ -1,8 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-"""Helper functions for conversion between classes indices, onehot, names and probabilities for multiclass classification.
-"""
+"""Helper functions for conversion between classes indices, onehot, names and probabilities for multiclass classification."""
 
 from typing import (
     Any,
@@ -21,18 +20,19 @@ import torch
 from torch import Tensor
 from torch.nn import functional as F
 
-from torchoutil.core.get import DeviceLike, DTypeLike, get_device, get_dtype
-from torchoutil.extras.numpy import np
-from torchoutil.nn.functional.others import nelement, to_item
-from torchoutil.pyoutil.logging import warn_once
+from torchoutil.core.make import DeviceLike, DTypeLike, as_device, as_dtype
+from torchoutil.nn.functional.others import ndim, shape
+from torchoutil.nn.functional.transform import to_item
+from torchoutil.pyoutil.collections import prod
+from torchoutil.pyoutil.warnings import warn_once
 from torchoutil.types import LongTensor, is_number_like
-from torchoutil.types._typing import TensorLike
+from torchoutil.types._typing import TensorOrArray
 
 T_Name = TypeVar("T_Name", bound=Hashable)
 
 
 def index_to_onehot(
-    index: Union[Sequence[int], TensorLike, Sequence],
+    index: Union[Sequence[int], TensorOrArray, Sequence],
     num_classes: int,
     *,
     padding_idx: Optional[int] = None,
@@ -49,8 +49,8 @@ def index_to_onehot(
         device: PyTorch device of the output tensor.
         dtype: PyTorch DType of the output tensor.
     """
-    device = get_device(device)
-    dtype = get_dtype(dtype)
+    device = as_device(device)
+    dtype = as_dtype(dtype)
     index = torch.as_tensor(index, device=device, dtype=torch.long)
 
     if padding_idx is not None:
@@ -71,8 +71,26 @@ def index_to_onehot(
     return onehot
 
 
+def one_hot(
+    tensor: Union[Sequence[int], TensorOrArray, Sequence],
+    num_classes: int,
+    *,
+    padding_idx: Optional[int] = None,
+    device: DeviceLike = None,
+    dtype: DTypeLike = torch.bool,
+) -> Tensor:
+    """Alias of :func:`~torchoutil.nn.functional.multiclass.index_to_onehot`."""
+    return index_to_onehot(
+        tensor,
+        num_classes,
+        padding_idx=padding_idx,
+        device=device,
+        dtype=dtype,
+    )
+
+
 def index_to_name(
-    index: Union[Sequence[int], TensorLike, Sequence],
+    index: Union[Sequence[int], TensorOrArray, Sequence],
     idx_to_name: Union[Mapping[int, T_Name], Sequence[T_Name]],
     *,
     is_number_fn: Callable[[Any], bool] = is_number_like,
@@ -84,13 +102,10 @@ def index_to_name(
         idx_to_name: Mapping to convert a class index to its name.
         is_number_fn: Type guard to check if a value is a scalar number. defaults to `is_number_like`.
     """
-    if (
-        isinstance(index, (Tensor, np.ndarray))
-        and nelement(index) == 0
-        and index.ndim > 1
-    ):
-        msg = f"Found 0 elements in {index=} but {index.ndim=} > 1, which means that we will lose information about shape when converting to names."
-        warn_once(msg, __name__)
+    index_ndim = ndim(index)
+    if index_ndim > 1 and prod(shape(index)[:-1]) == 0:
+        msg = f"Found 0 elements in {index=} but {index_ndim=} > 1, which means that we will lose information about shape when converting to names."
+        warn_once(msg)
 
     def _impl(x) -> Union[T_Name, list]:
         if is_number_fn(x):

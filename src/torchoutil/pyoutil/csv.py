@@ -18,49 +18,61 @@ from typing import (
     overload,
 )
 
-from torchoutil.pyoutil.collections import (
-    dict_list_to_list_dict,
-    list_dict_to_dict_list,
-)
+from .collections import dict_list_to_list_dict, list_dict_to_dict_list
+from .io import _setup_path
+from .typing import isinstance_guard
 
 T = TypeVar("T")
 
 ORIENT_VALUES = ("list", "dict")
+Orient = Literal["list", "dict"]
 
 
-def to_csv(
-    data: Union[Iterable[Mapping[str, Any]], Mapping[str, Iterable[Any]]],
+def dump_csv(
+    data: Union[Iterable[Mapping[str, Any]], Mapping[str, Iterable[Any]], Iterable],
     fpath: Union[str, Path, None] = None,
     *,
     overwrite: bool = True,
     make_parents: bool = True,
-    header: bool = True,
+    header: Union[bool, Literal["auto"]] = "auto",
     align_content: bool = False,
     **csv_writer_kwds,
 ) -> str:
     """Dump content to CSV format."""
-    if fpath is not None:
-        fpath = Path(fpath).resolve().expanduser()
-        if not overwrite and fpath.exists():
-            raise FileExistsError(f"File {fpath} already exists.")
-        elif make_parents:
-            fpath.parent.mkdir(parents=True, exist_ok=True)
+    fpath = _setup_path(fpath, overwrite, make_parents)
 
-    if isinstance(data, Mapping):
+    if header == "auto":
+        header = isinstance_guard(
+            data, (Mapping[str, Iterable], Iterable[Mapping[str, Any]])
+        )
+
+    if isinstance_guard(data, Mapping[str, Iterable]):
         data_lst = dict_list_to_list_dict(data)  # type: ignore
+    elif isinstance_guard(data, Iterable[Mapping[str, Any]]):
+        data_lst = [dict(data_i.items()) for data_i in data]
+    elif not header and isinstance_guard(data, Iterable[str]):
+        data_lst = [{"0": data_i} for data_i in data]
+    elif not header and isinstance_guard(data, Iterable[Iterable]):
+        data_lst = [dict(zip(map(str, range(len(data_i))))) for data_i in data]
+    elif not header and isinstance_guard(data, Iterable):
+        data_lst = [{"0": data_i} for data_i in data]
     else:
-        data_lst = list(data)
+        raise TypeError(f"Invalid argument type {type(data)} with {header=}.")
     del data
 
     if header:
         writer_cls = DictWriter
-        if len(data_lst) == 0:
-            fieldnames = []
-        else:
-            fieldnames = [str(k) for k in data_lst[0].keys()]
     else:
         writer_cls = csv.writer
-        fieldnames = list(range(len(next(iter(data_lst)))))
+
+    if len(data_lst) == 0:
+        fieldnames = []
+    # elif header:
+    #     fieldnames = list(range(len(next(iter(data_lst)))))
+    else:
+        fieldnames = [str(k) for k in data_lst[0].keys()]
+
+    print(f"{fieldnames=}; {header=}")
 
     if align_content:
         old_fieldnames = fieldnames
@@ -89,7 +101,10 @@ def to_csv(
     writer = writer_cls(file, **csv_writer_kwds)
     if isinstance(writer, DictWriter):
         writer.writeheader()
-    writer.writerows(data_lst)  # type: ignore
+        writer.writerows(data_lst)
+    else:
+        data_lst = [tuple(data_i.values()) for data_i in data_lst]
+        writer.writerows(data_lst)
     content = file.getvalue()
     file.close()
 
@@ -108,6 +123,8 @@ def load_csv(
     header: bool = True,
     comment_start: Optional[str] = None,
     strip_content: bool = False,
+    # CSV reader kwargs
+    delimiter: Optional[str] = None,
     **csv_reader_kwds,
 ) -> Dict[str, List[Any]]:
     ...
@@ -122,6 +139,8 @@ def load_csv(
     header: bool = True,
     comment_start: Optional[str] = None,
     strip_content: bool = False,
+    # CSV reader kwargs
+    delimiter: Optional[str] = None,
     **csv_reader_kwds,
 ) -> List[Dict[str, Any]]:
     ...
@@ -131,20 +150,26 @@ def load_csv(
     fpath: Union[str, Path],
     /,
     *,
-    orient: Literal["list", "dict"] = "list",
+    orient: Orient = "list",
     header: bool = True,
     comment_start: Optional[str] = None,
     strip_content: bool = False,
+    # CSV reader kwargs
+    delimiter: Optional[str] = None,
     **csv_reader_kwds,
 ) -> Union[List[Dict[str, Any]], Dict[str, List[Any]]]:
     """Load content from csv filepath."""
+    fpath = Path(fpath)
+    if delimiter is None or delimiter is ...:
+        delimiter = "\t" if fpath.suffix == ".tsv" else ","
+
     if header:
         reader_cls = DictReader
     else:
         reader_cls = csv.reader
 
     with open(fpath, "r") as file:
-        reader = reader_cls(file, **csv_reader_kwds)
+        reader = reader_cls(file, delimiter=delimiter, **csv_reader_kwds)
         raw_data_lst = list(reader)
 
     data_lst: List[Dict[str, Any]]

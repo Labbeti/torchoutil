@@ -1,16 +1,15 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import os
-import tempfile
 import unittest
-from pathlib import Path
 from unittest import TestCase
 
 import torch
 
+import torchoutil as to
 from torchoutil import Tensor, nn
-from torchoutil.nn.modules.mixins import _DEFAULT_DEVICE_DETECT_MODE
+from torchoutil.hub.paths import get_tmp_dir
+from torchoutil.nn.modules._mixins import _DEFAULT_DEVICE_DETECT_MODE
 
 
 class Intermediate(torch.nn.Module):
@@ -43,9 +42,7 @@ class MyModule(nn.EModule[Tensor, Tensor]):
 class TestInheritEModule(TestCase):
     @classmethod
     def setUpClass(cls) -> None:
-        tmpdir = Path(os.getenv("TORCHOUTIL_TMPDIR", tempfile.gettempdir())).joinpath(
-            "torchoutil_tests"
-        )
+        tmpdir = get_tmp_dir().joinpath("torchoutil_tests")
         cls.tmpdir = tmpdir
 
     def test_multiple(self) -> None:
@@ -75,9 +72,9 @@ class TestInheritEModule(TestCase):
         path = self.tmpdir.joinpath("state_dict.pt")
         path.parent.mkdir(parents=True, exist_ok=True)
         with open(path, "wb") as file:
-            torch.save(module1.state_dict(), file)
-            state_dict = torch.load(path)
+            to.save(module1.state_dict(), file)
 
+        state_dict = to.load(path)
         module2 = MyModule(in_features, out_features, p=0.25)
         module2.load_state_dict(state_dict)
 

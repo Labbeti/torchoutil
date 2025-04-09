@@ -4,17 +4,18 @@
 from typing import Iterable, List, Optional, Union
 
 import torch
-from torch import LongTensor, Tensor
+from torch import Tensor
 
-from torchoutil.core.get import DeviceLike, DTypeLike, get_device, get_dtype
+from torchoutil.core.make import DeviceLike, DTypeLike, as_device, as_dtype
+from torchoutil.types import LongTensor, LongTensor1D, T_TensorOrArray
 
 
 def masked_mean(
-    x: Tensor,
-    non_pad_mask: Tensor,
+    x: T_TensorOrArray,
+    non_pad_mask: T_TensorOrArray,
     *,
     dim: Union[None, int, Iterable[int]] = None,
-) -> Tensor:
+) -> T_TensorOrArray:
     """Average a tensor along the specified dim(s).
 
     Args:
@@ -31,16 +32,16 @@ def masked_mean(
         dim = tuple(dim)
 
     masked = x * non_pad_mask
-    reduced = masked.sum(dim=dim) / non_pad_mask.sum(dim=dim).clamp(min=1.0)
-    return reduced
+    reduced = masked.sum(dim) / non_pad_mask.sum(dim).clamp(min=1.0)
+    return reduced  # type: ignore
 
 
 def masked_sum(
-    x: Tensor,
-    non_pad_mask: Tensor,
+    x: T_TensorOrArray,
+    non_pad_mask: T_TensorOrArray,
     *,
     dim: Union[None, int, Iterable[int]] = None,
-) -> Tensor:
+) -> T_TensorOrArray:
     """Sum a tensor along the specified dim(s).
 
     Args:
@@ -57,8 +58,8 @@ def masked_sum(
         dim = tuple(dim)
 
     masked = x * non_pad_mask
-    reduced = masked.sum(dim=dim)
-    return reduced
+    reduced = masked.sum(dim)
+    return reduced  # type: ignore
 
 
 def masked_equal(
@@ -87,8 +88,8 @@ def generate_square_subsequent_mask(
     device: DeviceLike = None,
     dtype: DTypeLike = None,
 ) -> Tensor:
-    device = get_device(device)
-    dtype = get_dtype(dtype)
+    device = as_device(device)
+    dtype = as_dtype(dtype)
 
     mask = torch.ones((size, size), device=device, dtype=torch.bool)
     mask = torch.tril(mask, diagonal=diagonal)
@@ -130,13 +131,14 @@ def lengths_to_non_pad_mask(
     dim = -1
     if max_len is None:
         max_len = int(lengths.max(dim=dim)[0].item())
+
     indices = torch.arange(0, max_len, device=lengths.device)
     lengths = lengths.unsqueeze(dim=-1)
     if include_end:
         non_pad_mask = indices <= lengths
     else:
         non_pad_mask = indices < lengths
-    dtype = get_dtype(dtype)
+    dtype = as_dtype(dtype)
     non_pad_mask = non_pad_mask.to(dtype=dtype)
     return non_pad_mask
 
@@ -176,16 +178,16 @@ def lengths_to_pad_mask(
         dtype=torch.bool,
     )
     pad_mask = non_pad_mask.logical_not()
-    dtype = get_dtype(dtype)
+    dtype = as_dtype(dtype)
     pad_mask = pad_mask.to(dtype=dtype)
     return pad_mask
 
 
-def non_pad_mask_to_lengths(mask: Tensor, *, dim: int = -1) -> LongTensor:
-    return mask.sum(dim=dim)  # type: ignore
+def non_pad_mask_to_lengths(mask: T_TensorOrArray, *, dim: int = -1) -> T_TensorOrArray:
+    return mask.sum(dim)  # type: ignore
 
 
-def pad_mask_to_lengths(mask: Tensor, *, dim: int = -1) -> LongTensor:
+def pad_mask_to_lengths(mask: T_TensorOrArray, *, dim: int = -1) -> T_TensorOrArray:
     return mask.shape[dim] - non_pad_mask_to_lengths(mask, dim=dim)  # type: ignore
 
 
@@ -272,7 +274,7 @@ def tensor_to_non_pad_mask(
         >>> tensor_to_pad_mask(input, end_value=2)
         tensor([True, True, True, False, False, False])
     """
-    dtype = get_dtype(dtype)
+    dtype = as_dtype(dtype)
 
     if (pad_value is None) == (end_value is None):
         msg = "Invalid arguments. Please provide only one of the arguments: end_value, pad_value."
@@ -324,7 +326,7 @@ def tensor_to_pad_mask(
         >>> tensor_to_pad_mask(input, end_value=2)
         tensor([False, False, False, True, True, True])
     """
-    dtype = get_dtype(dtype)
+    dtype = as_dtype(dtype)
     non_pad_mask = tensor_to_non_pad_mask(
         tensor,
         pad_value=pad_value,
@@ -384,7 +386,7 @@ def tensor_to_tensors_list(
     return tensors
 
 
-def tensors_list_to_lengths(tensors: List[Tensor], dim: int = -1) -> LongTensor:
+def tensors_list_to_lengths(tensors: List[Tensor], dim: int = -1) -> LongTensor1D:
     """Return the size of the tensor at a specific dim.
 
     The output will be a tensor of size N.

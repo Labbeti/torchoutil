@@ -6,7 +6,7 @@ from unittest import TestCase
 
 import torch
 
-from torchoutil.nn.functional.crop import crop_dims
+from torchoutil.nn.functional.cropping import crop_dims
 
 
 class TestCropDims(TestCase):

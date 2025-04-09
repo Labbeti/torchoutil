@@ -4,6 +4,7 @@
 import copy
 import random
 import unittest
+from typing import List
 from unittest import TestCase
 
 from torchoutil.pyoutil.collections import (
@@ -20,7 +21,7 @@ from torchoutil.pyoutil.collections import (
     unflat_list_of_list,
 )
 from torchoutil.pyoutil.re import get_key_fn
-from torchoutil.pyoutil.typing import is_list_list_str, is_list_str
+from torchoutil.pyoutil.typing import isinstance_guard
 
 
 class TestAllEqAllNe(TestCase):
@@ -31,11 +32,16 @@ class TestAllEqAllNe(TestCase):
         x = [1] * 10
         assert all_eq(x)
         assert all_eq([random.randint(0, 2**20)])
+        assert all_eq([])
+        assert all_eq(())
 
     def test_all_ne(self) -> None:
         lst = [random.randint(0, 10) for _ in range(100)]
+
         assert all_ne(set(lst))
         assert all_ne([random.randint(0, 2**20)])
+        assert all_ne([])
+        assert all_ne(())
 
 
 class TestDictListToListDict(TestCase):
@@ -153,15 +159,15 @@ class TestFlatList(TestCase):
             random.shuffle(sublst)
         random.shuffle(lst)
 
-        assert is_list_list_str(lst)
+        assert isinstance_guard(lst, List[List[str]])
 
         flatten, sizes = flat_list_of_list(lst)
-        assert is_list_str(flatten)
+        assert isinstance_guard(flatten, List[str])
         assert len(lst) == len(sizes)
         assert len(flatten) == sum(sizes)
 
         unflat = unflat_list_of_list(flatten, sizes)
-        assert is_list_list_str(unflat)
+        assert isinstance_guard(unflat, List[List[str]])
         assert len(lst) == len(unflat)
         assert lst == unflat
 
@@ -205,8 +211,17 @@ class TestIsSorted(TestCase):
         x[0] = x_sorted[-1]
         x[-1] = x_sorted[0]
 
-        assert is_sorted(x_sorted)
-        assert not is_sorted(x)
+        tests = [
+            (x_sorted, True),
+            (x, False),
+            ([], True),
+            ([2], True),
+            ([2, 2], True),
+            ([2, 3], True),
+        ]
+
+        for input_, expected in tests:
+            assert is_sorted(input_) == expected
 
 
 if __name__ == "__main__":

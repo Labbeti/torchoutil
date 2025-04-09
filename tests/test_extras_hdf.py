@@ -1,13 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import os
 import pickle
 import random
-import tempfile
 import time
 import unittest
-from pathlib import Path
 from unittest import TestCase
 
 import numpy as np
@@ -17,17 +14,16 @@ from torch.utils.data.dataset import Subset
 from torchvision.datasets import CIFAR10
 
 from torchoutil.extras.hdf import HDFDataset, pack_to_hdf
+from torchoutil.hub.paths import get_tmp_dir
 from torchoutil.nn import ESequential, IndexToOnehot, ToList, ToNumpy
-from torchoutil.nn.functional import to_tensor
+from torchoutil.nn.functional import as_tensor
 from torchoutil.pyoutil import dict_list_to_list_dict
 
 
 class TestHDF(TestCase):
     @classmethod
     def setUpClass(cls) -> None:
-        tmpdir = Path(os.getenv("TORCHOUTIL_TMPDIR", tempfile.gettempdir())).joinpath(
-            "torchoutil_tests"
-        )
+        tmpdir = get_tmp_dir().joinpath("torchoutil_tests")
         tmpdir.mkdir(parents=True, exist_ok=True)
         cls.tmpdir = tmpdir
 
@@ -36,7 +32,7 @@ class TestHDF(TestCase):
         tmpdir = cls.tmpdir
 
         dataset = CIFAR10(
-            tmpdir,
+            str(tmpdir),
             train=False,
             transform=ToNumpy(),
             target_transform=ESequential(IndexToOnehot(10), ToList()),
@@ -128,8 +124,8 @@ class TestHDF(TestCase):
             hdf_dataset[indices, "data"],
             hdf_dataset[mask.tolist(), "data"],
             hdf_dataset[indices.tolist(), "data"],
-            hdf_dataset[to_tensor(mask), "data"],
-            hdf_dataset[to_tensor(indices), "data"],
+            hdf_dataset[as_tensor(mask), "data"],
+            hdf_dataset[as_tensor(indices), "data"],
             data[mask],
             data[indices],
         ):

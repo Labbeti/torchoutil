@@ -38,4 +38,7 @@ Submodules
    torchoutil.pyoutil.math
    torchoutil.pyoutil.os
    torchoutil.pyoutil.pickle
+   torchoutil.pyoutil.random
    torchoutil.pyoutil.re
+   torchoutil.pyoutil.semver
+   torchoutil.pyoutil.warnings

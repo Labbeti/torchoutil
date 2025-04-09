@@ -1,17 +1,21 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from torch.types import *
+from torch.types import *  # type: ignore
 
 from torchoutil.core.dtype_enum import DTypeEnum
-from torchoutil.core.get import DeviceLike, DTypeLike, GeneratorLike
+from torchoutil.core.make import DeviceLike, DTypeLike, GeneratorLike
 from torchoutil.pyoutil.typing import *
 
+from ._typing import T_Tensor, T_TensorOrArray, TensorOrArray
 from .guards import (
     is_bool_tensor,
     is_bool_tensor1d,
     is_builtin_number,
     is_builtin_scalar,
+    is_complex_tensor,
+    is_dict_str_tensor,
+    is_floating_tensor,
     is_integral_dtype,
     is_integral_tensor,
     is_integral_tensor1d,
@@ -22,8 +26,9 @@ from .guards import (
     is_numpy_scalar_like,
     is_scalar_like,
     is_tensor0d,
-    is_tensor_like,
+    is_tensor_or_array,
     is_tuple_tensor,
+    isinstance_guard,
 )
 from .tensor_subclasses import (
     BoolTensor,
@@ -46,11 +51,6 @@ from .tensor_subclasses import (
     CFloatTensor1D,
     CFloatTensor2D,
     CFloatTensor3D,
-    CHalfTensor,
-    CHalfTensor0D,
-    CHalfTensor1D,
-    CHalfTensor2D,
-    CHalfTensor3D,
     CharTensor,
     CharTensor0D,
     CharTensor1D,
@@ -101,6 +101,7 @@ from .tensor_subclasses import (
     SignedIntegerTensor1D,
     SignedIntegerTensor2D,
     SignedIntegerTensor3D,
+    Tensor,
     Tensor0D,
     Tensor1D,
     Tensor2D,

@@ -17,7 +17,6 @@ TORCH_DTYPES: Final[Dict[str, torch.dtype]] = {
     "int16": torch.int16,
     "int32": torch.int32,
     "int64": torch.int64,
-    "complex32": torch.complex32,
     "complex64": torch.complex64,
     "complex128": torch.complex128,
     # Aliases
@@ -27,7 +26,6 @@ TORCH_DTYPES: Final[Dict[str, torch.dtype]] = {
     "short": torch.short,
     "int": torch.int,
     "long": torch.long,
-    "chalf": torch.chalf if hasattr(torch, "chalf") else torch.complex32,
     "cfloat": torch.cfloat,
     "cdouble": torch.cdouble,
     # Others
@@ -42,14 +40,20 @@ TORCH_DTYPES: Final[Dict[str, torch.dtype]] = {
 }
 
 # Optional
+if hasattr(torch, "complex32"):
+    TORCH_DTYPES["complex32"] = torch.complex32  # type: ignore
+if hasattr(torch, "chalf"):
+    TORCH_DTYPES["chalf"] = torch.chalf  # type: ignore
+elif hasattr(torch, "complex32"):
+    TORCH_DTYPES["chalf"] = torch.complex32  # type: ignore
 if hasattr(torch, "quint2x4"):
     TORCH_DTYPES["quint2x4"] = torch.quint2x4
 if hasattr(torch, "uint16"):
-    TORCH_DTYPES["uint16"] = torch.uint16
+    TORCH_DTYPES["uint16"] = torch.uint16  # type: ignore
 if hasattr(torch, "uint32"):
-    TORCH_DTYPES["uint32"] = torch.uint32
+    TORCH_DTYPES["uint32"] = torch.uint32  # type: ignore
 if hasattr(torch, "uint64"):
-    TORCH_DTYPES["uint64"] = torch.uint64
+    TORCH_DTYPES["uint64"] = torch.uint64  # type: ignore
 
 
 _NAME_TO_DTYPE: Final[Dict[str, torch.dtype]] = TORCH_DTYPES
@@ -128,13 +132,13 @@ class DTypeEnum(StrEnum):
 
     @property
     def itemsize(self) -> _int:
-        return self.dtype.itemsize
+        return self.dtype.itemsize  # type: ignore
 
     def to_real(self) -> "DTypeEnum":
-        return DTypeEnum.from_dtype(self.dtype.to_real())
+        return DTypeEnum.from_dtype(self.dtype.to_real())  # type: ignore
 
     def to_complex(self) -> "DTypeEnum":
-        return DTypeEnum.from_dtype(self.dtype.to_complex())
+        return DTypeEnum.from_dtype(self.dtype.to_complex())  # type: ignore
 
     def __eq__(self, other: Any) -> _bool:
         if isinstance(other, DTypeEnum):

@@ -13,8 +13,6 @@ Subpackages
    :maxdepth: 4
 
    torchoutil.utils.data
-   torchoutil.utils.pack
-   torchoutil.utils.saving
 
 Submodules
 ----------
@@ -22,4 +20,6 @@ Submodules
 .. toctree::
    :maxdepth: 4
 
+   torchoutil.utils.hdf
    torchoutil.utils.return_types
+   torchoutil.utils.saving

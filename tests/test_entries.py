@@ -1,22 +1,18 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import os
 import shutil
-import tempfile
 import unittest
-from pathlib import Path
 from unittest import TestCase
 
 from torchoutil.entries import print_safe_rmdir, print_tree
+from torchoutil.hub.paths import get_tmp_dir
 
 
 class TestEntries(TestCase):
     @classmethod
     def setUpClass(cls) -> None:
-        tmpdir = Path(os.getenv("TORCHOUTIL_TMPDIR", tempfile.gettempdir())).joinpath(
-            "torchoutil_tests"
-        )
+        tmpdir = get_tmp_dir().joinpath("torchoutil_tests")
         tmpdir.mkdir(parents=True, exist_ok=True)
         cls.tmpdir = tmpdir
 

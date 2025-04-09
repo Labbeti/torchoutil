@@ -1,21 +1,25 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from typing import Any, Iterable, Tuple, Union, overload
+from typing import Any, Iterable, List, Literal, Tuple, Union, overload
 
 import torch
 from torch import Tensor
-from typing_extensions import TypeIs
+from typing_extensions import TypeGuard
 
-from torchoutil.core.get import DeviceLike, DTypeLike, get_device, get_dtype
-from torchoutil.core.packaging import torch_version_ge_1_13
-from torchoutil.extras.numpy.definitions import NumpyNumberLike, NumpyScalarLike, np
+from torchoutil.core.make import DeviceLike, DTypeLike, as_device, as_dtype
 from torchoutil.pyoutil import (
     BuiltinScalar,
+    function_alias,
     get_current_fn_name,
     is_builtin_scalar,
     prod,
+    reduce_and,
+    reduce_or,
 )
+from torchoutil.pyoutil.semver import Version
+
+from .definitions import NumpyNumberLike, NumpyScalarLike, np
 
 
 def to_numpy(
@@ -28,7 +32,7 @@ def to_numpy(
     if isinstance(x, Tensor):
         return tensor_to_numpy(x, dtype=dtype, force=force)
     else:
-        return np.asarray(x, dtype=dtype)  # type: ignore
+        return np.array(x, dtype=dtype)  # type: ignore
 
 
 def tensor_to_numpy(
@@ -38,7 +42,7 @@ def tensor_to_numpy(
     force: bool = False,
 ) -> np.ndarray:
     """Convert PyTorch tensor to numpy array."""
-    if torch_version_ge_1_13():
+    if Version(str(torch.__version__)) >= Version("1.13.0"):
         kwargs = dict(force=force)
     elif not force:
         kwargs = dict()
@@ -59,8 +63,8 @@ def numpy_to_tensor(
     dtype: DTypeLike = None,
 ) -> Tensor:
     """Convert numpy array to PyTorch tensor."""
-    device = get_device(device)
-    dtype = get_dtype(dtype)
+    device = as_device(device)
+    dtype = as_dtype(dtype)
     return torch.from_numpy(x).to(dtype=dtype, device=device)
 
 
@@ -99,7 +103,7 @@ def numpy_view_as_complex(x: np.ndarray) -> np.ndarray:
 
 
 def numpy_is_floating_point(x: Union[np.ndarray, np.generic]) -> bool:
-    return isinstance(x, np.floating)
+    return x.dtype.kind == "f"
 
 
 def numpy_is_complex(x: Union[np.ndarray, np.generic]) -> bool:
@@ -110,48 +114,24 @@ def numpy_is_complex_dtype(dtype: np.dtype) -> bool:
     return np.iscomplexobj(np.empty((0,), dtype=dtype))
 
 
-def is_numpy_bool_array(x: Any) -> TypeIs[Union[np.bool_, np.ndarray]]:
+def is_numpy_bool_array(x: Any) -> TypeGuard[Union[np.bool_, np.ndarray]]:
     return isinstance(x, (np.generic, np.ndarray)) and x.dtype.kind == "b"
 
 
-def is_numpy_number_like(x: Any) -> TypeIs[NumpyNumberLike]:
+def is_numpy_number_like(x: Any) -> TypeGuard[NumpyNumberLike]:
     """Returns True if x is an instance of a numpy number type, a np.bool_ or a zero-dimensional numpy array.
     If numpy is not installed, this function always returns False.
     """
     return isinstance(x, (np.number, np.bool_)) or (
-        isinstance(x, np.ndarray) and x.ndim == 0
+        isinstance(x, np.ndarray) and x.ndim == 0 and np.issubdtype(x.dtype, np.number)
     )
 
 
-def is_numpy_scalar_like(x: Any) -> TypeIs[NumpyScalarLike]:
+def is_numpy_scalar_like(x: Any) -> TypeGuard[NumpyScalarLike]:
     """Returns True if x is an instance of a numpy number type or a zero-dimensional numpy array.
     If numpy is not installed, this function always returns False.
     """
     return isinstance(x, np.generic) or (isinstance(x, np.ndarray) and x.ndim == 0)
-
-
-def logical_and_lst(
-    arr0: np.ndarray,
-    /,
-    *others: np.ndarray,
-) -> np.ndarray:
-    """Compute multiple logical_and over numpy arrays."""
-    current = arr0
-    for other in others:
-        current = np.logical_and(current, other)
-    return current
-
-
-def logical_or_lst(
-    arr0: np.ndarray,
-    /,
-    *others: np.ndarray,
-) -> np.ndarray:
-    """Compute multiple logical_or over numpy arrays."""
-    current = arr0
-    for other in others:
-        current = np.logical_or(current, other)
-    return current
 
 
 def numpy_topk(
@@ -172,7 +152,7 @@ def numpy_item(x: Union[np.ndarray, np.generic, BuiltinScalar]) -> np.generic:
     if isinstance(x, np.generic):
         return x
     if is_builtin_scalar(x, strict=True):
-        return np.array(x)[()]
+        return np.array(x)[()]  # type: ignore
     if prod(x.shape) != 1:
         msg = f"Invalid argument shape {x.shape=}. (expected nd-array with 1 element)"
         raise ValueError(msg)
@@ -184,7 +164,7 @@ def numpy_item(x: Union[np.ndarray, np.generic, BuiltinScalar]) -> np.generic:
 @overload
 def numpy_all_eq(
     x: Union[np.generic, np.ndarray],
-    dim: None = None,
+    dim: Literal[None] = None,
 ) -> bool:
     ...
 
@@ -200,20 +180,48 @@ def numpy_all_eq(
 def numpy_all_eq(
     x: Union[np.generic, np.ndarray],
     dim: Union[int, None] = None,
-) -> bool:
-    if dim is None:
+) -> Union[bool, np.ndarray]:
+    if isinstance(x, np.generic):
+        return True
+
+    elif dim is None:
         if x.ndim == 0 or prod(x.shape) == 0:
             return True
         else:
             return (x.flat[0] == x.flat[1:]).all()
 
     else:
-        slices = [slice(None) for _ in range(x.ndim)]
-        slices[dim] = 0
-        slices.insert(dim + 1, None)
-        slices = tuple(slices)
-        return (x == x[slices]).all(dim)
+        indexer: List[Union[int, slice, None]] = [slice(None) for _ in range(x.ndim)]
+        indexer[dim] = 0
+        indexer.insert(dim + 1, None)
+        indexer_tuple = tuple(indexer)
+        return (x == x[indexer_tuple]).all(dim)
 
 
 def numpy_all_ne(x: Union[np.generic, np.ndarray]) -> bool:
     return len(np.unique(x)) == x.size
+
+
+@function_alias(reduce_and)
+def logical_and_lst(*args, **kwargs):
+    ...
+
+
+@function_alias(reduce_or)
+def logical_or_lst(*args, **kwargs):
+    ...
+
+
+@function_alias(to_numpy)
+def to_ndarray(*args, **kwargs):
+    ...
+
+
+@function_alias(tensor_to_numpy)
+def tensor_to_ndarray(*args, **kwargs):
+    ...
+
+
+@function_alias(tensor_to_numpy)
+def ndarray_to_tensor(*args, **kwargs):
+    ...

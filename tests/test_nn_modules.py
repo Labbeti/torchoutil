@@ -12,6 +12,7 @@ from torchoutil.nn.modules import (
     AsTensor,
     CropDim,
     CropDims,
+    ESequential,
     Identity,
     LogSoftmaxMultidim,
     Mean,
@@ -26,7 +27,6 @@ from torchoutil.nn.modules import (
     Transpose,
     Unsqueeze,
 )
-from torchoutil.nn.modules.mixins import ESequential
 
 
 class TestSequential(TestCase):

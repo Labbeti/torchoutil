@@ -9,6 +9,7 @@ requires-python = ">=3.8"
 keywords = ["pytorch", "deep-learning"]
 license = {file = "LICENSE"}
 classifiers = [
+    "Intended Audience :: Developers",
     "Intended Audience :: Science/Research",
     "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3",
@@ -17,6 +18,7 @@ classifiers = [
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Topic :: Scientific/Engineering",
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
     "Operating System :: OS Independent",
@@ -38,9 +40,15 @@ torchoutil-info = "torchoutil.info:print_install_info"
 torchoutil-tree = "torchoutil.entries:main_tree"
 torchoutil-safe-rmdir = "torchoutil.entries:main_safe_rmdir"
 
+[build-system]
+requires = ["setuptools >= 61.0"]
+build-backend = "setuptools.build_meta"
+
 [tool.setuptools.packages.find]
 where = ["src"]  # list of folders that contain the packages (["."] by default)
-include = ["torchoutil*"]  # package names should match these glob patterns (["*"] by default)
+# package names should match these glob patterns (["*"] by default)
+# note: star after package names is required to work
+include = ["torchoutil*", "pyoutil*"]
 
 [tool.setuptools.dynamic]
 version = {attr = "torchoutil.__version__"}

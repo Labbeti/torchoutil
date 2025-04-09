@@ -3,6 +3,7 @@
 
 import copy
 import operator
+import random
 import sys
 from typing import (
     Any,
@@ -10,20 +11,32 @@ from typing import (
     Dict,
     Generator,
     Iterable,
+    Iterator,
     List,
     Literal,
     Mapping,
+    MutableSequence,
     Optional,
     Sequence,
     Tuple,
+    Type,
     TypeVar,
     Union,
     overload,
 )
 
-from typing_extensions import TypeIs
+from typing_extensions import TypeGuard, TypeIs
 
-from torchoutil.pyoutil.typing import T_BuiltinScalar, is_builtin_scalar, is_mapping_str
+from .functools import function_alias, identity
+from .semver import Version
+from .typing.classes import (
+    SupportsAdd,
+    SupportsAnd,
+    SupportsMul,
+    SupportsOr,
+    T_BuiltinScalar,
+)
+from .typing.guards import is_builtin_scalar, isinstance_guard
 
 K = TypeVar("K", covariant=True)
 T = TypeVar("T", covariant=True)
@@ -31,6 +44,12 @@ U = TypeVar("U", covariant=True)
 V = TypeVar("V", covariant=True)
 W = TypeVar("W", covariant=True)
 X = TypeVar("X", covariant=True)
+Y = TypeVar("Y", covariant=True)
+
+T_SupportsAdd = TypeVar("T_SupportsAdd", bound=SupportsAdd)
+T_SupportsAnd = TypeVar("T_SupportsAnd", bound=SupportsAnd)
+T_SupportsMul = TypeVar("T_SupportsMul", bound=SupportsMul)
+T_SupportsOr = TypeVar("T_SupportsOr", bound=SupportsOr)
 
 KeyMode = Literal["intersect", "same", "union"]
 KEY_MODES = ("same", "intersect", "union")
@@ -38,43 +57,60 @@ KEY_MODES = ("same", "intersect", "union")
 
 @overload
 def list_dict_to_dict_list(
-    lst: Sequence[Mapping[K, V]],
-    key_mode: Literal["intersect", "same"],
+    lst: Iterable[Mapping[K, V]],
+    key_mode: Literal["intersect", "same"] = "same",
     default_val: Any = None,
     *,
     default_val_fn: Any = None,
+    list_fn: None = None,
 ) -> Dict[K, List[V]]:
     ...
 
 
 @overload
 def list_dict_to_dict_list(
-    lst: Sequence[Mapping[K, V]],
+    lst: Iterable[Mapping[K, V]],
     key_mode: Literal["union"],
     default_val: Any = None,
     *,
     default_val_fn: Callable[[K], X],
+    list_fn: None = None,
 ) -> Dict[K, List[Union[V, X]]]:
     ...
 
 
 @overload
 def list_dict_to_dict_list(
-    lst: Sequence[Mapping[K, V]],
+    lst: Iterable[Mapping[K, V]],
     key_mode: Literal["union"],
     default_val: W = None,
     *,
     default_val_fn: None = None,
+    list_fn: None = None,
 ) -> Dict[K, List[Union[V, W]]]:
     ...
 
 
+@overload
 def list_dict_to_dict_list(
-    lst: Sequence[Mapping[K, V]],
-    key_mode: KeyMode,
+    lst: Iterable[Mapping[K, V]],
+    key_mode: KeyMode = "same",
     default_val: W = None,
+    *,
     default_val_fn: Optional[Callable[[K], X]] = None,
-) -> Dict[K, List[Union[V, W]]]:
+    list_fn: Callable[[List[Union[V, W, X]]], Y],
+) -> Dict[K, Y]:
+    ...
+
+
+def list_dict_to_dict_list(
+    lst: Iterable[Mapping[K, V]],
+    key_mode: KeyMode = "same",
+    default_val: W = None,
+    *,
+    default_val_fn: Optional[Callable[[K], X]] = None,
+    list_fn: Optional[Callable[[List[Union[V, W, X]]], Y]] = identity,
+) -> Dict[K, Y]:
     """Convert list of dicts to dict of lists.
 
     Args:
@@ -84,13 +120,18 @@ def list_dict_to_dict_list(
             If "intersect", only the intersection of all keys will be used in output.
             If "union", the output dict will contains the union of all keys, and the missing value will use the argument default_val.
         default_val: Default value of an element when key_mode is "union". defaults to None.
+        default_val_fn: Function to return the default value according to a specific key. defaults to None.
+        list_fn: Optional function to build the values. defaults to identity.
     """
-    if len(lst) <= 0:
+    try:
+        item0 = next(iter(lst))
+    except StopIteration:
         return {}
 
-    keys = set(lst[0].keys())
+    keys = set(item0.keys())
+
     if key_mode == "same":
-        invalids = [list(item.keys()) for item in lst[1:] if keys != set(item.keys())]
+        invalids = [list(item.keys()) for item in lst if keys != set(item.keys())]
         if len(invalids) > 0:
             msg = f"Invalid dict keys for conversion from List[dict] to Dict[list]. (with {key_mode=}, {keys=} and {invalids=})"
             raise ValueError(msg)
@@ -105,16 +146,22 @@ def list_dict_to_dict_list(
         msg = f"Invalid argument key_mode={key_mode}. (expected one of {KEY_MODES})"
         raise ValueError(msg)
 
+    if list_fn is None:
+        list_fn = identity  # type: ignore
+
     result = {
-        key: [
-            item.get(
-                key, default_val_fn(key) if default_val_fn is not None else default_val
-            )
-            for item in lst
-        ]
+        key: list_fn(
+            [
+                item.get(
+                    key,
+                    default_val_fn(key) if default_val_fn is not None else default_val,
+                )
+                for item in lst
+            ]
+        )  # type: ignore
         for key in keys
     }
-    return result
+    return result  # type: ignore
 
 
 @overload
@@ -209,13 +256,14 @@ def union_lists(lst_of_lst: Iterable[Iterable[T]]) -> List[T]:
 
 
 def dump_dict(
-    dic: Mapping[str, T],
+    dic: Optional[Mapping[str, T]] = None,
     /,
     join: str = ", ",
     fmt: str = "{key}={value}",
     ignore_lst: Iterable[T] = (),
+    **kwargs,
 ) -> str:
-    """Custom dictionary of scalars to string function to customize representation.
+    """Dump dictionary of scalars to string function to customize representation.
 
     Example 1:
     ----------
@@ -225,6 +273,12 @@ def dump_dict(
     ... 'a=1, b=2'
     ```
     """
+    if dic is None:
+        dic = {}
+    else:
+        dic = dict(dic.items())
+    dic.update(kwargs)
+
     ignore_lst = dict.fromkeys(ignore_lst)
     result = join.join(
         fmt.format(key=key, value=value)
@@ -236,36 +290,76 @@ def dump_dict(
 
 @overload
 def find(
-    x: T,
-    include: Iterable[V],
+    target: T,
+    it: Iterable[V],
     *,
     match_fn: Callable[[V, T], bool] = operator.eq,
     order: Literal["right"] = "right",
     default: U = -1,
+    return_value: Literal[False] = False,
 ) -> Union[int, U]:
     ...
 
 
 @overload
 def find(
-    x: T,
-    include: Iterable[V],
+    target: T,
+    it: Iterable[V],
     *,
     match_fn: Callable[[T, V], bool] = operator.eq,
     order: Literal["left"],
     default: U = -1,
+    return_value: Literal[False] = False,
 ) -> Union[int, U]:
     ...
 
 
+@overload
 def find(
-    x: T,
-    include: Iterable[T],
+    target: T,
+    it: Iterable[V],
     *,
-    match_fn: Callable[[T, T], bool] = operator.eq,
+    match_fn: Callable[[V, T], bool] = operator.eq,
+    order: Literal["right"] = "right",
+    default: U = -1,
+    return_value: Literal[True],
+) -> Tuple[Union[int, U], Union[V, U]]:
+    ...
+
+
+@overload
+def find(
+    target: T,
+    it: Iterable[V],
+    *,
+    match_fn: Callable[[T, V], bool] = operator.eq,
+    order: Literal["left"],
+    default: U = -1,
+    return_value: Literal[True],
+) -> Tuple[Union[int, U], Union[V, U]]:
+    ...
+
+
+def find(
+    target: Any,
+    it: Iterable[V],
+    *,
+    match_fn: Callable[[Any, Any], bool] = operator.eq,
     order: Literal["left", "right"] = "right",
     default: U = -1,
-) -> Union[int, U]:
+    return_value: bool = False,
+) -> Union[int, U, Tuple[Union[int, U], Union[V, U]]]:
+    if not return_value:
+        result = find(
+            target,
+            it,
+            match_fn=match_fn,
+            order=order,
+            default=default,
+            return_value=True,
+        )
+        return result[0]
+
     if order == "right":
         pass
     elif order == "left":
@@ -281,10 +375,11 @@ def find(
         ORDER_VALUES = ("left", "right")
         raise ValueError(f"Invalid argument {order=}. (expected one of {ORDER_VALUES})")
 
-    for i, include_i in enumerate(include):
-        if match_fn(include_i, x):
-            return i
-    return default
+    for i, xi in enumerate(it):
+        if match_fn(xi, target):
+            return i, xi
+
+    return default, default
 
 
 def contained(
@@ -338,7 +433,11 @@ def all_eq(it: Iterable[T], eq_fn: Optional[Callable[[T, T], bool]] = None) -> b
     Note: This function returns True for iterable that contains 0 or 1 element.
     """
     it = list(it)
-    first = it[0]
+    try:
+        first = next(iter(it))
+    except StopIteration:
+        return True
+
     if eq_fn is None:
         return all(first == elt for elt in it)
     else:
@@ -354,6 +453,8 @@ def all_ne(
 
     Note: This function returns True for iterable that contains 0 or 1 element.
     """
+    if isinstance(it, (set, frozenset, dict)):
+        return True
     if use_set and ne_fn is not None:
         raise ValueError(f"Cannot use arguments {use_set=} with {ne_fn=}.")
 
@@ -411,7 +512,7 @@ def flat_dict_of_dict(
     def _impl(nested_dic: Mapping[str, Any]) -> Dict[str, Any]:
         output = {}
         for k, v in nested_dic.items():
-            if is_mapping_str(v):
+            if isinstance_guard(v, Mapping[str, Any]):
                 v = _impl(v)
                 v = {f"{k}{sep}{kv}": vv for kv, vv in v.items()}
                 output.update(v)
@@ -538,14 +639,14 @@ def unzip(lst: Iterable[Tuple[T, U, V]]) -> Tuple[List[T], List[U], List[V]]:
 
 @overload
 def unzip(
-    lst: Iterable[Tuple[T, U, V, W]]
+    lst: Iterable[Tuple[T, U, V, W]],
 ) -> Tuple[List[T], List[U], List[V], List[W]]:
     ...
 
 
 @overload
 def unzip(
-    lst: Iterable[Tuple[T, U, V, W, X]]
+    lst: Iterable[Tuple[T, U, V, W, X]],
 ) -> Tuple[List[T], List[U], List[V], List[W], List[X]]:
     ...
 
@@ -565,13 +666,6 @@ def unzip(lst):
         ... [1, 2, 3, 4], [5, 6, 7, 8]
     """
     return tuple(map(list, zip(*lst)))
-
-
-def prod(x: Iterable[T], /, start: T = 1) -> T:
-    result = copy.copy(start)
-    for xi in x:
-        result = result * xi  # type: ignore
-    return result
 
 
 def sorted_dict(
@@ -594,7 +688,7 @@ def flatten(
 
 
 @overload
-def flatten(
+def flatten(  # type: ignore
     x: Iterable[T_BuiltinScalar],
     start_dim: int = 0,
     end_dim: Optional[int] = None,
@@ -607,7 +701,9 @@ def flatten(
     x: Any,
     start_dim: int = 0,
     end_dim: Optional[int] = None,
-    is_scalar_fn: Callable[[Any], TypeIs[T]] = is_builtin_scalar,
+    is_scalar_fn: Union[
+        Callable[[Any], TypeGuard[T]], Callable[[Any], TypeIs[T]]
+    ] = is_builtin_scalar,
 ) -> List[Any]:
     ...
 
@@ -616,7 +712,9 @@ def flatten(
     x: Any,
     start_dim: int = 0,
     end_dim: Optional[int] = None,
-    is_scalar_fn: Callable[[Any], TypeIs[T]] = is_builtin_scalar,
+    is_scalar_fn: Union[
+        Callable[[Any], TypeGuard[T]], Callable[[Any], TypeIs[T]]
+    ] = is_builtin_scalar,
 ) -> List[Any]:
     if end_dim is None:
         end_dim = sys.maxsize
@@ -654,7 +752,9 @@ def recursive_generator(x: Any) -> Generator[Tuple[Any, int, int], None, None]:
         i: int,
         deep: int,
     ) -> Generator[Tuple[Any, int, int], None, None]:
-        if isinstance(x, Iterable):
+        if is_builtin_scalar(x):
+            yield x, i, deep
+        elif isinstance(x, Iterable):
             for j, xj in enumerate(x):
                 if xj == x:
                     yield xj, i, deep
@@ -691,11 +791,18 @@ def is_sorted(
     return True
 
 
-def union_dicts(dicts: Iterable[Mapping[K, V]]) -> Dict[K, V]:
-    result = {}
-    for dic in dicts:
-        result.update(dic)
-    return result
+def union_dicts(dicts: Iterable[Dict[K, V]]) -> Dict[K, V]:
+    if Version.python() >= Version("3.9.0"):
+        return reduce_or(dicts)  # type: ignore
+
+    it = iter(dicts)
+    try:
+        dic0 = next(it)
+    except StopIteration:
+        return {}
+    for dic in it:
+        dic0.update(dic)
+    return dic0
 
 
 def argmin(x: Iterable) -> int:
@@ -706,3 +813,269 @@ def argmin(x: Iterable) -> int:
 def argmax(x: Iterable) -> int:
     max_index, _max_value = max(enumerate(x), key=lambda t: t[1])
     return max_index
+
+
+def shuffled(
+    x: MutableSequence[T],
+    *,
+    seed: Optional[int] = None,
+    deep: bool = False,
+) -> MutableSequence[T]:
+    if deep:
+        x = copy.deepcopy(x)
+    else:
+        x = copy.copy(x)
+
+    if seed is None:
+        random.shuffle(x)
+        return x
+    else:
+        state = random.getstate()
+        random.seed(seed)
+        random.shuffle(x)
+        state = random.setstate(state)
+        return x
+
+
+@overload
+def reduce_add(
+    args: Iterable[T_SupportsAdd],
+    /,
+    *,
+    start: T_SupportsAdd,
+) -> T_SupportsAdd:
+    ...
+
+
+@overload
+def reduce_add(
+    *args: T_SupportsAdd,
+    start: T_SupportsAdd,
+) -> T_SupportsAdd:
+    ...
+
+
+@overload
+def reduce_add(
+    arg0: T_SupportsAdd,
+    /,
+    *args: T_SupportsAdd,
+    start: Optional[T_SupportsAdd] = None,
+) -> T_SupportsAdd:
+    ...
+
+
+def reduce_add(*args, start=None):
+    return _reduce(*args, start=start, op_fn=operator.add, type_=SupportsAdd)
+
+
+@overload
+def reduce_and(
+    args: Iterable[T_SupportsAnd],
+    /,
+    *,
+    start: T_SupportsAnd,
+) -> T_SupportsAnd:
+    ...
+
+
+@overload
+def reduce_and(
+    *args: T_SupportsAnd,
+    start: T_SupportsAnd,
+) -> T_SupportsAnd:
+    ...
+
+
+@overload
+def reduce_and(
+    arg0: T_SupportsAnd,
+    /,
+    *args: T_SupportsAnd,
+    start: Optional[T_SupportsAnd] = None,
+) -> T_SupportsAnd:
+    ...
+
+
+def reduce_and(*args, start=None):
+    return _reduce(*args, start=start, op_fn=operator.and_, type_=SupportsAnd)
+
+
+@overload
+def reduce_mul(
+    args: Iterable[T_SupportsMul],
+    /,
+    *,
+    start: T_SupportsMul,
+) -> T_SupportsMul:
+    ...
+
+
+@overload
+def reduce_mul(
+    *args: T_SupportsMul,
+    start: T_SupportsMul,
+) -> T_SupportsMul:
+    ...
+
+
+@overload
+def reduce_mul(
+    arg0: T_SupportsMul,
+    /,
+    *args: T_SupportsMul,
+    start: Optional[T_SupportsMul] = None,
+) -> T_SupportsMul:
+    ...
+
+
+def reduce_mul(*args, start=None):
+    return _reduce(*args, start=start, op_fn=operator.mul, type_=SupportsMul)
+
+
+@overload
+def reduce_or(
+    args: Iterable[T_SupportsOr],
+    /,
+    *,
+    start: T_SupportsOr,
+) -> T_SupportsOr:
+    ...
+
+
+@overload
+def reduce_or(
+    *args: T_SupportsOr,
+    start: T_SupportsOr,
+) -> T_SupportsOr:
+    ...
+
+
+@overload
+def reduce_or(
+    arg0: T_SupportsOr,
+    /,
+    *args: T_SupportsOr,
+    start: Optional[T_SupportsOr] = None,
+) -> T_SupportsOr:
+    ...
+
+
+def reduce_or(*args, start=None):
+    return _reduce(*args, start=start, op_fn=operator.or_, type_=SupportsOr)
+
+
+def _reduce(
+    *args,
+    start: Optional[T] = None,
+    op_fn: Callable[[T, T], T],
+    type_: Type[T],
+) -> T:
+    if isinstance_guard(args, Tuple[Iterable[type_]]):
+        it_or_args = args[0]
+    elif isinstance_guard(args, Tuple[type_, ...]):
+        it_or_args = args
+    else:
+        msg = f"Invalid positional arguments {args}. (expected {Tuple[type_, ...]} or {Tuple[Iterable[type_]]})"
+        raise TypeError(msg)
+
+    it: Iterator[T] = iter(it_or_args)
+
+    if isinstance(start, type_):
+        accumulator = start
+    elif start is None:
+        try:
+            accumulator = next(it)
+        except StopIteration:
+            msg = f"Invalid combinaison of arguments {args=} and {start=}. (expected at least 1 non-empty argument or start that supports or operator.)"
+            raise ValueError(msg)
+    else:
+        raise TypeError(f"Invalid argument type {type(start)}.")
+
+    for arg in it:
+        accumulator = op_fn(accumulator, arg)
+    return accumulator
+
+
+@overload
+def sum(
+    args: Iterable[T_SupportsAdd],
+    /,
+    *,
+    start: T_SupportsAdd = 0,
+) -> T_SupportsAdd:
+    ...
+
+
+@overload
+def sum(
+    *args: T_SupportsAdd,
+    start: T_SupportsAdd = 0,
+) -> T_SupportsAdd:
+    ...
+
+
+@overload
+def sum(
+    arg0: T_SupportsAdd,
+    /,
+    *args: T_SupportsAdd,
+    start: Optional[T_SupportsAdd] = 0,
+) -> T_SupportsAdd:
+    ...
+
+
+def sum(*args, start: Any = 0):
+    return reduce_add(*args, start=start)
+
+
+@overload
+def prod(
+    args: Iterable[T_SupportsMul],
+    /,
+    *,
+    start: T_SupportsMul = 1,
+) -> T_SupportsMul:
+    ...
+
+
+@overload
+def prod(
+    *args: T_SupportsMul,
+    start: T_SupportsMul = 1,
+) -> T_SupportsMul:
+    ...
+
+
+@overload
+def prod(
+    arg0: T_SupportsMul,
+    /,
+    *args: T_SupportsMul,
+    start: Optional[T_SupportsMul] = 1,
+) -> T_SupportsMul:
+    ...
+
+
+def prod(*args, start: Any = 1):
+    return reduce_mul(*args, start=start)
+
+
+@function_alias(all_eq)
+def is_full(*args, **kwargs):
+    ...
+
+
+@function_alias(all_ne)
+def is_unique(*args, **kwargs):
+    ...
+
+
+@function_alias(reduce_and)
+def intersect(*args, **kwargs):
+    ...
+
+
+@function_alias(reduce_or)
+def union(*args, **kwargs):
+    ...

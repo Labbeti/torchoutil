@@ -7,9 +7,11 @@ from typing import Any, List, Tuple, Type
 from unittest import TestCase
 
 import torch
-from torch import Tensor, nn
+from torch import nn
 
+from torchoutil.nn.functional import deep_equal
 from torchoutil.nn.modules import tensor as tensor_module
+from torchoutil.pyoutil.inspect import get_fullname
 
 
 def module_name_to_fn_name(x: str) -> str:
@@ -21,9 +23,14 @@ def module_name_to_fn_name(x: str) -> str:
     return x
 
 
-class TestModuleTensorCompat(TestCase):
+class TestModuleCompat(TestCase):
     def test_all_results(self) -> None:
-        base_modules = [torch, torch.Tensor, torch.nn.functional, torch.fft]
+        base_modules = [
+            torch,
+            torch.Tensor,
+            torch.nn.functional,  # type: ignore
+            torch.fft,
+        ]
         all_fn_names = {
             base_module: dict.fromkeys(
                 name
@@ -73,22 +80,21 @@ class TestModuleTensorCompat(TestCase):
             except Exception as err:
                 result = err
 
+            fn = getattr(base_module, fn_name)
             try:
-                fn = getattr(base_module, fn_name)
                 expected = fn(x)
             except Exception as err:
                 expected = err
 
             if isinstance(result, Exception) and isinstance(expected, Exception):
                 pass
-            elif isinstance(result, Tensor) and isinstance(expected, Tensor):
-                assert torch.equal(result, expected)
             else:
-                assert (
-                    result == expected
-                ), f"{result=} ; {expected=} from {module_cls.__qualname__} and {base_module.__name__}.{fn_name}"
+                msg = f"{result=} ; {expected=} from {get_fullname(module_cls)} and {get_fullname(fn)}"
+                assert deep_equal(result, expected), msg
 
-        print(f"Total base coverage hit: {len(tested_modules)}")
+        print(
+            f"Total base coverage hit: {len(tested_modules)}/{len(tested_modules) + len(missed_modules)}"
+        )
         print(f"Hit_: {tested_modules}")
         print(f"Miss: {missed_modules}")
 

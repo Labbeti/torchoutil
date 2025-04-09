@@ -11,7 +11,6 @@ from typing import (
     Any,
     Callable,
     Dict,
-    Iterable,
     List,
     Literal,
     Mapping,
@@ -25,20 +24,32 @@ from typing import (
 import h5py
 import numpy as np
 import torch
-import tqdm
 from h5py import Dataset as HDFRawDataset
 from torch.utils.data.dataloader import DataLoader
+from typing_extensions import TypeAlias
+
+try:
+    from tqdm import tqdm  # type: ignore
+
+except ImportError:
+
+    def tqdm(x, *args, **kwargs):
+        return x
+
 
 import pyoutil as po
 import torchoutil as to
 from torchoutil import nn
 from torchoutil.extras.hdf.common import (
     _DUMPED_JSON_KEYS,
+    EXISTS_MODES,
     HDF_ENCODING,
     HDF_STRING_DTYPE,
     HDF_VOID_DTYPE,
     SHAPE_SUFFIX,
+    ExistsMode,
     HDFItemType,
+    _tuple_to_dict,
 )
 from torchoutil.extras.hdf.dataset import HDFDataset
 from torchoutil.extras.numpy import (
@@ -49,17 +60,16 @@ from torchoutil.extras.numpy import (
 from torchoutil.pyoutil.collections import all_eq
 from torchoutil.pyoutil.datetime import now_iso
 from torchoutil.pyoutil.functools import Compose
-from torchoutil.pyoutil.typing import is_dataclass_instance, is_dict_str
+from torchoutil.pyoutil.typing import is_dataclass_instance, isinstance_guard
+from torchoutil.serialization.common import to_builtin
 from torchoutil.types import BuiltinScalar
 from torchoutil.utils.data.dataloader import get_auto_num_cpus
 from torchoutil.utils.data.dataset import IterableDataset, SizedDatasetLike
-from torchoutil.utils.pack.common import EXISTS_MODES, ExistsMode, _tuple_to_dict
-from torchoutil.utils.saving.common import to_builtin
 
 T = TypeVar("T", covariant=True)
 T_DictOrTuple = TypeVar("T_DictOrTuple", tuple, dict, covariant=True)
 
-HDFDType = Union[np.dtype, Literal["b", "i", "u", "f", "c"], type]
+HDFDType: TypeAlias = Union[np.dtype, Literal["b", "i", "u", "f", "c"], type]
 
 
 pylog = logging.getLogger(__name__)
@@ -275,7 +285,7 @@ def pack_to_hdf(
         )
 
         for _batch_idx, batch in enumerate(
-            tqdm.tqdm(
+            tqdm(
                 loader,
                 desc="Pack data into HDF...",
                 disable=verbose <= 0,
@@ -490,7 +500,7 @@ def _scan_dataset(
 
     to_dict_fn: Callable[[T], Dict[str, Any]]
 
-    if is_dict_str(item_0):
+    if isinstance_guard(item_0, Dict[str, Any]):
         item_type = "dict"
         to_dict_fn = to.identity  # type: ignore
     elif isinstance(item_0, tuple):
@@ -522,13 +532,13 @@ def _scan_dataset(
     infos_dict: Dict[str, Set[Tuple[Tuple[int, ...], np.dtype]]] = {}
     src_np_dtypes: Dict[str, Set[np.dtype]] = {}
 
-    for batch in tqdm.tqdm(
+    for batch in tqdm(
         loader,
         desc="Pre compute shapes...",
         disable=verbose <= 0 or skip_scan,
     ):
         batch = [pre_transform(item) for item in batch]
-        batch = [to_dict_fn(item) for item in batch]
+        batch = [to_dict_fn(item) for item in batch]  # type: ignore
 
         for item in batch:
             for attr_name, value in item.items():
@@ -604,7 +614,7 @@ def bytearray_to_bytes(x: Any) -> Any:
         return bytes(x)
     elif isinstance(x, Mapping):
         return {bytearray_to_bytes(k): bytearray_to_bytes(v) for k, v in x.items()}
-    elif isinstance(x, Iterable):
+    elif isinstance(x, (list, tuple, set, frozenset)):
         return type(x)(bytearray_to_bytes(xi) for xi in x)
     else:
         return x

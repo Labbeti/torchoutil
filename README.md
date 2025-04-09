@@ -30,10 +30,12 @@ pip install torchoutil
 
 The main requirement is **[PyTorch](https://pytorch.org/)**.
 
-To check if the package is installed and show the package version, you can use the following command:
+To check if the package is installed and show the package version, you can use the following command in your terminal:
 ```bash
 torchoutil-info
 ```
+
+This library works on all Python versions **>=3.8**, all PyTorch versions **>= 3.10**, and on **Linux, Mac and Windows** systems.
 
 ## Examples
 
@@ -63,25 +65,25 @@ indices = to.multihot_to_indices(multihot)
 ### Typing
 
 ```python
-from torchoutil import Tensor2D
+import torchoutil as to
 
-x1 = torch.as_tensor([1, 2])
-print(isinstance(x1, Tensor2D))  # False
-x2 = torch.as_tensor([[1, 2], [3, 4]])
-print(isinstance(x2, Tensor2D))  # True
+x1 = to.as_tensor([1, 2])
+print(isinstance(x1, to.Tensor2D))  # False
+x2 = to.as_tensor([[1, 2], [3, 4]])
+print(isinstance(x2, to.Tensor2D))  # True
 ```
 
 ```python
-from torchoutil import SignedIntegerTensor
+import torchoutil as to
 
-x1 = torch.as_tensor([1, 2], dtype=torch.int)
-print(isinstance(x1, SignedIntegerTensor))  # True
+x1 = to.as_tensor([1, 2], dtype=to.int)
+print(isinstance(x1, to.SignedIntegerTensor))  # True
 
-x2 = torch.as_tensor([1, 2], dtype=torch.long)
-print(isinstance(x2, SignedIntegerTensor))  # True
+x2 = to.as_tensor([1, 2], dtype=to.long)
+print(isinstance(x2, to.SignedIntegerTensor))  # True
 
-x3 = torch.as_tensor([1, 2], dtype=torch.float)
-print(isinstance(x3, SignedIntegerTensor))  # False
+x3 = to.as_tensor([1, 2], dtype=to.float)
+print(isinstance(x3, to.SignedIntegerTensor))  # False
 ```
 
 ### Padding
@@ -89,7 +91,7 @@ print(isinstance(x3, SignedIntegerTensor))  # False
 ```python
 import torchoutil as to
 
-x1 = torch.rand(10, 3, 1)
+x1 = to.rand(10, 3, 1)
 x2 = to.pad_dim(x, target_length=5, dim=1, pad_value=-1)
 # x2 has shape (10, 5, 1)
 ```
@@ -97,7 +99,7 @@ x2 = to.pad_dim(x, target_length=5, dim=1, pad_value=-1)
 ```python
 import torchoutil as to
 
-tensors = [torch.rand(10, 2), torch.rand(5, 3), torch.rand(0, 5)]
+tensors = [to.rand(10, 2), to.rand(5, 3), to.rand(0, 5)]
 padded = to.pad_and_stack_rec(tensors, pad_value=0)
 # padded has shape (10, 5)
 ```
@@ -146,7 +148,7 @@ x3 = x2[inv_perm]
 # inv_perm are indices that allow us to get x3 from x2, i.e. x1 == x3 here
 ```
 
-### Pre-compute datasets to pickle or HDF files
+### Pre-compute datasets to HDF files
 
 Here is an example of pre-computing spectrograms of torchaudio `SPEECHCOMMANDS` dataset, using `pack_dataset` function:
 
@@ -154,10 +156,10 @@ Here is an example of pre-computing spectrograms of torchaudio `SPEECHCOMMANDS` 
 from torchaudio.datasets import SPEECHCOMMANDS
 from torchaudio.transforms import Spectrogram
 from torchoutil import nn
-from torchoutil.utils.pack import pack_dataset
+from torchoutil.extras.hdf import pack_to_hdf
 
 speech_commands_root = "path/to/speech_commands"
-packed_root = "path/to/packed_dataset"
+packed_root = "path/to/packed_dataset.hdf"
 
 dataset = SPEECHCOMMANDS(speech_commands_root, download=True, subset="validation")
 # dataset[0] is a tuple, contains waveform and other metadata
@@ -172,15 +174,15 @@ class MyTransform(nn.Module):
         spectrogram = self.spectrogram_extractor(waveform)
         return (spectrogram,) + item[1:]
 
-pack_dataset(dataset, packed_root, MyTransform())
+pack_to_hdf(dataset, packed_root, MyTransform())
 ```
 
-Then you can load the pre-computed dataset using `PackedDataset`:
+Then you can load the pre-computed dataset using `HDFDataset`:
 ```python
-from torchoutil.utils.pack import PackedDataset
+from torchoutil.extras.hdf import HDFDataset
 
-packed_root = "path/to/packed_dataset"
-packed_dataset = PackedDataset(packed_root)
+packed_root = "path/to/packed_dataset.hdf"
+packed_dataset = HDFDataset(packed_root)
 packed_dataset[0]  # == first transformed item, i.e. transform(dataset[0])
 ```
 

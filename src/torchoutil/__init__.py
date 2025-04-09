@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-"""Collection of functions and modules to help development in PyTorch.
-"""
+"""Collection of functions and modules to help development in PyTorch."""
+
 
 __name__ = "torchoutil"
 __author__ = "Étienne Labbé (Labbeti)"
@@ -10,32 +10,49 @@ __author_email__ = "labbeti.pub@gmail.com"
 __license__ = "MIT"
 __maintainer__ = "Étienne Labbé (Labbeti)"
 __status__ = "Development"
-__version__ = "0.5.0"
+__version__ = "0.6.0"
 
-
+# Import global functions and classes from torch
 from torch import *  # type: ignore
 
-# Re-import for language servers
+# Re-import torchoutil modules for language servers
 from . import core as core
 from . import extras as extras
-from . import fft as fft
 from . import hub as hub
 from . import nn as nn
 from . import optim as optim
+from . import pyoutil as pyoutil
+from . import serialization as serialization
+from . import types as types
 from . import utils as utils
+
+# Global imports
 from .core.dtype_enum import DTypeEnum
 from .core.dtype_enum import DTypeEnum as dtype_enum
-from .core.get import (  # noqa: F401
+from .core.make import (  # noqa: F401
     CUDA_IF_AVAILABLE,
     DeviceLike,
     DTypeLike,
     GeneratorLike,
-    get_device,
-    get_dtype,
-    get_generator,
 )
-from .core.semver import Version
+from .hub.download import download_file
+from .hub.paths import get_cache_dir, get_tmp_dir
 from .nn.functional import *
+from .pyoutil.semver import Version
+from .pyoutil.typing.guards import isinstance_guard
+from .serialization.common import to_builtin
+from .serialization.csv import dump_csv, load_csv
+from .serialization.dump_fn import dump, save
+from .serialization.json import dump_json, load_json
+from .serialization.load_fn import load
+from .serialization.pickle import dump_pickle, load_pickle
+from .serialization.torch import dump_torch, load_torch
+from .types.guards import (
+    is_builtin_number,
+    is_builtin_scalar,
+    is_number_like,
+    is_scalar_like,
+)
 from .types.tensor_subclasses import (
     BoolTensor,
     BoolTensor0D,
@@ -57,11 +74,6 @@ from .types.tensor_subclasses import (
     CFloatTensor1D,
     CFloatTensor2D,
     CFloatTensor3D,
-    CHalfTensor,
-    CHalfTensor0D,
-    CHalfTensor1D,
-    CHalfTensor2D,
-    CHalfTensor3D,
     CharTensor,
     CharTensor0D,
     CharTensor1D,
@@ -92,6 +104,11 @@ from .types.tensor_subclasses import (
     HalfTensor1D,
     HalfTensor2D,
     HalfTensor3D,
+    IntegralTensor,
+    IntegralTensor0D,
+    IntegralTensor1D,
+    IntegralTensor2D,
+    IntegralTensor3D,
     IntTensor,
     IntTensor0D,
     IntTensor1D,
@@ -116,14 +133,12 @@ from .types.tensor_subclasses import (
     Tensor1D,
     Tensor2D,
     Tensor3D,
+    UnsignedIntegerTensor,
+    UnsignedIntegerTensor0D,
+    UnsignedIntegerTensor1D,
+    UnsignedIntegerTensor2D,
+    UnsignedIntegerTensor3D,
 )
-from .types.variable_fns import as_tensor, empty, full, ones, rand, zeros
-from .utils.saving.common import to_builtin
-from .utils.saving.csv import load_csv, to_csv
-from .utils.saving.json import load_json, to_json
-from .utils.saving.pickle import load_pickle, to_pickle
 
 version = __version__
 version_info = Version(__version__)
-
-del Version
