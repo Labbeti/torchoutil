@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.6.1] UNRELEASED
+### Fixed
+- `checksum` with `np.generic` instances.
+- Move serializations functions aliases in global context.
+
 ## [0.6.0] 2025-04-09
 ### Added
 - Functions `unsqueeze`, `squeeze` and `one_hot`.
