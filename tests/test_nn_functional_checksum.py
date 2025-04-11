@@ -47,6 +47,7 @@ class TestChecksum(TestCase):
             x += [
                 np.arange(10),
                 np.arange(10).reshape(2, 5),
+                np.int64(100),
             ]
 
         csums = [checksum(xi) for xi in x]

@@ -451,7 +451,7 @@ def _checksum_tensor_array_like(
     kwargs["accumulator"] += checksum_iterable(x.shape, **kwargs)
     kwargs["accumulator"] += __cached_checksum_str(get_fullname(x))
 
-    if isinstance(x, np.ndarray):
+    if isinstance(x, (np.ndarray, np.generic)):
         xbytes = x.tobytes()
         csum = checksum_bytes(xbytes, **kwargs)
     elif isinstance(x, Tensor):
