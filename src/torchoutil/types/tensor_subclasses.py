@@ -18,8 +18,8 @@ CHalfTensor CFloatTensor CDoubleTensor    HalfTensor FloatTensor DoubleTensor   
    (c32)        (c64)       (c128)          (f16)       (f32)       (f64)                       |                                     |
                                                                               +-----------+-----+-----+-----------+             +-----+-----+
                                                                               |           |           |           |             |           |
-                                                                          CharTensor  ShortTensor  IntTensor  LongTensor    ByteTensor  BoolTensor
-                                                                             (i8)       (i16)       (i32)       (i64)          (u8)       (bool)
+                                                                          CharTensor  ShortTensor  IntTensor  LongTensor   ByteTensor   BoolTensor
+                                                                             (i8)       (i16)       (i32)       (i64)         (u8)       (bool)
 
 """
 
@@ -64,7 +64,7 @@ T_Signed = TypeVar("T_Signed", bound=_bool)
 
 _TORCH_BASE_CLASSES: Final[Dict[str, Type]] = {
     "float32": torch.FloatTensor,
-    "_float": torch.FloatTensor,
+    "float": torch.FloatTensor,
     "float64": torch.DoubleTensor,
     "double": torch.DoubleTensor,
     "float16": torch.HalfTensor,
@@ -72,10 +72,13 @@ _TORCH_BASE_CLASSES: Final[Dict[str, Type]] = {
     "int16": torch.ShortTensor,
     "short": torch.ShortTensor,
     "int32": torch.IntTensor,
-    "_int": torch.IntTensor,
+    "int": torch.IntTensor,
     "int64": torch.LongTensor,
     "long": torch.LongTensor,
-    "_bool": torch.BoolTensor,
+    "bool": torch.BoolTensor,
+    "byte": torch.ByteTensor,
+    "char": torch.CharTensor,
+    "int8": torch.CharTensor,
 }
 
 
