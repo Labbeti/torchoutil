@@ -230,7 +230,7 @@ def pack_to_hdf(
         if verbose >= 2:
             num_scalars = sum(len(hdf_ds.shape) == 1 for hdf_ds in hdf_dsets.values())
             ratio = num_scalars / total
-            msg = f"{num_scalars}/{len(hdf_dsets)} column dsets contains a single dim. ({ratio*100:.3f}%)"
+            msg = f"{num_scalars}/{len(hdf_dsets)} column dsets contains a single dim. ({ratio * 100:.3f}%)"
             pylog.debug(msg)
 
             if num_scalars < len(hdf_dsets):
@@ -241,7 +241,7 @@ def pack_to_hdf(
                 if len(hdf_ds.shape) == 1:
                     continue
                 ratio = max_shapes_ratios[attr_name]
-                msg = f"HDF column dset multidim '{attr_name}' has been built. (with shape={hdf_ds.shape}, nelement_per_item={po.prod(hdf_ds.shape[1:])} ({ratio*100:.3f}%), dtype={hdf_ds.dtype})"
+                msg = f"HDF column dset multidim '{attr_name}' has been built. (with shape={hdf_ds.shape}, nelement_per_item={po.prod(hdf_ds.shape[1:])} ({ratio * 100:.3f}%), dtype={hdf_ds.dtype})"
                 pylog.debug(msg)
 
         added_columns: List[str] = []

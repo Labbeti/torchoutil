@@ -3,7 +3,6 @@
 
 """Collection of functions and modules to help development in PyTorch."""
 
-
 __name__ = "torchoutil"
 __author__ = "Étienne Labbé (Labbeti)"
 __author_email__ = "labbeti.pub@gmail.com"

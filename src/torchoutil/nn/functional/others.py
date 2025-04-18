@@ -413,7 +413,12 @@ def stack(
     ...
 
 
-def stack(tensors: Union[List[Tensor], Tuple[Tensor, ...]], dim: int = 0, *, out: Optional[Tensor] = None) -> Tensor:  # type: ignore
+def stack(
+    tensors: Union[List[Tensor], Tuple[Tensor, ...]],
+    dim: int = 0,
+    *,
+    out: Optional[Tensor] = None,
+) -> Tensor:  # type: ignore
     return torch.stack(tensors, dim=dim, out=out)
 
 
@@ -428,7 +433,12 @@ def cat(
 
 
 @overload
-def cat(tensors: Union[List[Tensor], Tuple[Tensor, ...]], dim: int = 0, *, out: Optional[Tensor] = None) -> Tensor:  # type: ignore
+def cat(
+    tensors: Union[List[Tensor], Tuple[Tensor, ...]],
+    dim: int = 0,
+    *,
+    out: Optional[Tensor] = None,
+) -> Tensor:  # type: ignore
     ...
 
 

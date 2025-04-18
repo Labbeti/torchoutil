@@ -419,7 +419,9 @@ class _TensorNDBase(
         ...
 
     @overload
-    def all(self, dim: Union[_int, Tuple[_int, ...]], keepdim: _bool = False) -> "BoolTensor":  # type: ignore
+    def all(
+        self, dim: Union[_int, Tuple[_int, ...]], keepdim: _bool = False
+    ) -> "BoolTensor":  # type: ignore
         ...
 
     @overload
@@ -427,7 +429,9 @@ class _TensorNDBase(
         ...
 
     @overload
-    def any(self, dim: Union[_int, Tuple[_int, ...]], keepdim: _bool = False) -> "BoolTensor":  # type: ignore
+    def any(
+        self, dim: Union[_int, Tuple[_int, ...]], keepdim: _bool = False
+    ) -> "BoolTensor":  # type: ignore
         ...
 
     @overload

@@ -48,7 +48,7 @@ def as_device(device: Literal[None]) -> None:
 
 @overload
 def as_device(
-    device: Union[str, int, torch.device] = CUDA_IF_AVAILABLE
+    device: Union[str, int, torch.device] = CUDA_IF_AVAILABLE,
 ) -> torch.device:
     ...
 
@@ -100,7 +100,7 @@ def as_generator(generator: Literal[None] = None) -> None:
 
 @overload
 def as_generator(
-    generator: Union[int, torch.Generator, Literal["default"]]
+    generator: Union[int, torch.Generator, Literal["default"]],
 ) -> torch.Generator:
     ...
 

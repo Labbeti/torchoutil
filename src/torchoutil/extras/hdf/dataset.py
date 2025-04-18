@@ -329,7 +329,7 @@ class HDFDataset(Generic[T, U], DatasetSlicer[U]):
 
         elif isinstance(index, int):
             if not (-len(self) <= index < len(self)):
-                msg = f"Invalid argument {index=}. (expected int in range [{-len(self)}, {len(self)-1}])"
+                msg = f"Invalid argument {index=}. (expected int in range [{-len(self)}, {len(self) - 1}])"
                 raise IndexError(msg)
             is_mult = False
         else:

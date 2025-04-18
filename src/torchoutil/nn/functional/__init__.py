@@ -109,6 +109,7 @@ from .transform import (  # noqa: F811
     as_tensor,
     flatten,
     identity,
+    move_to,
     move_to_rec,
     pad_and_crop_dim,
     repeat_interleave_nd,
