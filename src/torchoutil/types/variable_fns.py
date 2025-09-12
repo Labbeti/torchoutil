@@ -6,10 +6,12 @@ from torchoutil.nn.functional.new import (  # noqa: F401
     arange,
     empty,
     full,
-    ones,
     rand,
     randint,
     randperm,
+    ones,
     zeros,
 )
-from torchoutil.nn.functional.transform import as_tensor  # noqa: F401
+from torchoutil.nn.functional.transform import (  # noqa: F401
+    as_tensor,
+)

@@ -5,6 +5,7 @@ from typing import Union
 
 from torch import Tensor
 
+from torchoutil.nn.modules.module import Module
 from torchoutil.core.make import DeviceLike, DTypeLike
 from torchoutil.extras.numpy.definitions import np
 from torchoutil.extras.numpy.functional import (
@@ -12,7 +13,6 @@ from torchoutil.extras.numpy.functional import (
     tensor_to_numpy,
     to_numpy,
 )
-from torchoutil.nn.modules.module import Module
 
 
 class ToNumpy(Module):

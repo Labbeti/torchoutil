@@ -22,6 +22,7 @@ from typing import (
     Type,
     TypeVar,
     Union,
+    get_args,
     overload,
 )
 
@@ -52,7 +53,7 @@ T_SupportsMul = TypeVar("T_SupportsMul", bound=SupportsMul)
 T_SupportsOr = TypeVar("T_SupportsOr", bound=SupportsOr)
 
 KeyMode = Literal["intersect", "same", "union"]
-KEY_MODES = ("same", "intersect", "union")
+Order = Literal["left", "right"]
 
 
 @overload
@@ -94,7 +95,7 @@ def list_dict_to_dict_list(
 @overload
 def list_dict_to_dict_list(
     lst: Iterable[Mapping[K, V]],
-    key_mode: KeyMode = "same",
+    key_mode: Union[KeyMode, Iterable[K]] = "same",
     default_val: W = None,
     *,
     default_val_fn: Optional[Callable[[K], X]] = None,
@@ -105,7 +106,7 @@ def list_dict_to_dict_list(
 
 def list_dict_to_dict_list(
     lst: Iterable[Mapping[K, V]],
-    key_mode: KeyMode = "same",
+    key_mode: Union[KeyMode, Iterable[K]] = "same",
     default_val: W = None,
     *,
     default_val_fn: Optional[Callable[[K], X]] = None,
@@ -128,23 +129,32 @@ def list_dict_to_dict_list(
     except StopIteration:
         return {}
 
-    keys = set(item0.keys())
+    if isinstance(key_mode, str):
+        unique_keys = set(item0.keys())
 
-    if key_mode == "same":
-        invalids = [list(item.keys()) for item in lst if keys != set(item.keys())]
-        if len(invalids) > 0:
-            msg = f"Invalid dict keys for conversion from List[dict] to Dict[list]. (with {key_mode=}, {keys=} and {invalids=})"
+        if key_mode == "same":
+            invalids = [
+                list(item.keys()) for item in lst if unique_keys != set(item.keys())
+            ]
+            if len(invalids) > 0:
+                msg = f"Invalid dict keys for conversion from List[dict] to Dict[list]. (with {key_mode=}, {unique_keys=} and {invalids=})"
+                raise ValueError(msg)
+            keys = list(item0.keys())
+
+        elif key_mode == "intersect":
+            keys = intersect_lists([item.keys() for item in lst])
+
+        elif key_mode == "union":
+            keys = union_lists(item.keys() for item in lst)
+
+        else:
+            msg = f"Invalid argument key_mode={key_mode}. (expected one of {get_args(KeyMode)})"
             raise ValueError(msg)
-
-    elif key_mode == "intersect":
-        keys = intersect_lists([item.keys() for item in lst])
-
-    elif key_mode == "union":
-        keys = union_lists(item.keys() for item in lst)
-
     else:
-        msg = f"Invalid argument key_mode={key_mode}. (expected one of {KEY_MODES})"
-        raise ValueError(msg)
+        keys = list(key_mode)
+
+    if list_fn is None:
+        list_fn = identity  # type: ignore
 
     if list_fn is None:
         list_fn = identity  # type: ignore
@@ -224,7 +234,7 @@ def dict_list_to_list_dict(
         length = max(lengths)
 
     else:
-        msg = f"Invalid argument key_mode={key_mode}. (expected one of {KEY_MODES})"
+        msg = f"Invalid argument key_mode={key_mode}. (expected one of {get_args(KeyMode)})"
         raise ValueError(msg)
 
     result = [
@@ -345,7 +355,7 @@ def find(
     it: Iterable[V],
     *,
     match_fn: Callable[[Any, Any], bool] = operator.eq,
-    order: Literal["left", "right"] = "right",
+    order: Order = "right",
     default: U = -1,
     return_value: bool = False,
 ) -> Union[int, U, Tuple[Union[int, U], Union[V, U]]]:
@@ -372,8 +382,9 @@ def find(
 
         match_fn = revert(match_fn)
     else:
-        ORDER_VALUES = ("left", "right")
-        raise ValueError(f"Invalid argument {order=}. (expected one of {ORDER_VALUES})")
+        raise ValueError(
+            f"Invalid argument {order=}. (expected one of {get_args(Order)})"
+        )
 
     for i, xi in enumerate(it):
         if match_fn(xi, target):

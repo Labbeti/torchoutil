@@ -21,11 +21,12 @@ from torch import Tensor
 from torch.nn import functional as F
 
 from torchoutil.core.make import DeviceLike, DTypeLike, as_device, as_dtype
-from torchoutil.nn.functional.others import ndim, shape
+from torchoutil.nn.functional.others import get_ndim, get_shape
 from torchoutil.nn.functional.transform import to_item
 from torchoutil.pyoutil.collections import prod
+from torchoutil.pyoutil.functools import function_alias
 from torchoutil.pyoutil.warnings import warn_once
-from torchoutil.types import LongTensor, is_number_like
+from torchoutil.types import LongTensor, SizedGetitem, SizedIterable, is_number_like
 from torchoutil.types._typing import TensorOrArray
 
 T_Name = TypeVar("T_Name", bound=Hashable)
@@ -71,6 +72,7 @@ def index_to_onehot(
     return onehot
 
 
+@function_alias(index_to_onehot)
 def one_hot(
     tensor: Union[Sequence[int], TensorOrArray, Sequence],
     num_classes: int,
@@ -79,19 +81,12 @@ def one_hot(
     device: DeviceLike = None,
     dtype: DTypeLike = torch.bool,
 ) -> Tensor:
-    """Alias of :func:`~torchoutil.nn.functional.multiclass.index_to_onehot`."""
-    return index_to_onehot(
-        tensor,
-        num_classes,
-        padding_idx=padding_idx,
-        device=device,
-        dtype=dtype,
-    )
+    ...
 
 
 def index_to_name(
     index: Union[Sequence[int], TensorOrArray, Sequence],
-    idx_to_name: Union[Mapping[int, T_Name], Sequence[T_Name]],
+    idx_to_name: Union[Mapping[int, T_Name], SizedGetitem[T_Name]],
     *,
     is_number_fn: Callable[[Any], bool] = is_number_like,
 ) -> List[T_Name]:
@@ -102,8 +97,8 @@ def index_to_name(
         idx_to_name: Mapping to convert a class index to its name.
         is_number_fn: Type guard to check if a value is a scalar number. defaults to `is_number_like`.
     """
-    index_ndim = ndim(index)
-    if index_ndim > 1 and prod(shape(index)[:-1]) == 0:
+    index_ndim = get_ndim(index)
+    if index_ndim > 1 and prod(get_shape(index)[:-1]) == 0:
         msg = f"Found 0 elements in {index=} but {index_ndim=} > 1, which means that we will lose information about shape when converting to names."
         warn_once(msg)
 
@@ -145,7 +140,7 @@ def onehot_to_index(
 
 def onehot_to_name(
     onehot: Tensor,
-    idx_to_name: Union[Mapping[int, T_Name], Sequence[T_Name]],
+    idx_to_name: Union[Mapping[int, T_Name], SizedGetitem[T_Name]],
     *,
     dim: int = -1,
 ) -> List[T_Name]:
@@ -163,7 +158,7 @@ def onehot_to_name(
 
 def name_to_index(
     name: List[T_Name],
-    idx_to_name: Union[Mapping[int, T_Name], Sequence[T_Name]],
+    idx_to_name: Union[Mapping[int, T_Name], Iterable[T_Name]],
 ) -> Tensor:
     """Convert names to indices of labels for **multiclass** classification.
 
@@ -193,7 +188,7 @@ def name_to_index(
 
 def name_to_onehot(
     name: List[T_Name],
-    idx_to_name: Union[Mapping[int, T_Name], Sequence[T_Name]],
+    idx_to_name: Union[Mapping[int, T_Name], SizedIterable[T_Name]],
     *,
     device: DeviceLike = None,
     dtype: DTypeLike = torch.bool,
@@ -222,7 +217,7 @@ def probs_to_index(
         probs: Output probabilities for each classes.
         dim: Dimension of classes. defaults to -1.
     """
-    index = probs.argmax(dim=dim)
+    index = probs.argmax(dim)
     return index  # type: ignore
 
 
@@ -250,7 +245,7 @@ def probs_to_onehot(
 
 def probs_to_name(
     probs: Tensor,
-    idx_to_name: Union[Mapping[int, T_Name], Sequence[T_Name]],
+    idx_to_name: Union[Mapping[int, T_Name], SizedGetitem[T_Name]],
     *,
     dim: int = -1,
 ) -> List[T_Name]:

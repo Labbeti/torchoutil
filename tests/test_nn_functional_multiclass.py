@@ -6,10 +6,20 @@ from unittest import TestCase
 
 import torch
 
-from torchoutil.nn.functional.multiclass import index_to_onehot, onehot_to_index
+from torchoutil.nn.functional.multiclass import (
+    index_to_name,
+    index_to_onehot,
+    onehot_to_index,
+)
 
 
 class TestMulticlass(TestCase):
+    def test_index_to_name(self) -> None:
+        indices = torch.as_tensor([1, 2, 0, 0])
+        mapping = ["a", "b", "c"]
+        expected = ["b", "c", "a", "a"]
+        assert index_to_name(indices, mapping) == expected
+
     def test_index_to_onehot_1(self) -> None:
         indices = torch.as_tensor([[0, 2, 1], [0, 0, 2]])
         expected = torch.as_tensor(

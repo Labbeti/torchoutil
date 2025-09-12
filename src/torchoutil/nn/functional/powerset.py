@@ -38,7 +38,7 @@ import torch
 from torch import Tensor
 from torch.nn import functional as F
 
-from torchoutil.core.make import DTypeLike, as_dtype
+from torchoutil.core.make import DeviceLike, DTypeLike, as_device, as_dtype
 from torchoutil.nn.functional.multiclass import probs_to_onehot
 from torchoutil.pyoutil.warnings import warn_once
 from torchoutil.types.tensor_subclasses import Tensor2D, Tensor3D
@@ -157,9 +157,12 @@ def build_powerset_mapping(
     num_classes: int,
     max_set_size: int,
     dtype: DTypeLike = None,
+    device: DeviceLike = None,
 ) -> Tensor2D:
     """Build powerset mapping matrix of shape (num_powerset_classes, num_classes)."""
     dtype = as_dtype(dtype)
+    device = as_device(device)
+
     num_powerset_classes = get_num_powerset_classes(num_classes, max_set_size)
     mapping = torch.zeros(num_powerset_classes, num_classes, dtype=dtype)
     powerset_k = 0

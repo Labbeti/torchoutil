@@ -48,6 +48,27 @@ class TestSegments(TestCase):
         expected = torch.full((5,), False)
         assert torch.equal(activity, expected)
 
+    def test_example_4(self) -> None:
+        segments = torch.as_tensor([[0, 4, 8], [2, 6, 10]]).T
+
+        maxsize = None
+        expected = torch.as_tensor([1, 1, 0, 0, 1, 1, 0, 0, 1, 1]).bool()
+        assert torch.equal(segments_list_to_activity(segments, maxsize), expected)
+
+    def test_example_5(self) -> None:
+        segments = torch.as_tensor([[0, 4, 8], [2, 6, 10]]).T
+
+        maxsize = 13
+        expected = torch.as_tensor([1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 0]).bool()
+        assert torch.equal(segments_list_to_activity(segments, maxsize), expected)
+
+    def test_example_6(self) -> None:
+        segments = torch.as_tensor([[[600, 1322]], [[6, 1248]], [[43, 497]]])
+
+        maxsize = 1460
+        expected_shape = (len(segments), maxsize)
+        assert segments_list_to_activity(segments, maxsize).shape == expected_shape
+
 
 if __name__ == "__main__":
     unittest.main()

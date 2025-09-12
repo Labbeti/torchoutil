@@ -114,7 +114,9 @@ def is_floating_point(x: float) -> TypeGuard[float]:
 
 
 @overload
-def is_floating_point(x: Any) -> TypeGuard[Union[FloatingTensor, np.ndarray, float]]:
+def is_floating_point(
+    x: Any,
+) -> TypeGuard[Union[FloatingTensor, np.ndarray, float]]:
     ...
 
 
@@ -144,7 +146,9 @@ def is_complex(x: complex) -> TypeGuard[complex]:
 
 
 @overload
-def is_complex(x: Any) -> TypeGuard[Union[ComplexFloatingTensor, np.ndarray, complex]]:
+def is_complex(
+    x: Any,
+) -> TypeGuard[Union[ComplexFloatingTensor, np.ndarray, complex]]:
     ...
 
 

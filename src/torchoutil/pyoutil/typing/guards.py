@@ -53,8 +53,8 @@ def is_typed_dict(x: Any) -> TypeGuard[type]:
 
 
 def isinstance_guard(
-    x: Any,
-    target_type: Union[Type[T], None, Tuple[Type[T], ...]],
+    obj: Any,
+    class_or_tuple: Union[Type[T], None, Tuple[Type[T], ...]],
 ) -> TypeIs[T]:
     """Improved isinstance(...) function that supports parametrized Union, TypedDict, Literal, Mapping or Iterable.
 
@@ -66,66 +66,68 @@ def isinstance_guard(
     >>> isinstance_guard({"a": 1, "b": 2}, dict)  # True
     ```
     """
-    if isinstance(x, type):
+    if isinstance(obj, type):
         return False
-    if target_type is Any or target_type is typing_extensions.Any:
+    if class_or_tuple is Any or class_or_tuple is typing_extensions.Any:
         return True
-    if target_type is None:
-        return x is None
-    if isinstance(target_type, tuple):
-        return any(isinstance_guard(x, target_type_i) for target_type_i in target_type)
-    if is_typed_dict(target_type):
-        return _isinstance_guard_typed_dict(x, target_type)
+    if class_or_tuple is None:
+        return obj is None
+    if isinstance(class_or_tuple, tuple):
+        return any(
+            isinstance_guard(obj, target_type_i) for target_type_i in class_or_tuple
+        )
+    if is_typed_dict(class_or_tuple):
+        return _isinstance_guard_typed_dict(obj, class_or_tuple)
 
-    origin = get_origin(target_type)
+    origin = get_origin(class_or_tuple)
     if origin is None:
-        return isinstance(x, target_type)
+        return isinstance(obj, class_or_tuple)
 
     # Special case for empty tuple because get_args(Tuple[()]) returns () and not ((),) in python >= 3.11
     # More info at https://github.com/python/cpython/issues/91137
-    if target_type == Tuple[()]:
-        return x == ()
+    if class_or_tuple == Tuple[()]:
+        return obj == ()
 
-    args = get_args(target_type)
+    args = get_args(class_or_tuple)
     if len(args) == 0:
-        return isinstance_guard(x, origin)
+        return isinstance_guard(obj, origin)
 
     if origin is Union:
-        return any(isinstance_guard(x, arg) for arg in args)
+        return any(isinstance_guard(obj, arg) for arg in args)
 
     if origin is Literal:
-        return x in args
+        return obj in args
 
-    if isinstance(x, Generator):
-        msg = f"Invalid argument type {type(x)}."
+    if isinstance(obj, Generator):
+        msg = f"Invalid argument type {type(obj)}."
         raise TypeError(msg)
 
     if issubclass(origin, Mapping):
         assert len(args) == 2, f"{args=}"
-        if not isinstance_guard(x, origin):
+        if not isinstance_guard(obj, origin):
             return False
 
-        return all(isinstance_guard(k, args[0]) for k in x.keys()) and all(
-            isinstance_guard(v, args[1]) for v in x.values()
+        return all(isinstance_guard(k, args[0]) for k in obj.keys()) and all(
+            isinstance_guard(v, args[1]) for v in obj.values()
         )
 
     if issubclass(origin, Tuple):
-        if not isinstance_guard(x, origin):
+        if not isinstance_guard(obj, origin):
             return False
         elif len(args) == 1 and args[0] == ():
-            return len(x) == 0
+            return len(obj) == 0
         elif len(args) == 2 and args[1] is ...:
-            args = tuple([args[0]] * len(x))
-        elif len(x) != len(args):
+            args = tuple([args[0]] * len(obj))
+        elif len(obj) != len(args):
             return False
-        return all(isinstance_guard(xi, ti) for xi, ti in zip(x, args))
+        return all(isinstance_guard(xi, ti) for xi, ti in zip(obj, args))
 
     if issubclass(origin, Iterable):
-        if not isinstance_guard(x, origin):
+        if not isinstance_guard(obj, origin):
             return False
-        return all(isinstance_guard(xi, args[0]) for xi in x)
+        return all(isinstance_guard(xi, args[0]) for xi in obj)
 
-    msg = f"Unsupported type {target_type}. (expected unparametrized type or parametrized Union, TypedDict, Literal, Mapping or Iterable)"
+    msg = f"Unsupported type {class_or_tuple}. (expected unparametrized type or parametrized Union, TypedDict, Literal, Mapping or Iterable)"
     raise NotImplementedError(msg)
 
 

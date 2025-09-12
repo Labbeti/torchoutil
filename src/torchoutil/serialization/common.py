@@ -18,6 +18,7 @@ from typing import (
     Optional,
     TypeVar,
     Union,
+    get_args,
     overload,
 )
 
@@ -158,7 +159,6 @@ def _fpath_to_saving_backend(
 BACKEND_TO_PATTERN: Dict[SavingBackend, str] = {
     backend: ext for ext, backend in PATTERN_TO_BACKEND.items()
 }
-UNK_MODES = ("identity", "error")
 
 
 @overload
@@ -307,4 +307,6 @@ def to_builtin(
     elif unk_mode == "error":
         raise TypeError(f"Unsupported argument type {type(x)}.")
     else:
-        raise ValueError(f"Invalid argument {unk_mode=}. (expected one of {UNK_MODES})")
+        raise ValueError(
+            f"Invalid argument {unk_mode=}. (expected one of {get_args(UnkMode)})"
+        )

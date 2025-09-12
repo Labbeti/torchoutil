@@ -3,17 +3,34 @@
 
 """Collection of functions and modules to help development in PyTorch."""
 
-
 __name__ = "torchoutil"
 __author__ = "Étienne Labbé (Labbeti)"
 __author_email__ = "labbeti.pub@gmail.com"
 __license__ = "MIT"
 __maintainer__ = "Étienne Labbé (Labbeti)"
 __status__ = "Development"
-__version__ = "0.6.0"
+__version__ = "0.6.1"
 
 # Import global functions and classes from torch
 from torch import *  # type: ignore
+from torch import (
+    complex64,
+    complex128,
+    double,
+    float,
+    float16,
+    float32,
+    float64,
+    half,
+    int,
+    int8,
+    int16,
+    int32,
+    int64,
+    long,
+    short,
+    uint8,
+)
 
 # Re-import torchoutil modules for language servers
 from . import core as core
@@ -39,19 +56,24 @@ from .hub.download import download_file
 from .hub.paths import get_cache_dir, get_tmp_dir
 from .nn.functional import *
 from .pyoutil.semver import Version
-from .pyoutil.typing.guards import isinstance_guard
+from .pyoutil.typing.guards import (
+    is_dataclass_instance,
+    is_namedtuple_instance,
+    isinstance_guard,
+)
 from .serialization.common import to_builtin
-from .serialization.csv import dump_csv, load_csv
+from .serialization.csv import dump_csv, load_csv, to_csv
 from .serialization.dump_fn import dump, save
-from .serialization.json import dump_json, load_json
+from .serialization.json import dump_json, load_json, to_json
 from .serialization.load_fn import load
-from .serialization.pickle import dump_pickle, load_pickle
-from .serialization.torch import dump_torch, load_torch
+from .serialization.pickle import dump_pickle, load_pickle, to_pickle
+from .serialization.torch import dump_torch, load_torch, to_torch
 from .types.guards import (
     is_builtin_number,
     is_builtin_scalar,
     is_number_like,
     is_scalar_like,
+    is_tensor_or_array,
 )
 from .types.tensor_subclasses import (
     BoolTensor,

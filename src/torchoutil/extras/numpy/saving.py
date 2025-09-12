@@ -4,7 +4,7 @@
 import warnings
 from io import BytesIO
 from pathlib import Path
-from typing import Literal, Optional, Union
+from typing import Literal, Optional, Union, get_args
 
 from torchoutil.pyoutil.io import _setup_path
 
@@ -31,8 +31,7 @@ def dump_numpy(
     elif fpath.suffix == ".npz":
         np_format = "npz"
     else:
-        NUMPY_EXTENSIONS = (".npy", ".npz")
-        msg = f"Unknown numpy extension '{fpath.suffix}'. (expected one of {NUMPY_EXTENSIONS})"
+        msg = f"Unknown numpy extension '{fpath.suffix}'. (expected one of {get_args(NumpyFormat)})"
         warnings.warn(msg)
         np_format = "npy"
 

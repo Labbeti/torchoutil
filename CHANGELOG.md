@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.6.1] 2025-09-12
+
+**This project has been replaced by [torchwrench](https://github.com/Labbeti/torchwrench) and is no longer maintained after 0.6.1.**
+
+### Added
+- `SplitTagLoader` to load yaml tag without instantiating them.
+
+### Fixed
+- `checksum` with `np.generic` instances.
+- Move serializations functions aliases in global context.
+
 ## [0.6.0] 2025-04-09
 ### Added
 - Functions `unsqueeze`, `squeeze` and `one_hot`.

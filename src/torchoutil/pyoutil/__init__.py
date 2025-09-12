@@ -48,7 +48,7 @@ from .collections import (
 )
 from .csv import dump_csv, load_csv
 from .dataclasses import get_defaults_values
-from .datetime import now_iso
+from .datetime import now, now_iso, now_iso8601
 from .difflib import find_closest_in_list, sequence_matcher_ratio
 from .enum import StrEnum
 from .functools import (

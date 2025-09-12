@@ -9,12 +9,11 @@ from typing import (
     Protocol,
     Sized,
     Tuple,
-    TypeVar,
     Union,
     runtime_checkable,
 )
 
-from typing_extensions import TypeAlias
+from typing_extensions import TypeAlias, TypeVar
 
 NoneType: TypeAlias = type(None)  # type: ignore
 EllipsisType: TypeAlias = type(...)  # type: ignore
@@ -24,8 +23,8 @@ BuiltinNumber: TypeAlias = Union[bool, int, float, complex]
 BuiltinScalar: TypeAlias = Union[bool, int, float, complex, NoneType, str, bytes]
 
 T = TypeVar("T", covariant=True)
-T_BuiltinNumber = TypeVar("T_BuiltinNumber", bound=BuiltinNumber)
-T_BuiltinScalar = TypeVar("T_BuiltinScalar", bound=BuiltinScalar)
+T_BuiltinNumber = TypeVar("T_BuiltinNumber", bound=BuiltinNumber, default=BuiltinNumber)
+T_BuiltinScalar = TypeVar("T_BuiltinScalar", bound=BuiltinScalar, default=BuiltinScalar)
 
 
 @runtime_checkable

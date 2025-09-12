@@ -104,7 +104,7 @@ class TestFunctionsCompat(TestCase):
                     assert result == expected, msg
 
         print(
-            f"Total base coverage hit: {len(tested_fns)}/{len(tested_fns)+len(missed_fns)}"
+            f"Total base coverage hit: {len(tested_fns)}/{len(tested_fns) + len(missed_fns)}"
         )
         print(f"Hit_: {tested_fns}")
         print(f"Miss: {missed_fns}")

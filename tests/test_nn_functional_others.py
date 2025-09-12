@@ -10,7 +10,7 @@ import torch
 import torchoutil as to
 from torchoutil.core.packaging import _NUMPY_AVAILABLE
 from torchoutil.extras.numpy import np
-from torchoutil.nn.functional.others import deep_equal, ndim, shape
+from torchoutil.nn.functional.others import deep_equal, get_ndim, get_shape
 
 
 class TestNDimShape(TestCase):
@@ -87,19 +87,19 @@ class TestNDimShape(TestCase):
             zip(examples, expected_ndims, expected_shapes)
         ):
             if isinstance(expected_ndim, int):
-                result = ndim(example)
+                result = get_ndim(example)
                 assert result == expected_ndim, f"{example=}"
             else:
                 with self.assertRaises(expected_ndim):
-                    invalid_ndim = ndim(example)
+                    invalid_ndim = get_ndim(example)
                     print(f"{invalid_ndim=} with {example=} at {i=}")
 
             if isinstance(expected_shape, tuple):
-                result = shape(example)
+                result = get_shape(example)
                 assert result == expected_shape, f"{example=}"
             else:
                 with self.assertRaises(expected_shape):
-                    invalid_shape = shape(example)
+                    invalid_shape = get_shape(example)
                     print(f"{invalid_shape=} with {example=} at {i=}")
 
 

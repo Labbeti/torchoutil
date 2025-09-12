@@ -579,11 +579,12 @@ def view_as_complex(
     ):
         return x[0] + x[1] * 1j
     else:
-        raise TypeError(f"Invalid argument type {type(x)=}.")
+        msg = f"Invalid argument type {type(x)=}."
+        raise TypeError(msg)
 
 
 @overload
-def move_to_rec(
+def move_to(
     x: Mapping[T, U],
     predicate: Optional[Callable[[Union[Tensor, nn.Module]], bool]] = None,
     **kwargs,
@@ -592,7 +593,7 @@ def move_to_rec(
 
 
 @overload
-def move_to_rec(
+def move_to(
     x: T,
     predicate: Optional[Callable[[Union[Tensor, nn.Module]], bool]] = None,
     **kwargs,
@@ -600,7 +601,7 @@ def move_to_rec(
     ...
 
 
-def move_to_rec(
+def move_to(
     x: Any,
     predicate: Optional[Callable[[Union[Tensor, nn.Module]], bool]] = None,
     **kwargs,
@@ -617,9 +618,9 @@ def move_to_rec(
         else:
             return x
     elif isinstance(x, Mapping):
-        return {k: move_to_rec(v, predicate=predicate, **kwargs) for k, v in x.items()}
+        return {k: move_to(v, predicate=predicate, **kwargs) for k, v in x.items()}
     elif isinstance(x, Iterable):
-        generator = (move_to_rec(xi, predicate=predicate, **kwargs) for xi in x)
+        generator = (move_to(xi, predicate=predicate, **kwargs) for xi in x)
         if isinstance(x, PythonGenerator):
             return generator
         elif isinstance(x, tuple):
@@ -632,6 +633,11 @@ def move_to_rec(
             return list(generator)
     else:
         return x
+
+
+@function_alias(move_to)
+def move_to_rec(*args, **kwargs):
+    ...
 
 
 # ----------

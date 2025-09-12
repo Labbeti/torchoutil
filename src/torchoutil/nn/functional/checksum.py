@@ -10,6 +10,7 @@ import struct
 import zlib
 from dataclasses import asdict
 from functools import lru_cache
+from pathlib import Path
 from types import FunctionType, MethodType
 from typing import Callable, Iterable, Literal, Mapping, Union, get_args
 
@@ -64,6 +65,7 @@ Checksumable: TypeAlias = Union[
     functools.partial,
     type,
     slice,
+    Path,
 ]
 UnkMode = Literal["pickle", "error"]
 
@@ -108,6 +110,8 @@ def checksum_any(
         return checksum_bytearray(x, **kwargs)
     elif isinstance(x, slice):
         return checksum_slice(x, **kwargs)
+    elif isinstance(x, Path):
+        return checksum_path(x, **kwargs)
     elif isinstance(x, re.Pattern):
         return checksum_pattern(x, **kwargs)
     elif isinstance(x, nn.Module):
@@ -262,6 +266,13 @@ def checksum_partial(x: functools.partial, **kwargs) -> int:
 
 
 def checksum_pattern(x: re.Pattern, **kwargs) -> int:
+    kwargs["accumulator"] = kwargs.get("accumulator", 0) + __cached_checksum_str(
+        get_fullname(x)
+    )
+    return checksum_str(str(x), **kwargs)
+
+
+def checksum_path(x: Path, **kwargs) -> int:
     kwargs["accumulator"] = kwargs.get("accumulator", 0) + __cached_checksum_str(
         get_fullname(x)
     )
@@ -451,7 +462,7 @@ def _checksum_tensor_array_like(
     kwargs["accumulator"] += checksum_iterable(x.shape, **kwargs)
     kwargs["accumulator"] += __cached_checksum_str(get_fullname(x))
 
-    if isinstance(x, np.ndarray):
+    if isinstance(x, (np.ndarray, np.generic)):
         xbytes = x.tobytes()
         csum = checksum_bytes(xbytes, **kwargs)
     elif isinstance(x, Tensor):

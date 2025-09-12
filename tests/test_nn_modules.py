@@ -27,6 +27,7 @@ from torchoutil.nn.modules import (
     Transpose,
     Unsqueeze,
 )
+from torchoutil.nn.modules import ESequential
 
 
 class TestSequential(TestCase):

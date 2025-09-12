@@ -24,7 +24,7 @@ jobs:
     strategy:
       matrix:
         include:
-          - os: ubuntu-20.04
+          - os: ubuntu-22.04
             python-version: "3.8"
             torch-version: "1.10"
           - os: ubuntu-latest

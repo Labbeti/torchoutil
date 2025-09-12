@@ -89,11 +89,11 @@ class TestGuards(TestCase):
 
             try:
                 # Impl: scalar => (ndim == 0)
-                ndim = F.ndim(x)  # type: ignore
+                ndim = F.get_ndim(x)  # type: ignore
                 assert not x_is_scalar or (ndim == 0), f"{type(x)=} ; {x=}"
 
                 # Impl: scalar => (len(shape) == 0)
-                shape = F.shape(x)  # type: ignore
+                shape = F.get_shape(x)  # type: ignore
                 assert not x_is_scalar or (len(shape) == 0), f"{type(x)=} ; {x=}"
 
                 assert len(shape) == ndim, f"{type(x)=} ; {x=}"

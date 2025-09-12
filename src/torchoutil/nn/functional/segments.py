@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from typing import Iterable, List, Tuple, Union
+from typing import List, Optional, Tuple, Union
 
 import torch
 from torch import Tensor
@@ -62,7 +62,16 @@ def segments_to_segments_list(
     segments: Tensor,
     maxsize: Union[int, Tuple[int, ...], None] = None,
 ) -> Union[List[Tuple[int, int]], list]:
-    """Converts segments starts and ends to a list of (start, end) positions."""
+    """Convert stacked list/tensor of starts end stops separated to list of (start, end) tuples.
+
+    Args:
+        x: (2+C, N) tensor, where C defines indices in dimensions of a segments for 3D activity tensors.
+        maxsize: Optional max size. If None, use x.max().
+
+    Returns:
+        list of (start, end) tuples of shape (*, N, 2).
+            note: (*) corresponds to C batched dimensions.
+    """
     if segments.shape[0] in (0, 1):
         msg = f"Invalid argument shape {segments.shape=}. (expected first dim >= 2)"
         raise ValueError(msg)
@@ -94,46 +103,82 @@ def segments_to_segments_list(
 def segments_list_to_activity(
     segments_list: Union[List[Tuple[int, int]], Tensor, list],
     maxsize: Union[int, None] = None,
+    *,
     device: DeviceLike = None,
+) -> BoolTensor:
+    """Convert list of (start, end) tuples to activity boolean tensor.
+
+    Args:
+        segments_list: list of (start, end) tuples of shape (*, N, 2).
+        maxsize: Optional max size. If None, use segments_list.max(). defaults to None.
+        device: Optional output device. If None and segments_list is a tensor, it will use the same device. defaults to None.
+
+    Returns:
+        activity boolean tensor of shape (*, maxsize)
+    """
+    if device is None and isinstance(segments_list, Tensor):
+        device = segments_list.device
+    else:
+        device = as_device(device)
+
+    ndim = F.get_ndim(segments_list)
+    if ndim == 1 and len(segments_list) == 0:
+        if maxsize is None:
+            num_elems = 0
+        else:
+            num_elems = maxsize
+
+        activity = F.full((num_elems,), False, dtype=torch.bool, device=device)
+        return activity  # type: ignore
+
+    elif ndim == 2:
+        segments_list = F.as_tensor(segments_list)
+        return _segments_list_tensor_to_activity(segments_list, maxsize, device)
+
+    elif ndim > 2 and F.get_shape(segments_list, return_valid=True).valid:
+        segments_list = F.as_tensor(segments_list)
+        return _segments_list_tensor_to_activity(segments_list, maxsize, device)
+
+    elif ndim > 2:
+        activities = [
+            segments_list_to_activity(segments_list_i, maxsize, device=device)  # type: ignore
+            for segments_list_i in segments_list
+        ]
+        return pad_and_stack_rec(activities, False, device=device, dtype=torch.bool)  # type: ignore
+
+    else:
+        msg = f"Invalid argument ndim {ndim}. (expected ndim>=2 or (ndim == 1 and len == 0))"
+        raise ValueError(msg)
+
+
+def _segments_list_tensor_to_activity(
+    segments_list: Tensor,
+    maxsize: Optional[int],
+    device: DeviceLike,
 ) -> BoolTensor:
     if device is None and isinstance(segments_list, Tensor):
         device = segments_list.device
     else:
         device = as_device(device)
 
-    if F.ndim(segments_list) == 2 or (
-        F.ndim(segments_list) == 1 and len(segments_list) == 0
-    ):
-        if len(segments_list) == 0:
-            if maxsize is None:
-                num_elems = 0
-            else:
-                num_elems = maxsize
+    assert (
+        segments_list.ndim >= 2 and segments_list.shape[-1] == 2
+    ), f"{segments_list.shape=}"
+    starts, ends = segments_list.permute(-1, *range(0, segments_list.ndim - 1))
 
-            return F.full((num_elems,), False, dtype=torch.bool, device=device)  # type: ignore
-
-        starts, ends = F.as_tensor(segments_list).transpose(0, 1)
-
-        if maxsize is None:
-            num_elems = ends.max().item()
-        else:
-            num_elems = maxsize
-
-        arange = F.arange(num_elems, device=device)[None]
-        activity = (starts[:, None] <= arange) & (arange < ends[:, None])
-        activity = activity.any(dim=0)
-        return activity  # type: ignore
-
-    elif isinstance(segments_list, Iterable):
-        activities = [
-            segments_list_to_activity(segments_list_i)  # type: ignore
-            for segments_list_i in segments_list
-        ]
-        return pad_and_stack_rec(activities, False)  # type: ignore
-
+    if maxsize is None:
+        num_elems = ends.max().item()
     else:
-        msg = f"Invalid argument type {type(segments_list)}."
-        raise TypeError(msg)
+        num_elems = maxsize
+
+    unsqueeze_arange = tuple([None] * starts.ndim + [slice(None)])
+    arange = F.arange(num_elems, device=device)[unsqueeze_arange]
+
+    unsqueeze_bounds = tuple([slice(None)] * starts.ndim + [None])
+    activity = (starts[unsqueeze_bounds] <= arange) & (arange < ends[unsqueeze_bounds])
+    activity = activity.any(dim=-2)
+
+    return activity  # type: ignore
 
 
 def activity_to_segments_list(x: Tensor) -> Union[List[Tuple[int, int]], list]:
@@ -142,9 +187,20 @@ def activity_to_segments_list(x: Tensor) -> Union[List[Tuple[int, int]], list]:
     return segments_lst
 
 
-def segments_to_activity(x: Tensor) -> BoolTensor:
-    segments_lst = segments_to_segments_list(x, x.shape[-1])
-    activity = segments_list_to_activity(segments_lst, x.shape[-1])
+def segments_to_activity(x: Tensor, maxsize: Optional[int] = None) -> BoolTensor:
+    """Convert stacked list/tensor of starts end stops separated to activity boolean tensor.
+
+    Args:
+        x: (*, 2, N) tensor
+        maxsize: Optional max size. If None, use x.max().
+
+    Returns:
+        activity boolean tensor of shape (*, maxsize)
+    """
+    if maxsize is None:
+        maxsize = int(x.max().item())
+    segments_lst = segments_to_segments_list(x, maxsize)
+    activity = segments_list_to_activity(segments_lst, maxsize)
     return activity
 
 

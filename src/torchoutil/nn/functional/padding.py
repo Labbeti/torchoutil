@@ -96,7 +96,8 @@ def pad_and_stack_rec(
 
     Args:
         sequence: The sequence to pad. Must be convertable to tensor by having the correct number of dims in all sublists.
-        pad_value: The pad value used.
+        pad_value: The pad value used. defaults to 0.
+        align: Alignement used for padding. defaults to "left".
         device: The device of the output Tensor. defaults to None.
         dtype: The dtype of the output Tensor. defaults to None.
 

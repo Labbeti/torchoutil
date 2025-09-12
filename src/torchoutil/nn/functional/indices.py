@@ -5,10 +5,16 @@ from typing import Any, Dict, List, Union
 
 import torch
 from torch import Tensor
-from torch.types import Number
 
 from torchoutil.core.make import DeviceLike, GeneratorLike, as_device, as_generator
-from torchoutil.types import LongTensor1D, Tensor1D, is_builtin_number
+from torchoutil.nn import functional as F
+from torchoutil.types import (
+    BuiltinNumber,
+    LongTensor,
+    LongTensor1D,
+    Tensor1D,
+    is_builtin_number,
+)
 
 
 def get_inverse_perm(indices: Tensor, dim: int = -1) -> Tensor:
@@ -68,15 +74,15 @@ def randperm_diff(
     generator = as_generator(generator)
 
     perm_kws: Dict[str, Any] = dict(generator=generator, device=device)
-    arange = torch.arange(size, device=device)
-    perm = torch.randperm(size, **perm_kws)
+    arange = F.arange(size, device=device)
+    perm = F.randperm(size, **perm_kws)
 
     while perm.eq(arange).any():
         perm = torch.randperm(size, **perm_kws)
     return perm  # type: ignore
 
 
-def get_perm_indices(x1: Tensor, x2: Tensor) -> LongTensor1D:
+def get_perm_indices(x1: Tensor, x2: Tensor) -> LongTensor:
     """Find permutation between two vectors t1 and t2 which contains values from 0 to N-1.
 
     Example 1::
@@ -93,8 +99,8 @@ def get_perm_indices(x1: Tensor, x2: Tensor) -> LongTensor1D:
 
 def insert_at_indices(
     x: Tensor,
-    indices: Union[Tensor, List, Number],
-    values: Union[Number, Tensor],
+    indices: Union[Tensor, List, BuiltinNumber],
+    values: Union[BuiltinNumber, Tensor],
 ) -> Tensor1D:
     """Insert value(s) in vector at specified indices.
 
@@ -124,7 +130,7 @@ def insert_at_indices(
     indices = indices + torch.arange(
         indices.shape[0], device=indices.device, dtype=indices.dtype
     )
-    out[indices] = values
+    out[indices] = values  # type: ignore
     mask = torch.full((out.shape[0],), True, dtype=torch.bool)
     mask[indices] = False
     out[mask] = x
@@ -133,7 +139,7 @@ def insert_at_indices(
 
 def remove_at_indices(
     x: Tensor,
-    indices: Union[Tensor, List, Number],
+    indices: Union[Tensor, List, BuiltinNumber],
 ) -> Tensor1D:
     """Remove value(s) in vector at specified indices."""
     if x.ndim != 1:
@@ -150,10 +156,8 @@ def remove_at_indices(
     else:
         raise TypeError(f"Invalid argument type {type(indices)=}.")
 
-    indices = indices + torch.arange(
-        indices.shape[0], device=device, dtype=indices.dtype
-    )
-    mask = torch.full((x.shape[0],), True, dtype=torch.bool)
+    indices = indices + F.arange(indices.shape[0], device=device, dtype=indices.dtype)
+    mask = F.full((x.shape[0],), True, dtype=torch.bool)
     mask[indices] = False
     out = x[mask]
     return out  # type: ignore

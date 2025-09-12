@@ -7,15 +7,39 @@ from unittest import TestCase
 
 import torch
 
+from torchoutil import as_tensor
 from torchoutil.nn.functional.mask import (
     generate_square_subsequent_mask,
     lengths_to_non_pad_mask,
     lengths_to_pad_mask,
+    masked_equal,
+    masked_mean,
+    masked_sum,
     non_pad_mask_to_lengths,
     pad_mask_to_lengths,
     tensor_to_non_pad_mask,
     tensor_to_pad_mask,
 )
+
+
+class TestMaskedOps(TestCase):
+    def test_masked_mean(self) -> None:
+        x = as_tensor([1, 0, 2, 0, 0, 3])
+        mask = as_tensor([True, False, True, False, False, True])
+        expected = as_tensor(2.0)
+        assert torch.equal(masked_mean(x, mask), expected)
+
+    def test_masked_sum(self) -> None:
+        x = as_tensor([1, 0, 2, 0, 0, 3])
+        mask = as_tensor([True, False, True, False, False, True])
+        expected = as_tensor(6)
+        assert torch.equal(masked_sum(x, mask), expected)
+
+    def test_masked_equal(self) -> None:
+        x = as_tensor([1, 0, 2, 0, 0, 3])
+        y = as_tensor([1, 2, 2, 3, 3, 3])
+        mask = as_tensor([True, False, True, False, False, True])
+        assert masked_equal(x, y, mask)
 
 
 class TestTensorToPadMask(TestCase):

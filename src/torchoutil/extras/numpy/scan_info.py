@@ -37,7 +37,7 @@ class ShapeDTypeInfo(Generic[T_Invalid, T_EmptyTorch, T_EmptyNp]):
         return numpy_dtype_to_fill_value(self.numpy_dtype)
 
     @property
-    def ndim(self) -> int:
+    def get_ndim(self) -> int:
         return len(self.shape)
 
     @property
@@ -56,7 +56,7 @@ def scan_shape_dtypes(
     empty_np: T_EmptyNp = np.dtype("V"),
 ) -> ShapeDTypeInfo[InvalidTorchDType, T_EmptyTorch, T_EmptyNp]:
     """Returns the shape and the hdf_dtype for an input."""
-    valid_shape, shape = to.shape(x, return_valid=True)
+    valid_shape, shape = to.get_shape(x, return_valid=True)
     if not accept_heterogeneous_shape and not valid_shape:
         msg = f"Invalid argument {x} for {get_current_fn_name()}. (cannot compute shape for heterogeneous data)"
         raise ValueError(msg)

@@ -47,7 +47,7 @@ if hasattr(torch, "chalf"):
 elif hasattr(torch, "complex32"):
     TORCH_DTYPES["chalf"] = torch.complex32  # type: ignore
 if hasattr(torch, "quint2x4"):
-    TORCH_DTYPES["quint2x4"] = torch.quint2x4
+    TORCH_DTYPES["quint2x4"] = torch.quint2x4  # type: ignore
 if hasattr(torch, "uint16"):
     TORCH_DTYPES["uint16"] = torch.uint16  # type: ignore
 if hasattr(torch, "uint32"):

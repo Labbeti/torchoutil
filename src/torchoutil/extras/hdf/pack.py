@@ -19,6 +19,7 @@ from typing import (
     Tuple,
     TypeVar,
     Union,
+    get_args,
 )
 
 import h5py
@@ -144,7 +145,7 @@ def pack_to_hdf(
         msg = f"Cannot overwrite file {hdf_fpath}. Please remove it or use exists='overwrite' or exists='skip' option."
         raise ValueError(msg)
     else:
-        msg = f"Invalid argument {exists=}. (expected one of {EXISTS_MODES})"
+        msg = f"Invalid argument {exists=}. (expected one of {get_args(ExistsMode)})"
         raise ValueError(msg)
 
     if file_kwds is None:
@@ -230,7 +231,7 @@ def pack_to_hdf(
         if verbose >= 2:
             num_scalars = sum(len(hdf_ds.shape) == 1 for hdf_ds in hdf_dsets.values())
             ratio = num_scalars / total
-            msg = f"{num_scalars}/{len(hdf_dsets)} column dsets contains a single dim. ({ratio*100:.3f}%)"
+            msg = f"{num_scalars}/{len(hdf_dsets)} column dsets contains a single dim. ({ratio * 100:.3f}%)"
             pylog.debug(msg)
 
             if num_scalars < len(hdf_dsets):
@@ -241,7 +242,7 @@ def pack_to_hdf(
                 if len(hdf_ds.shape) == 1:
                     continue
                 ratio = max_shapes_ratios[attr_name]
-                msg = f"HDF column dset multidim '{attr_name}' has been built. (with shape={hdf_ds.shape}, nelement_per_item={po.prod(hdf_ds.shape[1:])} ({ratio*100:.3f}%), dtype={hdf_ds.dtype})"
+                msg = f"HDF column dset multidim '{attr_name}' has been built. (with shape={hdf_ds.shape}, nelement_per_item={po.prod(hdf_ds.shape[1:])} ({ratio * 100:.3f}%), dtype={hdf_ds.dtype})"
                 pylog.debug(msg)
 
         added_columns: List[str] = []
@@ -296,7 +297,7 @@ def pack_to_hdf(
             for item in batch:
                 for attr_name, value in item.items():
                     hdf_dset = hdf_dsets[attr_name]
-                    shape = to.shape(value)
+                    shape = to.get_shape(value)
 
                     # Check every shape
                     if len(shape) != hdf_dset.ndim - 1:

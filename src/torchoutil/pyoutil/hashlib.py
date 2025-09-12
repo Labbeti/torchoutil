@@ -5,14 +5,13 @@ import hashlib
 import logging
 from io import BufferedReader
 from pathlib import Path
-from typing import Literal, Optional, Protocol, Union, runtime_checkable
+from typing import Literal, Optional, Protocol, Union, get_args, runtime_checkable
 
 from typing_extensions import Buffer
 
 HashName = Literal["sha256", "md5"]
 
 DEFAULT_CHUNK_SIZE = 256 * 1024**2  # 256 MiB
-HASH_NAMES = ("sha256", "md5")
 
 pylog = logging.getLogger(__name__)
 
@@ -61,7 +60,7 @@ def hash_file(
     elif isinstance(hash_type, Hasher):
         hasher = hash_type
     else:
-        msg = f"Invalid argument hash_type={hash_type}. (expected one of {HASH_NAMES} or a custom hasher)"
+        msg = f"Invalid argument hash_type={hash_type}. (expected one of {get_args(HashName)} or a custom hasher)"
         raise ValueError(msg)
     del hash_type
 

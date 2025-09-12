@@ -15,6 +15,7 @@ from typing import (
     Optional,
     TypeVar,
     Union,
+    get_args,
     overload,
 )
 
@@ -24,7 +25,6 @@ from .typing import isinstance_guard
 
 T = TypeVar("T")
 
-ORIENT_VALUES = ("list", "dict")
 Orient = Literal["list", "dict"]
 
 
@@ -36,6 +36,7 @@ def dump_csv(
     make_parents: bool = True,
     header: Union[bool, Literal["auto"]] = "auto",
     align_content: bool = False,
+    replace_newline_by: Optional[str] = "\\n",
     **csv_writer_kwds,
 ) -> str:
     """Dump content to CSV format."""
@@ -53,7 +54,7 @@ def dump_csv(
     elif not header and isinstance_guard(data, Iterable[str]):
         data_lst = [{"0": data_i} for data_i in data]
     elif not header and isinstance_guard(data, Iterable[Iterable]):
-        data_lst = [dict(zip(map(str, range(len(data_i))))) for data_i in data]
+        data_lst = [dict(zip(map(str, range(len(data_i))), data)) for data_i in data]
     elif not header and isinstance_guard(data, Iterable):
         data_lst = [{"0": data_i} for data_i in data]
     else:
@@ -67,12 +68,8 @@ def dump_csv(
 
     if len(data_lst) == 0:
         fieldnames = []
-    # elif header:
-    #     fieldnames = list(range(len(next(iter(data_lst)))))
     else:
         fieldnames = [str(k) for k in data_lst[0].keys()]
-
-    print(f"{fieldnames=}; {header=}")
 
     if align_content:
         old_fieldnames = fieldnames
@@ -91,6 +88,19 @@ def dump_csv(
                 old_to_new_fieldnames[k]: f"{{:^{max_num_chars[k]}s}}".format(v)
                 for k, v in data_i.items()
             }
+            for data_i in data_lst
+        ]
+
+    if replace_newline_by is not None:
+
+        def _replace_newline(s):
+            if not isinstance(s, str):
+                return s
+            else:
+                return s.replace("\n", replace_newline_by)
+
+        data_lst = [
+            {_replace_newline(k): _replace_newline(v) for k, v in data_i.items()}
             for data_i in data_lst
         ]
 
@@ -199,7 +209,7 @@ def load_csv(
     elif orient == "list":
         result = data_lst
     else:
-        msg = f"Invalid argument {orient=}. (expected one of {ORIENT_VALUES})"
+        msg = f"Invalid argument {orient=}. (expected one of {get_args(Orient)})"
         raise ValueError(msg)
 
     return result  # type: ignore

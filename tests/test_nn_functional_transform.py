@@ -7,13 +7,46 @@ from unittest import TestCase
 import torch
 
 import pyoutil as po
+import torchoutil as to
 from torchoutil.core.packaging import _NUMPY_AVAILABLE
 from torchoutil.extras.numpy import np
+from torchoutil.nn.functional.others import deep_equal
 from torchoutil.nn.functional.transform import (
     flatten,
+    move_to,
     repeat_interleave_nd,
     resample_nearest_rates,
+    shuffled,
+    top_p,
 )
+from torchoutil.utils import return_types
+
+
+class TestTopP(TestCase):
+    def test_example(self) -> None:
+        values = to.as_tensor([0.2, 0.1, 0.5, 0.0, 0.2])
+        assert deep_equal(
+            top_p(values, 0.55),
+            return_types.top_p([to.as_tensor([0.5]), to.as_tensor([2])]),
+        )
+
+
+class TestMoveTo(TestCase):
+    def test_example(self) -> None:
+        x1 = to.randint(0, 100, (100,))
+        x2 = to.rand((100,))
+        x = {"x1": x1, "x2": x2}
+        expected = {"x1": x1.double(), "x2": x2.double()}
+        assert deep_equal(move_to(x, dtype=to.double), expected)
+
+
+class TestShuffled(TestCase):
+    def test_example(self) -> None:
+        indices = torch.randperm(100)
+        shuffled_indices = shuffled(indices)
+        assert torch.equal(
+            indices.unique().sort().values, shuffled_indices.unique().sort().values
+        )
 
 
 class TestRepeat(TestCase):

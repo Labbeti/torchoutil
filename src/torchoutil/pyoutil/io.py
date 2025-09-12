@@ -27,6 +27,7 @@ def _setup_path(
     overwrite: bool,
     make_parents: bool,
 ) -> Optional[Path]:
+    """Resolve & expand path and create intermediate parents."""
     if not isinstance(fpath, (str, Path, os.PathLike)):
         return fpath
 

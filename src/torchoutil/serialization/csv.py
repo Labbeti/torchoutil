@@ -12,11 +12,12 @@ from typing import (
     Mapping,
     Optional,
     Union,
+    get_args,
     overload,
 )
 
 from torchoutil.core.packaging import _PANDAS_AVAILABLE
-from torchoutil.pyoutil.csv import ORIENT_VALUES, Orient, _setup_path
+from torchoutil.pyoutil.csv import Orient, _setup_path
 from torchoutil.pyoutil.csv import dump_csv as _dump_csv_base
 from torchoutil.pyoutil.csv import load_csv as _load_csv_base
 from torchoutil.pyoutil.importlib import Placeholder
@@ -35,7 +36,6 @@ else:
 
 
 CSVBackend = Literal["csv", "pandas", "auto"]
-CSV_BACKENDS = ("csv", "pandas", "auto")
 
 
 def dump_csv(
@@ -58,7 +58,7 @@ def dump_csv(
 
     if to_builtins:
         if isinstance(data, DataFrame) and backend == "pandas":
-            msg = f"Invalid combinaison of arguments {to_builtins=}, {backend=} and {type(data)=}."
+            msg = f"Inconsistent combinaison of arguments: {to_builtins=}, {backend=} and {type(data)=}."
             warn_once(msg)
         data = to_builtin(data)
 
@@ -84,7 +84,7 @@ def dump_csv(
         )
 
     else:
-        msg = f"Invalid argument {backend=}. (expected one of {CSV_BACKENDS})"
+        msg = f"Invalid argument {backend=}. (expected one of {get_args(CSVBackend)})"
         raise ValueError(msg)
 
 
@@ -164,7 +164,7 @@ def load_csv(
         )
 
     else:
-        msg = f"Invalid argument {backend=}. (expected one of {CSV_BACKENDS})"
+        msg = f"Invalid argument {backend=}. (expected one of {get_args(CSVBackend)})"
         raise ValueError(msg)
 
 
@@ -232,7 +232,7 @@ def _load_csv_with_pandas(
     elif orient == "dict":
         return df.to_dict("list")  # type: ignore
     else:
-        msg = f"Invalid argument {orient=}. (expected one of {ORIENT_VALUES})"
+        msg = f"Invalid argument {orient=}. (expected one of {get_args(Orient)})"
         raise ValueError(msg)
 
 

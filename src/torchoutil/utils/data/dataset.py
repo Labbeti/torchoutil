@@ -53,13 +53,11 @@ class Wrapper(Generic[T], Dataset[T]):
 
     def unwrap(self, recursive: bool = True) -> Union[SupportsLenAndGetItem, Dataset]:
         dataset = self.dataset
-        continue_ = recursive and isinstance(dataset, Wrapper)
+        continue_ = recursive and isinstance(dataset, (Wrapper, TorchSubset))
         while continue_:
-            if not isinstance(dataset, (Wrapper, TorchSubset)):
-                break
-            dataset = dataset.dataset
+            dataset = dataset.dataset  # type: ignore
             continue_ = isinstance(dataset, Wrapper)
-        return dataset
+        return dataset  # type: ignore
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}({repr(self.dataset)})"

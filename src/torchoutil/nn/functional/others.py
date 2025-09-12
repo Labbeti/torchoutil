@@ -33,7 +33,6 @@ from torchoutil.pyoutil.typing import BuiltinNumber, SizedIter, T_BuiltinNumber
 from torchoutil.types._typing import (
     LongTensor,
     ScalarLike,
-    T_Tensor,
     T_TensorOrArray,
     TensorOrArray,
 )
@@ -92,7 +91,7 @@ def find(
 
 
 @overload
-def ndim(
+def get_ndim(
     x: Union[ScalarLike, Tensor, np.ndarray, Iterable],
     *,
     return_valid: Literal[False] = False,
@@ -101,7 +100,7 @@ def ndim(
 
 
 @overload
-def ndim(
+def get_ndim(
     x: Union[ScalarLike, Tensor, np.ndarray, Iterable],
     *,
     return_valid: Literal[True],
@@ -109,7 +108,7 @@ def ndim(
     ...
 
 
-def ndim(
+def get_ndim(
     x: Union[ScalarLike, Tensor, np.ndarray, Iterable],
     *,
     return_valid: bool = False,
@@ -163,8 +162,13 @@ def ndim(
         raise ValueError(msg)
 
 
+@function_alias(get_ndim)
+def ndim(*args, **kwargs):
+    ...
+
+
 @overload
-def shape(
+def get_shape(
     x: Union[ScalarLike, Tensor, np.ndarray, Iterable],
     *,
     output_type: Callable[[Tuple[int, ...]], T] = identity,
@@ -174,7 +178,7 @@ def shape(
 
 
 @overload
-def shape(
+def get_shape(
     x: Union[ScalarLike, Tensor, np.ndarray, Iterable],
     *,
     output_type: Callable[[Tuple[int, ...]], T] = identity,
@@ -183,7 +187,7 @@ def shape(
     ...
 
 
-def shape(
+def get_shape(
     x: Union[ScalarLike, Tensor, np.ndarray, Iterable],
     *,
     output_type: Callable[[Tuple[int, ...]], T] = identity,
@@ -241,6 +245,11 @@ def shape(
         raise ValueError(msg)
 
 
+@function_alias(get_shape)
+def shape(*args, **kwargs):
+    ...
+
+
 def ranks(x: Tensor, dim: int = -1, descending: bool = False) -> LongTensor:
     """Get the ranks of each value in range [0, x.shape[dim][."""
     return x.argsort(dim, descending).argsort(dim)  # type: ignore
@@ -253,7 +262,7 @@ def nelement(x: Union[ScalarLike, Tensor, np.ndarray, Iterable]) -> int:
     elif isinstance(x, (np.ndarray, np.generic)):
         return x.size
     else:
-        return builtin_prod(shape(x))
+        return builtin_prod(get_shape(x))
 
 
 @overload
@@ -413,23 +422,13 @@ def stack(
     ...
 
 
-def stack(tensors: Union[List[Tensor], Tuple[Tensor, ...]], dim: int = 0, *, out: Optional[Tensor] = None) -> Tensor:  # type: ignore
-    return torch.stack(tensors, dim=dim, out=out)
-
-
-@overload
-def cat(
-    tensors: Union[List[T_Tensor], Tuple[T_Tensor, ...]],
+def stack(
+    tensors,
     dim: int = 0,
     *,
-    out: Optional[T_Tensor] = None,
-) -> T_Tensor:
-    ...
-
-
-@overload
-def cat(tensors: Union[List[Tensor], Tuple[Tensor, ...]], dim: int = 0, *, out: Optional[Tensor] = None) -> Tensor:  # type: ignore
-    ...
+    out: Optional[Tensor] = None,
+) -> Tensor:  # type: ignore
+    return torch.stack(tensors, dim=dim, out=out)
 
 
 def cat(
