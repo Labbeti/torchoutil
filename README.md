@@ -1,5 +1,8 @@
 # torchoutil
 
+> [!CAUTION]
+> **This project has been replaced by [torchwrench](https://github.com/Labbeti/torchwrench) and is no longer maintained.**
+
 <center>
 
 <a href="https://www.python.org/">
