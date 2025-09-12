@@ -156,6 +156,9 @@ def list_dict_to_dict_list(
     if list_fn is None:
         list_fn = identity  # type: ignore
 
+    if list_fn is None:
+        list_fn = identity  # type: ignore
+
     result = {
         key: list_fn(
             [

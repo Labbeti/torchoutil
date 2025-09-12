@@ -43,6 +43,7 @@ import torchoutil as to
 from torchoutil import nn
 from torchoutil.extras.hdf.common import (
     _DUMPED_JSON_KEYS,
+    EXISTS_MODES,
     HDF_ENCODING,
     HDF_STRING_DTYPE,
     HDF_VOID_DTYPE,

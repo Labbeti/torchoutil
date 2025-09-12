@@ -67,7 +67,7 @@ T_Signed = TypeVar("T_Signed", bound=_bool, default=_bool)
 
 _TORCH_BASE_CLASSES: Final[Dict[str, Type]] = {
     "float32": torch.FloatTensor,
-    "float": torch.FloatTensor,
+    "_float": torch.FloatTensor,
     "float64": torch.DoubleTensor,
     "double": torch.DoubleTensor,
     "float16": torch.HalfTensor,
@@ -75,7 +75,7 @@ _TORCH_BASE_CLASSES: Final[Dict[str, Type]] = {
     "int16": torch.ShortTensor,
     "short": torch.ShortTensor,
     "int32": torch.IntTensor,
-    "int": torch.IntTensor,
+    "_int": torch.IntTensor,
     "int64": torch.LongTensor,
     "long": torch.LongTensor,
     "bool": torch.BoolTensor,

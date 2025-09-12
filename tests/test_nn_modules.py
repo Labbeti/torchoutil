@@ -12,6 +12,7 @@ from torchoutil.nn.modules import (
     AsTensor,
     CropDim,
     CropDims,
+    ESequential,
     Identity,
     LogSoftmaxMultidim,
     Mean,
